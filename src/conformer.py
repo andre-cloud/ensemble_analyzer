@@ -105,7 +105,7 @@ class Conformer:
         :rtype: tuple
         """
         en = self._last_energy
-        number, e, g, b, erel, time, pop = (
+        number, e, g, b, erel, time, pop, cluster = (
             self.number,
             en.get("E", float(0)),
             en.get("G", float(0)),
@@ -113,10 +113,11 @@ class Conformer:
             en.get("Erel", float(0)),
             en.get("time"),
             en.get("Pop", float(0)),
+            self.cluster
         )
         if g:
             g /= 627.51
-        return number, e / 627.51, g, b, erel, pop, time
+        return number, e / 627.51, g, b, erel, pop, time, cluster
 
     @staticmethod
     def load_raw(json):

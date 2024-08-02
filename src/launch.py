@@ -227,8 +227,9 @@ def create_summary(title, conformers, log):
                 "E. Rel [kcal/mol]",
                 "Pop [%]",
                 "Elap. time [sec]",
+                "# Cluster"
             ],
-            floatfmt=".6f",
+            floatfmt=".5f",
         )
     )
     log.info("")

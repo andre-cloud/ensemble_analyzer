@@ -4,6 +4,7 @@ from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 import matplotlib.pyplot as plt
 from matplotlib.lines import Line2D
+from matplotlib import rcParams
 from typing import Union
 import matplotlib.gridspec as gridspec
 from scipy.interpolate import griddata
@@ -145,8 +146,9 @@ def save_PCA_snapshot(
     """
 
     fig = plt.figure()
+    rcParams.update({'figure.autolayout': True})
 
-    gs = gridspec.GridSpec(2, 1, height_ratios=[50, 1])
+    gs = gridspec.GridSpec(2, 1, height_ratios=[50, .75])
 
     ax = fig.add_subplot(gs[0])
     color_axis = fig.add_subplot(gs[1])
@@ -161,7 +163,7 @@ def save_PCA_snapshot(
     zi = griddata((x_, y_), z, (xi, yi), method="linear")
 
     im = ax.pcolormesh(xi, yi, zi, shading="auto", cmap="coolwarm", alpha=0.75)
-    ax.contour(xi, yi, zi, "--", levels=10, colors="grey", linewidths=0.5, alpha=0.6)
+    ax.contour(xi, yi, zi, "--", levels=6, colors="grey", linewidths=0.5, alpha=0.6)
 
     cbar = plt.colorbar(im, cax=color_axis, orientation="horizontal")
     cbar.set_label("Potential energy [kcal/mol]")
@@ -187,15 +189,16 @@ def save_PCA_snapshot(
 
     ax.set_xlim(x)
     ax.set_ylim(y)
-    plt.legend(
+    ax.legend(
         loc="upper left",
         bbox_to_anchor=(1.05, 1.0),
         fancybox=True,
         shadow=True,
         ncol=2,
         title="Conformers",
+        prop={'size': 6}
     )
-    plt.tight_layout()
+    # plt.tight_layout()
     plt.savefig(fname, dpi=300)
     return None
 
@@ -233,4 +236,4 @@ if __name__ == "__main__":  # pragma: no cover:
 
     # Load the XYZ file
     xyz_file = read_ensemble("files/ensemble.xyz", 0, 1, mock.MagicMock(), raw=True)
-    perform_PCA(xyz_file, 5, "files/test.png", "Test", mock.MagicMock())
+    perform_PCA(xyz_file, 25, "files/test.png", "Test", mock.MagicMock())
