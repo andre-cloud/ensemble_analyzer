@@ -97,7 +97,7 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
                 f"Max number of re-run ({MAX_TRY}) executed for CONF_{conf.number}. Exiting"
             )
 
-    print(ensemble)
+
     json.dump(
         {i.number: i.__dict__ for i in ensemble},
         open("checkpoint.json", "w"),

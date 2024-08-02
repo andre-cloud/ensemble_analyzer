@@ -97,7 +97,7 @@ def calc_pca(confs: list, cluster=False, ncluster: Union[int, None] = None) -> t
             kmeans = KMeans(n_clusters=n_c, n_init=10)
             clusters = kmeans.fit_predict(pca_scores)
             for idx, conf in enumerate(confs):
-                conf.cluster = clusters[idx]
+                conf.cluster = int(clusters[idx])
         else:
             clusters = [conf.cluster for conf in confs]
 
@@ -213,7 +213,7 @@ def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log) -> None
     :param title:  title of the graph
     :type title: str
     :param log:  logger instance
-    :type log: logging
+    :type log: logging    
 
     :rtype: None
     """
