@@ -221,7 +221,7 @@ class Protocol:
             f"%pal nprocs {cpu} end "
             + smd
             + self.add_input
-            + (" %maxcore 4000" if "maxcore" not in self.add_input else "")
+            + (" %maxcore 8000" if "maxcore" not in self.add_input else "")
         )
 
         return si, ob
