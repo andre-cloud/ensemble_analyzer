@@ -688,7 +688,7 @@ def main_graph(graphs, protocol, fname, output, title):
     ref = None
     if os.path.exists(os.path.join(os.getcwd(), fname)):
         ref = np.loadtxt(fname)
-        ax.plot(ref[:, 0], ref[:, 1], label="Experimental", lw=1.5)
+        ax.plot(ref[:, 0], ref[:, 1], label="Sperimentale", lw=1.5)
     for p in graphs:
         data_uv = np.loadtxt(f"{output}_protocol_{p}.dat")
         ax.plot(data_uv[:, 0], data_uv[:, 1], label=protocol[int(p)].functional, lw=1)
@@ -708,18 +708,18 @@ def main_graph(graphs, protocol, fname, output, title):
         ncol=2,
     )
 
-    ax.set_xlabel("Energy [eV]")
+    ax.set_xlabel("Energia [eV]")
 
     ax2 = ax.secondary_xaxis('bottom', functions=(eV_to_nm, eV_to_nm))
     p = ax.get_position()
     # p = [p.x0, p.y0-0.5]
     ax2.spines['bottom'].set_position(("outward", p.y0+0.073*fig.dpi))
 
-    ax2.set_xlabel("Wavelength (nm)")
+    ax2.set_xlabel("Lunghezza d'onda (nm)")
 
     ax.set_xlim(1.8)
     plt.title(title)
-    plt.ylabel("Intenisty [a.u.]")
+    plt.ylabel("Intensità [u.a.]")
     plt.tight_layout()
     plt.savefig(f"regraphed_{output}.png", dpi=300)
 
@@ -733,7 +733,7 @@ def plot_conv_graph(graphs, protocol):
     :type protocol: list[Protocol]
     """
 
-    main_graph(graphs, protocol, "uv_ref_norm_eV.dat", "uv", "UV comparison graph")
+    main_graph(graphs, protocol, "uv_ref_norm_eV.dat", "uv", "Comparazione grafico UV")
     main_graph(graphs, protocol, "ecd_ref_norm_eV.dat", "ecd", "ECD comparison graph")
 
 
