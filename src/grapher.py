@@ -324,8 +324,8 @@ class Graph:
         m = np.max(np.max(impulses, axis=2))
         cut = np.where(impulses[:, :, 0] == m)
         max_impulse_x = impulses[cut[0], cut[1], 0]
-        user_shift = list(user_shift) if user_shift else user_shift
-        user_sigma = list(user_sigma) if user_sigma else user_sigma
+        user_shift = list(user_shift) if user_shift is not None else user_shift
+        user_sigma = list(user_sigma) if user_sigma is not None else user_sigma
 
         # dx = X[0]-X[1]
 

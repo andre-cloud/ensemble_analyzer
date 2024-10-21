@@ -12,9 +12,10 @@ from scipy.spatial import distance_matrix
 
 import sys
 
+
 plt.set_loglevel("error")
 
-MARKERS = list(Line2D.markers.keys())
+MARKERS = ['.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_', 'P', 'X']
 
 
 def calc_distance_matrix(coords):
@@ -72,10 +73,10 @@ def calc_pca(confs: list, cluster=False, ncluster: Union[int, None] = None) -> t
     """
 
     # fetch all geometries and reshaping them to create the correct 2D matrix
-    data = np.array([conf.last_geometry for conf in confs])
-    colors = [conf.color for conf in confs]
-    numbers = [conf.number for conf in confs]
-    energy = np.array([conf.get_energy for conf in confs])
+    data = np.array([conf.last_geometry for conf in confs if conf.active])
+    colors = [conf.color for conf in confs if conf.active]
+    numbers = [conf.number for conf in confs if conf.active]
+    energy = np.array([conf.get_energy for conf in confs if conf.active])
     energy -= min(energy)
 
     evalue_dist, _ = calc_distance_matrix(data)
@@ -116,7 +117,7 @@ def obtain_markers_from_cluster(cluster: int):
     :return: marker
     :rtype: matplotlib.lines
     """
-    return MARKERS[cluster % len(MARKERS)]
+    return MARKERS[cluster % (len(MARKERS))]
 
 
 def save_PCA_snapshot(
@@ -145,10 +146,11 @@ def save_PCA_snapshot(
     :rtype: None
     """
 
-    fig = plt.figure()
+    fig = plt.figure(figsize=(10,8))
     rcParams.update({'figure.autolayout': True})
+    plt.subplots_adjust(bottom=.3, right=.6, left=.115)
 
-    gs = gridspec.GridSpec(2, 1, height_ratios=[50, .75])
+    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 0.1], hspace=0.3)
 
     ax = fig.add_subplot(gs[0])
     color_axis = fig.add_subplot(gs[1])
@@ -194,9 +196,9 @@ def save_PCA_snapshot(
         bbox_to_anchor=(1.05, 1.0),
         fancybox=True,
         shadow=True,
-        ncol=2,
-        title="Conformers",
-        prop={'size': 6}
+        ncol=4,
+        borderaxespad=0., 
+        fontsize=6
     )
     # plt.tight_layout()
     plt.savefig(fname, dpi=300)
@@ -229,11 +231,29 @@ def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log) -> None
 
     return None
 
+def get_ensemble(confs):
+    
+    tmp = sorted(confs)
+    clust_pres = []
+    for i in tmp: 
+        if not i.active:
+            continue
+        if i.cluster not in clust_pres:
+            clust_pres.append(i.cluster)
+        else:
+            i.active = False
+        
+    return tmp
+
 
 if __name__ == "__main__":  # pragma: no cover:
     from ioFile import read_ensemble
+    from ioFile import save_snapshot
     import mock
 
     # Load the XYZ file
     xyz_file = read_ensemble("files/ensemble.xyz", 0, 1, mock.MagicMock(), raw=True)
-    perform_PCA(xyz_file, 25, "files/test.png", "Test", mock.MagicMock())
+    perform_PCA(xyz_file, 30, "files/test.png", "Test", mock.MagicMock())
+    xyz_file_new = get_ensemble(xyz_file)
+    perform_PCA(xyz_file_new, 30, "files/test_after.png", "Test After", mock.MagicMock())
+    save_snapshot("files/clustered.xyz", xyz_file_new, mock.MagicMock())

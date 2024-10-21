@@ -83,6 +83,11 @@ def save_snapshot(output, confs, log):
     :return: None
     """
     log.debug("Saving snapshot of the ensemble")
+    xyzs = []
+    for conf in confs:
+        xyz_data = conf.write_xyz()
+        if xyz_data:
+            xyzs.append(xyz_data)
     with open(output, "w") as f:
-        f.write("\n".join([f"{i.write_xyz().strip()}" for i in confs]).strip())
+        f.write('\n'.join(xyzs))
     return None
