@@ -21,6 +21,7 @@ def create_log(output):
     :rtype: logging
     """
 
+    print(output)
     logging.basicConfig(
         filename=output,
         level=logging.DEBUG if DEBUG else logging.INFO,
@@ -36,4 +37,4 @@ def create_log(output):
 
 
 if __name__ == "__main__":  # pragma: no cover:
-    log = create_log("tests/output_test.out")
+    log = create_log("output_test.out")
