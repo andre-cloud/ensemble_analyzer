@@ -2,9 +2,13 @@ import json
 import os
 import sys
 from ase.calculators.orca import ORCA
+from ase.calculators.orca import OrcaProfile
 
 
 DEBUG = os.getenv("DEBUG")
+
+
+orca_profile = OrcaProfile(command='/opt/orca/6.0.1/orca')
 
 
 def load_protocol(file: str):  # pragma: no cover
@@ -242,6 +246,7 @@ class Protocol:
         simple_input, ob = self.orca_common_str(cpu)
         label = "ORCA"
         calculator = ORCA(
+            profile=orca_profile
             label=label,
             orcasimpleinput=simple_input,
             orcablocks=ob,
