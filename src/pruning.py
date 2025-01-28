@@ -32,7 +32,7 @@ def cut_over_thr_max(confs: list, number: str, thrGMAX: float, log) -> None:
 
     en = []
     for i in confs:
-        e_tmp = -np.infty
+        e_tmp = -np.inf 
         if i.energies.get(str(number)):
             e_tmp = (
                 i.energies[str(number)]["G"]
