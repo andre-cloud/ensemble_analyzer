@@ -244,7 +244,7 @@ class Protocol:
         """
 
         simple_input, ob = self.orca_common_str(cpu)
-        label = "ORCA"
+        label = "orca"
         calculator = ORCA(
             profile=orca_profile,
             label=label,
