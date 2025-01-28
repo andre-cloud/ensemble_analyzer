@@ -166,7 +166,7 @@ def parser_arguments():
         "-o",
         "--output",
         help="Define the output filename. Default: %(default)s",
-        default="$SLURM_SUBMIT_DIR/output.out",
+        default="output.out",
     )
 
     help_group = parser.add_argument_group("Get help")
