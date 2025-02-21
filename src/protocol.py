@@ -83,6 +83,7 @@ class Protocol:
         maxstep: float = 0.2,
         fmax: float = 0.05,
         cluster: bool = False,
+        no_prune: bool = False,
     ):
         self.number = number
         self.functional = functional.upper()
@@ -99,6 +100,7 @@ class Protocol:
         self.constrains = constrains
         self.maxstep = maxstep
         self.cluster = cluster
+        self.no_prune = no_prune
 
         if fmax != 0.05:
             self.fmax = fmax

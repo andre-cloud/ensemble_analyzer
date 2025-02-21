@@ -182,6 +182,12 @@ def check_ensemble(confs: list, protocol, log) -> list:
         )
         return confs
 
+    if protocol.no_prune:
+        log.info(
+            f"Since no prune setting is detected in this part ({ordinal(int(protocol.number))}), PRUNING NOT EXECUTED"
+        )
+        return confs
+
     cut_over_thr_max(confs, protocol.number, protocol.thrGMAX, log)
 
     if DEBUG:
