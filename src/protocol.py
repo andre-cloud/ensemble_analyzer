@@ -8,10 +8,7 @@ from ase.calculators.orca import OrcaProfile
 DEBUG = os.getenv("DEBUG")
 
 
-# try:
-#     orca_profile = OrcaProfile(command='/opt/orca/6.0.1/orca')
-# except Exception: 
-#     orca_profile = OrcaProfile()
+orca_profile = OrcaProfile(command='/opt/orca/6.0.1/orca')
 
 
 def load_protocol(file: str):  # pragma: no cover
@@ -251,7 +248,7 @@ class Protocol:
         simple_input, ob = self.orca_common_str(cpu)
         label = "orca"
         calculator = ORCA(
-            # profile=orca_profile,
+            profile=orca_profile,
             label=label,
             orcasimpleinput=simple_input,
             orcablocks=ob,
