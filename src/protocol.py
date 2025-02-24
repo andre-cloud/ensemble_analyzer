@@ -7,8 +7,10 @@ from ase.calculators.orca import OrcaProfile
 
 DEBUG = os.getenv("DEBUG")
 
-
-orca_profile = OrcaProfile(command='/opt/orca/6.0.1/orca')
+try:
+    orca_profile = OrcaProfile(command='/opt/orca/6.0.1/orca')
+except TypeError:
+    orca_profile = None
 
 
 def load_protocol(file: str):  # pragma: no cover

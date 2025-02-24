@@ -5,10 +5,15 @@ from ase.constraints import FixAtoms
 from ase.optimize import LBFGS
 from ase.vibrations import Infrared
 
-from src.IOsystem import tail
-from src.regex_parsing import regex_parsing
-from src.parser_parameter import get_opt_geometry
-
+try:
+    from src.IOsystem import tail
+    from src.regex_parsing import regex_parsing
+    from src.parser_parameter import get_opt_geometry
+except ImportError:
+    from IOsystem import tail
+    from regex_parsing import regex_parsing
+    from parser_parameter import get_opt_geometry
+    
 MAX_TRY = 5
 
 

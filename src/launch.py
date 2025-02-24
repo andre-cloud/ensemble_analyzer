@@ -495,4 +495,21 @@ def main():
     if len(idxs_graphs) > 0:
         plot_conv_graph(idxs_graphs, protocol)
 
+    log.info(f'Final ensemble has {len(conformers)} conformers')
+    t = 0
+    for i in conformers:
+        for j in i.energies:
+            t += i.energies[j]["time"]            
+    log.info(f'Total elapsed time: {datetime.timedelta(seconds=t)}')
+
     log.info("Ensemble refined correcly!")
+
+
+if __name__=='__main__':
+    conformers, protocol, start_from = restart()
+    print(f'Final ensemble has {len(conformers)} conformers')
+    t = 0
+    for i in conformers:
+        for j in i.energies:
+            t += i.energies[j]["time"]            
+    print(f'Total elapsed time: {datetime.timedelta(seconds=t)}')
