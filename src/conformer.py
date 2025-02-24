@@ -8,6 +8,8 @@ import numpy as np
 import random
 from ase.atoms import Atoms
 
+EH_TO_KCAL = 627.5096080305927
+
 
 class Conformer:
     """
@@ -94,7 +96,7 @@ class Conformer:
             return ""
         
         # Header
-        header = f'{len(self.atoms)}\nCONFORMER {self.number} {"G : {:.6f} kcal/mol".format(self._last_energy["G"]) if self._last_energy["G"] else "E : {:.6f} kcal/mol".format(self._last_energy["E"])}'
+        header = f'{len(self.atoms)}\nCONFORMER {self.number} {"  {:.10f}".format(self._last_energy["G"]/EH_TO_KCAL) if self._last_energy["G"] else "  {:.10f}".format(self._last_energy["E"]/EH_TO_KCAL)}'
         
         # Atoms and positions
         atom_lines = [f"{a}\t{x:14f}\t{y:14f}\t{z:14f}" for a, (x, y, z) in zip(self.atoms, self.last_geometry)]

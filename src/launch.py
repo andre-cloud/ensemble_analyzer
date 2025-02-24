@@ -291,8 +291,8 @@ def start_calculation(
             )
 
     # sort the final ensemble
-    c_ = sorted(conformers)
     calculate_rel_energies(c_, temperature)
+    c_ = sorted(conformers)
     save_snapshot("final_ensemble.xyz", c_, log)
     log.info(f'{"="*15}\nCALCULATIONS ENDED\n{"="*15}\n\n')
     create_summary("Final Summary", c_, log)
@@ -405,6 +405,9 @@ def check_protocol(log, func, graph, add_input, idx, last_prot_with_freq=None) -
         if not last_prot_with_freq:
             log.critical(
                 f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nElectrical spectra requires Boltzmann population over ∆G. In the specified protocol there is NO frequency calculation turned on.\n{'='*20}\nExiting\n{'='*20}"
+            )
+            raise IOError(
+                "There is an error in the input file with the definition of the functional. See the output file."
             )
 
     return None
