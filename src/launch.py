@@ -149,6 +149,9 @@ def run_protocol(conformers, p, temperature, cpu, log) -> None:
         )
     )
 
+
+    # TODO: make number of cluster a parameter
+
     perform_PCA(
         [i for i in conformers if i.active],
         5,
@@ -160,8 +163,11 @@ def run_protocol(conformers, p, temperature, cpu, log) -> None:
     create_summary("Summary", conformers, log)
     conformers = check_ensemble(conformers, p, log)
     log.debug("Start Pruning")
-    calculate_rel_energies(conformers, temperature)
+    conformers = sort_conformers_by_energy(conformers, temperature)
+
     save_snapshot(f"ensemble_after_{p.number}.xyz", conformers, log)
+
+    # TODO: store (x,y) coordinates of FIRST PCA so the graph stays the same
 
     perform_PCA(
         [i for i in conformers if i.active],
@@ -171,7 +177,7 @@ def run_protocol(conformers, p, temperature, cpu, log) -> None:
         log,
     )
 
-    calculate_rel_energies(conformers, temperature)
+    conformers = sort_conformers_by_energy(conformers, temperature)
     create_summary("Summary After Pruning", conformers, log)
 
     log.info(f'{"="*15}\nEND PROTOCOL {p.number}\n{"="*15}\n\n')
@@ -291,13 +297,17 @@ def start_calculation(
             )
 
     # sort the final ensemble
-    calculate_rel_energies(c_, temperature)
-    c_ = sorted(conformers)
+    c_ = sort_conformers_by_energy(conformers, temperature)
     save_snapshot("final_ensemble.xyz", c_, log)
     log.info(f'{"="*15}\nCALCULATIONS ENDED\n{"="*15}\n\n')
     create_summary("Final Summary", c_, log)
 
     return None
+
+def sort_conformers_by_energy(conformers, temperature):
+    calculate_rel_energies(c_, temperature)
+    c_ = sorted(conformers)
+    return c_
 
 
 def restart() -> tuple:
