@@ -305,7 +305,7 @@ def start_calculation(
     return None
 
 def sort_conformers_by_energy(conformers, temperature):
-    calculate_rel_energies(c_, temperature)
+    calculate_rel_energies(conformers, temperature)
     c_ = sorted(conformers)
     return c_
 
