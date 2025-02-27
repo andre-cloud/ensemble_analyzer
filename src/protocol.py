@@ -2,7 +2,10 @@ import json
 import os
 import sys
 from ase.calculators.orca import ORCA
-from ase.calculators.orca import OrcaProfile
+try:
+    from ase.calculators.orca import OrcaProfile
+except ImportError:
+    pass
 
 
 DEBUG = os.getenv("DEBUG")
@@ -11,6 +14,9 @@ try:
     orca_profile = OrcaProfile(command='/opt/orca/6.0.1/orca')
 except TypeError:
     orca_profile = None
+except NameError:
+    orca_profile = None
+
 
 
 def load_protocol(file: str):  # pragma: no cover
@@ -291,6 +297,9 @@ class Protocol:
         """
         calculator, label = self.calc_orca_std(cpu, charge, mult)
         calculator.parameters["orcasimpleinput"] += " freq"
+        #TODO check
+        print("check")
+        calculator.parameters["block"] += "\n%freq vcd true end\n"
 
         return calculator, label
 

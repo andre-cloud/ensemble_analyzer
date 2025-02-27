@@ -1,13 +1,10 @@
 import numpy as np
-import numpy.ma as ma
 
 import os
-import sys
 import scipy.optimize as opt
 from scipy.signal import argrelextrema
 from scipy.constants import c, h, electron_volt, R
 import matplotlib.pyplot as plt
-import matplotlib.transforms as mtransforms
 from typing import Union
 
 plt.set_loglevel("error")
