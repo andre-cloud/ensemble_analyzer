@@ -3,7 +3,7 @@ try:
     from src.ioFile import read_ensemble, save_snapshot
     from src.logger import create_log, ordinal
     from src.parser_arguments import parser_arguments
-    from src.parser_parameter import get_conf_parameters
+    from src.parser_parameter import get_conf_parameters, get_data_for_graph
     from src.IOsystem import SerialiseEncoder
     from src.protocol import Protocol, load_protocol
     from src.pruning import calculate_rel_energies, check_ensemble
@@ -17,7 +17,7 @@ except ImportError as e:  # pragma: no cover
     from ioFile import read_ensemble, save_snapshot
     from logger import create_log, ordinal
     from parser_arguments import parser_arguments
-    from parser_parameter import get_conf_parameters
+    from parser_parameter import get_conf_parameters, get_data_for_graph
     from IOsystem import SerialiseEncoder
     from protocol import Protocol, load_protocol
     from pruning import calculate_rel_energies, check_ensemble
@@ -284,6 +284,10 @@ def start_calculation(
             f.write(str(p.number))
         run_protocol(conformers, p, temperature, cpu, log)
         if p.graph:
+            get_data_for_graph(
+                conformers=conformers,
+                protocol=p,
+                log=log)
             Graph(
                 confs=conformers,
                 protocol=p,
@@ -352,10 +356,11 @@ def create_protocol(p, log) -> list:
         func = d.get("functional", None)
         add_input = d.get("add_input", "")
         graph = d.get("graph", False)
+        freq = d.get("freq", False)
 
-        check_protocol(log, func, graph, add_input, idx, last_prot_with_freq)
+        check_protocol(log, func, graph, freq, add_input, idx, last_prot_with_freq)
 
-        if not graph and d.get("freq"):
+        if not graph and freq:
             last_prot_with_freq = int(idx)
 
         protocol.append(Protocol(number=idx, **d))
@@ -373,7 +378,7 @@ def create_protocol(p, log) -> list:
     return protocol
 
 
-def check_protocol(log, func, graph, add_input, idx, last_prot_with_freq=None) -> None:
+def check_protocol(log, func, graph, freq, add_input, idx, last_prot_with_freq=None) -> None:
     """
     Sanity check of the input settings
 
@@ -405,7 +410,7 @@ def check_protocol(log, func, graph, add_input, idx, last_prot_with_freq=None) -
         )
 
     if graph:
-        if not add_input:
+        if not add_input and not freq:
             log.critical(
                 f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nADD_INPUT must be set so the proper calculation (TD-DFT or CASSCF/RASSCF) to simulate the electronic spectra (Problem at {ordinal(int(idx))} protocol definition)\n{'='*20}\n Exiting\n{'='*20}\n"
             )

@@ -4,7 +4,7 @@ from types import UnionType
 import os
 from scipy.constants import c, h, electron_volt, R
 import matplotlib.pyplot as plt 
-from scipy.optimize import minimize
+from scipy.optimize import minimize, differential_evolution
 
 
 
@@ -19,9 +19,9 @@ def eV_to_nm(eV):
 class Graph: 
 
     START = {
-        'IR': 300,  # cm-1
-        'VCD': 300, # cm-1
-        'UV': 0.1,  # eV
+        'IR':  0.1, # cm-1
+        'VCD': 0.1, # cm-1
+        'UV':  0.1, # eV
         'ECD': 0.1  # eV
     }
     END = {
@@ -56,15 +56,14 @@ class Graph:
     def normalize(self): 
         return self.y / np.max(np.abs(self.y)) * self.norm
 
-    def gaussian(self, x0, I, fwmh):
-        sigma = fwmh / (2 * np.sqrt(2 * np.log(2)))
-        y = np.zeros(self.x.shape)
-        for x, i in zip(x0, I):
-            y += i / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((self.x - x) / sigma) ** 2)
+    def gaussian(self, x0, I, fwhm):
+        sigma = fwhm / (2 * np.sqrt(2 * np.log(2)))
+        y = np.sum(I[:, np.newaxis] / (sigma * np.sqrt(2 * np.pi)) * np.exp(-0.5 * ((self.x - x0[:, np.newaxis]) / sigma) ** 2), axis=0)
         return y
-    
+
     def lorentzian(self, x0, I, fwhm):
-        return (I*fwhm**2)/(fwhm**2+4*(self.x-x0)**2)
+        y = np.sum((I[:, np.newaxis] * fwhm**2) / (fwhm**2 + 4 * (self.x - x0[:, np.newaxis]) ** 2), axis=0)
+        return y
 
 
 
@@ -73,25 +72,25 @@ class Computed(Graph):
     DEFs = {
         'IR': 50,      # σ in cm-1
         'VCD': 50,     # σ in cm-1
-        'UV': 1/3,     # FWHM in eV
-        'ECD': 1/3     # FWHM in eV
+        'UV': 0.4,     # FWHM in eV
+        'ECD': 0.4     # FWHM in eV
     }
 
-    def __init__(self, conf, invert, convolution = None, **kwargs):
+    def __init__(self, conf, invert, convolution = None, shift = None, fwhm = None, **kwargs):
         super().__init__(**kwargs)
 
         self.invert = invert
         self.g = convolution if convolution else self.graph_type
         self.conformers = conf
-
-
-        self.convolution_model = {
-            'IR': self.lorentzian,
-            'VCD': self.lorentzian,
-            'UV': self.gaussian,
-            'ECD': self.gaussian,
-        }
-
+        if conf[0].energies[self.protocol].get("graph", None) is None:
+            return
+        elif conf[0].energies[self.protocol].get("graph").get(self.graph_type, None) is None:
+            return
+        
+        if shift:
+            self.shift = shift
+        if fwhm:        
+            self.fwhm = fwhm
 
         self.retrive_data()
 
@@ -100,61 +99,61 @@ class Computed(Graph):
         if self.auto: 
             self.ref = Experimental(**kwargs)
             self.autoconvolute()
+        else:
+            self.y = self.CONV[self.g](self.x, self.y_comp, self.DEFs[self.graph_type])
+            self.y = self.normalize()
+            self.shift = 0
+            self.fwhm = self.DEFs[self.graph_type]
 
 
     def retrive_data(self):
         self.y_comp = np.zeros(self.x.shape)
-        f = self.convolution_model[self.graph_type]
+        f = self.CONV[self.graph_type]
         for i in self.conformers:
             if not i.active:
                 continue
             x = np.array(i.energies[self.protocol]["graph"][self.graph_type]['x'])
             y = np.array(i.energies[self.protocol]["graph"][self.graph_type]['y'])
-
-            print(f(
-                x, y, 
-                self.DEFs[self.graph_type]))
-            self.y_comp += f(
-                x, y, 
-                self.DEFs[self.graph_type]) \
-                    * float(i.energies[self.protocol]['Pop'])
+            self.y_comp += f(x, y, self.DEFs[self.graph_type]) * float(i.energies[self.protocol]['Pop'])
 
 
     def autoconvolute(self):
+        f = self.CONV[self.graph_type]
         
-        f = self.convolution_model[self.graph_type]
-
         def wrapper(variables):
             shift, fwhm = variables
-            y = f(self.x-shift, self.y_comp,fwhm)
-            n = np.max(np.abs(y[self.ref.x_min_idx:self.ref.x_max_idx]))
-            y /= n
-            d = self.diversity_function(y[self.ref.x_min_idx:self.ref.x_max_idx]/n
-                                        , self.ref.y[self.ref.x_min_idx:self.ref.x_max_idx])
-            print(d)
-            return d
-        
-        # Initial guess for the parameters
-        initial_guess = [0, self.DEFs[self.graph_type]]
+            y = f(self.x + shift, self.y_comp, fwhm)
+            y_norm = y / np.max(np.abs(y[self.ref.x_min_idx:self.ref.x_max_idx]))
+            ref_norm = self.ref.y / np.max(np.abs(self.ref.y[self.ref.x_min_idx:self.ref.x_max_idx]))
+            d = self.diversity_function(y_norm[self.ref.x_min_idx:self.ref.x_max_idx],
+                                        ref_norm[self.ref.x_min_idx:self.ref.x_max_idx])
+            print(f"Shift: {shift:.4f}, FWHM: {fwhm:.4f}, RMSD: {d:.6f}")
+            return d  # Minimizzare questa funzione
 
-        # Bounds for the parameters
-        bounds = [(-.75, .75), (0.1, 0.5)]  # Example bounds
+        sb, fb = 0.6, 0.3
+        ss, sf = 0, self.DEFs[self.graph_type]
 
-        # Fit the convolution model to the experimental data
+        if hasattr(self, 'shift'):
+            ss = self.shift
+        if hasattr(self, 'fwhm'):
+            sf = self.fwhm
 
-        result = minimize(wrapper, initial_guess, bounds=bounds, method='L-BFGS-B', options={'maxiter': 1000})
+        initial_guess = [ss, sf]  # BLUE SHIFT NEGATIVE
+        bounds = [(-sb, sb), (0.2, sf + fb)]
 
-        # Extract the optimal parameters
+        result = minimize(wrapper, initial_guess, bounds=bounds, options={'maxiter': 1000}, method='L-BFGS-B')
+        # result = minimize(wrapper, initial_guess, bounds=bounds, options={'maxiter': 1000}, method='Nelder-Mead')
+
         if result.success:
-            shift_opt, fwhm_opt = result.x
-            self.y = self.convolution_model[self.graph_type](self.x - shift_opt, self.y_comp, fwhm_opt)
+            self.shift, self.fwhm = result.x
+            self.y = self.CONV[self.graph_type](self.x + self.shift, self.y_comp, self.fwhm)
             self.y = self.normalize()
-            print(f"Optimal shift: {shift_opt}, Optimal FWHM: {fwhm_opt}")
+            print(f"Optimal shift: {self.shift:.3f}, Optimal FWHM: {self.fwhm:.3f}, Similarity: {(1-result.fun)*100:.2f}%")
         else:
             print("Optimization failed")
 
-    def diversity_function(self, y_comp, y_ref):
-        return np.sqrt(np.mean((y_comp - y_ref) ** 2))
+    def diversity_function(self, a, b):
+        return np.sqrt(np.mean((a - b) ** 2))  # Calcolo corretto di RMSD
 
     
 
@@ -184,7 +183,6 @@ class Experimental(Graph):
         self.data = self.data[np.argsort(self.data[:, 0])]
 
         self.x_min = float(min(self.data[:, 0]))
-        self.x_min_idx = np.argmin(self.data[:, 0])
         self.x_max = float(max(self.data[:, 0]))
         self.x_max_idx = np.argmax(self.data[:, 0])
 
@@ -199,7 +197,7 @@ class Experimental(Graph):
             self.x_exp = self.data[:, 0]
 
 
-        print(self.x_exp)
+
         self.reverse = self.x_exp[0] > self.x_exp[-1]
 
         self.y_exp = self.data[:, 1]
@@ -211,6 +209,14 @@ class Experimental(Graph):
             self.y_exp = self.y_exp[::-1]
 
         self.y = self.interpolate()
+        tmp = (self.x > self.x_min) & (self.x < self.x_max)
+        print(tmp)
+        print(self.x[tmp])
+
+        self.x_min_idx = np.where(self.x == np.min(self.x[tmp]))[0][0]
+        self.x_max_idx = np.where(self.x == np.max(self.x[tmp]))[0][0]
+
+
         self.y = self.normalize()
 
     def interpolate(self):
@@ -223,15 +229,25 @@ class Experimental(Graph):
 
 if __name__ == '__main__':
 
-    from conformer import Conformer
-    import json
-    
-    j = json.loads(open('checkpoint.json').read())
-    c = Conformer.load_raw(j['1'])
+    from launch import restart
+    from pruning import calculate_rel_energies
 
-    graph = Computed([c], False, graph_type='ECD', protocol="6")
+    ensemble, protocol, _= restart()
+    calculate_rel_energies(ensemble, 298.15)
 
-    plt.plot(graph.x, graph.y)
-    plt.plot(graph.ref.x, graph.ref.y)
-    # plt.xlim(graph.ref.x_min, graph.ref.x_max)
-    plt.show()
+    for i in  protocol: 
+        shift, fwhm = None, None
+        for j in ['IR', 'UV', 'ECD']:
+            graph = Computed(ensemble, False, graph_type=j, protocol=str(i.number), shift=shift, fwhm=fwhm)
+
+            if not hasattr(graph, "y_comp"):
+                continue
+
+            shift, fwhm = graph.shift, graph.fwhm
+            plt.plot(graph.x, graph.y)
+            if hasattr(graph, 'ref'):
+                plt.plot(graph.ref.x[graph.ref.x_min_idx:graph.ref.x_max_idx], graph.ref.y[graph.ref.x_min_idx:graph.ref.x_max_idx])
+                plt.xlim(graph.ref.x_min-.5, graph.ref.x_max+.5)
+
+            plt.title(f'{j} of protocol {i.number}')
+            plt.show()

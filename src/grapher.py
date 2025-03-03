@@ -147,12 +147,12 @@ class Graph:
                 FACTOR_EV_NM
                 / float(
                     i.strip().split()[
-                        regex_parsing[self.protocol.calculator]["idx_en_UV"]
+                        regex_parsing[self.protocol.calculator]["idx_en_tddft"]
                     ]
                 ),
                 float(
                     i.strip().split()[
-                        regex_parsing[self.protocol.calculator]["idx_imp_UV"]
+                        regex_parsing[self.protocol.calculator]["idx_imp_tddft"]
                     ]
                 )
                 * pop,
@@ -183,12 +183,12 @@ class Graph:
                 FACTOR_EV_NM
                 / float(
                     i.strip().split()[
-                        regex_parsing[self.protocol.calculator]["idx_en_ECD"]
+                        regex_parsing[self.protocol.calculator]["idx_en_tddft"]
                     ]
                 ),
                 float(
                     i.strip().split()[
-                        regex_parsing[self.protocol.calculator]["idx_imp_ECD"]
+                        regex_parsing[self.protocol.calculator]["idx_imp_tddft"]
                     ]
                 )
                 * pop,
