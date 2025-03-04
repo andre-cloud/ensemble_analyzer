@@ -1,6 +1,7 @@
 import numpy as np
 from types import UnionType
 import os
+import pickle as pl
 from scipy.constants import c, h, electron_volt, R
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize, differential_evolution
@@ -185,7 +186,7 @@ class Computed(Graph):
             self.y = self.normalize()
 
     def diversity_function(self, a, b):
-        return np.sqrt(np.mean((a - b) ** 2)) # RMSD
+        return np.sqrt(np.mean((a - b) ** 2))  # RMSD
 
 
 class Experimental(Graph):
@@ -354,6 +355,10 @@ class Compared(Graph):
 
         plt.tight_layout()
         plt.savefig(f"{self.graph_type.lower()}_comparison.png", dpi=300)
+
+        with open(f"{self.graph_type.lower()}_comparison.pickle", 'wb') as f:
+            pl.dump(self.fig, f)
+        
 
     def eV_to_nm(eV):
         return FACTOR_EV_NM / eV

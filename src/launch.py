@@ -509,7 +509,6 @@ def main():
         g = Compared(protocol, graph_type=j)
         g.save_graph()
 
-
     log.info(f"Final ensemble has {len(conformers)} conformers")
     t = 0
     for i in conformers:
