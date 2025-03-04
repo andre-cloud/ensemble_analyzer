@@ -23,17 +23,14 @@ regex_parsing = {
        (1/cm) (1E-44*esu^2*cm^2) 
 ---------------------------------""",
         "break": "\n\n",
-
         "idx_en_tddft": 3,  # index for energy in the UV & ECD table in eV
         "idx_imp_tddft": 6,  # index for oscillator strength in the UV table
         "idx_en_ir": 1,  # index for energy in the IR table in cm**-1
         "idx_imp_ir": 3,  # index for oscillator strength in the IR table
-        "idx_imp_vcd": 2,  # index for oscillator strength in the VCD table 
-
+        "idx_imp_vcd": 2,  # index for oscillator strength in the VCD table
         "s_freq": "VIBRATIONAL FREQUENCIES",
         "e_freq": "------------",
         "idx_freq": 1,  # index for frequency in frequency table
-
         "opt_done": "                    ***        THE OPTIMIZATION HAS CONVERGED     ***",
         "geom_start": """CARTESIAN COORDINATES (ANGSTROEM)
 ---------------------------------""",

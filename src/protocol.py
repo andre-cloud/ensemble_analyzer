@@ -2,6 +2,7 @@ import json
 import os
 import sys
 from ase.calculators.orca import ORCA
+
 try:
     from ase.calculators.orca import OrcaProfile
 except ImportError:
@@ -11,12 +12,11 @@ except ImportError:
 DEBUG = os.getenv("DEBUG")
 
 try:
-    orca_profile = OrcaProfile(command='/opt/orca/6.0.1/orca')
+    orca_profile = OrcaProfile(command="/opt/orca/6.0.1/orca")
 except TypeError:
     orca_profile = None
 except NameError:
     orca_profile = None
-
 
 
 def load_protocol(file: str):  # pragma: no cover
@@ -56,16 +56,6 @@ class Solvent:
             return f"CPCM({self.solvent})"
         else:
             return "CPCM"
-
-    def orca_input_smd(self):
-        """Get the ORCA input string for the SMD
-
-        :return: SMD input for ORCA
-        :rtype: str
-        """
-        if self.smd:
-            return f'%cpcm smd true smdsolvent "{self.solvent}" end'
-        return ""
 
 
 class Protocol:
@@ -215,21 +205,17 @@ class Protocol:
         :rtype: str
         """
 
-        if self.solvent and not (self.solvent.smd and self.freq):
+        if self.solvent:
             if "xtb" in self.functional.lower():
                 solv = f"ALPB({self.solvent.solvent})"
             elif self.solvent.solvent.strip():
-                solv = f" CPCM({self.solvent.solvent.strip()})"
+                solv = f" {self.solvent}"
             else:
                 solv = f" CPCM"
         else:
             solv = ""
 
         si = f"{self.functional} {self.basis} {solv} nopop"
-
-        smd = ""
-        if self.solvent and ("xtb" not in self.functional.lower()) and (not self.freq):
-            smd = self.solvent.orca_input_smd()
 
         ob = (
             f"%pal nprocs {cpu} end "
@@ -297,7 +283,7 @@ class Protocol:
         """
         calculator, label = self.calc_orca_std(cpu, charge, mult)
         calculator.parameters["orcasimpleinput"] += " freq"
-        #TODO check
+        # TODO check
         print("check")
         calculator.parameters["block"] += "\n%freq vcd true end\n"
 

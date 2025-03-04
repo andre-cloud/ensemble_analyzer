@@ -62,8 +62,8 @@ def read_ensemble(file, charge, multiplicity, log, raw=False) -> list:
         confs.append(
             Conformer(counter, geom=geom, atoms=atoms, charge=charge, mult=multiplicity)
         )
-        if raw: 
-            confs[-1].energies = {"0": {'E': e*627.51, 'G' : e*627.51}}
+        if raw:
+            confs[-1].energies = {"0": {"E": e * 627.51, "G": e * 627.51}}
         old_idx = i
         counter += 1
 
@@ -89,5 +89,5 @@ def save_snapshot(output, confs, log):
         if xyz_data:
             xyzs.append(xyz_data)
     with open(output, "w") as f:
-        f.write('\n'.join(xyzs))
+        f.write("\n".join(xyzs))
     return None

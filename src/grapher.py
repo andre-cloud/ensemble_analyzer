@@ -350,21 +350,21 @@ class Graph:
         in_delta = 1
 
         initial_guess = [0.1415, in_delta]
-        if user_shift is not None: 
+        if user_shift is not None:
             if len(user_shift) > 1:
                 shift = user_shift
             else:
                 shift = user_shift * 2
         else:
-            shift= (-1.5, 1.5)
+            shift = (-1.5, 1.5)
 
-        if user_sigma is not None:  
+        if user_sigma is not None:
             if len(user_sigma) > 1:
                 sigma = user_sigma
             else:
                 sigma = user_sigma * 2
         else:
-            sigma= (0.08, 0.27) # corresponding to FWMH = (0.19, 0.64) eV
+            sigma = (0.08, 0.27)  # corresponding to FWMH = (0.19, 0.64) eV
 
         default_guess = [0.1415, 0]  # the σ correspond to a FWHM of 0.33 eV
         result = opt.minimize(
@@ -707,10 +707,10 @@ def main_graph(graphs, protocol, fname, output, title):
 
     ax.set_xlabel("Energia [eV]")
 
-    ax2 = ax.secondary_xaxis('bottom', functions=(eV_to_nm, eV_to_nm))
+    ax2 = ax.secondary_xaxis("bottom", functions=(eV_to_nm, eV_to_nm))
     p = ax.get_position()
     # p = [p.x0, p.y0-0.5]
-    ax2.spines['bottom'].set_position(("outward", p.y0+0.073*fig.dpi))
+    ax2.spines["bottom"].set_position(("outward", p.y0 + 0.073 * fig.dpi))
 
     ax2.set_xlabel("Lunghezza d'onda (nm)")
 

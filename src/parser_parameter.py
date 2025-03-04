@@ -216,57 +216,66 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
 
 def get_data_for_graph(conformers, protocol, log):
     confs = [i for i in conformers if i.active]
-    if (protocol.freq or "tddft" in protocol.add_input):
+    if protocol.freq or "tddft" in protocol.add_input:
         for i in confs:
-            with open(os.path.join(os.getcwd(), i.folder, f"protocol_{protocol.number}.out")) as f:
+            with open(
+                os.path.join(os.getcwd(), i.folder, f"protocol_{protocol.number}.out")
+            ) as f:
                 fl = f.read()
-        
+
             parse_graph(fl, i, protocol, log)
-    
+
         return True
     return False
 
-def parse_graph(fl, conf, protocol, log):
 
+def parse_graph(fl, conf, protocol, log):
     reg = {
-        'UV' : {
-            'start': regex_parsing[protocol.calculator]["s_UV"],
-            'end': regex_parsing[protocol.calculator]["break"],
-            'x': regex_parsing[protocol.calculator]["idx_en_tddft"],
-            'y': regex_parsing[protocol.calculator]["idx_imp_tddft"]
+        "UV": {
+            "start": regex_parsing[protocol.calculator]["s_UV"],
+            "end": regex_parsing[protocol.calculator]["break"],
+            "x": regex_parsing[protocol.calculator]["idx_en_tddft"],
+            "y": regex_parsing[protocol.calculator]["idx_imp_tddft"],
         },
-        'ECD' : {
-            'start': regex_parsing[protocol.calculator]["s_ECD"],
-            'end': regex_parsing[protocol.calculator]["break"],
-            'x': regex_parsing[protocol.calculator]["idx_en_tddft"],
-            'y': regex_parsing[protocol.calculator]["idx_imp_tddft"]
+        "ECD": {
+            "start": regex_parsing[protocol.calculator]["s_ECD"],
+            "end": regex_parsing[protocol.calculator]["break"],
+            "x": regex_parsing[protocol.calculator]["idx_en_tddft"],
+            "y": regex_parsing[protocol.calculator]["idx_imp_tddft"],
         },
-        'IR' : {
-            'start': regex_parsing[protocol.calculator]["s_IR"],
-            'end': regex_parsing[protocol.calculator]["break"],
-            'x': regex_parsing[protocol.calculator]["idx_en_ir"],
-            'y': regex_parsing[protocol.calculator]["idx_imp_ir"]
+        "IR": {
+            "start": regex_parsing[protocol.calculator]["s_IR"],
+            "end": regex_parsing[protocol.calculator]["break"],
+            "x": regex_parsing[protocol.calculator]["idx_en_ir"],
+            "y": regex_parsing[protocol.calculator]["idx_imp_ir"],
         },
-        'VCD' : {
-            'start': regex_parsing[protocol.calculator]["s_VCD"],
-            'end': regex_parsing[protocol.calculator]["break"],
-            'x': regex_parsing[protocol.calculator]["idx_en_ir"],
-            'y': regex_parsing[protocol.calculator]["idx_imp_vcd"]
-        }
+        "VCD": {
+            "start": regex_parsing[protocol.calculator]["s_VCD"],
+            "end": regex_parsing[protocol.calculator]["break"],
+            "x": regex_parsing[protocol.calculator]["idx_en_ir"],
+            "y": regex_parsing[protocol.calculator]["idx_imp_vcd"],
+        },
     }
 
     conf.energies[str(protocol.number)]["graph"] = {}
 
     for i in reg.keys():
-        if reg[i]['start'] not in fl:
-            log.error(f"Graph of {conf.number} not found in the output file. Saving empty arrays")
+        if reg[i]["start"] not in fl:
+            log.error(
+                f"Graph of {conf.number} not found in the output file. Saving empty arrays"
+            )
             x = np.array([])
             y = np.array([])
         else:
-            tmp = fl.split(reg[i]['start'])[-1].split(reg[i]['end'])[0].strip().splitlines()
+            tmp = (
+                fl.split(reg[i]["start"])[-1]
+                .split(reg[i]["end"])[0]
+                .strip()
+                .splitlines()
+            )
 
-            x = np.array([float(j.split()[reg[i]['x']]) for j in tmp])
-            y = np.array([float(j.split()[reg[i]['y']]) for j in tmp])
+            x = np.array([float(j.split()[reg[i]["x"]]) for j in tmp])
+            y = np.array([float(j.split()[reg[i]["y"]]) for j in tmp])
 
             conf.energies[str(protocol.number)]["graph"][i] = {
                 "x": x,
@@ -274,9 +283,7 @@ def parse_graph(fl, conf, protocol, log):
             }
 
 
-
 if __name__ == "__main__":  # pragma: no cover:
-
     # class Conf:
     #     def __init__(self, number, mult, folder):
     #         self.number = number
@@ -294,28 +301,27 @@ if __name__ == "__main__":  # pragma: no cover:
     import json
     from IOsystem import SerialiseEncoder
 
-
-    log = create_log('test.out')
+    log = create_log("test.out")
     ensemble, protocol, start_from = restart()
 
     print(protocol)
 
-    for i in protocol: 
+    for i in protocol:
         print(i)
         if get_data_for_graph(ensemble, i, log):
             print(ensemble[0].energies[str(i.number)]["graph"])
-    
+
     json.dump(
         {i.number: i.__dict__ for i in ensemble},
         open("checkpoint.json", "w"),
         indent=4,
         cls=SerialiseEncoder,
     )
-        
-        # if i.freq or "tddft" in i.add_input:
-        #     if i.freq:
-        #         Computed(ensemble, False, graph_type='IR', protocol=i.number)
-        #         Computed(ensemble, False, graph_type='VCD', protocol=i.number)
-        #     if "tddft" in i.add_input:
-        #         Computed(ensemble, False, graph_type='UV', protocol=i.number)
-        #         Computed(ensemble, False, graph_type='ECD', protocol=i.number)
+
+    # if i.freq or "tddft" in i.add_input:
+    #     if i.freq:
+    #         Computed(ensemble, False, graph_type='IR', protocol=i.number)
+    #         Computed(ensemble, False, graph_type='VCD', protocol=i.number)
+    #     if "tddft" in i.add_input:
+    #         Computed(ensemble, False, graph_type='UV', protocol=i.number)
+    #         Computed(ensemble, False, graph_type='ECD', protocol=i.number)

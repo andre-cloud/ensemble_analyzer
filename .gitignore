@@ -136,11 +136,10 @@ files/
 ORCA*
 output*.out
 conf_*/
-settings.json
-protocol_dump.json
-checkpoint.json
+*json
 last_protocol
 *dat
 try.py
 .DS_Store
 *png
+*xy 

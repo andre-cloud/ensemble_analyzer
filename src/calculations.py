@@ -13,7 +13,7 @@ except ImportError:
     from IOsystem import tail
     from regex_parsing import regex_parsing
     from parser_parameter import get_opt_geometry
-    
+
 MAX_TRY = 5
 
 

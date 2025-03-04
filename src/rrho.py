@@ -353,8 +353,7 @@ def free_gibbs_energy(
     return H - T * S
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     from parser_parameter import get_param, get_freq
     import sys
 
@@ -366,9 +365,7 @@ if __name__ == '__main__':
             fl = f.readlines()
 
         e = float(
-            list(filter(lambda x: get_param(x, calc, "E"), fl))[-1]
-            .strip()
-            .split()[-1]
+            list(filter(lambda x: get_param(x, calc, "E"), fl))[-1].strip().split()[-1]
         )
 
         B = np.array(
@@ -382,11 +379,15 @@ if __name__ == '__main__':
         mw = float(
             [i for i in fl if "Total Mass" in i][0]
             .strip()
-            .split('...')[1].split()[0].strip()
+            .split("...")[1]
+            .split()[0]
+            .strip()
         )
 
         freq = get_freq(fl, calc)
-        im_freq = freq[freq<0]
+        im_freq = freq[freq < 0]
 
         g = free_gibbs_energy(SCF=e, T=float(T), freq=freq, mw=mw, B=B, m=1)
-        print(f'{i} --- G with mRRHO @ T={T}: {g} Eh     Calculation ended with {len(im_freq)} imaginary frequencies {" ".join(list(map(str, im_freq))) if len(im_freq)>0 else ""}')
+        print(
+            f'{i} --- G with mRRHO @ T={T}: {g} Eh     Calculation ended with {len(im_freq)} imaginary frequencies {" ".join(list(map(str, im_freq))) if len(im_freq)>0 else ""}'
+        )
