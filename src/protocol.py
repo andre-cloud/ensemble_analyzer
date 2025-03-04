@@ -219,7 +219,6 @@ class Protocol:
 
         ob = (
             f"%pal nprocs {cpu} end "
-            + smd
             + self.add_input
             + (" %maxcore 6000" if "maxcore" not in self.add_input else "")
         )
