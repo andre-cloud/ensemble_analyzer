@@ -36,7 +36,7 @@ def mkdir(directory: str):
     """
     # if os.path.exists(directory):
     #     raise IOError(f"Directory {directory} already exists. Going to exit!")
-        # shutil.rmtree(directory)
+    # shutil.rmtree(directory)
     os.makedirs(directory, exist_ok=True)
     return None
 

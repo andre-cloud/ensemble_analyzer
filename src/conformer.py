@@ -94,16 +94,19 @@ class Conformer:
         """
         if not self.active:
             return ""
-        
+
         # Header
         header = f'{len(self.atoms)}\nCONFORMER {self.number} {"  {:.10f}".format(self._last_energy["G"]/EH_TO_KCAL) if self._last_energy["G"] else "  {:.10f}".format(self._last_energy["E"]/EH_TO_KCAL)}'
-        
+
         # Atoms and positions
-        atom_lines = [f"{a}\t{x:14f}\t{y:14f}\t{z:14f}" for a, (x, y, z) in zip(self.atoms, self.last_geometry)]
-        
+        atom_lines = [
+            f"{a}\t{x:14f}\t{y:14f}\t{z:14f}"
+            for a, (x, y, z) in zip(self.atoms, self.last_geometry)
+        ]
+
         # Combine the header and atom lines
         txt = "\n".join([header] + atom_lines)
-        
+
         return txt
 
     def create_log(self):
@@ -121,7 +124,7 @@ class Conformer:
             en.get("Erel", float(0)),
             en.get("time"),
             en.get("Pop", float(0)),
-            self.cluster
+            self.cluster,
         )
         if g:
             g /= 627.51

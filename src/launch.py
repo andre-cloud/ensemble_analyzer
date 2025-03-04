@@ -3,11 +3,13 @@ try:
     from src.ioFile import read_ensemble, save_snapshot
     from src.logger import create_log, ordinal
     from src.parser_arguments import parser_arguments
-    from src.parser_parameter import get_conf_parameters
+    from src.parser_parameter import get_conf_parameters, get_data_for_graph
     from src.IOsystem import SerialiseEncoder
     from src.protocol import Protocol, load_protocol
     from src.pruning import calculate_rel_energies, check_ensemble
-    from src.grapher import Graph, plot_conv_graph
+    from src.graph import main_graph, Compared
+
+    # from src.grapher import Graph, plot_conv_graph
     from src.clustering import perform_PCA
     from src.title import title
     from src.calculations import optimize, calc_freq, single_point
@@ -17,11 +19,13 @@ except ImportError as e:  # pragma: no cover
     from ioFile import read_ensemble, save_snapshot
     from logger import create_log, ordinal
     from parser_arguments import parser_arguments
-    from parser_parameter import get_conf_parameters
+    from parser_parameter import get_conf_parameters, get_data_for_graph
     from IOsystem import SerialiseEncoder
     from protocol import Protocol, load_protocol
     from pruning import calculate_rel_energies, check_ensemble
-    from grapher import Graph
+    from graph import main_graph, Compared
+
+    # from grapher import Graph
     from clustering import perform_PCA
     from title import title
     from calculations import optimize, calc_freq, single_point
@@ -67,13 +71,13 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
     st = time.perf_counter()
 
     if protocol.opt:
-        atoms, label = optimize(conf, protocol, cpu=cpu, log=log)
+        _, label = optimize(conf, protocol, cpu=cpu, log=log)
 
     if protocol.freq:
-        atoms, label = calc_freq(conf, protocol, cpu=cpu, log=log)
+        _, label = calc_freq(conf, protocol, cpu=cpu, log=log)
 
     if not (protocol.opt or protocol.freq):
-        atoms, label = single_point(conf, protocol, cpu=cpu, log=log)
+        _, label = single_point(conf, protocol, cpu=cpu, log=log)
 
     end = time.perf_counter()
 
@@ -96,7 +100,6 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
             raise RuntimeError(
                 f"Max number of re-run ({MAX_TRY}) executed for CONF_{conf.number}. Exiting"
             )
-
 
     json.dump(
         {i.number: i.__dict__ for i in ensemble},
@@ -148,7 +151,6 @@ def run_protocol(conformers, p, temperature, cpu, log) -> None:
             )
         )
     )
-
 
     # TODO: make number of cluster a parameter
 
@@ -233,7 +235,7 @@ def create_summary(title, conformers, log):
                 "E. Rel [kcal/mol]",
                 "Pop [%]",
                 "Elap. time [sec]",
-                "# Cluster"
+                "# Cluster",
             ],
             floatfmt=".5f",
         )
@@ -282,27 +284,24 @@ def start_calculation(
     for p in protocol[start_from:]:
         with open("last_protocol", "w") as f:
             f.write(str(p.number))
+
         run_protocol(conformers, p, temperature, cpu, log)
-        if p.graph:
-            Graph(
-                confs=conformers,
-                protocol=p,
-                log=log,
-                T=temperature,
-                final_lambda=final_lambda,
-                definition=definition,
-                FWHM=FWHM,
-                shift=shift,
-                invert=invert,
-            )
+
+        log.debug("Getting data for graph")
+        get_data_for_graph(conformers=conformers, protocol=p, log=log)
+        log.debug("Creating graph")
+
+        # TODO: incorporate FWHM and shift from settings as bounds
+        main_graph(conformers, p, log)
 
     # sort the final ensemble
     c_ = sort_conformers_by_energy(conformers, temperature)
     save_snapshot("final_ensemble.xyz", c_, log)
-    log.info(f'{"="*15}\nCALCULATIONS ENDED\n{"="*15}\n\n')
     create_summary("Final Summary", c_, log)
+    log.info(f'{"="*15}\nCALCULATIONS ENDED\n{"="*15}\n\n')
 
     return None
+
 
 def sort_conformers_by_energy(conformers, temperature):
     calculate_rel_energies(conformers, temperature)
@@ -352,10 +351,11 @@ def create_protocol(p, log) -> list:
         func = d.get("functional", None)
         add_input = d.get("add_input", "")
         graph = d.get("graph", False)
+        freq = d.get("freq", False)
 
-        check_protocol(log, func, graph, add_input, idx, last_prot_with_freq)
+        check_protocol(log, func, graph, freq, add_input, idx, last_prot_with_freq)
 
-        if not graph and d.get("freq"):
+        if not graph and freq:
             last_prot_with_freq = int(idx)
 
         protocol.append(Protocol(number=idx, **d))
@@ -373,7 +373,9 @@ def create_protocol(p, log) -> list:
     return protocol
 
 
-def check_protocol(log, func, graph, add_input, idx, last_prot_with_freq=None) -> None:
+def check_protocol(
+    log, func, graph, freq, add_input, idx, last_prot_with_freq=None
+) -> None:
     """
     Sanity check of the input settings
 
@@ -405,7 +407,7 @@ def check_protocol(log, func, graph, add_input, idx, last_prot_with_freq=None) -
         )
 
     if graph:
-        if not add_input:
+        if not add_input and not freq:
             log.critical(
                 f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nADD_INPUT must be set so the proper calculation (TD-DFT or CASSCF/RASSCF) to simulate the electronic spectra (Problem at {ordinal(int(idx))} protocol definition)\n{'='*20}\n Exiting\n{'='*20}\n"
             )
@@ -503,26 +505,26 @@ def main():
         invert=invert,
     )
 
-    # Plots eventual graphs
-    idxs_graphs = [i.number for i in protocol if i.graph]
-    if len(idxs_graphs) > 0:
-        plot_conv_graph(idxs_graphs, protocol)
+    for j in ["IR", "VCD", "UV", "ECD"]:
+        g = Compared(protocol, graph_type=j)
+        g.save_graph()
 
-    log.info(f'Final ensemble has {len(conformers)} conformers')
+
+    log.info(f"Final ensemble has {len(conformers)} conformers")
     t = 0
     for i in conformers:
         for j in i.energies:
-            t += i.energies[j]["time"]            
-    log.info(f'Total elapsed time: {datetime.timedelta(seconds=t)}')
+            t += i.energies[j]["time"]
+    log.info(f"Total elapsed time: {datetime.timedelta(seconds=t)}")
 
     log.info("Ensemble refined correcly!")
 
 
-if __name__=='__main__':
+if __name__ == "__main__":
     conformers, protocol, start_from = restart()
-    print(f'Final ensemble has {len(conformers)} conformers')
+    print(f"Final ensemble has {len(conformers)} conformers")
     t = 0
     for i in conformers:
         for j in i.energies:
-            t += i.energies[j]["time"]            
-    print(f'Total elapsed time: {datetime.timedelta(seconds=t)}')
+            t += i.energies[j]["time"]
+    print(f"Total elapsed time: {datetime.timedelta(seconds=t)}")

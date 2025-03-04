@@ -15,23 +15,47 @@ import sys
 
 plt.set_loglevel("error")
 
-MARKERS = ['.', ',', 'o', 'v', '^', '<', '>', '1', '2', '3', '4', '8', 's', 'p', '*', 'h', 'H', '+', 'x', 'D', 'd', '|', '_', 'P', 'X']
+MARKERS = [
+    ".",
+    ",",
+    "o",
+    "v",
+    "^",
+    "<",
+    ">",
+    "1",
+    "2",
+    "3",
+    "4",
+    "8",
+    "s",
+    "p",
+    "*",
+    "h",
+    "H",
+    "+",
+    "x",
+    "D",
+    "d",
+    "|",
+    "_",
+    "P",
+    "X",
+]
 
 
 def calc_distance_matrix(coords):
     dist = np.zeros((coords.shape[0], coords.shape[1], coords.shape[1]))
     evalue_dist, evector_dist = [], []
 
-
-    for idx, _ in enumerate(coords): 
+    for idx, _ in enumerate(coords):
         c = coords[idx]
         dist[idx] = distance_matrix(c, c)
         eva, eve = np.linalg.eig(dist[idx])
         evalue_dist.append(eva)
         evector_dist.append(eve)
-        
-    return np.array(evalue_dist), np.array(evector_dist)
 
+    return np.array(evalue_dist), np.array(evector_dist)
 
 
 def get_best_ncluster(coords):
@@ -146,9 +170,9 @@ def save_PCA_snapshot(
     :rtype: None
     """
 
-    fig = plt.figure(figsize=(10,8))
-    rcParams.update({'figure.autolayout': True})
-    plt.subplots_adjust(bottom=.3, right=.6, left=.115)
+    fig = plt.figure(figsize=(10, 8))
+    rcParams.update({"figure.autolayout": True})
+    plt.subplots_adjust(bottom=0.3, right=0.6, left=0.115)
 
     gs = gridspec.GridSpec(2, 1, height_ratios=[3, 0.1], hspace=0.3)
 
@@ -197,8 +221,8 @@ def save_PCA_snapshot(
         fancybox=True,
         shadow=True,
         ncol=4,
-        borderaxespad=0., 
-        fontsize=6
+        borderaxespad=0.0,
+        fontsize=6,
     )
     # plt.tight_layout()
     plt.savefig(fname, dpi=300)
@@ -218,7 +242,7 @@ def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log) -> None
     :param title:  title of the graph
     :type title: str
     :param log:  logger instance
-    :type log: logging    
+    :type log: logging
 
     :rtype: None
     """
@@ -226,23 +250,25 @@ def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log) -> None
     nc = ncluster if len(confs) > ncluster else len(confs) - 1
     if nc <= 2:
         return None
-    pca_scores, clusters, colors, numbers, energy = calc_pca(confs, ncluster=nc, cluster=True)
+    pca_scores, clusters, colors, numbers, energy = calc_pca(
+        confs, ncluster=nc, cluster=True
+    )
     save_PCA_snapshot(fname, title, pca_scores, clusters, colors, numbers, energy)
 
     return None
 
+
 def get_ensemble(confs):
-    
     tmp = sorted(confs)
     clust_pres = []
-    for i in tmp: 
+    for i in tmp:
         if not i.active:
             continue
         if i.cluster not in clust_pres:
             clust_pres.append(i.cluster)
         else:
             i.active = False
-        
+
     return tmp
 
 
@@ -255,5 +281,7 @@ if __name__ == "__main__":  # pragma: no cover:
     xyz_file = read_ensemble("files/ensemble.xyz", 0, 1, mock.MagicMock(), raw=True)
     perform_PCA(xyz_file, 30, "files/test.png", "Test", mock.MagicMock())
     xyz_file_new = get_ensemble(xyz_file)
-    perform_PCA(xyz_file_new, 30, "files/test_after.png", "Test After", mock.MagicMock())
+    perform_PCA(
+        xyz_file_new, 30, "files/test_after.png", "Test After", mock.MagicMock()
+    )
     save_snapshot("files/clustered.xyz", xyz_file_new, mock.MagicMock())
