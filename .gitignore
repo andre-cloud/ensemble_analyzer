@@ -143,3 +143,5 @@ try.py
 .DS_Store
 *png
 *xy 
+*pickle
+*out
