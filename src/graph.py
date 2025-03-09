@@ -354,10 +354,12 @@ class Compared(Graph):
         plt.title(self.title)
 
         plt.tight_layout()
-        plt.savefig(f"{self.graph_type.lower()}_comparison.png", dpi=300)
-
+        
         with open(f"{self.graph_type.lower()}_comparison.pickle", 'wb') as f:
             pl.dump(self.fig, f)
+        
+        plt.savefig(f"{self.graph_type.lower()}_comparison.png", dpi=300)
+
         
 
     def eV_to_nm(eV):
@@ -405,7 +407,10 @@ if __name__ == "__main__":
     ensemble, protocol, _ = restart()
     calculate_rel_energies(ensemble, 298.15)
 
-    main_graph(ensemble, protocol, create_log("test.out"))
+
+    log = create_log("test.out")
+    for i in protocol:
+        main_graph(ensemble, i, log=log)
     for j in ["IR", "VCD", "UV", "ECD"]:
-        g = Compared(protocol, graph_type=j)
+        g = Compared(protocol, graph_type=j, log=log)
         g.save_graph()
