@@ -282,9 +282,7 @@ class Protocol:
         """
         calculator, label = self.calc_orca_std(cpu, charge, mult)
         calculator.parameters["orcasimpleinput"] += " freq"
-        # TODO check
-        print("check")
-        calculator.parameters["block"] += "\n%freq vcd true end\n"
+        calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"
 
         return calculator, label
 

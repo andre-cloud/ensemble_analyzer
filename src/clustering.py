@@ -55,6 +55,10 @@ def calc_distance_matrix(coords):
         evalue_dist.append(eva)
         evector_dist.append(eve)
 
+    # diff = coords[:, :, np.newaxis, :] - coords[:, np.newaxis, :, :]
+    # dist = np.linalg.norm(diff, axis=-1)
+    # print(dist)
+
     return np.array(evalue_dist), np.array(evector_dist)
 
 
@@ -170,9 +174,9 @@ def save_PCA_snapshot(
     :rtype: None
     """
 
-    fig = plt.figure(figsize=(10, 8))
-    rcParams.update({"figure.autolayout": True})
+    fig = plt.figure(figsize=(10,8))
     plt.subplots_adjust(bottom=0.3, right=0.6, left=0.115)
+    rcParams.update({"figure.autolayout": True})
 
     gs = gridspec.GridSpec(2, 1, height_ratios=[3, 0.1], hspace=0.3)
 
@@ -220,7 +224,7 @@ def save_PCA_snapshot(
         bbox_to_anchor=(1.05, 1.0),
         fancybox=True,
         shadow=True,
-        ncol=4,
+        ncol=3,
         borderaxespad=0.0,
         fontsize=6,
     )
@@ -275,13 +279,13 @@ def get_ensemble(confs):
 if __name__ == "__main__":  # pragma: no cover:
     from ioFile import read_ensemble
     from ioFile import save_snapshot
-    import mock
+    import mock, sys
 
     # Load the XYZ file
-    xyz_file = read_ensemble("files/ensemble.xyz", 0, 1, mock.MagicMock(), raw=True)
-    perform_PCA(xyz_file, 30, "files/test.png", "Test", mock.MagicMock())
+    xyz_file = read_ensemble(sys.argv[1], 0, 1, mock.MagicMock(), raw=True)
+    perform_PCA(xyz_file, 5, "cluster.png", "Cluster", mock.MagicMock())
     xyz_file_new = get_ensemble(xyz_file)
-    perform_PCA(
-        xyz_file_new, 30, "files/test_after.png", "Test After", mock.MagicMock()
-    )
-    save_snapshot("files/clustered.xyz", xyz_file_new, mock.MagicMock())
+    # perform_PCA(
+    #     xyz_file_new, 30, "files/test_after.png", "Test After", mock.MagicMock()
+    # )
+    save_snapshot("clustered.xyz", xyz_file_new, mock.MagicMock())

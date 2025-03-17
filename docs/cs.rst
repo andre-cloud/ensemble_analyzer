@@ -15,7 +15,7 @@ Importance of Conformational Research
 
 A large variety of software and methods have been developed with this aim. 
 
-Some will take into consideration the type of bonds present in the molecule and their rigidity, and so the software will rotate each bond and optimise with different theories of the so-formed structure, (like RDKit, Schödinger Meastro). Some other will insted consider the potential hole in which the input molecule is and, from there, try to excape from it running a metadynamic simulation, saving a snapshot from the trajectory and so optimizing thse geometries (like CREST).
+Some will take into consideration the type of bonds present in the molecule and their rigidity, and so the software will rotate each bond and optimise with different theories of the so-formed structure, (like RDKit, Schödinger Meastro). Some other will insted consider the potential hole in which the input molecule is and, from there, try to escape from it running a metadynamic simulation, saving a snapshot from the trajectory and so optimizing thse geometries (like CREST).
 
 
 

@@ -1,3 +1,7 @@
+docs: 
+	cd docs/
+	make html
+
 format:
 	/Users/andrea/opt/miniconda3/bin/python -m autopep8 -r --in-place src
 	/Users/andrea/opt/miniconda3/bin/python -m black src
