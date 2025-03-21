@@ -1,3 +1,5 @@
+#!/opt/miniconda3/bin/python
+
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
