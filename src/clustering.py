@@ -279,15 +279,17 @@ def get_ensemble(confs):
 if __name__ == "__main__":  # pragma: no cover:
     from ioFile import read_ensemble
     from ioFile import save_snapshot
-    import mock, sys
+    import sys 
+    import argparse
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument('file', help='Ensemble to be clusterd')
+    parser.add_argument('-nc', '--ncluster', help='Number of families to cluster. Defaults 5', default=5)
+    args = parser.parse_args()
 
     # Load the XYZ file
-    xyz_file = read_ensemble(sys.argv[1], 0, 1, mock.MagicMock(), raw=True)
-    if len(sys.argv) == 3:
-        ncluster = sys.argv[2]
-    else: 
-        nclusetr = 5
-    perform_PCA(xyz_file, nclusetr, "cluster.png", "Cluster", mock.MagicMock())
+    xyz_file = read_ensemble(args.file, 0, 1, mock.MagicMock(), raw=True)
+    perform_PCA(xyz_file, args.nclusetr, "cluster.png", "Cluster", mock.MagicMock())
     xyz_file_new = get_ensemble(xyz_file)
     # perform_PCA(
     #     xyz_file_new, 30, "files/test_after.png", "Test After", mock.MagicMock()
