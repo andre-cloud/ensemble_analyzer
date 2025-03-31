@@ -15,7 +15,7 @@ def _parse_xyz_str(fl: str, raw=False):
     """
     e = None
     if raw:
-        e = float(fl[1].strip())
+        e = float(fl[1].split()[0].strip())
     fl = fl[2:]
     atoms, geom = [], []
     for line in fl:
