@@ -82,7 +82,7 @@ class Protocol:
     ):
         self.number = number
         self.functional = functional.upper()
-        self.basis = basis.upper()
+        self.basis = basis.upper() if 'xtb' not in functional.lower() else ""
         self.solvent = Solvent(solvent) if solvent else None
         self.opt = opt
         self.freq = freq
