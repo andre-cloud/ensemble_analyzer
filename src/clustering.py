@@ -86,7 +86,7 @@ def get_best_ncluster(coords):
     return k_range[np.argmax(silhouette_scores)]
 
 
-def calc_pca(confs: list, cluster=False, ncluster: Union[int, None] = None) -> tuple:
+def calc_pca(confs: list, cluster=False, ncluster: Union[int, None] = None, set = True) -> tuple:
     """
     Function that execute the actual PCA analysis.
     It wants to understand how conformations differ from each other based on their overall Cartesian coordinates
@@ -128,8 +128,9 @@ def calc_pca(confs: list, cluster=False, ncluster: Union[int, None] = None) -> t
         if not confs[0].cluster:
             kmeans = KMeans(n_clusters=n_c, n_init=10)
             clusters = kmeans.fit_predict(pca_scores)
-            for idx, conf in enumerate(confs):
-                conf.cluster = int(clusters[idx])
+            if set: 
+                for idx, conf in enumerate(confs):
+                    conf.cluster = int(clusters[idx])
         else:
             clusters = [conf.cluster for conf in confs]
 
@@ -235,7 +236,7 @@ def save_PCA_snapshot(
     return None
 
 
-def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log) -> None:
+def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log, set=True) -> None:
     """
     Perform a PCA analysis
 
@@ -257,7 +258,7 @@ def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log) -> None
     if nc <= 2:
         return None
     pca_scores, clusters, colors, numbers, energy = calc_pca(
-        confs, ncluster=nc, cluster=True
+        confs, ncluster=nc, cluster=True, set=set
     )
     save_PCA_snapshot(fname, title, pca_scores, clusters, colors, numbers, energy)
 

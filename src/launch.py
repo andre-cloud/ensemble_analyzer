@@ -160,6 +160,7 @@ def run_protocol(conformers, p, temperature, cpu, log) -> None:
         f"PCA_before_pruning_protocol_{p.number}.png",
         f"PCA before pruning protocol {p.number}",
         log,
+        set=False
     )
 
     create_summary("Summary", conformers, log)
