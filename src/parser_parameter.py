@@ -163,24 +163,32 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
             )
             raise IOError("No frequency in the output file")
 
-    B = np.array(
-        list(filter(lambda x: get_param(x, p.calculator, "B"), fl))[-1]
-        .strip()
-        .split(":")[-1]
-        .split(),
-        dtype=float,
-    )
-    b = np.linalg.norm(B)
-
-    M = np.linalg.norm(
-        np.array(
-            list(filter(lambda x: get_param(x, p.calculator, "m"), fl))[-1]
+    try:
+        B = np.array(
+            list(filter(lambda x: get_param(x, p.calculator, "B"), fl))[-1]
             .strip()
             .split(":")[-1]
             .split(),
             dtype=float,
         )
-    )
+        b = np.linalg.norm(B)
+    except Exception as e: 
+        log.warnig('\tB not found')
+        b = None
+
+    try:
+        M = np.linalg.norm(
+            np.array(
+                list(filter(lambda x: get_param(x, p.calculator, "m"), fl))[-1]
+                .strip()
+                .split(":")[-1]
+                .split(),
+                dtype=float,
+            )
+        )
+    except Exception:
+        log.warnig('\tM not found')
+        M = None
 
     g = ""
     if freq.size > 0:
