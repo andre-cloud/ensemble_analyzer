@@ -135,11 +135,6 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
     with open(os.path.join(conf.folder, f"protocol_{number}.out")) as f:
         fl = f.readlines()
 
-    # already handeled in the opt function
-    # if p.opt:
-    #     # Fetch and set the optimized geometry
-    #     conf.last_geometry = get_opt_geometry(fl, p.calculator, log)
-
     try:
         e = float(
             list(filter(lambda x: get_param(x, p.calculator, "E"), fl))[-1]
@@ -172,7 +167,7 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
             dtype=float,
         )
         b = np.linalg.norm(B)
-    except Exception as e: 
+    except Exception: 
         log.warning('\tB not found')
         b = None
 
