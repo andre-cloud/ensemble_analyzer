@@ -169,7 +169,7 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
         b = np.linalg.norm(B)
     except Exception: 
         log.warning('\tB not found')
-        b = None
+        b = 1
 
     try:
         M = np.linalg.norm(
@@ -183,7 +183,7 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
         )
     except Exception:
         log.warning('\tM not found')
-        M = None
+        M = 1
 
     g = ""
     if freq.size > 0:
