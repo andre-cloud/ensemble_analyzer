@@ -303,7 +303,16 @@ def start_calculation(
     c_ = sort_conformers_by_energy(conformers, temperature)
     save_snapshot("final_ensemble.xyz", c_, log)
     create_summary("Final Summary", c_, log)
+
+    log.info(f"Final ensemble has {len(conformers)} conformers")
+    t = 0
+    for i in conformers:
+        for j in i.energies:
+            t += i.energies[j]["time"]
+    log.info(f"Total elapsed time: {datetime.timedelta(seconds=t)}")
+
     log.info(f'{"="*15}\nCALCULATIONS ENDED\n{"="*15}\n\n')
+    log.info("Ensemble refined correctly!")
 
     return None
 
@@ -513,15 +522,6 @@ def main():
     for j in ["IR", "VCD", "UV", "ECD"]:
         g = Compared(protocol, graph_type=j)
         g.save_graph()
-
-    log.info(f"Final ensemble has {len(conformers)} conformers")
-    t = 0
-    for i in conformers:
-        for j in i.energies:
-            t += i.energies[j]["time"]
-    log.info(f"Total elapsed time: {datetime.timedelta(seconds=t)}")
-
-    log.info("Ensemble refined correcly!")
 
 
 if __name__ == "__main__":
