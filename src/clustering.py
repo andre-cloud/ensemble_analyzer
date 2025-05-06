@@ -264,8 +264,12 @@ def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log) -> None
     return None
 
 
-def get_ensemble(confs):
-    tmp = sorted(confs)
+def get_ensemble(confs, sort=False):
+    if sort: 
+        tmp = sorted(confs)
+    else:
+        tmp = confs[:]
+
     clust_pres = []
     for i in tmp:
         if not i.active:
@@ -281,7 +285,8 @@ def get_ensemble(confs):
 if __name__ == "__main__":  # pragma: no cover:
     from ioFile import read_ensemble
     from ioFile import save_snapshot
-    import sys, mock
+    import sys
+    import mock
     import argparse
 
     parser = argparse.ArgumentParser()

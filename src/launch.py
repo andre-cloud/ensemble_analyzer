@@ -10,7 +10,7 @@ try:
     from src.graph import main_graph, Compared
 
     # from src.grapher import Graph, plot_conv_graph
-    from src.clustering import perform_PCA
+    from src.clustering import perform_PCA, get_ensemble
     from src.title import title
     from src.calculations import optimize, calc_freq, single_point
 except ImportError as e:  # pragma: no cover
@@ -26,7 +26,7 @@ except ImportError as e:  # pragma: no cover
     from graph import main_graph, Compared
 
     # from grapher import Graph
-    from clustering import perform_PCA
+    from clustering import perform_PCA, get_ensemble
     from title import title
     from calculations import optimize, calc_freq, single_point
 
@@ -167,19 +167,23 @@ def run_protocol(conformers, p, temperature, cpu, log) -> None:
     log.debug("Start Pruning")
     conformers = sort_conformers_by_energy(conformers, temperature)
 
+
     save_snapshot(f"ensemble_after_{p.number}.xyz", conformers, log)
 
     # TODO: store (x,y) coordinates of FIRST PCA so the graph stays the same
 
+    conformers = sort_conformers_by_energy(conformers, temperature)
+    
     perform_PCA(
         [i for i in conformers if i.active],
-        5,
+    p.cluster if type(p.cluster) is int else 5,
         f"PCA_after_pruning_protocol_{p.number}.png",
         f"PCA after pruning protocol {p.number}",
         log,
     )
+    if type(p.cluster) is int:
+        conformers = get_ensemble(conformers)
 
-    conformers = sort_conformers_by_energy(conformers, temperature)
     create_summary("Summary After Pruning", conformers, log)
 
     log.info(f'{"="*15}\nEND PROTOCOL {p.number}\n{"="*15}\n\n')

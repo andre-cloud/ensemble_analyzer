@@ -8,7 +8,7 @@ from scipy.optimize import minimize, differential_evolution
 
 FACTOR_EV_NM = h * c / (10**-9 * electron_volt)
 FACTOR_EV_CM_1 = 1 / 8065.544  # to yield eV
-
+CHIRALS = ['VCD', 'ECD']
 
 def eV_to_nm(eV):
     return FACTOR_EV_NM / eV
@@ -100,11 +100,14 @@ class Computed(Graph):
             os.path.join(os.getcwd(), f"{self.graph_type.lower()}_ref.dat")
         )
 
+        
         if self.auto:
             self.ref = Experimental(**kwargs)
             self.autoconvolute()
         else:
             self.y = self.CONV[self.g](self.x, self.y_comp, self.DEFs[self.graph_type])
+            if self.invert: 
+                self.y *= -1
             self.y = self.normalize()
             self.shift = 0
             self.fwhm = self.DEFs[self.graph_type]
@@ -129,6 +132,8 @@ class Computed(Graph):
             x = self.x + shift if self.graph_type in ["UV", "ECD"] else self.x * shift
 
             y = f(x, self.y_comp, fwhm)
+            if self.invert: 
+                y *= -1
 
             y_norm = y / np.max(np.abs(y[self.ref.x_min_idx : self.ref.x_max_idx]))
             ref_norm = self.ref.y / np.max(
@@ -369,12 +374,12 @@ class Compared(Graph):
         return FACTOR_EV_NM / nm
 
 
-def main_graph(ensemble, p, log):
+def main_graph(ensemble, p, log, invert):
     shift, fwhm = None, None
     for j in ["IR", "VCD", "UV", "ECD"]:
         graph = Computed(
             ensemble,
-            False,
+            invert=(i in CHIRALS and invert),
             graph_type=j,
             protocol=str(p.number),
             shift=shift,

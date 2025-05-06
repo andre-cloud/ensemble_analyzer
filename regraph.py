@@ -1,7 +1,9 @@
 from src.launch import restart
 from src.logger import create_log
 from src.protocol import Protocol
-from src.grapher import Graph, plot_conv_graph
+from src.graph import main_graph, Compared
+from src.pruning import calculate_rel_energies
+
 import json, logging
 import argparse, os
 
@@ -19,16 +21,15 @@ def load_protocol(p: dict, log: logging):
     return protocol
 
 
-conformers, protocol, start_from = restart()
+ensemble, protocol, _ = restart()
 
 settings = json.load(open("settings.json"))
 output = 'regraph.log'
 temperature = settings.get("temperature", 298.15)
-final_lambda = settings.get("final_lambda", 800)
-definition = settings.get("definition", 4)
-fwhm = settings.get("fwhm", None)
-shift = settings.get("shift", None)
+
 invert = settings.get("invert", False)
+
+calculate_rel_energies(ensemble, 298.15)
 
 # initiate the log
 log = create_log(output)
@@ -38,21 +39,8 @@ logging.getLogger("matplotlib").disabled = False
 protocol = load_protocol(json.load(open('protocol_dump.json')), log)
 
 
-
-for p in args.idx: 
-    log.info(f'\n\nProtocol number: {p}')
-    Graph(
-        confs=conformers,
-        protocol=protocol[int(p)],
-        log=log,
-        T=temperature,
-        final_lambda=final_lambda,
-        definition=definition,
-        FWHM=fwhm,
-        shift=shift,
-        invert=invert,
-        regraph = True
-    )
-
-
-plot_conv_graph(args.idx, protocol)
+for i in protocol:
+    main_graph(ensemble, i, log=log, invert=invert)
+for j in ["IR", "VCD", "UV", "ECD"]:
+    g = Compared(protocol, graph_type=j, log=log)
+    g.save_graph()
