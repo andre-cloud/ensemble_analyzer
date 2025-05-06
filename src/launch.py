@@ -173,7 +173,7 @@ def run_protocol(conformers, p, temperature, cpu, log) -> None:
     # TODO: store (x,y) coordinates of FIRST PCA so the graph stays the same
 
     conformers = sort_conformers_by_energy(conformers, temperature)
-    
+
     perform_PCA(
         [i for i in conformers if i.active],
     p.cluster if type(p.cluster) is int else 5,
@@ -296,7 +296,7 @@ def start_calculation(
         log.debug("Creating graph")
 
         # TODO: incorporate FWHM and shift from settings as bounds
-        main_graph(conformers, p, log)
+        main_graph(conformers, p, log, invert=invert)
 
     # sort the final ensemble
     c_ = sort_conformers_by_energy(conformers, temperature)

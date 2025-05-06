@@ -209,8 +209,8 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
     conf.energies[str(number)] = {
         "E": e * EH_TO_KCAL if e else e,  # Electronic Energy [kcal/mol]
         "G": g * EH_TO_KCAL if g else None,  # Free Gibbs Energy [kcal/mol]
-        "B": b if b else None,  # Rotatory Constant [cm-1]
-        "m": M if M else None,  # dipole momenti [Debye]
+        "B": b if b else 1,  # Rotatory Constant [cm-1]
+        "m": M if M else 1,  # dipole momenti [Debye]
         "time": time,  # elapsed time [sec]
     }
 
