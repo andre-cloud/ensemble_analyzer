@@ -379,7 +379,7 @@ def main_graph(ensemble, p, log, invert):
     for j in ["IR", "VCD", "UV", "ECD"]:
         graph = Computed(
             ensemble,
-            invert=(i in CHIRALS and invert),
+            invert=(j in CHIRALS) and invert,
             graph_type=j,
             protocol=str(p.number),
             shift=shift,

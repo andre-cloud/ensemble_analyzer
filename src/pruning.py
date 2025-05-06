@@ -114,6 +114,9 @@ def check(check, conf_ref, protocol, controller: dict) -> bool:
 
     if not conf_ref.active:
         return False
+    if check.rotatory == 1: 
+        return False
+
 
     l = len(controller)
 
