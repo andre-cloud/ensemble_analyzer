@@ -84,7 +84,7 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
     os.rename(f"{label}.out", f"{conf.folder}/protocol_{protocol.number}.out")
     if protocol.freq:
         os.rename(f"{label}.hess", f"{conf.folder}/protocol_{protocol.number}.hess")
-    os.rename(f"{label}.gbw", f"{conf.folder}/protocol_{protocol.number}.out")
+    os.rename(f"{label}.gbw", f"{conf.folder}/protocol_{protocol.number}.gbw")
 
     if not get_conf_parameters(conf, protocol.number, protocol, end - st, temp, log):
         if try_num <= MAX_TRY:
