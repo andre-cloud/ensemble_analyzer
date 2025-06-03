@@ -188,7 +188,7 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
     g = ""
     if freq.size > 0:
         g = free_gibbs_energy(
-                SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B, m=conf.mult
+                SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B, m=p.mult
             )
     else:
         g_e = conf.energies.get(str(number-1), {}).get("G-E")
