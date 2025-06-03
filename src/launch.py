@@ -371,7 +371,6 @@ def create_protocol(p, log) -> list:
         if not graph and freq:
             last_prot_with_freq = int(idx)
 
-        log.debug('Checking protocol %s, %s', idx, last_prot_with_freq)    
         check_protocol(log, func, graph, freq, add_input, idx, last_prot_with_freq)
 
 
@@ -431,7 +430,7 @@ def check_protocol(
             raise IOError(
                 "There is an error in the input file with the definition of the functional. See the output file."
             )
-        if not last_prot_with_freq:
+        if last_prot_with_freq is not None:
             log.critical(
                 f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nElectrical spectra requires Boltzmann population over ∆G. In the specified protocol there is NO frequency calculation turned on (Problem at {ordinal(int(idx))} protocol definition).\n{'='*20}\nExiting\n{'='*20}"
             )
