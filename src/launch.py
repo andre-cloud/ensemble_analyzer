@@ -431,7 +431,7 @@ def check_protocol(
             )
         if not last_prot_with_freq:
             log.critical(
-                f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nElectrical spectra requires Boltzmann population over ∆G. In the specified protocol there is NO frequency calculation turned on.\n{'='*20}\nExiting\n{'='*20}"
+                f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nElectrical spectra requires Boltzmann population over ∆G. In the specified protocol there is NO frequency calculation turned on (Problem at {ordinal(int(idx))} protocol definition).\n{'='*20}\nExiting\n{'='*20}"
             )
             raise IOError(
                 "There is an error in the input file with the definition of the functional. See the output file."
