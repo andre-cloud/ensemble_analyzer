@@ -370,7 +370,8 @@ def create_protocol(p, log) -> list:
 
         if not graph and freq:
             last_prot_with_freq = int(idx)
-            
+
+        log.debug('Checking protocol %s, %s', idx, last_prot_with_freq)    
         check_protocol(log, func, graph, freq, add_input, idx, last_prot_with_freq)
 
 
