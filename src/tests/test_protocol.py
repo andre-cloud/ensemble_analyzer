@@ -43,7 +43,7 @@ def test_protocol():
     assert p.calculation_level == "OPT"
     assert p.level == "R2SCAN-3C/DEF2-MTZVPP"
 
-    assert type(p.get_calculator(1, 0, 1)) is tuple
+    assert type(p.get_calculator(1)) is tuple
 
 
 def test_solvent():

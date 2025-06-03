@@ -146,7 +146,7 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
         return False
 
     freq = np.array([])
-    if p.freq:
+    if p.freq or ("freq" in p.add_input):
         freq = get_freq(fl, p.calculator) * p.freq_fact
         log.info(
             f"{conf.number} has {freq[freq<0].size} imaginary frequency(s): {', '.join(list(map(tranform_float, freq[freq<0])))}"
@@ -187,24 +187,13 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
 
     g = ""
     if freq.size > 0:
-        if p.solvent:
-            if p.solvent.smd:
-                g = free_gibbs_energy(
-                    SCF=conf._last_energy["E"] / EH_TO_KCAL,
-                    T=temp,
-                    freq=freq,
-                    mw=conf.weight_mass,
-                    B=B,
-                    m=conf.mult,
-                )
-            else:
-                g = free_gibbs_energy(
-                    SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B, m=conf.mult
-                )
-        else:
-            g = free_gibbs_energy(
+        g = free_gibbs_energy(
                 SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B, m=conf.mult
             )
+    else:
+        g_e = conf.energies.get(str(number-1), {}).get("G-E")
+        if g_e is not None:
+            g = e + g_e
 
     conf.energies[str(number)] = {
         "E": e * EH_TO_KCAL if e else e,  # Electronic Energy [kcal/mol]
@@ -212,6 +201,7 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
         "B": b if b else 1,  # Rotatory Constant [cm-1]
         "m": M if M else 1,  # dipole momenti [Debye]
         "time": time,  # elapsed time [sec]
+        "G-E" : (g-e) if g and e else None,  # G-E [Eh]
     }
 
     return True

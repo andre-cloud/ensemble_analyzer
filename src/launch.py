@@ -84,7 +84,7 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
     os.rename(f"{label}.out", f"{conf.folder}/protocol_{protocol.number}.out")
     if protocol.freq:
         os.rename(f"{label}.hess", f"{conf.folder}/protocol_{protocol.number}.hess")
-    os.remove(f"{label}.gbw")
+    os.rename(f"{label}.gbw", f"{conf.folder}/protocol_{protocol.number}.out")
 
     if not get_conf_parameters(conf, protocol.number, protocol, end - st, temp, log):
         if try_num <= MAX_TRY:
@@ -234,10 +234,11 @@ def create_summary(title, conformers, log):
             [i.create_log() for i in conformers if i.active],
             headers=[
                 "Conformers",
-                "E[Eh]",
-                "G[Eh]",
-                "B[cm-1]",
-                "E. Rel [kcal/mol]",
+                "E [Eh]",
+                "G-E [Eh]",
+                "G [Eh]",
+                "B [cm-1]",
+                "∆G [kcal/mol]",
                 "Pop [%]",
                 "Elap. time [sec]",
                 "# Cluster",
@@ -498,7 +499,7 @@ def main():
             indent=4,
             cls=SerialiseEncoder,
         )
-        conformers = read_ensemble(args.ensemble, args.charge, args.multiplicity, log)
+        conformers = read_ensemble(args.ensemble, log)
         if len(conformers) > 3:
             perform_PCA(
                 conformers, 5, "initial_pca", "PCA analysis of Conf Search", log

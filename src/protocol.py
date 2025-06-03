@@ -69,6 +69,8 @@ class Protocol:
         freq: bool = False,
         add_input: str = "",
         freq_fact: float = 1,
+        mult: int = 1,
+        charge: int = 0,
         graph: bool = False,
         calculator: str = "orca",
         thrG: float = None,
@@ -79,6 +81,7 @@ class Protocol:
         fmax: float = 0.05,
         cluster: bool|int = False,
         no_prune: bool = False,
+        comment: str = "",
     ):
         self.number = number
         self.functional = functional.upper()
@@ -96,6 +99,12 @@ class Protocol:
         self.maxstep = maxstep
         self.cluster = cluster
         self.no_prune = no_prune
+        self.mult = mult
+        self.charge = charge
+        self.comment = comment
+        
+        assert self.mult > 0, "Multiplicity must be greater than 0"
+
 
         if fmax != 0.05:
             self.fmax = fmax
@@ -114,8 +123,8 @@ class Protocol:
     @property
     def level(self):
         return f"{self.functional}/{self.basis}" + (
-            str(self.solvent) if self.solvent else ""
-        )
+            ("["+str(self.solvent))+"]" if self.solvent else ""
+        ) + (f'-> {self.comment}' if self.comment else "")
 
     @property
     def thr(self):
@@ -145,16 +154,12 @@ class Protocol:
         )
         return json.load(open(default))
 
-    def get_calculator(self, cpu, charge: int, mult: int, mode: str):
+    def get_calculator(self, cpu, mode: str):
         """
         Get the calculator from the user selector
 
         :param cpu: allocated CPU
         :type cpu: int
-        :param charge: charge of the molecule
-        :type charge: int
-        :param mult: multiplicity of the molecule
-        :type mult: int
         :param mode: type of calculation required. Choose between: opt, freq, energy
         :type mode: str
         """
@@ -167,7 +172,7 @@ class Protocol:
             },
         }
 
-        return calc[self.calculator][mode](cpu, charge, mult)
+        return calc[self.calculator][mode](cpu, self.charge, self.mult)
 
     def get_thrs(self, thr_json):
         """

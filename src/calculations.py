@@ -55,7 +55,7 @@ def optimize(conf, protocol, cpu: int, log, attempts=0):
     """
 
     calc, label = protocol.get_calculator(
-        cpu=cpu, charge=conf.charge, mult=conf.mult, mode="opt"
+        cpu=cpu, mode="opt"
     )
 
     atoms = conf.get_ase_atoms(calc)
@@ -119,7 +119,7 @@ def calc_freq(conf, protocol, cpu: int, log, attempts=0):
     """
 
     calc, label = protocol.get_calculator(
-        cpu=cpu, charge=conf.charge, mult=conf.mult, mode="freq"
+        cpu=cpu, mode="freq"
     )
 
     atoms = conf.get_ase_atoms(calc)
@@ -155,7 +155,7 @@ def single_point(conf, protocol, cpu: int, log, attempts=0):
     """
 
     calc, label = protocol.get_calculator(
-        cpu=cpu, charge=conf.charge, mult=conf.mult, mode="energy"
+        cpu=cpu, mode="energy"
     )
 
     atoms = conf.get_ase_atoms(calc)

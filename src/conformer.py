@@ -21,14 +21,11 @@ class Conformer:
         number: int,
         geom: np.ndarray,
         atoms: np.ndarray,
-        charge: int = 0,
-        mult: int = 1,
         raw=False,
     ) -> None:
         self.number = number
         self._initial_geometry = geom.copy()
-        self.charge = charge
-        self.mult = mult
+
 
         self.last_geometry = geom.copy()
         self.atoms = atoms.copy()
@@ -116,9 +113,10 @@ class Conformer:
         :rtype: tuple
         """
         en = self._last_energy
-        number, e, g, b, erel, time, pop, cluster = (
+        number, e, g_e, g, b, erel, time, pop, cluster = (
             self.number,
             en.get("E", float(0)),
+            en.get("G-E", float(0)),
             en.get("G", float(0)),
             en.get("B", float(0)),
             en.get("Erel", float(0)),
@@ -128,7 +126,7 @@ class Conformer:
         )
         if g:
             g /= 627.51
-        return number, e / 627.51, g, b, erel, pop, time, cluster
+        return number, e / 627.51, g_e, g, b, erel, pop, time, cluster
 
     @staticmethod
     def load_raw(json):
