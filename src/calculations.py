@@ -160,7 +160,7 @@ def single_point(conf, protocol, cpu: int, log, attempts=0):
 
     atoms = conf.get_ase_atoms(calc)
 
-    if "opt" in ([protocol.add_input.lower().split()]+[protocol.function.lower().split()]):
+    if "opt" in ([protocol.add_input.lower().split()]+[protocol.functional.lower().split()]):
         with open(f"{label}.{regex_parsing[calc]['ext']}") as f:
             fl = f.readlines()
 
