@@ -368,7 +368,7 @@ def create_protocol(p, log) -> list:
         graph = d.get("graph", False)
         freq = d.get("freq", False)
 
-        if not graph and freq:
+        if not graph and (freq or 'freq' in add_input.lower()):
             last_prot_with_freq = int(idx)
 
         check_protocol(log, func, graph, freq, add_input, idx, last_prot_with_freq)
