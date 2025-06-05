@@ -141,8 +141,6 @@ class Conformer:
             number=json["number"],
             geom=json["last_geometry"],
             atoms=json["atoms"],
-            charge=json["charge"],
-            mult=json["mult"],
             raw=True,
         )
         a.energies = json["energies"]
