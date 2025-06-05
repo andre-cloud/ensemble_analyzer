@@ -14,6 +14,8 @@ def print_help_protocol():
                 "freq": "bool: TRUE IF WANT ANALYTICAL FREQUENCY CALCULATION. DEFAULT: False",
                 "freq_fact": "float: FREQUENCY SCALE FACTOR",
                 "graph": "bool : TRUE IF WANT SIMULATION OF ELECTRONIC GRAPH",
+                "mult": "int: DEFINE THE MULTIPLICITY OF THE SYSTEM. DEFAULT: 1",
+                "charge": "int: DEFINE THE CHARGE OF THE SYSTEM. DEFAULT: 0",
                 "solv": {
                     "solvent": "str|null: NAME OF THE SOLVENT. IF GAS PHASE DEFINE AS NULL",
                     "smd": "bool: TRUE IF SMD MODEL EMPLOYED FOR IMPLICIT CALCULATION, ELSE CPCM USE",
@@ -97,20 +99,6 @@ def parser_arguments():
         help="Define the temperature in Kelvin. Default %(default)s",
         default=298.15,
         type=float,
-    )
-    molecule_group.add_argument(
-        "-c",
-        "--charge",
-        help="Define the charge of the studied system. Default %(default)s",
-        default=0,
-        type=int,
-    )
-    molecule_group.add_argument(
-        "-m",
-        "--multiplicity",
-        help="Define the multiplicity of the studied system. Default %(default)s",
-        default=1,
-        type=int,
     )
 
     system_group = parser.add_argument_group("System Parameters")
