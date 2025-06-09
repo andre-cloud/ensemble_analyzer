@@ -256,7 +256,7 @@ class Protocol:
         )
         if self.read_orbitals:
             calculator.parameters['orcasimpleinput'] += " moread"
-            calculator.parameters["orcablocks"] += f"\n%moinp {conf.folder}/protocol_{self.read_orbitals}.gbw\n"
+            calculator.parameters["orcablocks"] += f'\n%moinp "{conf.folder}/protocol_{self.read_orbitals}.gbw"\n'
 
         return calculator, label
 
