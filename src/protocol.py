@@ -255,7 +255,7 @@ class Protocol:
             mult=self.mult,
         )
         if self.read_orbitals:
-            calculator.parameters['orcasimpleinput'] += " mroead"
+            calculator.parameters['orcasimpleinput'] += " moread"
             calculator.parameters["orcablocks"] += f"\n%moinp {conf.folder}/protocol_{self.read_orbitals}.gbw\n"
 
         return calculator, label
@@ -275,7 +275,7 @@ class Protocol:
         calculator, label = self.calc_orca_std(cpu, conf)
         calculator.parameters["orcasimpleinput"] += " engrad"
         if self.read_orbitals:
-            calculator.parameters['orcasimpleinput'] += " mroead"
+            calculator.parameters['orcasimpleinput'] += " moread"
             calculator.parameters["orcablocks"] += f"\n%moinp {conf.folder}/protocol_{self.read_orbitals}.gbw\n"
 
         return calculator, label
@@ -296,7 +296,7 @@ class Protocol:
         calculator.parameters["orcasimpleinput"] += " freq"
         calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"
         if self.read_orbitals:
-            calculator.parameters['orcasimpleinput'] += " mroead"
+            calculator.parameters['orcasimpleinput'] += " moread"
             calculator.parameters["orcablocks"] += f"\n%moinp {conf.folder}/protocol_{self.read_orbitals}.gbw\n"
 
         return calculator, label
