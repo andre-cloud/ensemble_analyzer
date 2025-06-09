@@ -1,3 +1,5 @@
+#!/opt/miniconda3/bin/python
+ 
 from InquirerPy import inquirer
 from InquirerPy.separator import Separator
 import json, os
