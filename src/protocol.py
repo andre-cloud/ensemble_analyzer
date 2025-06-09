@@ -82,6 +82,7 @@ class Protocol:
         cluster: bool|int = False,
         no_prune: bool = False,
         comment: str = "",
+        read_orbitals = "",
     ):
         self.number = number
         self.functional = functional.upper()
@@ -102,6 +103,7 @@ class Protocol:
         self.mult = mult
         self.charge = charge
         self.comment = comment
+        self.read_orbitals = read_orbitals # number of protocol to read orbitals from
         
         assert self.mult > 0, "Multiplicity must be greater than 0"
 
@@ -118,7 +120,7 @@ class Protocol:
 
     @property
     def calculation_level(self):
-        return LEVEL_DEFINITION[self.number_level].upper()
+        return LEVEL_DEFINITION[self.number_level].upper() + (f'-> {self.comment}' if self.comment else "")
 
     @property
     def level(self):
@@ -154,7 +156,7 @@ class Protocol:
         )
         return json.load(open(default))
 
-    def get_calculator(self, cpu, mode: str):
+    def get_calculator(self, cpu, mode: str, conf=None):
         """
         Get the calculator from the user selector
 
@@ -162,6 +164,8 @@ class Protocol:
         :type cpu: int
         :param mode: type of calculation required. Choose between: opt, freq, energy
         :type mode: str
+        :param conf: Conformer instance, if needed
+        :type conf: Conformer
         """
 
         calc = {
@@ -172,7 +176,7 @@ class Protocol:
             },
         }
 
-        return calc[self.calculator][mode](cpu, self.charge, self.mult)
+        return calc[self.calculator][mode](cpu, self.charge, self.mult, conf)
 
     def get_thrs(self, thr_json):
         """
@@ -222,6 +226,7 @@ class Protocol:
 
         si = f"{self.functional} {self.basis} {solv} nopop"
 
+
         ob = (
             f"%pal nprocs {cpu} end "
             + self.add_input
@@ -230,15 +235,11 @@ class Protocol:
 
         return si, ob
 
-    def calc_orca_std(self, cpu: int, charge: int, mult: int):
+    def calc_orca_std(self, cpu: int, conf=None):
         """Standard calculator
 
         :param cpu: CPU number
         :type cpu: int
-        :param charge: charge of the molecule
-        :type charge: int
-        :param mult: multiplicity of the molecule
-        :type mult: int
         :return: calculator and label
         :rtype: tuple
         """
@@ -250,13 +251,16 @@ class Protocol:
             label=label,
             orcasimpleinput=simple_input,
             orcablocks=ob,
-            charge=charge,
-            mult=mult,
+            charge=self.charge,
+            mult=self.mult,
         )
+        if self.read_orbitals:
+            calculator.parameters['orcasimpleinput'] += " mroead"
+            calculator.parameters["orcablocks"] += f"\n%moinp {conf.folder}/protocol_{self.read_orbitals}.gbw\n"
 
         return calculator, label
 
-    def orca_opt(self, cpu: int, charge: int, mult: int):
+    def orca_opt(self, cpu: int, conf=None):
         """Optimization calculator
 
         :param cpu: CPU number
@@ -268,12 +272,15 @@ class Protocol:
         :return: calculator and label
         :rtype: tuple
         """
-        calculator, label = self.calc_orca_std(cpu, charge, mult)
+        calculator, label = self.calc_orca_std(cpu, self.charge, self.mult)
         calculator.parameters["orcasimpleinput"] += " engrad"
+        if self.read_orbitals:
+            calculator.parameters['orcasimpleinput'] += " mroead"
+            calculator.parameters["orcablocks"] += f"\n%moinp {conf.folder}/protocol_{self.read_orbitals}.gbw\n"
 
         return calculator, label
 
-    def orca_freq(self, cpu: int, charge: int, mult: int):
+    def orca_freq(self, cpu: int, charge: int, mult: int, conf=None):
         """Frequency calculator
 
         :param cpu: CPU number
@@ -288,6 +295,9 @@ class Protocol:
         calculator, label = self.calc_orca_std(cpu, charge, mult)
         calculator.parameters["orcasimpleinput"] += " freq"
         calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"
+        if self.read_orbitals:
+            calculator.parameters['orcasimpleinput'] += " mroead"
+            calculator.parameters["orcablocks"] += f"\n%moinp {conf.folder}/protocol_{self.read_orbitals}.gbw\n"
 
         return calculator, label
 

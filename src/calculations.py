@@ -55,7 +55,7 @@ def optimize(conf, protocol, cpu: int, log, attempts=0):
     """
 
     calc, label = protocol.get_calculator(
-        cpu=cpu, mode="opt"
+        cpu=cpu, mode="opt", conf=conf
     )
 
     atoms = conf.get_ase_atoms(calc)
@@ -119,7 +119,7 @@ def calc_freq(conf, protocol, cpu: int, log, attempts=0):
     """
 
     calc, label = protocol.get_calculator(
-        cpu=cpu, mode="freq"
+        cpu=cpu, mode="freq", conf=conf
     )
 
     atoms = conf.get_ase_atoms(calc)
@@ -155,10 +155,15 @@ def single_point(conf, protocol, cpu: int, log, attempts=0):
     """
 
     calc, label = protocol.get_calculator(
-        cpu=cpu, mode="energy"
+        cpu=cpu, mode="energy", conf=conf
     )
 
-    atoms = conf.get_ase_atoms(calc)
+    atoms = conf.get_ase_atoms(calc )
+
+    try:
+        atoms.get_potential_energy()
+    except Exception as e:
+        pass
 
     if "opt" in ([protocol.add_input.lower().split()]+[protocol.functional.lower().split()]):
         with open(f"{label}.{regex_parsing[calc]['ext']}") as f:
@@ -167,10 +172,6 @@ def single_point(conf, protocol, cpu: int, log, attempts=0):
         geom = get_opt_geometry(fl, protocol.calculator, log)
         set_last_geometry(conf, geom)
 
-    try:
-        atoms.get_potential_energy()
-    except Exception as e:
-        pass
 
     return atoms, label
 
@@ -182,7 +183,7 @@ def set_last_geometry(conf, geometry):
     :param conf: the conformer instance to optimize
     :type conf: Conformer
     :param geometry: XYZ geometry
-    :type geometry: 2D array
+    :type geometry: 3D array
 
     :rtype: None
 
