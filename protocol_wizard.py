@@ -37,15 +37,14 @@ def load_basis_sets():
     path = os.path.join(os.path.dirname(__file__), "src", "parameters_file", "basis_sets")
     return load_grouped(path)    
 
-def print_step_summary(step):
-    print("\n--- Step summary ---")
+def print_step_summary(idx, step):
+    print(f"\n--- Step {idx} summary ---")
     for k, v in step.items():
         print(f"{k}: {v}")
     print("-------------------\n")
 
 def protocol_step(step_num, level="Basic"):
     step = {}
-    step["number"] = step_num
     # BASIC
     functionals = load_functionals()
     if functionals:
@@ -118,11 +117,11 @@ def protocol_step(step_num, level="Basic"):
     step["graph"] = False  # puoi aggiungere la domanda se vuoi
     step["calculator"] = 'orca'
 
-    print_step_summary(step)
+    print_step_summary(step_num, step)
     return step
 
 def main():
-    protocol = []
+    protocol = {}
     step_num = 0
     print("Interactive wizard for Ensemble_Analyser protocol file creation")
     level = inquirer.select(
@@ -132,7 +131,7 @@ def main():
     ).execute()
     while True:
         step = protocol_step(step_num, level=level)
-        protocol.append(step)
+        protocol[step_num] = step
         another = inquirer.confirm(message="Add another step?", default=False).execute()
         if not another:
             break
