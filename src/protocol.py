@@ -272,7 +272,7 @@ class Protocol:
         :return: calculator and label
         :rtype: tuple
         """
-        calculator, label = self.calc_orca_std(cpu, self.charge, self.mult)
+        calculator, label = self.calc_orca_std(cpu, conf)
         calculator.parameters["orcasimpleinput"] += " engrad"
         if self.read_orbitals:
             calculator.parameters['orcasimpleinput'] += " mroead"
@@ -292,7 +292,7 @@ class Protocol:
         :return: calculator and label
         :rtype: tuple
         """
-        calculator, label = self.calc_orca_std(cpu, charge, mult)
+        calculator, label = self.calc_orca_std(cpu, conf)
         calculator.parameters["orcasimpleinput"] += " freq"
         calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"
         if self.read_orbitals:
