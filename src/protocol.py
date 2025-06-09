@@ -176,7 +176,7 @@ class Protocol:
             },
         }
 
-        return calc[self.calculator][mode](cpu, self.charge, self.mult, conf)
+        return calc[self.calculator][mode](cpu, conf)
 
     def get_thrs(self, thr_json):
         """
