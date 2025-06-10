@@ -166,7 +166,7 @@ def single_point(conf, protocol, cpu: int, log, attempts=0):
         pass
 
     if "opt" in (protocol.add_input.lower().split()+protocol.functional.lower().split()):
-        with open(f"{label}.{regex_parsing[calc]['ext']}") as f:
+        with open(f"{label}.{regex_parsing[protocol.calculator]['ext']}") as f:
             fl = f.readlines()
 
         geom = get_opt_geometry(fl, protocol.calculator, log)
