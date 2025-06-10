@@ -145,11 +145,11 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
         log.error(e)
         return False
 
-    if 'opt' in [p.functional.lower().split()+p.add_input.lower().split()]:
+    if 'opt' in p.functional.lower().split()+p.add_input.lower().split():
         conf.last_geometry = get_opt_geometry(fl, p.calculator, log)
 
     freq = np.array([])
-    if p.freq or ("freq" in p.add_input):
+    if p.freq or ("freq" in p.functional.lower().split()+p.add_input.lower().split()):
         freq = get_freq(fl, p.calculator) * p.freq_fact
         log.info(
             f"{conf.number} has {freq[freq<0].size} imaginary frequency(s): {', '.join(list(map(tranform_float, freq[freq<0])))}"

@@ -165,7 +165,7 @@ def single_point(conf, protocol, cpu: int, log, attempts=0):
     except Exception as e:
         pass
 
-    if "opt" in ([protocol.add_input.lower().split()]+[protocol.functional.lower().split()]):
+    if "opt" in (protocol.add_input.lower().split()+protocol.functional.lower().split()):
         with open(f"{label}.{regex_parsing[calc]['ext']}") as f:
             fl = f.readlines()
 
