@@ -31,7 +31,7 @@ regex_parsing = {
         "s_freq": "VIBRATIONAL FREQUENCIES",
         "e_freq": "------------",
         "idx_freq": 1,  # index for frequency in frequency table
-        "opt_done": "                    ***        THE OPTIMIZATION HAS CONVERGED     ***",
+        "opt_done": "THE OPTIMIZATION HAS CONVERGED",
         "geom_start": """CARTESIAN COORDINATES (ANGSTROEM)
 ---------------------------------""",
         "finish": "ORCA TERMINATED NORMALLY",
