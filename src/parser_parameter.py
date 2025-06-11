@@ -189,8 +189,9 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
         M = 1
 
     g = ""
+    zpve, H, S = 0, 0, 0
     if freq.size > 0:
-        g = free_gibbs_energy(
+        g, zpve, H, S = free_gibbs_energy(
                 SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B, m=p.mult
             )
     else:
@@ -205,6 +206,9 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
         "m": M if M else 1,  # dipole momenti [Debye]
         "time": time,  # elapsed time [sec]
         "G-E" : (g-e) if g and e else None,  # G-E [Eh]
+        "zpve": zpve, # Zero Point Energy [Eh]
+        "H": H, # Ethalpy [Eh]
+        "S": S, # Entropy [Eh]
     }
 
     return True
@@ -292,27 +296,27 @@ if __name__ == "__main__":  # pragma: no cover:
     # get_conf_parameters(c, 0, 1, 298.15, log)
     # print(c.energies)
 
-    from launch import restart
+    # from launch import restart
     from logger import create_log
-    import json
-    from IOsystem import SerialiseEncoder
+    # import json
+    # from IOsystem import SerialiseEncoder
 
-    log = create_log("test.out")
-    ensemble, protocol, start_from = restart()
+    log = create_log("files/test.out")
+    # ensemble, protocol, start_from = restart()
 
-    print(protocol)
+    # print(protocol)
 
-    for i in protocol:
-        print(i)
-        if get_data_for_graph(ensemble, i, log):
-            print(ensemble[0].energies[str(i.number)]["graph"])
+    # for i in protocol:
+    #     print(i)
+    #     if get_data_for_graph(ensemble, i, log):
+    #         print(ensemble[0].energies[str(i.number)]["graph"])
 
-    json.dump(
-        {i.number: i.__dict__ for i in ensemble},
-        open("checkpoint.json", "w"),
-        indent=4,
-        cls=SerialiseEncoder,
-    )
+    # json.dump(
+    #     {i.number: i.__dict__ for i in ensemble},
+    #     open("checkpoint.json", "w"),
+    #     indent=4,
+    #     cls=SerialiseEncoder,
+    # )
 
     # if i.freq or "tddft" in i.add_input:
     #     if i.freq:
@@ -321,3 +325,9 @@ if __name__ == "__main__":  # pragma: no cover:
     #     if "tddft" in i.add_input:
     #         Computed(ensemble, False, graph_type='UV', protocol=i.number)
     #         Computed(ensemble, False, graph_type='ECD', protocol=i.number)
+
+
+    with open('files/opt.out') as f:
+        fl = f.read()
+    
+    print(get_opt_geometry(fl, 'orca', log))

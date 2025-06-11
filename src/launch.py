@@ -1,36 +1,19 @@
-try:
-    from src.conformer import Conformer
-    from src.ioFile import read_ensemble, save_snapshot
-    from src.logger import create_log, ordinal
-    from src.parser_arguments import parser_arguments
-    from src.parser_parameter import get_conf_parameters, get_data_for_graph
-    from src.IOsystem import SerialiseEncoder
-    from src.protocol import Protocol, load_protocol
-    from src.pruning import calculate_rel_energies, check_ensemble
-    from src.graph import main_graph, Compared
+from src.conformer import Conformer
+from src.ioFile import read_ensemble, save_snapshot
+from src.logger import create_log, ordinal, DEBUG
+from src.parser_arguments import parser_arguments
+from src.parser_parameter import get_conf_parameters, get_data_for_graph
+from src.IOsystem import SerialiseEncoder
+from src.protocol import Protocol, load_protocol
+from src.pruning import calculate_rel_energies, check_ensemble
+from src.graph import main_graph, Compared
 
-    # from src.grapher import Graph, plot_conv_graph
-    from src.clustering import perform_PCA, get_ensemble
-    from src.title import title
-    from src.calculations import optimize, calc_freq, single_point
-except ImportError as e:  # pragma: no cover
-    print(e)
-    from conformer import Conformer
-    from ioFile import read_ensemble, save_snapshot
-    from logger import create_log, ordinal
-    from parser_arguments import parser_arguments
-    from parser_parameter import get_conf_parameters, get_data_for_graph
-    from IOsystem import SerialiseEncoder
-    from protocol import Protocol, load_protocol
-    from pruning import calculate_rel_energies, check_ensemble
-    from graph import main_graph, Compared
+# from src.grapher import Graph, plot_conv_graph
+from src.clustering import perform_PCA, get_ensemble
+from src.title import title
+from src.calculations import optimize, calc_freq, single_point
 
-    # from grapher import Graph
-    from clustering import perform_PCA, get_ensemble
-    from title import title
-    from calculations import optimize, calc_freq, single_point
 
-import ase
 import time
 import json
 import datetime
@@ -85,6 +68,8 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
     if protocol.freq:
         os.rename(f"{label}.hess", f"{conf.folder}/protocol_{protocol.number}.hess")
     os.rename(f"{label}.gbw", f"{conf.folder}/protocol_{protocol.number}.gbw")
+
+    # TODO: magari creare un tar con tutti i file per ogni protocollo
 
     if not get_conf_parameters(conf, protocol.number, protocol, end - st, temp, log):
         if try_num <= MAX_TRY:
@@ -152,36 +137,35 @@ def run_protocol(conformers, p, temperature, cpu, log) -> None:
         )
     )
 
-    # TODO: make number of cluster a parameter
+    # TODO: print the various averaged values of the energies (E, ZPVE, H, S, G)
 
-    perform_PCA(
-        [i for i in conformers if i.active],
-        5,
-        f"PCA_before_pruning_protocol_{p.number}.png",
-        f"PCA before pruning protocol {p.number}",
-        log,
-        set=False
-    )
-
-    create_summary("Summary", conformers, log)
-    conformers = check_ensemble(conformers, p, log)
+    if p.cluster and DEBUG: 
+        perform_PCA(
+            [i for i in conformers if i.active],
+            5,
+            f"PCA_before_pruning_protocol_{p.number}.png",
+            f"PCA before pruning protocol {p.number}",
+            log,
+            set=False
+        )
+    if DEBUG:
+        create_summary("Summary", conformers, log)
+        conformers = check_ensemble(conformers, p, log)
+    
     log.debug("Start Pruning")
     conformers = sort_conformers_by_energy(conformers, temperature)
-
+    # conformers = sort_conformers_by_energy(conformers, temperature)
 
     save_snapshot(f"ensemble_after_{p.number}.xyz", conformers, log)
 
-    # TODO: store (x,y) coordinates of FIRST PCA so the graph stays the same
-
-    conformers = sort_conformers_by_energy(conformers, temperature)
-
-    perform_PCA(
-        [i for i in conformers if i.active],
-    p.cluster if type(p.cluster) is int else 5,
-        f"PCA_after_pruning_protocol_{p.number}.png",
-        f"PCA after pruning protocol {p.number}",
-        log,
-    )
+    if p.cluster:
+        perform_PCA(
+            [i for i in conformers if i.active],
+        p.cluster if type(p.cluster) is int else 5,
+            f"PCA_after_pruning_protocol_{p.number}.png",
+            f"PCA after pruning protocol {p.number}",
+            log,
+        )
     if type(p.cluster) is int:
         conformers = get_ensemble(conformers)
 

@@ -350,7 +350,7 @@ def free_gibbs_energy(
 
     S = S_trans + S_rot + S_vib + S_elec
 
-    return H - T * S
+    return H - T * S, zpve, H, S
 
 
 if __name__ == "__main__":
