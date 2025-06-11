@@ -82,7 +82,7 @@ class Computed(Graph):
         self.g = convolution if convolution else self.graph_type
         self.conformers = conf
         idx_first_valid_conf = [idx for idx, i in enumerate(conf) if i.active][0]
-        log.debug(f'{idx_first_valid_conf} used in Computed')
+        self.log.debug(f'{idx_first_valid_conf} used in Computed')
         if conf[idx_first_valid_conf].energies[self.protocol].get("graph", None) is None:
             return
         elif (
