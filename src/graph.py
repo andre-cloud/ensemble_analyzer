@@ -81,10 +81,11 @@ class Computed(Graph):
         self.invert = invert
         self.g = convolution if convolution else self.graph_type
         self.conformers = conf
-        if conf[0].energies[self.protocol].get("graph", None) is None:
+        idx_first_valid_conf = [i for idx, i in enumerate(conf) if i.active][0]
+        if conf[idx_first_valid_conf].energies[self.protocol].get("graph", None) is None:
             return
         elif (
-            conf[0].energies[self.protocol].get("graph").get(self.graph_type, None)
+            conf[idx_first_valid_conf].energies[self.protocol].get("graph").get(self.graph_type, None)
             is None
         ):
             return

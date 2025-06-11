@@ -261,8 +261,8 @@ def parse_graph(fl, conf, protocol, log):
 
     for i in reg.keys():
         if reg[i]["start"] not in fl:
-            log.error(
-                f"Graph of {conf.number} not found in the output file. Saving empty arrays"
+            log.warning(
+                f"{i} Graph of {conf.number} not found in the output file. Saving empty arrays"
             )
             x = np.array([])
             y = np.array([])
