@@ -74,7 +74,7 @@ def protocol_step(step_num, level="Basic"):
         step["solvent"] = {}
     step["opt"] = inquirer.confirm(message="Optimization?", default=False).execute()
     step["freq"] = inquirer.confirm(message="Frequency calculation?", default=False).execute()
-    step["add_input"] = inquirer.text(message="Other ORCA input (leave blank if not needed):", default="").execute()
+    step["add_input"] = inquirer.text(message="Other ORCA input (leave blank if not needed):", default="").execute().replace("\\n", "\n")
     step["mult"] = int(inquirer.text(message="Multiplicity:", default="1").execute())
     step["charge"] = int(inquirer.text(message="Charge:", default="0").execute())
     step["read_orbitals"] = inquirer.text(message="Protocol number to read orbitals from (optional):", default="").execute()
@@ -85,7 +85,7 @@ def protocol_step(step_num, level="Basic"):
         try:
             step["cluster"] = int(cluster_num)
         except ValueError:
-            step["cluster"] = 2
+            step["cluster"] = 5
     else:
         step["cluster"] = False
     step["no_prune"] = inquirer.confirm(message="Disable pruning?", default=False).execute()
@@ -94,13 +94,12 @@ def protocol_step(step_num, level="Basic"):
     # INTERMEDIATE
     if level in ["Intermediate", "Advanced"]:
         step["constrains"] = []
-        step["maxstep"] = float(inquirer.text(message="maxstep (default 0.2):", default="0.2").execute())
     else:
         step["constrains"] = []
-        step["maxstep"] = 0.2
 
     # ADVANCED
     if level == "Advanced":
+        step["maxstep"] = float(inquirer.text(message="maxstep (default 0.2):", default="0.2").execute())
         thrG = inquirer.text(message="thrG (kcal/mol, leave blank for default):", default="").execute()
         step["thrG"] = float(thrG) if thrG else None
         thrB = inquirer.text(message="thrB (cm-1, leave blank for default):", default="").execute()
@@ -113,6 +112,7 @@ def protocol_step(step_num, level="Basic"):
         step["thrB"] = None
         step["thrGMAX"] = None
         step["freq_fact"] = 1.0
+        step["maxstep"] = 0.2
 
     step["graph"] = False  # puoi aggiungere la domanda se vuoi
     step["calculator"] = 'orca'

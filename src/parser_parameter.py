@@ -194,10 +194,15 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
         g, zpve, H, S = free_gibbs_energy(
                 SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B, m=p.mult
             )
+        H = H - (e/EH_TO_KCAL)
     else:
         g_e = conf.energies.get(str(int(number)-1), {}).get("G-E")
         if g_e is not None:
             g = e + g_e
+            for i in ['zpve', 'H', 'S']:
+                if i == 'zpve': zpve = conf.energies.get(str(int(number)-1), {}).get(i)
+                elif i == 'H': H = conf.energies.get(str(int(number)-1), {}).get(i)
+                elif i == 'S': S = conf.energies.get(str(int(number)-1), {}).get(i)
 
     conf.energies[str(number)] = {
         "E": e * EH_TO_KCAL if e else e,  # Electronic Energy [kcal/mol]
@@ -207,7 +212,7 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
         "time": time,  # elapsed time [sec]
         "G-E" : (g-e) if g and e else None,  # G-E [Eh]
         "zpve": zpve, # Zero Point Energy [Eh]
-        "H": H, # Ethalpy [Eh]
+        "H": H, # Enthalpy correction [Eh]
         "S": S, # Entropy [Eh]
     }
 

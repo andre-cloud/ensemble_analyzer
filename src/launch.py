@@ -299,6 +299,15 @@ def start_calculation(
     log.info(f'{"="*15}\nCALCULATIONS ENDED\n{"="*15}\n\n')
     log.info("Ensemble refined correctly!")
 
+
+    # save the final ensemble to a checkpoint file
+    json.dump(
+        {i.number: i.__dict__ for i in conformers},
+        open("checkpoint.json", "w"),
+        indent=4,
+        cls=SerialiseEncoder,
+    )
+
     return None
 
 

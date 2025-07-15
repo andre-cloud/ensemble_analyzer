@@ -97,7 +97,7 @@ class Conformer:
 
         # Atoms and positions
         atom_lines = [
-            f"{a}\t{x:14f}\t{y:14f}\t{z:14f}"
+            f"{a}  {x:14f}  {y:14f}  {z:14f}"
             for a, (x, y, z) in zip(self.atoms, self.last_geometry)
         ]
 

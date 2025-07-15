@@ -296,7 +296,7 @@ if __name__ == "__main__":  # pragma: no cover:
     args = parser.parse_args()
 
     # Load the XYZ file
-    xyz_file = read_ensemble(args.file, 0, 1, mock.MagicMock(), raw=True)
+    xyz_file = read_ensemble(args.file, mock.MagicMock(), raw=True)
     perform_PCA(xyz_file, args.ncluster, "cluster.png", "Cluster", mock.MagicMock())
     xyz_file_new = get_ensemble(xyz_file)
     # perform_PCA(
