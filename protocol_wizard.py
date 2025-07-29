@@ -72,7 +72,7 @@ def protocol_step(step_num, level="Basic"):
         step["solvent"] = solv
     else:
         step["solvent"] = {}
-    step["opt"] = inquirer.confirm(message="Optimization?", default=False).execute()
+    step["opt"] = inquirer.confirm(message="Optimization using ASE optimizer?", default=False).execute()
     step["freq"] = inquirer.confirm(message="Frequency calculation?", default=False).execute()
     step["add_input"] = inquirer.text(message="Other ORCA input (leave blank if not needed):", default="").execute().replace("\\n", "\n")
     step["mult"] = int(inquirer.text(message="Multiplicity:", default="1").execute())
