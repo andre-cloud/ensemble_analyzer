@@ -291,15 +291,17 @@ def start_calculation(
     save_snapshot("final_ensemble.xyz", c_, log)
     create_summary("Final Summary", c_, log)
 
-    log.info(f"Final ensemble has {len(conformers)} conformers")
+    log.info('\n\n\n\n')
+    log.info(f"Final ensemble has {len([i for i in conformers if i.active])} conformers")
+    
     t = 0
     for i in conformers:
         for j in i.energies:
             t += i.energies[j]["time"]
     log.info(f"Total elapsed time: {datetime.timedelta(seconds=t)}")
 
+    log.info("Ensemble refined correctly!\n\n")
     log.info(f'{"="*15}\nCALCULATIONS ENDED\n{"="*15}\n\n')
-    log.info("Ensemble refined correctly!")
 
 
     # save the final ensemble to a checkpoint file
