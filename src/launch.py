@@ -68,6 +68,8 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
     if protocol.freq:
         os.rename(f"{label}.hess", f"{conf.folder}/protocol_{protocol.number}.hess")
     os.rename(f"{label}.gbw", f"{conf.folder}/protocol_{protocol.number}.gbw")
+    os.rename(f"{label}.densities", f"{conf.folder}/protocol_{protocol.number}.densities")
+    os.rename(f"{label}.densitiesinfo", f"{conf.folder}/protocol_{protocol.number}.densitiesinfo")
 
     # TODO: magari creare un tar con tutti i file per ogni protocollo
 
