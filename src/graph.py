@@ -166,7 +166,7 @@ class Computed(Graph):
             initial_guess,
             bounds=bounds,
             options={"maxiter": 1000},
-            method="Nelder-Mead",
+            method="L-BFGS-B",
         )
         # result = minimize(wrapper, initial_guess, bounds=bounds, options={'maxiter': 1000}, method='Nelder-Mead')
 
@@ -180,7 +180,7 @@ class Computed(Graph):
             self.y = self.CONV[self.graph_type](x, self.y_comp, self.fwhm)
             self.y = self.normalize()
             self.log.info(
-                f"{'='*20}\nResults for {self.graph_type} graph calcualted in Protocol {self.protocol.number}\n{'='*20}\n" +
+                f"{'='*20}\nResults for {self.graph_type} graph calcualted in Protocol {self.protocol}\n{'='*20}\n" +
                 f"Optimal shift: {self.shift:.3f}, Optimal FWHM: {self.fwhm:.3f}, Similarity: {(1-result.fun)*100:.2f}%\n"+
                 "="*20+'\n'
             )
