@@ -147,7 +147,7 @@ class Computed(Graph):
             self.log.debug(f"Shift: {shift:.4f}, FWHM: {fwhm:.4f}, RMSD: {d:.6f}")
             return d  # Minimizzare questa funzione
 
-        sb, fb = 0.4, 0.3
+        sb, fb = 0.2, 0.3
         ss, sf = 0, self.DEFs[self.graph_type]
 
         if hasattr(self, "shift"):
@@ -157,7 +157,7 @@ class Computed(Graph):
 
         initial_guess = [ss, sf]  # BLUE SHIFT NEGATIVE
         if self.graph_type in ["UV", "ECD"]:
-            bounds = [(-sb, sb), (0.2, sf + fb)]
+            bounds = [(-sb+ss, sb+ss), (0.2, sf + fb)] # se impostato lo shift, allora i bounders si centrano sullo shift.
         elif self.graph_type in ["IR", "VCD"]:
             bounds = [(0.5, 1), (0.2, sf + fb)]
 
