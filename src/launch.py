@@ -65,7 +65,7 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
     end = time.perf_counter()
 
     files = [str(f) for f in os.listdir(os.getcwd()) if str(f).startswith(label)]
-    dest_folder = os.path.join(os.getcwd(),{conf.folder},f'protocol_{protocol.number}')
+    dest_folder = os.path.join(os.getcwd(),conf.folder,f'protocol_{protocol.number}')
     mkdir(os.path.join(os.getcwd(),{conf.folder},f'protocol_{protocol.number}'))
     for file in files: 
         src = os.path.join(os.getcwd(), file)
