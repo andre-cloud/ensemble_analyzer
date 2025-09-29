@@ -144,7 +144,7 @@ class Computed(Graph):
                 y_norm[self.ref.x_min_idx : self.ref.x_max_idx],
                 ref_norm[self.ref.x_min_idx : self.ref.x_max_idx],
             )
-            self.log.debug(f"Shift: {shift:.4f}, FWHM: {fwhm:.4f}, RMSD: {d:.6f}")
+            print(f"Shift: {shift:.4f}, FWHM: {fwhm:.4f}, RMSD: {d:.6f}")
             return d  # Minimizzare questa funzione
 
         sb, fb = 0.2, 0.3
@@ -166,7 +166,7 @@ class Computed(Graph):
             initial_guess,
             bounds=bounds,
             options={"maxiter": 1000},
-            method="Powell",
+            method="Nelder-Mead",
         )
         # result = minimize(wrapper, initial_guess, bounds=bounds, options={'maxiter': 1000}, method='Nelder-Mead')
 
