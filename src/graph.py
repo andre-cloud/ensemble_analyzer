@@ -320,6 +320,8 @@ class Compared(Graph):
                 label="Experimental",
                 lw=2,
             )
+            print(self.ref.x_min - self.BUFFER[self.graph_type],
+                self.ref.x_max + self.BUFFER[self.graph_type])
             self.axis.set_xlim(
                 self.ref.x_min - self.BUFFER[self.graph_type],
                 self.ref.x_max + self.BUFFER[self.graph_type],
