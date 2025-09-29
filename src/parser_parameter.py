@@ -221,7 +221,7 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
 
 def get_data_for_graph(conformers, protocol, log):
     confs = [i for i in conformers if i.active]
-    if protocol.freq or "tddft" in protocol.add_input:
+    if protocol.freq or "tddft" in protocol.add_input.lower() or "freq" in protocol.add_input.lower():
         for i in confs:
             with open(
                 os.path.join(os.getcwd(), i.folder, f"protocol_{protocol.number}.out")

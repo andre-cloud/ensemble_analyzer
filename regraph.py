@@ -5,6 +5,7 @@ from src.logger import create_log
 from src.protocol import Protocol
 from src.graph import main_graph, Compared
 from src.pruning import calculate_rel_energies
+from src.parser_parameter import get_data_for_graph
 
 import json, logging
 import argparse, os
@@ -42,6 +43,7 @@ protocol = load_protocol(json.load(open('protocol_dump.json')), log)
 
 
 for i in protocol:
+    get_data_for_graph(conformers=ensemble, protocol=i, log=log)
     main_graph(ensemble, i, log=log, invert=invert)
 for j in ["IR", "VCD", "UV", "ECD"]:
     g = Compared(protocol, graph_type=j, log=log)
