@@ -1,9 +1,9 @@
 from src.conformer import Conformer
-from src.ioFile import read_ensemble, save_snapshot, mkdir
+from src.ioFile import read_ensemble, save_snapshot
 from src.logger import create_log, ordinal, DEBUG
 from src.parser_arguments import parser_arguments
 from src.parser_parameter import get_conf_parameters, get_data_for_graph
-from src.IOsystem import SerialiseEncoder
+from src.IOsystem import SerialiseEncoder, mkdir
 from src.protocol import Protocol, load_protocol
 from src.pruning import calculate_rel_energies, check_ensemble
 from src.graph import main_graph, Compared
