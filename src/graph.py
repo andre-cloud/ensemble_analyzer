@@ -18,10 +18,11 @@ class Graph:
     START = {"IR": 0.1, "VCD": 0.1, "UV": 0.1, "ECD": 0.1}  # cm-1  # cm-1  # eV  # eV
     END = {"IR": 6000, "VCD": 6000, "UV": 9, "ECD": 9}  # cm-1  # cm-1  # eV  # eV
 
-    def __init__(self, graph_type, log=None, protocol=None, definition=4, norm=1):
+    def __init__(self, graph_type, log=None, protocol=None, definition=4, norm=1, read_pop = None):
         assert graph_type in list(self.START.keys())
 
         self.protocol = protocol
+        self.read_pop = read_pop
 
         self.graph_type = graph_type
         self.x = np.linspace(
@@ -75,7 +76,7 @@ class Computed(Graph):
         "ECD": 0.4,  # FWHM in eV
     }
 
-    def __init__(self, conf, invert, convolution=None, shift=None, fwhm=None, **kwargs):
+    def __init__(self, conf, invert, convolution=None, shift=None, fwhm=None, read_pop=None, **kwargs):
         super().__init__(**kwargs)
 
         self.invert = invert
@@ -121,9 +122,16 @@ class Computed(Graph):
                 continue
             x = np.array(i.energies[self.protocol]["graph"][self.graph_type]["x"])
             y = np.array(i.energies[self.protocol]["graph"][self.graph_type]["y"])
-            self.y_comp += f(x, y, self.DEFs[self.graph_type]) * float(
-                i.energies[self.protocol]["Pop"]
-            )
+            
+            pop = i.energies[self.protocol]["Pop"] if not self.read_pop else i.energies[self.read_pop]["Pop"]
+
+            conv_graph = f(x, y, self.DEFs[self.graph_type])
+
+            with open(os.path.join(i.folder,f'p{self.protocol}'), "w") as f:
+                for x, y in zip(self.x, self.y_comp):
+                    f.write(f"{x:.6f} {y:.6f}\n")
+
+            self.y_comp += conv_graph * float(pop)
 
     def autoconvolute(self):
         f = self.CONV[self.graph_type]
@@ -181,7 +189,7 @@ class Computed(Graph):
             self.y = self.normalize()
             self.log.info(
                 f"{'='*20}\nResults for {self.graph_type} graph calcualted in Protocol {self.protocol}\n{'='*20}\n" +
-                f"Optimal shift: {self.shift:.3f}, Optimal FWHM: {self.fwhm:.3f}, Similarity: {(1-result.fun)*100:.2f}%\n"+
+                f"Optimal shift: {self.shift:.3f}, Optimal FWHM: {self.fwhm:.3f}, Similarity: {((1 if self.graph_type not in CHIRALS else 2)-result.fun)/(1 if self.graph_type not in CHIRALS else 2)*100:.2f}%\n"+
                 "="*20+'\n'
             )
         else:
@@ -194,7 +202,7 @@ class Computed(Graph):
             self.y = self.normalize()
 
     def diversity_function(self, a, b):
-        return np.sqrt(np.mean((a - b) ** 2))  # RMSD
+        return (np.sqrt(np.mean((a - b) ** 2))) / (1 if self.graph_type not in CHIRALS else 2) # RMSD
 
 
 class Experimental(Graph):
@@ -377,7 +385,7 @@ class Compared(Graph):
         return FACTOR_EV_NM / nm
 
 
-def main_graph(ensemble, p, log, invert, shift = None, fwhm = None):
+def main_graph(ensemble, p, log, invert, shift = None, fwhm = None, read_pop = None):
     for j in ["IR", "VCD", "UV", "ECD"]:
         graph = Computed(
             ensemble,
@@ -387,6 +395,7 @@ def main_graph(ensemble, p, log, invert, shift = None, fwhm = None):
             shift=shift,
             fwhm=fwhm,
             log=log,
+            read_pop = read_pop
         )
 
         if not hasattr(graph, "y_comp"):

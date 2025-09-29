@@ -53,12 +53,12 @@ def cut_over_thr_max(confs: list, number: str, thrGMAX: float, log) -> None:
     log.info("\n")
 
 
-def rmsd(check, ref) -> float:
+def rmsd(check, ref, exclude_H=False) -> float:
     r"""
-    Compute the Root Mean Squared Deviation (**RMSD**) of two geometries
+    Compute the Root Mean Squared Deviation (**RMSD**) of two geometries based on the distance matrix's eigenvalues.
 
     .. math::
-        RMSD = \sqrt{ \frac {1}{N} ||v_{i} - w_{i}|| }
+        RMSD = \sqrt{ \frac {1}{N} \left(\lambda_{i} - lambda_{i}\right)^2 }
 
     :param check: conformer to be compared
     :type check: Conformer
@@ -68,11 +68,10 @@ def rmsd(check, ref) -> float:
     :return: RMSD
     :rtype: float
     """
-    ref_pos, check_pos = ref.copy(), check.copy()
-    minimize_rotation_and_translation(ref_pos, check_pos)
-    return np.sqrt(1 / len(ref.get_positions())) * np.linalg.norm(
-        np.array(ref_pos.get_positions()) - np.array(check_pos.get_positions())
-    )
+    ref_pos, check_pos = ref.distance_matrix(exclude_H), check.distance_matrix(exclude_H)
+    eva_ref, _ = np.linalg.eig(ref_pos)
+    eva_check, _ = np.linalg.eig(check_pos)
+    return np.sqrt(1 / len(eva_ref) * (eva_ref-eva_check)**2)
 
 
 def dict_compare(check, conf_ref, deactivate=True) -> dict:  # pragma: no cover
@@ -87,7 +86,7 @@ def dict_compare(check, conf_ref, deactivate=True) -> dict:  # pragma: no cover
         "∆E [kcal/mol]": check.get_energy - conf_ref.get_energy,
         "∆B [e-3 cm-1]": np.abs(check.rotatory - conf_ref.rotatory) * 10**3,
         "∆m [Debye]": np.abs(check.moment - conf_ref.moment),
-        "RMSD [Å]": rmsd(check.get_ase_atoms(), conf_ref.get_ase_atoms()),
+        "RMSD [Å]": rmsd(check, conf_ref),
         "Deactivate": deactivate,
     }
 

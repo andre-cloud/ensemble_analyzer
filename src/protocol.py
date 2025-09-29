@@ -83,7 +83,8 @@ class Protocol:
         no_prune: bool = False,
         comment: str = "",
         read_orbitals = "",
-    ):
+        read_population: str|None = None,
+    ): 
         self.number = number
         self.functional = functional.upper()
         self.basis = basis.upper() if 'xtb' not in functional.lower() else ""
@@ -104,6 +105,7 @@ class Protocol:
         self.charge = charge
         self.comment = comment
         self.read_orbitals = read_orbitals # number of protocol to read orbitals from
+        self.read_population = read_population
         
         assert self.mult > 0, "Multiplicity must be greater than 0"
 
@@ -230,7 +232,7 @@ class Protocol:
         ob = (
             f"%pal nprocs {cpu} end "
             + self.add_input
-            + (" %maxcore 6000" if "maxcore" not in self.add_input else "")
+            + (" %maxcore 5000" if "maxcore" not in self.add_input else "")
         )
 
         return si, ob
@@ -258,6 +260,9 @@ class Protocol:
             calculator.parameters['orcasimpleinput'] += " moread"
             calculator.parameters["orcablocks"] += f'\n%moinp "{conf.folder}/protocol_{self.read_orbitals}.gbw"\n'
 
+        if 'freq' in self.add_input.lower(): 
+            calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"
+
         return calculator, label
 
     def orca_opt(self, cpu: int, conf=None):
@@ -274,13 +279,10 @@ class Protocol:
         """
         calculator, label = self.calc_orca_std(cpu, conf)
         calculator.parameters["orcasimpleinput"] += " engrad"
-        if self.read_orbitals:
-            calculator.parameters['orcasimpleinput'] += " moread"
-            calculator.parameters["orcablocks"] += f"\n%moinp {conf.folder}/protocol_{self.read_orbitals}.gbw\n"
 
         return calculator, label
 
-    def orca_freq(self, cpu: int, charge: int, mult: int, conf=None):
+    def orca_freq(self, cpu: int, conf=None):
         """Frequency calculator
 
         :param cpu: CPU number
@@ -295,9 +297,6 @@ class Protocol:
         calculator, label = self.calc_orca_std(cpu, conf)
         calculator.parameters["orcasimpleinput"] += " freq"
         calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"
-        if self.read_orbitals:
-            calculator.parameters['orcasimpleinput'] += " moread"
-            calculator.parameters["orcablocks"] += f"\n%moinp {conf.folder}/protocol_{self.read_orbitals}.gbw\n"
 
         return calculator, label
 

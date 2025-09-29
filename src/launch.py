@@ -1,5 +1,5 @@
 from src.conformer import Conformer
-from src.ioFile import read_ensemble, save_snapshot
+from src.ioFile import read_ensemble, save_snapshot, mkdir
 from src.logger import create_log, ordinal, DEBUG
 from src.parser_arguments import parser_arguments
 from src.parser_parameter import get_conf_parameters, get_data_for_graph
@@ -21,7 +21,7 @@ import logging
 from tabulate import tabulate
 import os
 from typing import Union
-
+import shutil
 
 MAX_TRY = 5
 
@@ -64,14 +64,21 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
 
     end = time.perf_counter()
 
+    files = [str(f) for f in os.listdir(os.getcwd()) if str(f).startswith(label)]
+    dest_folder = os.path.join(os.getcwd(),{conf.folder},f'protocol_{protocol.number}')
+    mkdir(os.path.join(os.getcwd(),{conf.folder},f'protocol_{protocol.number}'))
+    for file in files: 
+        src = os.path.join(os.getcwd(), file)
+        dst = os.path.join(dest_folder, f"{conf.number}_p{protocol.number}_{file}")
+        shutil.copyfile(src, dst)
+
+
     os.rename(f"{label}.out", f"{conf.folder}/protocol_{protocol.number}.out")
     if protocol.freq:
         os.rename(f"{label}.hess", f"{conf.folder}/protocol_{protocol.number}.hess")
     os.rename(f"{label}.gbw", f"{conf.folder}/protocol_{protocol.number}.gbw")
     os.rename(f"{label}.densities", f"{conf.folder}/protocol_{protocol.number}.densities")
     os.rename(f"{label}.densitiesinfo", f"{conf.folder}/protocol_{protocol.number}.densitiesinfo")
-
-    # TODO: magari creare un tar con tutti i file per ogni protocollo
 
     if not get_conf_parameters(conf, protocol.number, protocol, end - st, temp, log):
         if try_num <= MAX_TRY:
@@ -284,7 +291,7 @@ def start_calculation(
         log.debug("Creating graph")
 
         # TODO: incorporate FWHM and shift from settings as bounds
-        main_graph(conformers, p, log, invert=invert)
+        main_graph(conformers, p, log, invert=invert, read_pop = p.read_population)
 
     # sort the final ensemble
     c_ = sort_conformers_by_energy(conformers, temperature)

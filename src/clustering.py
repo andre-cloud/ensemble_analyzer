@@ -52,7 +52,8 @@ def calc_distance_matrix(coords):
 
     for idx, _ in enumerate(coords):
         c = coords[idx]
-        dist[idx] = distance_matrix(c, c)
+        # dist[idx] = distance_matrix(c, c)
+        dist[idx] = c.distance_matrix()
         eva, eve = np.linalg.eig(dist[idx])
         evalue_dist.append(eva)
         evector_dist.append(eve)

@@ -77,6 +77,33 @@ class Conformer:
             return en["G"]
         return en["E"]
 
+    # def distance_matrix(self, exclude_H=False):
+    #     if exclude_H:
+    #         n = len(self.atoms[self.atoms != 'H'])
+    #         dm = np.zeros((n, n))
+    #         geo = self.last_geometry[self.atoms != 'H']
+    #         for i, pos1 in enumerate(geo):
+    #             for j, pos2 in enumerate(geo):
+    #                 if i==j: continue
+    #                 if dm[i,j]: continue
+    #                 dist = np.linalg.norm(pos1 - pos2)
+    #                 dm[i, j] = dist
+    #                 dm[j, i] = dist
+    #     else:
+    #         dm = np.linalg.norm(self.last_geometry[:, None, :] - self.last_geometry[None, :, :], axis=-1)
+
+    #     return dm
+
+    def distance_matrix(self, exclude_H=False):
+        if exclude_H:
+            mask = self.atoms != 'H'
+            geo = self.last_geometry[mask]
+        else:
+            geo = self.last_geometry
+
+        dm = np.linalg.norm(geo[:, None, :] - geo[None, :, :], axis=-1)
+        return dm
+
     @property
     def _last_energy(self):
         if self.energies:
