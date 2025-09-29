@@ -1,403 +1,436 @@
 #! double splitting
-STO-3G | H–I
-MINI | H–Ca
-MINIS | H–Ca
-MINIX | H–Rn
-MIDI | H–Na, Al–K
-3-21G | H–Cs
-3-21GSP | H–Ar
-4-22GSP | H–Ar
-SV | H–Kr
-SV(P) | H–Kr
-SVP | H–Kr
-DKH-SV(P) | H–Kr
-DKH-SVP | H–Kr
-ZORA-SV(P) | H–Kr
-ZORA-SVP | H–Kr
-def2-mSVP | H–Rn
-def2-SV(P) | H–Rn
-def2-SVP | H–Rn
-def2-SVPD | H–Rn
-dhf-SV(P) | H–Kr, Rb–Rn
-dhf-SVP | H–Kr, Rb–Rn
-dhf-SV(P)-2c | H–Kr, Rb–Rn
-dhf-SVP-2c | H–Kr, Rb–Rn
-DKH-def2-SV(P) | H–Kr
-DKH-def2-SVP | H–Kr
-ZORA-def2-SV(P) | H–Kr
-ZORA-def2-SVP | H–Kr
-ma-def2-mSVP | H–Rn
-ma-def2-SV(P) | H–Rn
-ma-def2-SVP | H–Rn
-ma-DKH-def2-SV(P) | H–Kr
-ma-DKH-def2-SVP | H–Kr
-ma-ZORA-def2-SV(P) | H–Kr
-ma-ZORA-def2-SVP | H–Kr
-old-SV | H–I
-old-SV(P) | H–I
-old-SVP | H–I
-old-DKH-SV(P) | H–I
-old-DKH-SVP | H–I
-old-ZORA-SV(P) | H–I
-old-ZORA-SVP | H–I
-ANO-SZ | H–Ar, Sc–Zn
-pc-0 | H–Ca, Ga–Kr
-aug-pc-0 | H–Ca, Ga–Kr
-pcJ-0 | H–He, B–Ne, Al–Ar
-aug-pcJ-0 | H–He, B–Ne, Al–Ar
-pcseg-0 | H–Kr
-aug-pcseg-0 | H–Kr
-pcSseg-0 | H–Kr
-aug-pcSseg-0 | H–Kr
-W1-mtsmall | H–Ar
-Sapporo-DZP-2012 | H–Xe
-Sapporo-DKH3-DZP-2012 | K–Rn
-LANL08 | Na–La, Hf–Bi
-LANL08(f) | Sc–Cu, Y–Ag, La, Hf–Au
-LANL2DZ | H, Li–La, Hf–Bi, U–Pu
-vDZP | H–Rn
-HGBS-5 | H–Og
-HGBSP1-5 | H–Og
-HGBSP2-5 | H–Og
-HGBSP3-5 | H–Og
-AHGBS-5 | H–Og
-AHGBSP1-5 | H–Og
-AHGBSP2-5 | H–Og
-AHGBSP3-5 | H–Og
-cc-pVDZ | H–Ar, Ca–Kr
-aug-cc-pVDZ | H–Ar, Sc–Kr
-cc-pVD(+d)Z | Na–Ar
-apr-cc-pV(Q+d)Z | H–Ar
-jun-cc-pV(D+d)Z | H–Ar
-jul-cc-pV(D+d)Z | H–Ar
-maug-cc-pV(D+d)Z | H–Ar
-aug-cc-pVD(+d)Z | Al–Ar
-cc-pCVDZ | H–Ar, Ca, Ga–Kr
-aug-cc-pCVDZ | H–Ar, Ga–Kr
-cc-pwCVDZ | H–Ar, Ca, Ga–Kr
-aug-cc-pwCVDZ | H–Ar, Ga–Kr
-cc-pVDZ-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra, U
-aug-cc-pVDZ-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra
+STO-3G | H-I
+MINI | H-Ca
+MINIS | H-Ca
+MINIX | H-Rn
+MIDI | H-Na, Al-K
+3-21G | H-Cs
+3-21GSP | H-Ar
+4-22GSP | H-Ar
+SV | H-Kr
+SV(P) | H-Kr
+SVP | H-Kr
+DKH-SV(P) | H-Kr
+DKH-SVP | H-Kr
+ZORA-SV(P) | H-Kr
+ZORA-SVP | H-Kr
+def2-mSVP | H-Rn
+def2-SV(P) | H-Rn
+def2-SVP | H-Rn
+def2-SVPD | H-Rn
+dhf-SV(P) | H-Kr, Rb-Rn
+dhf-SVP | H-Kr, Rb-Rn
+dhf-SV(P)-2c | H-Kr, Rb-Rn
+dhf-SVP-2c | H-Kr, Rb-Rn
+DKH-def2-SV(P) | H-Kr
+DKH-def2-SVP | H-Kr
+ZORA-def2-SV(P) | H-Kr
+ZORA-def2-SVP | H-Kr
+ma-def2-mSVP | H-Rn
+ma-def2-SV(P) | H-Rn
+ma-def2-SVP | H-Rn
+ma-DKH-def2-SV(P) | H-Kr
+ma-DKH-def2-SVP | H-Kr
+ma-ZORA-def2-SV(P) | H-Kr
+ma-ZORA-def2-SVP | H-Kr
+old-SV | H-I
+old-SV(P) | H-I
+old-SVP | H-I
+old-DKH-SV(P) | H-I
+old-DKH-SVP | H-I
+old-ZORA-SV(P) | H-I
+old-ZORA-SVP | H-I
+ANO-SZ | H-Ar, Sc-Zn
+pc-0 | H-Ca, Ga-Kr
+aug-pc-0 | H-Ca, Ga-Kr
+pcJ-0 | H-He, B-Ne, Al-Ar
+aug-pcJ-0 | H-He, B-Ne, Al-Ar
+pcseg-0 | H-Kr
+aug-pcseg-0 | H-Kr
+pcSseg-0 | H-Kr
+aug-pcSseg-0 | H-Kr
+W1-mtsmall | H-Ar
+Sapporo-DZP-2012 | H-Xe
+Sapporo-DKH3-DZP-2012 | K-Rn
+LANL08 | Na-La, Hf-Bi
+LANL08(f) | Sc-Cu, Y-Ag, La, Hf-Au
+LANL2DZ | H, Li-La, Hf-Bi, U-Pu
+vDZP | H-Rn
+HGBS-5 | H-Og
+HGBSP1-5 | H-Og
+HGBSP2-5 | H-Og
+HGBSP3-5 | H-Og
+AHGBS-5 | H-Og
+AHGBSP1-5 | H-Og
+AHGBSP2-5 | H-Og
+AHGBSP3-5 | H-Og
+cc-pVDZ | H-Ar, Ca-Kr
+aug-cc-pVDZ | H-Ar, Sc-Kr
+cc-pVD(+d)Z | Na-Ar
+apr-cc-pV(Q+d)Z | H-Ar
+jun-cc-pV(D+d)Z | H-Ar
+jul-cc-pV(D+d)Z | H-Ar
+maug-cc-pV(D+d)Z | H-Ar
+aug-cc-pVD(+d)Z | Al-Ar
+cc-pCVDZ | H-Ar, Ca, Ga-Kr
+aug-cc-pCVDZ | H-Ar, Ga-Kr
+cc-pwCVDZ | H-Ar, Ca, Ga-Kr
+aug-cc-pwCVDZ | H-Ar, Ga-Kr
+cc-pVDZ-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra, U
+aug-cc-pVDZ-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra
 cc-pCVDZ-PP | Ca, Sr, Ba, Ra
 aug-cc-pCVDZ-PP | Ca, Sr, Ba, Ra
-cc-pwCVDZ-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra, U
-aug-cc-pwCVDZ-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra
-cc-pVDZ-DK | H–Ar, Sc–Kr
-aug-cc-pVDZ-DK | H–Ar, Sc–Kr
-cc-pwCVDZ-DK | H–Be, Na–Mg, Ca–Zn
-aug-cc-pwCVDZ-DK | H–Be, Na–Mg, Sc–Zn
-cc-pVDZ-F12 | H–Ar
-cc-pVDZ-PP-F12 | Ga–Kr, In–Xe, Tl–Rn
-cc-pCVDZ-F12 | Li–Ar
-Partridge-1 | H, Li–Sr
-x2c-SV(P)all | H–Rn
-x2c-SV(P)all-2c | H–Rn
-x2c-SV(P)all-s | H–Rn
-SARC-DKH-SVP | Hf–Hg
-SARC-ZORA-SVP | Hf–Hg
-D95 | H, Li, B–Ne, Al–Cl
-D95p | H, Li, B–Ne, Al–Cl
-EPR-II | H, B–F
-IGLO-II | H, B–F, Al–Cl
-UGBS | H–Th, Pu–Am, Cf–Lr
-CP | Sc–Zn
-CP(PPP) | Sc–Zn
-6-31G | H–Zn
-6-31G* | H–Zn
-m6-31G | Sc–Cu
-m6-31G* | Sc–Cu
-6-31G** | H–Zn
-6-31G(d) | H–Zn
-6-31G(d,p) | H–Zn
-6-31G(2d) | H–Zn
-6-31G(2d,p) | H–Zn
-6-31G(2d,2p) | H–Zn
-6-31G(2df) | H–Zn
-6-31G(2df,2p) | H–Zn
-6-31G(2df,2pd) | H–Zn
-6-31+G* | H–Zn
-6-31+G** | H–Zn
-6-31+G(d) | H–Zn
-6-31+G(d,p) | H–Zn
-6-31+G(2d) | H–Zn
-6-31+G(2d,p) | H–Zn
-6-31+G(2d,2p) | H–Zn
-6-31+G(2df) | H–Zn
-6-31+G(2df,2p) | H–Zn
-6-31+G(2df,2pd) | H–Zn
-6-31++G** | H–Zn
-6-31++G(d,p) | H–Zn
-6-31++G(2d,p) | H–Zn
-6-31++G(2d,2p) | H–Zn
-6-31++G(2df,2p) | H–Zn
-6-31++G(2df,2pd) | H–Zn
+cc-pwCVDZ-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra, U
+aug-cc-pwCVDZ-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra
+cc-pVDZ-DK | H-Ar, Sc-Kr
+aug-cc-pVDZ-DK | H-Ar, Sc-Kr
+cc-pwCVDZ-DK | H-Be, Na-Mg, Ca-Zn
+aug-cc-pwCVDZ-DK | H-Be, Na-Mg, Sc-Zn
+cc-pVDZ-F12 | H-Ar
+cc-pVDZ-PP-F12 | Ga-Kr, In-Xe, Tl-Rn
+cc-pCVDZ-F12 | Li-Ar
+Partridge-1 | H, Li-Sr
+x2c-SV(P)all | H-Rn
+x2c-SV(P)all-2c | H-Rn
+x2c-SV(P)all-s | H-Rn
+SARC-DKH-SVP | Hf-Hg
+SARC-ZORA-SVP | Hf-Hg
+D95 | H, Li, B-Ne, Al-Cl
+D95p | H, Li, B-Ne, Al-Cl
+EPR-II | H, B-F
+IGLO-II | H, B-F, Al-Cl
+UGBS | H-Th, Pu-Am, Cf-Lr
+CP | Sc-Zn
+CP(PPP) | Sc-Zn
+6-31G | H-Zn
+6-31G* | H-Zn
+m6-31G | Sc-Cu
+m6-31G* | Sc-Cu
+6-31G** | H-Zn
+6-31G(d) | H-Zn
+6-31G(d,p) | H-Zn
+6-31G(2d) | H-Zn
+6-31G(2d,p) | H-Zn
+6-31G(2d,2p) | H-Zn
+6-31G(2df) | H-Zn
+6-31G(2df,2p) | H-Zn
+6-31G(2df,2pd) | H-Zn
+6-31+G* | H-Zn
+6-31+G** | H-Zn
+6-31+G(d) | H-Zn
+6-31+G(d,p) | H-Zn
+6-31+G(2d) | H-Zn
+6-31+G(2d,p) | H-Zn
+6-31+G(2d,2p) | H-Zn
+6-31+G(2df) | H-Zn
+6-31+G(2df,2p) | H-Zn
+6-31+G(2df,2pd) | H-Zn
+6-31++G** | H-Zn
+6-31++G(d,p) | H-Zn
+6-31++G(2d,p) | H-Zn
+6-31++G(2d,2p) | H-Zn
+6-31++G(2df,2p) | H-Zn
+6-31++G(2df,2pd) | H-Zn
 
-#! triple
-TZV | H–Kr
-TZV(P) | H–Kr
-TZVP | H–Kr
-TZVPP | H–Kr
-DKH-TZV(P) | H–Kr
-DKH-TZVP | H–Kr
-DKH-TZVPP | H–Kr
-ZORA-TZV(P) | H–Kr
-ZORA-TZVP | H–Kr
-ZORA-TZVPP | H–Kr
-def2-mTZVP | H–Rn
-def2-mTZVPP | H–Lr
-def2-TZVP(-f) | H–Rn
-def2-TZVP | H–Rn
-def2-TZVPP | H–Rn
-def2-TZVPD | H–Rn
-def2-TZVPPD | H–Rn
-dhf-TZVP | H–Kr, Rb–Rn
-dhf-TZVPP | H–Kr, Rb–Rn
-dhf-TZVP-2c | H–Kr, Rb–Rn
-dhf-TZVPP-2c | H–Kr, Rb–Rn
-DKH-def2-TZVP(-f) | H–Kr
-DKH-def2-TZVP | H–Kr
-DKH-def2-TZVPP | H–Kr
-ZORA-def2-TZVP(-f) | H–Kr
-ZORA-def2-TZVP | H–Kr
-ZORA-def2-TZVPP | H–Kr
-ma-def2-mTZVP | H–Rn
-ma-def2-TZVP(-f) | H–Rn
-ma-def2-TZVP | H–Rn
-ma-def2-TZVPP | H–Rn
-ma-DKH-def2-TZVP(-f) | H–Kr
-ma-DKH-def2-TZVP | H–Kr
-ma-DKH-def2-TZVPP | H–Kr
-ma-ZORA-def2-TZVP(-f) | H–Kr
-ma-ZORA-def2-TZVP | H–Kr
-ma-ZORA-def2-TZVPP | H–Kr
-old-TZV | H–I
-old-TZV(P) | H–I
-old-TZVP | H–I
-old-TZVPP | H–I
-old-DKH-TZV(P) | H–I
-old-DKH-TZVP | H–I
-old-DKH-TZVPP | H–I
-old-ZORA-TZV(P) | H–I
-old-ZORA-TZVP | H–I
-old-ZORA-TZVPP | H–I
-ANO-pVDZ | H–Ar, Sc–Zn
-ANO-pVTZ | H–Ar, Sc–Zn
-aug-ANO-pVDZ | H–Ar, Sc–Zn
-aug-ANO-pVTZ | H–Ar, Sc–Zn
-saug-ANO-pVDZ | H–Ar, Sc–Zn
-saug-ANO-pVTZ | H–Ar, Sc–Zn
-ANO-RCC-DZP | H–Cm
-ANO-RCC-TZP | H–Cm
-pc-1 | H–Kr
-pc-2 | H–Kr
-aug-pc-1 | H–Kr
-aug-pc-2 | H–Kr
-pcJ-1 | H–He, B–Ne, Al–Ar
-pcJ-2 | H–He, B–Ne, Al–Ar
-aug-pcJ-1 | H–He, B–Ne, Al–Ar
-aug-pcJ-2 | H–He, B–Ne, Al–Ar
-pcseg-1 | H–Kr
-pcseg-2 | H–Kr
-aug-pcseg-1 | H–Kr
-aug-pcseg-2 | H–Kr
-pcSseg-1 | H–Kr
-pcSseg-2 | H–Kr
-aug-pcSseg-1 | H–Kr
-aug-pcSseg-2 | H–Kr
-W1-DZ | H–Ar
-W1-TZ | H–Ar
-Sapporo-TZP-2012 | H–Xe
-Sapporo-DKH3-TZP-2012 | K–Rn
-LANL2TZ | Sc–Zn, Y–Cd, La, Hf–Hg
-LANL2TZ(f) | Sc–Cu, Y–Ag, La, Hf–Au
-HGBS-7 | H–Og
-HGBSP1-7 | H–Og
-HGBSP2-7 | H–Og
-HGBSP3-7 | H–Og
-AHGBS-7 | H–Og
-AHGBSP1-7 | H–Og
-AHGBSP2-7 | H–Og
-AHGBSP3-7 | H–Og
-cc-pVTZ | H–Ar, Ca–Kr, Y, Ag, Au
-aug-cc-pVTZ | H–Ar, Sc–Kr, Ag, Au
-cc-pVT(+d)Z | Na–Ar
-may-cc-pV(T+d)Z | H–Ar
-jun-cc-pV(T+d)Z | H–Ar
-jul-cc-pV(T+d)Z | H–Ar
-maug-cc-pV(T+d)Z | H–Ar
-aug-cc-pVT(+d)Z | Al–Ar
-aug-cc-pVTZ-J | H, B–F, Al–Cl, Sc–Zn, Se
-cc-pCVTZ | H–Ar, Ca, Ga–Kr
-aug-cc-pCVTZ | H–Ar, Ga–Kr
-cc-pwCVTZ | H–Ar, Ca–Kr, Ag, Au
-aug-cc-pwCVTZ | H–Ar, Sc–Kr, Ag, Au
-cc-pVTZ-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra, U
-aug-cc-pVTZ-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra
+#! triple 
+6-311G | H-Br
+6-311G* | H-Br
+6-311G** | H-Br
+6-311G(d) | H-Br
+6-311G(d,p) | H-Br
+6-311G(2d) | H-Br
+6-311G(2d,p) | H-Br
+6-311G(2d,2p) | H-Br
+6-311G(2df) | H-Br
+6-311G(2df,2p) | H-Br
+6-311G(2df,2pd) | H-Br
+6-311G(3df) | H-Br
+6-311G(3df,3pd) | H-Br
+6-311+G* | H-Br
+6-311+G** | H-Br
+6-311+G(d) | H-Br
+6-311+G(d,p) | H-Br
+6-311+G(2d) | H-Br
+6-311+G(2d,p) | H-Br
+6-311+G(2d,2p) | H-Br
+6-311+G(2df) | H-Br
+6-311+G(2df,2p) | H-Br
+6-311+G(2df,2pd) | H-Br
+6-311+G(3df) | H-Br
+6-311+G(3df,2p) | H-Br
+6-311+G(3df,3pd) | H-Br
+6-311++G** | H-Br
+6-311++G(d,p) | H-Br
+6-311++G(2d,p) | H-Br
+6-311++G(2d,2p) | H-Br
+6-311++G(2df,2p) | H-Br
+6-311++G(2df,2pd) | H-Br
+6-311++G(3df,3pd) | H-Br
+TZV | H-Kr
+TZV(P) | H-Kr
+TZVP | H-Kr
+TZVPP | H-Kr
+DKH-TZV(P) | H-Kr
+DKH-TZVP | H-Kr
+DKH-TZVPP | H-Kr
+ZORA-TZV(P) | H-Kr
+ZORA-TZVP | H-Kr
+ZORA-TZVPP | H-Kr
+def2-mTZVP | H-Rn
+def2-mTZVPP | H-Lr
+def2-TZVP(-f) | H-Rn
+def2-TZVP | H-Rn
+def2-TZVPP | H-Rn
+def2-TZVPD | H-Rn
+def2-TZVPPD | H-Rn
+dhf-TZVP | H-Kr, Rb-Rn
+dhf-TZVPP | H-Kr, Rb-Rn
+dhf-TZVP-2c | H-Kr, Rb-Rn
+dhf-TZVPP-2c | H-Kr, Rb-Rn
+DKH-def2-TZVP(-f) | H-Kr
+DKH-def2-TZVP | H-Kr
+DKH-def2-TZVPP | H-Kr
+ZORA-def2-TZVP(-f) | H-Kr
+ZORA-def2-TZVP | H-Kr
+ZORA-def2-TZVPP | H-Kr
+ma-def2-mTZVP | H-Rn
+ma-def2-TZVP(-f) | H-Rn
+ma-def2-TZVP | H-Rn
+ma-def2-TZVPP | H-Rn
+ma-DKH-def2-TZVP(-f) | H-Kr
+ma-DKH-def2-TZVP | H-Kr
+ma-DKH-def2-TZVPP | H-Kr
+ma-ZORA-def2-TZVP(-f) | H-Kr
+ma-ZORA-def2-TZVP | H-Kr
+ma-ZORA-def2-TZVPP | H-Kr
+old-TZV | H-I
+old-TZV(P) | H-I
+old-TZVP | H-I
+old-TZVPP | H-I
+old-DKH-TZV(P) | H-I
+old-DKH-TZVP | H-I
+old-DKH-TZVPP | H-I
+old-ZORA-TZV(P) | H-I
+old-ZORA-TZVP | H-I
+old-ZORA-TZVPP | H-I
+ANO-pVDZ | H-Ar, Sc-Zn
+ANO-pVTZ | H-Ar, Sc-Zn
+aug-ANO-pVDZ | H-Ar, Sc-Zn
+aug-ANO-pVTZ | H-Ar, Sc-Zn
+saug-ANO-pVDZ | H-Ar, Sc-Zn
+saug-ANO-pVTZ | H-Ar, Sc-Zn
+ANO-RCC-DZP | H-Cm
+ANO-RCC-TZP | H-Cm
+pc-1 | H-Kr
+pc-2 | H-Kr
+aug-pc-1 | H-Kr
+aug-pc-2 | H-Kr
+pcJ-1 | H-He, B-Ne, Al-Ar
+pcJ-2 | H-He, B-Ne, Al-Ar
+aug-pcJ-1 | H-He, B-Ne, Al-Ar
+aug-pcJ-2 | H-He, B-Ne, Al-Ar
+pcseg-1 | H-Kr
+pcseg-2 | H-Kr
+aug-pcseg-1 | H-Kr
+aug-pcseg-2 | H-Kr
+pcSseg-1 | H-Kr
+pcSseg-2 | H-Kr
+aug-pcSseg-1 | H-Kr
+aug-pcSseg-2 | H-Kr
+W1-DZ | H-Ar
+W1-TZ | H-Ar
+Sapporo-TZP-2012 | H-Xe
+Sapporo-DKH3-TZP-2012 | K-Rn
+LANL2TZ | Sc-Zn, Y-Cd, La, Hf-Hg
+LANL2TZ(f) | Sc-Cu, Y-Ag, La, Hf-Au
+HGBS-7 | H-Og
+HGBSP1-7 | H-Og
+HGBSP2-7 | H-Og
+HGBSP3-7 | H-Og
+AHGBS-7 | H-Og
+AHGBSP1-7 | H-Og
+AHGBSP2-7 | H-Og
+AHGBSP3-7 | H-Og
+cc-pVTZ | H-Ar, Ca-Kr, Y, Ag, Au
+aug-cc-pVTZ | H-Ar, Sc-Kr, Ag, Au
+cc-pVT(+d)Z | Na-Ar
+may-cc-pV(T+d)Z | H-Ar
+jun-cc-pV(T+d)Z | H-Ar
+jul-cc-pV(T+d)Z | H-Ar
+maug-cc-pV(T+d)Z | H-Ar
+aug-cc-pVT(+d)Z | Al-Ar
+aug-cc-pVTZ-J | H, B-F, Al-Cl, Sc-Zn, Se
+cc-pCVTZ | H-Ar, Ca, Ga-Kr
+aug-cc-pCVTZ | H-Ar, Ga-Kr
+cc-pwCVTZ | H-Ar, Ca-Kr, Ag, Au
+aug-cc-pwCVTZ | H-Ar, Sc-Kr, Ag, Au
+cc-pVTZ-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra, U
+aug-cc-pVTZ-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra
 cc-pCVTZ-PP | Ca, Sr, Ba, Ra
 aug-cc-pCVTZ-PP | Ca, Sr, Ba, Ra
-cc-pwCVTZ-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra, U
-aug-cc-pwCVTZ-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra
-cc-pVTZ-DK | H–Ar, Sc–Kr, Y–Xe, Hf–Rn
-aug-cc-pVTZ-DK | H–Ar, Sc–Kr, Y–Xe, Hf–Rn
-cc-pwCVTZ-DK | H–Be, Na–Mg, Ca–Zn, Y–Xe, Hf–Rn
-aug-cc-pwCVTZ-DK | H–Be, Na–Mg, Sc–Zn, Y–Xe, Hf–Rn
-cc-pVTZ-F12 | H–Ar
-cc-pVTZ-PP-F12 | Ga–Kr, In–Xe, Tl–Rn
-cc-pCVTZ-F12 | Li–Ar
-Partridge-2 | H, Li–Kr
-x2c-SVPall | H–Rn
-x2c-TZVPall | H–Rn
-x2c-TZVPPall | H–Rn
-x2c-SVPall-2c | H–Rn
-x2c-TZVPall-2c | H–Rn
-x2c-TZVPPall-2c | H–Rn
-x2c-SVPall-s | H–Rn
-x2c-TZVPall-s | H–Rn
-x2c-TZVPPall-s | H–Rn
-SARC-DKH-TZVP | Rb–Rn, Ac–Lr
-SARC-DKH-TZVPP | Rb–Rn, Ac–Lr
-SARC-ZORA-TZVP | Rb–Rn, Ac–Lr
-SARC-ZORA-TZVPP | Rb–Rn, Ac–Lr
-D95 | H, Li, B–Ne, Al–Cl
-D95p | H, Li, B–Ne, Al–Cl
-EPR-II | H, B–F
-IGLO-II | H, B–F, Al–Cl
-UGBS | H–Th, Pu–Am, Cf–Lr
-CP | Sc–Zn
-CP(PPP) | Sc–Zn
-Wachters+f | Sc–Cu
+cc-pwCVTZ-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra, U
+aug-cc-pwCVTZ-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra
+cc-pVTZ-DK | H-Ar, Sc-Kr, Y-Xe, Hf-Rn
+aug-cc-pVTZ-DK | H-Ar, Sc-Kr, Y-Xe, Hf-Rn
+cc-pwCVTZ-DK | H-Be, Na-Mg, Ca-Zn, Y-Xe, Hf-Rn
+aug-cc-pwCVTZ-DK | H-Be, Na-Mg, Sc-Zn, Y-Xe, Hf-Rn
+cc-pVTZ-F12 | H-Ar
+cc-pVTZ-PP-F12 | Ga-Kr, In-Xe, Tl-Rn
+cc-pCVTZ-F12 | Li-Ar
+Partridge-2 | H, Li-Kr
+x2c-SVPall | H-Rn
+x2c-TZVPall | H-Rn
+x2c-TZVPPall | H-Rn
+x2c-SVPall-2c | H-Rn
+x2c-TZVPall-2c | H-Rn
+x2c-TZVPPall-2c | H-Rn
+x2c-SVPall-s | H-Rn
+x2c-TZVPall-s | H-Rn
+x2c-TZVPPall-s | H-Rn
+SARC-DKH-TZVP | Rb-Rn, Ac-Lr
+SARC-DKH-TZVPP | Rb-Rn, Ac-Lr
+SARC-ZORA-TZVP | Rb-Rn, Ac-Lr
+SARC-ZORA-TZVPP | Rb-Rn, Ac-Lr
+D95 | H, Li, B-Ne, Al-Cl
+D95p | H, Li, B-Ne, Al-Cl
+EPR-II | H, B-F
+IGLO-II | H, B-F, Al-Cl
+UGBS | H-Th, Pu-Am, Cf-Lr
+CP | Sc-Zn
+CP(PPP) | Sc-Zn
+Wachters+f | Sc-Cu
 
 #! quadriple splitting
-QZVP | H–Kr
-QZVPP | H–Kr
-DKH-QZVP | H–Kr
-DKH-QZVPP | H–Kr
-ZORA-QZVP | H–Kr
-ZORA-QZVPP | H–Kr
-def2-QZVP | H–Rn
-def2-QZVPP | H–Rn
-def2-QZVPD | H–Rn
-def2-QZVPPD | H–Rn
-dhf-QZVP | H–Kr, Rb–Rn
-dhf-QZVPP | H–Kr, Rb–Rn
-dhf-QZVP-2c | H–Kr, Rb–Rn
-dhf-QZVPP-2c | H–Kr, Rb–Rn
-DKH-def2-QZVPP | H–Kr
-ZORA-def2-QZVPP | H–Kr
-ma-def2-QZVP | H–Rn
-ma-def2-QZVPP | H–Rn
-ma-DKH-def2-QZVPP | H–Kr
-ma-ZORA-def2-QZVPP | H–Kr
-old-QZVP | H–I
-old-QZVPP | H–I
-old-DKH-QZVPP | H–I
-old-ZORA-QZVPP | H–I
-ANO-pVQZ | H–Ar, Sc–Zn
-aug-ANO-pVQZ | H–Ar, Sc–Zn
-saug-ANO-pVQZ | H–Ar, Sc–Zn
-ANO-RCC-QZP | H–Cm
-pc-3 | H–Kr
-pc-4 | H–Kr
-aug-pc-3 | H–Kr
-aug-pc-4 | H–Kr
-pcJ-3 | H–He, B–Ne, Al–Ar
-pcJ-4 | H–He, B–Ne, Al–Ar
-aug-pcJ-3 | H–He, B–Ne, Al–Ar
-aug-pcJ-4 | H–He, B–Ne, Al–Ar
-pcseg-3 | H–Kr
-pcseg-4 | H–Kr
-aug-pcseg-3 | H–Kr
-aug-pcseg-4 | H–Kr
-pcSseg-3 | H–Kr
-pcSseg-4 | H–Kr
-aug-pcSseg-3 | H–Kr
-aug-pcSseg-4 | H–Kr
-W1-QZ | H–Ar
-Sapporo-QZP-2012 | H–Xe
-Sapporo-DKH3-QZP-2012 | K–Rn
-HGBS-9 | H–Og
-HGBSP1-9 | H–Og
-HGBSP2-9 | H–Og
-HGBSP3-9 | H–Og
-AHGBS-9 | H–Og
-AHGBSP1-9 | H–Og
-AHGBSP2-9 | H–Og
-AHGBSP3-9 | H–Og
-cc-pVQZ | H–Ar, Ca–Kr
-aug-cc-pVQZ | H–Ar, Sc–Kr
-cc-pVQ(+d)Z | Na–Ar
-may-cc-pV(Q+d)Z | H–Ar
-jun-cc-pV(Q+d)Z | H–Ar
-jul-cc-pV(Q+d)Z | H–Ar
-maug-cc-pV(Q+d)Z | H–Ar
-aug-cc-pVQ(+d)Z | Al–Ar
-cc-pCVQZ | H–Ar, Ca, Ga–Kr
-aug-cc-pCVQZ | H–Ar, Ga–Kr
-cc-pwCVQZ | H–Ar, Ca–Kr
-aug-cc-pwCVQZ | H–Ar, Sc–Kr
-cc-pVQZ-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra, U
-aug-cc-pVQZ-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra
+QZVP | H-Kr
+QZVPP | H-Kr
+DKH-QZVP | H-Kr
+DKH-QZVPP | H-Kr
+ZORA-QZVP | H-Kr
+ZORA-QZVPP | H-Kr
+def2-QZVP | H-Rn
+def2-QZVPP | H-Rn
+def2-QZVPD | H-Rn
+def2-QZVPPD | H-Rn
+dhf-QZVP | H-Kr, Rb-Rn
+dhf-QZVPP | H-Kr, Rb-Rn
+dhf-QZVP-2c | H-Kr, Rb-Rn
+dhf-QZVPP-2c | H-Kr, Rb-Rn
+DKH-def2-QZVPP | H-Kr
+ZORA-def2-QZVPP | H-Kr
+ma-def2-QZVP | H-Rn
+ma-def2-QZVPP | H-Rn
+ma-DKH-def2-QZVPP | H-Kr
+ma-ZORA-def2-QZVPP | H-Kr
+old-QZVP | H-I
+old-QZVPP | H-I
+old-DKH-QZVPP | H-I
+old-ZORA-QZVPP | H-I
+ANO-pVQZ | H-Ar, Sc-Zn
+aug-ANO-pVQZ | H-Ar, Sc-Zn
+saug-ANO-pVQZ | H-Ar, Sc-Zn
+ANO-RCC-QZP | H-Cm
+pc-3 | H-Kr
+pc-4 | H-Kr
+aug-pc-3 | H-Kr
+aug-pc-4 | H-Kr
+pcJ-3 | H-He, B-Ne, Al-Ar
+pcJ-4 | H-He, B-Ne, Al-Ar
+aug-pcJ-3 | H-He, B-Ne, Al-Ar
+aug-pcJ-4 | H-He, B-Ne, Al-Ar
+pcseg-3 | H-Kr
+pcseg-4 | H-Kr
+aug-pcseg-3 | H-Kr
+aug-pcseg-4 | H-Kr
+pcSseg-3 | H-Kr
+pcSseg-4 | H-Kr
+aug-pcSseg-3 | H-Kr
+aug-pcSseg-4 | H-Kr
+W1-QZ | H-Ar
+Sapporo-QZP-2012 | H-Xe
+Sapporo-DKH3-QZP-2012 | K-Rn
+HGBS-9 | H-Og
+HGBSP1-9 | H-Og
+HGBSP2-9 | H-Og
+HGBSP3-9 | H-Og
+AHGBS-9 | H-Og
+AHGBSP1-9 | H-Og
+AHGBSP2-9 | H-Og
+AHGBSP3-9 | H-Og
+cc-pVQZ | H-Ar, Ca-Kr
+aug-cc-pVQZ | H-Ar, Sc-Kr
+cc-pVQ(+d)Z | Na-Ar
+may-cc-pV(Q+d)Z | H-Ar
+jun-cc-pV(Q+d)Z | H-Ar
+jul-cc-pV(Q+d)Z | H-Ar
+maug-cc-pV(Q+d)Z | H-Ar
+aug-cc-pVQ(+d)Z | Al-Ar
+cc-pCVQZ | H-Ar, Ca, Ga-Kr
+aug-cc-pCVQZ | H-Ar, Ga-Kr
+cc-pwCVQZ | H-Ar, Ca-Kr
+aug-cc-pwCVQZ | H-Ar, Sc-Kr
+cc-pVQZ-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra, U
+aug-cc-pVQZ-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra
 cc-pCVQZ-PP | Ca, Sr, Ba, Ra
 aug-cc-pCVQZ-PP | Ca, Sr, Ba, Ra
-cc-pwCVQZ-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra, U
-aug-cc-pwCVQZ-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra
-cc-pVQZ-DK | H–Ar, Sc–Kr, In–Xe, Tl–Rn
-aug-cc-pVQZ-DK | H–Ar, Sc–Kr, In–Xe, Tl–Rn
-cc-pwCVQZ-DK | H–Be, Na–Mg, Ca–Zn, In–Xe, Tl–Rn
-aug-cc-pwCVQZ-DK | H–Be, Na–Mg, Sc–Zn, In–Xe, Tl–Rn
-cc-pVQZ-F12 | H–Ar
-cc-pVQZ-PP-F12 | Ga–Kr, In–Xe, Tl–Rn
-cc-pCVQZ-F12 | Li–Ar
-Partridge-3 | H, Li–Zn
-x2c-QZVPall | H–Rn
-x2c-QZVPPall | H–Rn
-x2c-QZVPall-2c | H–Rn
-x2c-QZVPPall-2c | H–Rn
-x2c-QZVPall-s | H–Rn
-x2c-QZVPPall-s | H–Rn
-x2c-QZVPall-2c-s | H–Rn
-x2c-QZVPPall-2c-s | H–Rn
-SARC2-DKH-QZV | La–Lu
-SARC2-DKH-QZVP | La–Lu
-SARC2-ZORA-QZV | La–Lu
-SARC2-ZORA-QZVP | La–Lu
-ANO-RCC-QZP | H–Cm
+cc-pwCVQZ-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra, U
+aug-cc-pwCVQZ-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra
+cc-pVQZ-DK | H-Ar, Sc-Kr, In-Xe, Tl-Rn
+aug-cc-pVQZ-DK | H-Ar, Sc-Kr, In-Xe, Tl-Rn
+cc-pwCVQZ-DK | H-Be, Na-Mg, Ca-Zn, In-Xe, Tl-Rn
+aug-cc-pwCVQZ-DK | H-Be, Na-Mg, Sc-Zn, In-Xe, Tl-Rn
+cc-pVQZ-F12 | H-Ar
+cc-pVQZ-PP-F12 | Ga-Kr, In-Xe, Tl-Rn
+cc-pCVQZ-F12 | Li-Ar
+Partridge-3 | H, Li-Zn
+x2c-QZVPall | H-Rn
+x2c-QZVPPall | H-Rn
+x2c-QZVPall-2c | H-Rn
+x2c-QZVPPall-2c | H-Rn
+x2c-QZVPall-s | H-Rn
+x2c-QZVPPall-s | H-Rn
+x2c-QZVPall-2c-s | H-Rn
+x2c-QZVPPall-2c-s | H-Rn
+SARC2-DKH-QZV | La-Lu
+SARC2-DKH-QZVP | La-Lu
+SARC2-ZORA-QZV | La-Lu
+SARC2-ZORA-QZVP | La-Lu
+ANO-RCC-QZP | H-Cm
 
 #! penta- splitting
-5-21G | H–Ne
-cc-pV5Z | H–Ar, Ca–Kr
-aug-cc-pV5Z | H–Ar, Sc–Kr
-cc-pV5(+d)Z | Na–Ar
-may-cc-pV(5+d)Z | H–Ar
-jun-cc-pV(5+d)Z | H–Ar
-jul-cc-pV(5+d)Z | H–Ar
-maug-cc-pV(5+d)Z | H–Ar
-aug-cc-pV5(+d)Z | Al–Ar
-cc-pCV5Z | H–Ar, Ca, Ga–Kr
-aug-cc-pCV5Z | H–Ar, Ga–Kr
-cc-pwCV5Z | H–Ar, Ca–Kr
-aug-cc-pwCV5Z | H–Ar, Sc–Kr
-cc-pV5Z-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra
-aug-cc-pV5Z-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra
+5-21G | H-Ne
+cc-pV5Z | H-Ar, Ca-Kr
+aug-cc-pV5Z | H-Ar, Sc-Kr
+cc-pV5(+d)Z | Na-Ar
+may-cc-pV(5+d)Z | H-Ar
+jun-cc-pV(5+d)Z | H-Ar
+jul-cc-pV(5+d)Z | H-Ar
+maug-cc-pV(5+d)Z | H-Ar
+aug-cc-pV5(+d)Z | Al-Ar
+cc-pCV5Z | H-Ar, Ca, Ga-Kr
+aug-cc-pCV5Z | H-Ar, Ga-Kr
+cc-pwCV5Z | H-Ar, Ca-Kr
+aug-cc-pwCV5Z | H-Ar, Sc-Kr
+cc-pV5Z-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra
+aug-cc-pV5Z-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra
 cc-pCV5Z-PP | Ca, Sr, Ba, Ra
 aug-cc-pCV5Z-PP | Ca, Sr, Ba, Ra
-cc-pwCV5Z-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra
-aug-cc-pwCV5Z-PP | Ca, Cu–Kr, Sr–Xe, Ba, Hf–Rn, Ra
-cc-pV5Z-DK | H–Ar, Sc–Kr
-aug-cc-pV5Z-DK | H–Ar, Sc–Kr
-cc-pwCV5Z-DK | H–Be, Na–Mg, Ca–Zn
-aug-cc-pwCV5Z-DK | H–Be, Na–Mg, Sc–Zn
-HGBS-5 | H–Og
-HGBSP1-5 | H–Og
-HGBSP2-5 | H–Og
-HGBSP3-5 | H–Og
-AHGBS-5 | H–Og
-AHGBSP1-5 | H–Og
-AHGBSP2-5 | H–Og
-AHGBSP3-5 | H–Og
+cc-pwCV5Z-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra
+aug-cc-pwCV5Z-PP | Ca, Cu-Kr, Sr-Xe, Ba, Hf-Rn, Ra
+cc-pV5Z-DK | H-Ar, Sc-Kr
+aug-cc-pV5Z-DK | H-Ar, Sc-Kr
+cc-pwCV5Z-DK | H-Be, Na-Mg, Ca-Zn
+aug-cc-pwCV5Z-DK | H-Be, Na-Mg, Sc-Zn
+HGBS-5 | H-Og
+HGBSP1-5 | H-Og
+HGBSP2-5 | H-Og
+HGBSP3-5 | H-Og
+AHGBS-5 | H-Og
+AHGBSP1-5 | H-Og
+AHGBSP2-5 | H-Og
+AHGBSP3-5 | H-Og
 
 #! hexa-splitting
-cc-pV6Z | H–He, Be–Ne, Al–Ar
-aug-cc-pV6Z | H–He, B–Ne, Al–Ar
-cc-pCV6Z | H–He, B–Ne, Al–Ar
-aug-cc-pCV6Z | H–He, B–Ne, Al–Ar
+cc-pV6Z | H-He, Be-Ne, Al-Ar
+aug-cc-pV6Z | H-He, B-Ne, Al-Ar
+cc-pCV6Z | H-He, B-Ne, Al-Ar
+aug-cc-pCV6Z | H-He, B-Ne, Al-Ar
