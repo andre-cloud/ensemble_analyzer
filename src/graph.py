@@ -377,8 +377,7 @@ class Compared(Graph):
         return FACTOR_EV_NM / nm
 
 
-def main_graph(ensemble, p, log, invert):
-    shift, fwhm = None, None
+def main_graph(ensemble, p, log, invert, shift = None, fwhm = None):
     for j in ["IR", "VCD", "UV", "ECD"]:
         graph = Computed(
             ensemble,
