@@ -1,3 +1,5 @@
+#!/opt/miniconda3/bin/python
+
 from src.launch import restart
 from src.logger import create_log
 from src.protocol import Protocol
