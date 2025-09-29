@@ -43,7 +43,7 @@ protocol = load_protocol(json.load(open('protocol_dump.json')), log)
 
 
 if args.read_boltz: 
-    print(args.read_boltz, [p.number for p in protocol])
+
     assert str(args.read_boltz) in [p.number for p in protocol], f"{args.read_boltz} is not a specified step in the protocol file"
     for conf in ensemble:
         if not conf.active: continue

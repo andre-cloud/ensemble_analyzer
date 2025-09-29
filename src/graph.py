@@ -147,7 +147,7 @@ class Computed(Graph):
             self.log.debug(f"Shift: {shift:.4f}, FWHM: {fwhm:.4f}, RMSD: {d:.6f}")
             return d  # Minimizzare questa funzione
 
-        sb, fb = 0.6, 0.3
+        sb, fb = 0.4, 0.3
         ss, sf = 0, self.DEFs[self.graph_type]
 
         if hasattr(self, "shift"):
@@ -166,7 +166,7 @@ class Computed(Graph):
             initial_guess,
             bounds=bounds,
             options={"maxiter": 1000},
-            method="L-BFGS-B",
+            method="Powell",
         )
         # result = minimize(wrapper, initial_guess, bounds=bounds, options={'maxiter': 1000}, method='Nelder-Mead')
 
@@ -180,7 +180,9 @@ class Computed(Graph):
             self.y = self.CONV[self.graph_type](x, self.y_comp, self.fwhm)
             self.y = self.normalize()
             self.log.info(
-                f"Optimal shift: {self.shift:.3f}, Optimal FWHM: {self.fwhm:.3f}, Similarity: {(1-result.fun)*100:.2f}%"
+                f"{'='*20}\nResults for {self.graph_type} graph calcualted in Protocol {self.protocol.number}\n{'='*20}\n" +
+                f"Optimal shift: {self.shift:.3f}, Optimal FWHM: {self.fwhm:.3f}, Similarity: {(1-result.fun)*100:.2f}%\n"+
+                "="*20+'\n'
             )
         else:
             self.log.error("Optimization failed. Convolution with defaul values")
