@@ -71,7 +71,7 @@ def rmsd(check, ref, exclude_H=False) -> float:
     ref_pos, check_pos = ref.distance_matrix(exclude_H), check.distance_matrix(exclude_H)
     eva_ref, _ = np.linalg.eig(ref_pos)
     eva_check, _ = np.linalg.eig(check_pos)
-    return np.sqrt(1 / len(eva_ref) * (eva_ref-eva_check)**2)
+    return np.sqrt(1 / len(eva_ref) * np.sum((eva_ref-eva_check)**2))
 
 
 def dict_compare(check, conf_ref, deactivate=True) -> dict:  # pragma: no cover
