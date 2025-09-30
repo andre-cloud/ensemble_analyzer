@@ -97,9 +97,9 @@ class Conformer:
     def distance_matrix(self, exclude_H=False):
         if exclude_H:
             mask = self.atoms != 'H'
-            geo = self.last_geometry[mask]
+            geo = np.array(self.last_geometry)[mask]
         else:
-            geo = self.last_geometry
+            geo = np.array(self.last_geometry)
 
         dm = np.linalg.norm(geo[:, None, :] - geo[None, :, :], axis=-1)
         return dm
