@@ -116,7 +116,7 @@ class Computed(Graph):
 
     def retrive_data(self):
         self.y_comp = np.zeros(self.x.shape)
-        f = self.CONV[self.graph_type]
+        conv_func = self.CONV[self.graph_type]
         for i in self.conformers:
             if not i.active:
                 continue
@@ -125,7 +125,7 @@ class Computed(Graph):
             
             pop = i.energies[self.protocol]["Pop"] if not self.read_pop else i.energies[self.read_pop]["Pop"]
 
-            conv_graph = f(x, y, self.DEFs[self.graph_type])
+            conv_graph = conv_func(x, y, self.DEFs[self.graph_type])
 
             with open(os.path.join(i.folder,f'p{self.protocol}'), "w") as f:
                 for x, y in zip(self.x, self.y_comp):
