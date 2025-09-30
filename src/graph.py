@@ -127,7 +127,7 @@ class Computed(Graph):
 
             conv_graph = conv_func(x, y, self.DEFs[self.graph_type])
 
-            with open(os.path.join(i.folder,f'p{self.protocol}'), "w") as f:
+            with open(os.path.join(i.folder,f'p{self.protocol}_{self.graph_type}.xy'), "w") as f:
                 for x, y in zip(self.x, self.y_comp):
                     f.write(f"{x:.6f} {y:.6f}\n")
 
