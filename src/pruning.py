@@ -86,7 +86,7 @@ def dict_compare(check, conf_ref, deactivate=True) -> dict:  # pragma: no cover
         "∆E [kcal/mol]": check.get_energy - conf_ref.get_energy,
         "∆B [e-3 cm-1]": np.abs(check.rotatory - conf_ref.rotatory) * 10**3,
         "∆m [Debye]": np.abs(check.moment - conf_ref.moment),
-        "RMSD [Å]": rmsd(check, conf_ref),
+        "λi RMSD": rmsd(check, conf_ref),
         "Deactivate": deactivate,
     }
 
