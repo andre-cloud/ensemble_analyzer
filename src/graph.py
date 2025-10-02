@@ -18,7 +18,7 @@ class Graph:
     START = {"IR": 0.1, "VCD": 0.1, "UV": 0.1, "ECD": 0.1}  # cm-1  # cm-1  # eV  # eV
     END = {"IR": 6000, "VCD": 6000, "UV": 9, "ECD": 9}  # cm-1  # cm-1  # eV  # eV
 
-    def __init__(self, graph_type, log=None, protocol=None, definition=4, norm=1, read_pop = None):
+    def __init__(self, graph_type, log=None, protocol=None, definition=4, norm=1, read_pop = None, **kwargs):
         assert graph_type in list(self.START.keys())
 
         self.protocol = protocol
