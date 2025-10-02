@@ -165,7 +165,9 @@ class Computed(Graph):
             sf = self.fwhm
 
         initial_guess = [ss, sf]  # BLUE SHIFT NEGATIVE
-        # Gestione separata di shift e fwhm per i bounds
+
+        print(type(ss))
+
         # Shift
         if isinstance(ss, list):
             shift_bounds = (ss[0], ss[1])
