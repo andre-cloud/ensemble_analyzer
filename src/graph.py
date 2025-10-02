@@ -76,12 +76,10 @@ class Computed(Graph):
         "ECD": 0.25,  # FWHM in eV
     }
 
-    def __init__(self, conf, invert, convolution=None, shift=None, fwhm=None, **kwargs):
+    def __init__(self, conf, invert, convolution=None, shift=None, fwhm=None, read_pop=None, **kwargs):
         
         # kwargs.update({'shift': shift, 'fwmh':fwhm})
         super().__init__(**kwargs)
-
-        print(kwargs)
 
         self.invert = invert
         self.g = convolution if convolution else self.graph_type
@@ -95,15 +93,14 @@ class Computed(Graph):
         ):
             return
 
-        self.shift = shift
-        self.fwhm = fwhm
+        self.shift = shift or None
+        self.fwhm = fwhm or None
 
         self.retrive_data()
 
         self.auto = os.path.exists(
             os.path.join(os.getcwd(), f"{self.graph_type.lower()}_ref.dat")
         )
-
         
         if self.auto:
             kwargs.update({'log': self.log})
@@ -168,7 +165,6 @@ class Computed(Graph):
 
         initial_guess = [ss, sf]  # BLUE SHIFT NEGATIVE
 
-        print('Autoconvolute')
         print(f'{self.shift=}  {type(self.shift)=}')
         print(f'{self.fwhm=}  {type(self.fwhm)=}')
 
@@ -182,6 +178,9 @@ class Computed(Graph):
             shift_bounds = (-sb + ss, sb + ss)
         elif self.graph_type in ["IR", "VCD"]:
             shift_bounds = (0.5, 1)
+
+        print(f"{self.shift=}", type(self.shift))
+        print(f"{ss=}", type(ss))
 
 
         # FWHM
@@ -413,7 +412,6 @@ class Compared(Graph):
 
 def main_graph(ensemble, p, log, invert, shift = None, fwhm = None, read_pop = None):
     for j in ["IR", "VCD", "UV", "ECD"]:
-        print('Main Graph')
         print(f'{shift=}, {fwhm=}')
         graph = Computed(
             ensemble,
