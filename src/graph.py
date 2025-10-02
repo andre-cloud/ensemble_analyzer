@@ -77,7 +77,7 @@ class Computed(Graph):
     }
 
     def __init__(self, conf, invert, convolution=None, shift=None, fwhm=None, read_pop=None, **kwargs):
-        super().__init__(**kwargs)
+        super().__init__(**kwargs.update({'shift': shift, 'fwmh':fwhm}))
 
         self.invert = invert
         self.g = convolution if convolution else self.graph_type
@@ -178,7 +178,7 @@ class Computed(Graph):
         print(f"{self.shift=}", type(self.shift))
         print(f"{ss=}", type(ss))
 
-        
+
         # FWHM
         if isinstance(self.fwhm, list):
             fwhm_bounds = (self.fwhm[0], self.fwhm[1])
