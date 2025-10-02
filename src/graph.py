@@ -93,10 +93,8 @@ class Computed(Graph):
         ):
             return
 
-        if shift:
-            self.shift = shift
-        if fwhm:
-            self.fwhm = fwhm
+        self.shift = shift or None
+        self.fwhm = fwhm or None
 
         self.retrive_data()
 
