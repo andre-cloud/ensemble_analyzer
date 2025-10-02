@@ -161,6 +161,7 @@ class Computed(Graph):
 
         if hasattr(self, "shift"):
             ss = self.shift
+            print(ss)
         if hasattr(self, "fwhm"):
             sf = self.fwhm
 
@@ -168,7 +169,7 @@ class Computed(Graph):
         # Gestione separata di shift e fwhm per i bounds
         # Shift
         if isinstance(ss, list):
-            shift_bounds = ss
+            shift_bounds = tuple(ss)
         elif isinstance(ss, (float, int)):
             shift_bounds = (ss, ss)
         elif self.graph_type in ["UV", "ECD"]:
@@ -187,6 +188,7 @@ class Computed(Graph):
             fwhm_bounds = (0.2, sf + fb)
 
         bounds = [shift_bounds, fwhm_bounds]
+        print(bounds)
 
         result = minimize(
             wrapper,
