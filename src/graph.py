@@ -166,19 +166,22 @@ class Computed(Graph):
 
         initial_guess = [ss, sf]  # BLUE SHIFT NEGATIVE
 
-        print(f"{ss=}", type(ss))
 
         # Shift
-        if isinstance(ss, list):
-            shift_bounds = (ss[0], ss[1])
+        if isinstance(self.shift, list):
+            shift_bounds = (self.shift[0], self.shift[1])
         elif self.graph_type in ["UV", "ECD"]:
             shift_bounds = (-sb + ss, sb + ss)
         elif self.graph_type in ["IR", "VCD"]:
             shift_bounds = (0.5, 1)
 
+        print(f"{self.shift=}", type(self.shift))
+        print(f"{ss=}", type(ss))
+
+        
         # FWHM
-        if isinstance(sf, list):
-            fwhm_bounds = (sf[0], sf[1])
+        if isinstance(self.fwhm, list):
+            fwhm_bounds = (self.fwhm[0], self.fwhm[1])
         else:
             fwhm_bounds = (0.2, sf + fb)
 
