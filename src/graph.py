@@ -72,8 +72,8 @@ class Computed(Graph):
     DEFs = {
         "IR": 50,  # σ in cm-1
         "VCD": 50,  # σ in cm-1
-        "UV": 0.4,  # FWHM in eV
-        "ECD": 0.4,  # FWHM in eV
+        "UV": 0.25,  # FWHM in eV
+        "ECD": 0.25,  # FWHM in eV
     }
 
     def __init__(self, conf, invert, convolution=None, shift=None, fwhm=None, read_pop=None, **kwargs):
@@ -93,8 +93,8 @@ class Computed(Graph):
         ):
             return
 
-        self.shift = shift or None
-        self.fwhm = fwhm or None
+        self.shift = shift
+        self.fwhm = fwhm
 
         self.retrive_data()
 
@@ -166,6 +166,7 @@ class Computed(Graph):
 
         initial_guess = [ss, sf]  # BLUE SHIFT NEGATIVE
 
+        print('Autoconvolute')
         print(f'{self.shift=}  {type(self.shift)=}')
         print(f'{self.fwhm=}  {type(self.fwhm)=}')
 
@@ -179,9 +180,6 @@ class Computed(Graph):
             shift_bounds = (-sb + ss, sb + ss)
         elif self.graph_type in ["IR", "VCD"]:
             shift_bounds = (0.5, 1)
-
-        print(f"{self.shift=}", type(self.shift))
-        print(f"{ss=}", type(ss))
 
 
         # FWHM
@@ -413,6 +411,7 @@ class Compared(Graph):
 
 def main_graph(ensemble, p, log, invert, shift = None, fwhm = None, read_pop = None):
     for j in ["IR", "VCD", "UV", "ECD"]:
+        print('Main Graph')
         print(f'{shift=}, {fwhm=}')
         graph = Computed(
             ensemble,
