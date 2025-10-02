@@ -165,10 +165,28 @@ class Computed(Graph):
             sf = self.fwhm
 
         initial_guess = [ss, sf]  # BLUE SHIFT NEGATIVE
-        if self.graph_type in ["UV", "ECD"]:
-            bounds = [(-sb+ss, sb+ss), (0.2, sf + fb)] # se impostato lo shift, allora i bounders si centrano sullo shift.
+        # Gestione separata di shift e fwhm per i bounds
+        # Shift
+        if isinstance(ss, list):
+            shift_bounds = ss
+        elif isinstance(ss, (float, int)):
+            shift_bounds = (ss, ss)
+        elif self.graph_type in ["UV", "ECD"]:
+            shift_bounds = (-sb + ss, sb + ss)
         elif self.graph_type in ["IR", "VCD"]:
-            bounds = [(0.5, 1), (0.2, sf + fb)]
+            shift_bounds = (0.5, 1)
+        else:
+            shift_bounds = (ss, ss)
+
+        # FWHM
+        if isinstance(sf, list):
+            fwhm_bounds = sf
+        elif isinstance(sf, (float, int)):
+            fwhm_bounds = (sf, sf)
+        else:
+            fwhm_bounds = (0.2, sf + fb)
+
+        bounds = [shift_bounds, fwhm_bounds]
 
         result = minimize(
             wrapper,
