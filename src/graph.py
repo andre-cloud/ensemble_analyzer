@@ -104,6 +104,7 @@ class Computed(Graph):
 
         
         if self.auto:
+            kwargs.update({'log': self.log})
             self.ref = Experimental(**kwargs)
             self.autoconvolute()
         else:
