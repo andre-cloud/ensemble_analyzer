@@ -163,7 +163,6 @@ class Computed(Graph):
         if hasattr(self, "fwhm"):
             sf = self.fwhm
 
-        initial_guess = [ss, sf]  # BLUE SHIFT NEGATIVE
 
         print(f'{self.shift=}  {type(self.shift)=}')
         print(f'{self.fwhm=}  {type(self.fwhm)=}')
@@ -172,6 +171,7 @@ class Computed(Graph):
         # Shift
         if type(self.shift) == list:
             shift_bounds = (self.shift[0], self.shift[1])
+            ss = ss[0]
         elif type(self.shift) == float:
             shift_bounds = (self.shift, self.shift)
         elif self.graph_type in ["UV", "ECD"]:
@@ -186,11 +186,13 @@ class Computed(Graph):
         # FWHM
         if type(self.fwhm) == list:
             fwhm_bounds = (self.fwhm[0], self.fwhm[1])
+            sf = sf[0]
         elif type(self.fwhm) == float:
             fwhm_bounds = (self.fwhm, self.fwhm)
         else:
             fwhm_bounds = (0.2, sf + fb)
 
+        initial_guess = [ss, sf]  # BLUE SHIFT NEGATIVE
         bounds = [shift_bounds, fwhm_bounds]
         print(bounds)
 
