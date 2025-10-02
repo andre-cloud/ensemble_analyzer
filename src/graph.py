@@ -166,6 +166,9 @@ class Computed(Graph):
 
         initial_guess = [ss, sf]  # BLUE SHIFT NEGATIVE
 
+        print(f'{self.shift=}  {type(self.shift)=}')
+        print(f'{self.fwhm=}  {type(self.fwhm)=}')
+
 
         # Shift
         if isinstance(self.shift, list):
