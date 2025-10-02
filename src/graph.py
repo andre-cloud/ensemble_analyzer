@@ -76,10 +76,12 @@ class Computed(Graph):
         "ECD": 0.25,  # FWHM in eV
     }
 
-    def __init__(self, conf, invert, convolution=None, shift=None, fwhm=None, read_pop=None, **kwargs):
+    def __init__(self, conf, invert, convolution=None, shift=None, fwhm=None, **kwargs):
         
         # kwargs.update({'shift': shift, 'fwmh':fwhm})
-        # super().__init__(**kwargs)
+        super().__init__(**kwargs)
+
+        print(kwargs)
 
         self.invert = invert
         self.g = convolution if convolution else self.graph_type
