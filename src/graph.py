@@ -114,8 +114,8 @@ class Computed(Graph):
             if self.invert: 
                 self.y *= -1
             self.y = self.normalize()
-            self.shift = 0
-            self.fwhm = self.DEFs[self.graph_type]
+            # self.shift = 0
+            # self.fwhm = self.DEFs[self.graph_type]
 
     def retrive_data(self):
         self.y_comp = np.zeros(self.x.shape)
