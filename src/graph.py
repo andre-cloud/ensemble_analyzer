@@ -164,10 +164,6 @@ class Computed(Graph):
             sf = self.fwhm
 
 
-        print(f'{self.shift=}  {type(self.shift)=}')
-        print(f'{self.fwhm=}  {type(self.fwhm)=}')
-
-
         # Shift
         if type(self.shift) == list:
             shift_bounds = (self.shift[0], self.shift[1])
@@ -178,10 +174,6 @@ class Computed(Graph):
             shift_bounds = (-sb + ss, sb + ss)
         elif self.graph_type in ["IR", "VCD"]:
             shift_bounds = (0.5, 1)
-
-        print(f"{self.shift=}", type(self.shift))
-        print(f"{ss=}", type(ss))
-
 
         # FWHM
         if type(self.fwhm) == list:
@@ -194,7 +186,6 @@ class Computed(Graph):
 
         initial_guess = [ss, sf]  # BLUE SHIFT NEGATIVE
         bounds = [shift_bounds, fwhm_bounds]
-        print(bounds)
 
         result = minimize(
             wrapper,
@@ -414,7 +405,6 @@ class Compared(Graph):
 
 def main_graph(ensemble, p, log, invert, shift = None, fwhm = None, read_pop = None):
     for j in ["IR", "VCD", "UV", "ECD"]:
-        print(f'{shift=}, {fwhm=}')
         graph = Computed(
             ensemble,
             invert=(j in CHIRALS) and invert,
