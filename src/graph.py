@@ -78,7 +78,7 @@ class Computed(Graph):
 
     def __init__(self, conf, invert, convolution=None, shift=None, fwhm=None, read_pop=None, **kwargs):
         
-        kwargs.update({'shift': shift, 'fwmh':fwhm})
+        # kwargs.update({'shift': shift, 'fwmh':fwhm})
         super().__init__(**kwargs)
 
         self.invert = invert
@@ -171,8 +171,10 @@ class Computed(Graph):
 
 
         # Shift
-        if isinstance(self.shift, list):
+        if type(self.shift) == list:
             shift_bounds = (self.shift[0], self.shift[1])
+        elif type(self.shift) == float:
+            shift_bounds = (self.shift, self.shift)
         elif self.graph_type in ["UV", "ECD"]:
             shift_bounds = (-sb + ss, sb + ss)
         elif self.graph_type in ["IR", "VCD"]:
@@ -183,8 +185,10 @@ class Computed(Graph):
 
 
         # FWHM
-        if isinstance(self.fwhm, list):
+        if type(self.fwhm) == list:
             fwhm_bounds = (self.fwhm[0], self.fwhm[1])
+        elif type(self.fwhm) == float:
+            fwhm_bounds = (self.fwhm, self.fwhm)
         else:
             fwhm_bounds = (0.2, sf + fb)
 
@@ -409,6 +413,7 @@ class Compared(Graph):
 
 def main_graph(ensemble, p, log, invert, shift = None, fwhm = None, read_pop = None):
     for j in ["IR", "VCD", "UV", "ECD"]:
+        print(f'{shift=}, {fwhm=}')
         graph = Computed(
             ensemble,
             invert=(j in CHIRALS) and invert,
