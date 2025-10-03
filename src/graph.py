@@ -184,7 +184,7 @@ class Computed(Graph):
         else:
             fwhm_bounds = (0.2, sf + fb)
 
-        initial_guess = [ss, sf]  # BLUE SHIFT NEGATIVE
+        initial_guess = [ss, sf]  # RED SHIFT NEGATIVE
         bounds = [shift_bounds, fwhm_bounds]
 
         result = minimize(
