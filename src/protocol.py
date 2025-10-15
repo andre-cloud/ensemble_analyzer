@@ -12,7 +12,7 @@ except ImportError:
 DEBUG = os.getenv("DEBUG")
 
 try:
-    orca_profile = OrcaProfile(command="/opt/orca/6.0.1/orca")
+    orca_profile = OrcaProfile(command="/opt/orca/6.1.0/orca")
 except TypeError:
     orca_profile = None
 except NameError:
