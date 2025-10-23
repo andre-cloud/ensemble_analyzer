@@ -1,6 +1,6 @@
 import json
 import os
-import sys
+import sys, shutil
 from ase.calculators.orca import ORCA
 
 try:
@@ -12,7 +12,7 @@ except ImportError:
 DEBUG = os.getenv("DEBUG")
 
 try:
-    orca_profile = OrcaProfile(command="/opt/orca/6.1.0/orca")
+    orca_profile = OrcaProfile(command=shutil.which("orca"))
 except TypeError:
     orca_profile = None
 except NameError:
