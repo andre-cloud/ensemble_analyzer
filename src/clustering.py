@@ -46,12 +46,12 @@ MARKERS = [
 ]
 
 
-def calc_distance_matrix(coords):
+def calc_distance_matrix(coords, atoms, include_H=True):
     dist = np.zeros((coords.shape[0], coords.shape[1], coords.shape[1]))
     evalue_dist, evector_dist = [], []
 
     for idx, _ in enumerate(coords):
-        c = coords[idx]
+        c = coords[idx] if include_H else coords[idx][atoms!='H']
         dist[idx] = distance_matrix(c, c)
         eva, eve = np.linalg.eig(dist[idx])
         evalue_dist.append(eva)
@@ -86,7 +86,7 @@ def get_best_ncluster(coords):
     return k_range[np.argmax(silhouette_scores)]
 
 
-def calc_pca(confs: list, cluster=False, ncluster: Union[int, None] = None, set = True) -> tuple:
+def calc_pca(confs: list, cluster=False, ncluster: Union[int, None] = None, set = True, include_H = True) -> tuple:
     """
     Function that execute the actual PCA analysis.
     It wants to understand how conformations differ from each other based on their overall Cartesian coordinates
@@ -109,7 +109,7 @@ def calc_pca(confs: list, cluster=False, ncluster: Union[int, None] = None, set 
     energy = np.array([conf.get_energy for conf in confs if conf.active])
     energy -= min(energy)
 
-    evalue_dist, _ = calc_distance_matrix(data)
+    evalue_dist, _ = calc_distance_matrix(data, atoms=confs[0].atoms, include_H=include_H)
 
     # perform PCA analysis with number of components as minimum between number of
     # n. confs and whole geom
@@ -236,7 +236,7 @@ def save_PCA_snapshot(
     return None
 
 
-def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log, set=True) -> None:
+def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log, set=True, include_H=True) -> None:
     """
     Perform a PCA analysis
 
@@ -258,7 +258,7 @@ def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log, set=Tru
     if nc <= 2:
         return None
     pca_scores, clusters, colors, numbers, energy = calc_pca(
-        confs, ncluster=nc, cluster=True, set=set
+        confs, ncluster=nc, cluster=True, set=set, include_H=include_H
     )
     save_PCA_snapshot(fname, title, pca_scores, clusters, colors, numbers, energy)
 
@@ -293,11 +293,12 @@ if __name__ == "__main__":  # pragma: no cover:
     parser = argparse.ArgumentParser()
     parser.add_argument('file', help='Ensemble to be clusterd')
     parser.add_argument('-nc', '--ncluster', help='Number of families to cluster. Defaults 5', default=5, type=int)
+    parser.add_argument('--no-H', help='Exclude hydrogen atoms in the PCA', action='store_false')
     args = parser.parse_args()
 
     # Load the XYZ file
     xyz_file = read_ensemble(args.file, mock.MagicMock(), raw=True)
-    perform_PCA(xyz_file, args.ncluster, "cluster.png", "Cluster", mock.MagicMock())
+    perform_PCA(xyz_file, args.ncluster, "cluster.png", "Cluster", mock.MagicMock(), include_H=args.no_H)
     xyz_file_new = get_ensemble(xyz_file)
     # perform_PCA(
     #     xyz_file_new, 30, "files/test_after.png", "Test After", mock.MagicMock()
