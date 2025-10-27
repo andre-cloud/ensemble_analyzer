@@ -13,6 +13,7 @@ from scipy.interpolate import griddata
 from scipy.spatial import distance_matrix
 
 import sys
+import pickle as pl
 
 
 plt.set_loglevel("error")
@@ -179,10 +180,13 @@ def save_PCA_snapshot(
     """
 
     fig = plt.figure(figsize=(10,8))
-    plt.subplots_adjust(bottom=0.3, right=0.6, left=0.115)
+    if legend:
+        plt.subplots_adjust(bottom=0.3, right=0.6, left=0.115)
     rcParams.update({"figure.autolayout": True})
-
+    
     gs = gridspec.GridSpec(2, 1, height_ratios=[3, 0.1], hspace=0.3)
+    
+
 
     ax = fig.add_subplot(gs[0])
     color_axis = fig.add_subplot(gs[1])
@@ -235,8 +239,12 @@ def save_PCA_snapshot(
         )
     else:
         plt.tight_layout()
-        
-    plt.savefig(fname, dpi=300 )
+
+
+    with open(fname.replace('.png', '.pickle'), 'wb') as f:
+            pl.dump(fig, f)
+
+    plt.savefig(fname, dpi=300)
     return None
 
 
