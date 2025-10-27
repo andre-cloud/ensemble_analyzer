@@ -227,7 +227,7 @@ def save_PCA_snapshot(
         bbox_to_anchor=(1.05, 1.0),
         fancybox=True,
         shadow=True,
-        ncol=3,
+        ncol=min(max(1, len(numbers) // 10), 6),
         borderaxespad=0.0,
         fontsize=6,
     )
