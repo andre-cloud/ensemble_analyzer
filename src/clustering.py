@@ -307,13 +307,14 @@ if __name__ == "__main__":  # pragma: no cover:
     parser.add_argument('-nc', '--ncluster', help='Number of families to cluster. Defaults 5', default=5, type=int)
     parser.add_argument('--no-H', help='Exclude hydrogen atoms in the PCA', action='store_false')
     parser.add_argument('--no-legend', help='Exclude legend from PCA graph', action='store_false')
+    parser.add('--title', help='Title for the PCA graph', Default='Cluster')
     args = parser.parse_args()
 
     # Load the XYZ file
     xyz_file = read_ensemble(args.file, mock.MagicMock(), raw=True)
-    perform_PCA(xyz_file, args.ncluster, "cluster.png", "Cluster", mock.MagicMock(), include_H=args.no_H, legend=args.no_legend)
+
+    perform_PCA(xyz_file, args.ncluster, "cluster.png", args.title, mock.MagicMock(), include_H=args.no_H, legend=args.no_legend)
+
     xyz_file_new = get_ensemble(xyz_file)
-    # perform_PCA(
-    #     xyz_file_new, 30, "files/test_after.png", "Test After", mock.MagicMock()
-    # )
+
     save_snapshot("clustered.xyz", xyz_file_new, mock.MagicMock())
