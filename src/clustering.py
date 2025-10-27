@@ -159,6 +159,7 @@ def save_PCA_snapshot(
     colors: list,
     numbers: list,
     z: list,
+    legend: bool = True
 ):
     """
     Graph and save the image of the PCA analysis
@@ -222,21 +223,22 @@ def save_PCA_snapshot(
 
     ax.set_xlim(x)
     ax.set_ylim(y)
-    ax.legend(
-        loc="upper left",
-        bbox_to_anchor=(1.05, 1.0),
-        fancybox=True,
-        shadow=True,
-        ncol=min(max(1, len(numbers) // 10), 6),
-        borderaxespad=0.0,
-        fontsize=6,
-    )
+    if legend: 
+        ax.legend(
+            loc="upper left",
+            bbox_to_anchor=(1.05, 1.0),
+            fancybox=True,
+            shadow=True,
+            ncol=min(max(1, len(numbers) // 10), 6),
+            borderaxespad=0.0,
+            fontsize=6,
+        )
     # plt.tight_layout()
     plt.savefig(fname, dpi=300)
     return None
 
 
-def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log, set=True, include_H=True) -> None:
+def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log, set=True, include_H=True, legend=True) -> None:
     """
     Perform a PCA analysis
 
@@ -260,7 +262,7 @@ def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log, set=Tru
     pca_scores, clusters, colors, numbers, energy = calc_pca(
         confs, ncluster=nc, cluster=True, set=set, include_H=include_H
     )
-    save_PCA_snapshot(fname, title, pca_scores, clusters, colors, numbers, energy)
+    save_PCA_snapshot(fname, title, pca_scores, clusters, colors, numbers, energy, legend=legend)
 
     return None
 
@@ -294,11 +296,12 @@ if __name__ == "__main__":  # pragma: no cover:
     parser.add_argument('file', help='Ensemble to be clusterd')
     parser.add_argument('-nc', '--ncluster', help='Number of families to cluster. Defaults 5', default=5, type=int)
     parser.add_argument('--no-H', help='Exclude hydrogen atoms in the PCA', action='store_false')
+    parser.add_argument('--no-legend', help='Exclude legend from PCA graph', action='store_false')
     args = parser.parse_args()
 
     # Load the XYZ file
     xyz_file = read_ensemble(args.file, mock.MagicMock(), raw=True)
-    perform_PCA(xyz_file, args.ncluster, "cluster.png", "Cluster", mock.MagicMock(), include_H=args.no_H)
+    perform_PCA(xyz_file, args.ncluster, "cluster.png", "Cluster", mock.MagicMock(), include_H=args.no_H, legend=args.no_legend)
     xyz_file_new = get_ensemble(xyz_file)
     # perform_PCA(
     #     xyz_file_new, 30, "files/test_after.png", "Test After", mock.MagicMock()
