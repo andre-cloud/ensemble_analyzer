@@ -49,8 +49,7 @@ MARKERS = [
 
 def calc_distance_matrix(coords, atoms, include_H=True):
     natoms = coords[0].shape if include_H else coords[0][atoms!='H'].shape
-    print(coords.shape, natoms)
-    dist = np.zeros((coords.shape[0], natoms, natoms))
+    dist = np.zeros((coords.shape[0], natoms[0], natoms[0]))
     evalue_dist, evector_dist = [], []
 
     for idx, _ in enumerate(coords):
