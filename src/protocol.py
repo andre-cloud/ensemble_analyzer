@@ -12,7 +12,8 @@ except ImportError:
 DEBUG = os.getenv("DEBUG")
 
 try:
-    orca_profile = OrcaProfile(command=shutil.which("orca"))
+    ORCA_COMMAND = os.getenv('ORCACOMMAND') or shutil.which("orca")
+    orca_profile = OrcaProfile(command=ORCA_COMMAND)
 except TypeError:
     orca_profile = None
 except NameError:
