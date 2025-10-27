@@ -233,8 +233,10 @@ def save_PCA_snapshot(
             borderaxespad=0.0,
             fontsize=6,
         )
-    # plt.tight_layout()
-    plt.savefig(fname, dpi=300)
+    else:
+        plt.tight_layout()
+        
+    plt.savefig(fname, dpi=300 )
     return None
 
 
