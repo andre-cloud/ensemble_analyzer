@@ -249,7 +249,7 @@ def save_PCA_snapshot(
     return None
 
 
-def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log, set=True, include_H=True, legend=True) -> None:
+def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log, set_=True, include_H=True, legend=True) -> None:
     """
     Perform a PCA analysis
 
@@ -267,12 +267,20 @@ def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log, set=Tru
     :rtype: None
     """
     log.info("Starting PCA analysis")
-    nc = ncluster if len(confs) > ncluster else len(confs) - 1
-    if nc <= 2:
-        return None
+
+    nc = ncluster if len(confs) > ncluster else None
+
+    if nc:
+        log.info(f'\tUsing number_of_cluster={nc}.')
+    else:
+        log.info(f'\tEstimating the best number for clustering.')
+
+    log.info(f'\tThe cluster will be set: {set_}.\t\nPCA will include hydrogen atoms: {include_H}')
+
     pca_scores, clusters, colors, numbers, energy = calc_pca(
-        confs, ncluster=nc, cluster=True, set=set, include_H=include_H
+        confs, ncluster=nc, cluster=True, set=set_, include_H=include_H
     )
+
     save_PCA_snapshot(fname, title, pca_scores, clusters, colors, numbers, energy, legend=legend)
 
     return None

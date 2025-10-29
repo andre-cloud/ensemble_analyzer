@@ -31,7 +31,7 @@ def check_output(label, calc):
 
     file = f"{label}.{regex_parsing[calc]['ext']}"
     if os.path.exists(file):
-        return regex_parsing[calc]["finish"] in tail(file, 5)
+        return regex_parsing[calc]["finish"] in tail(file, 500)
 
     return False
 

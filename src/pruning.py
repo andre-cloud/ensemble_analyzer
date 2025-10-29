@@ -1,16 +1,19 @@
 from ase.build import minimize_rotation_and_translation
 from scipy.constants import R
 from tabulate import tabulate
+
 import numpy as np
 
 
 try:
     from src.ioFile import save_snapshot
     from src.logger import DEBUG, ordinal
+    from src.conformer import Conformer
 except ImportError as e:  # pragma: no cover
     print(e)
     from ioFile import save_snapshot
     from logger import DEBUG, ordinal
+    from conformer import Conformer
 
 
 def cut_over_thr_max(confs: list, number: str, thrGMAX: float, log) -> None:
@@ -53,7 +56,7 @@ def cut_over_thr_max(confs: list, number: str, thrGMAX: float, log) -> None:
     log.info("\n")
 
 
-def rmsd(check, ref, exclude_H=False) -> float:
+def rmsd(check, ref, include_H=False) -> float:
     r"""
     Compute the Root Mean Squared Deviation (**RMSD**) of two geometries based on the distance matrix's eigenvalues.
 
@@ -68,13 +71,13 @@ def rmsd(check, ref, exclude_H=False) -> float:
     :return: RMSD
     :rtype: float
     """
-    ref_pos, check_pos = ref.distance_matrix(exclude_H), check.distance_matrix(exclude_H)
+    ref_pos, check_pos = ref.distance_matrix(include_H), check.distance_matrix(include_H)
     eva_ref, _ = np.linalg.eig(ref_pos)
     eva_check, _ = np.linalg.eig(check_pos)
     return np.sqrt(1 / len(eva_ref) * np.sum((eva_ref-eva_check)**2))
 
 
-def dict_compare(check, conf_ref, deactivate=True) -> dict:  # pragma: no cover
+def dict_compare(check, conf_ref, include_H, deactivate=True, RMSD=None) -> dict:  # pragma: no cover
     """
     Create a default dictionary for the comparison
 
@@ -86,12 +89,12 @@ def dict_compare(check, conf_ref, deactivate=True) -> dict:  # pragma: no cover
         "∆E [kcal/mol]": check.get_energy - conf_ref.get_energy,
         "∆B [e-3 cm-1]": np.abs(check.rotatory - conf_ref.rotatory) * 10**3,
         "∆m [Debye]": np.abs(check.moment - conf_ref.moment),
-        "λi RMSD": rmsd(check, conf_ref),
+        "λi RMSD": RMSD if RMSD else rmsd(check, conf_ref, include_H),
         "Deactivate": deactivate,
     }
 
 
-def check(check, conf_ref, protocol, controller: dict) -> bool:
+def check_dE_dB(check, conf_ref, protocol, controller: dict, include_H:bool) -> bool:
     """
     Control conformer against a reference. Both the following asserts MUST be matched to deactivate the conformer:
 
@@ -119,7 +122,7 @@ def check(check, conf_ref, protocol, controller: dict) -> bool:
 
     l = len(controller)
 
-    controller[l] = dict_compare(check, conf_ref, deactivate=False)
+    controller[l] = dict_compare(check, conf_ref, deactivate=False,include_H=include_H)
 
     if (
         controller[l]["∆E [kcal/mol]"] < protocol.thrG
@@ -128,6 +131,39 @@ def check(check, conf_ref, protocol, controller: dict) -> bool:
         check.active = False
         check.diactivated_by = conf_ref.number
         controller[l] = dict_compare(check, conf_ref)
+        return True
+
+    controller.pop(l)
+
+    return False
+
+def check_enantiomer(check, ref, protocol, controller: dict) -> bool:
+    """Check if two conformers are enatiomeric conformations
+
+    Args:
+        :param check: conformer to be compared
+        :type check: Conformer
+        :param ref: reference
+        :type ref: Conformer
+        :param protocol: protocol in order to gain the thresholds
+        :type protocol: Protocol
+        :param controller: tracker of the deactivated conformers
+        :type controller: dict
+
+    Returns:
+        :return: Returns True if the two conformers are enantiomers
+        :type: bool
+    """
+
+    l = len(controller)
+
+    RMSD = rmsd(check, ref, include_H=False)
+    controller[l] = dict_compare(check, ref, deactivate=False, include_H=False, RMSD=RMSD)
+
+    if RMSD < protocol.thrRMSD_enantio:
+        check.active = False
+        check.diactivated_by = ref.number
+        controller[l] = dict_compare(check, ref)
         return True
 
     controller.pop(l)
@@ -160,7 +196,7 @@ def refactor_dict(controller: dict) -> dict:
     return d
 
 
-def check_ensemble(confs: list, protocol, log) -> list:
+def check_ensemble(confs: list, protocol, log, include_H, exclude_enantiomers) -> list:
     """
     Check the ensemble:
 
@@ -180,16 +216,17 @@ def check_ensemble(confs: list, protocol, log) -> list:
 
     if protocol.graph:
         log.info(
-            f"Since graph calculation is detected in this part ({ordinal(int(protocol.number))}), PRUNING NOT EXECUTED"
+            f"Graph calculation is detected in this part ({ordinal(int(protocol.number))}), PRUNING NOT EXECUTED"
         )
         return confs
 
     if protocol.no_prune:
         log.info(
-            f"Since no prune setting is detected in this part ({ordinal(int(protocol.number))}), PRUNING NOT EXECUTED"
+            f"No prune setting is detected in this part ({ordinal(int(protocol.number))}), PRUNING NOT EXECUTED"
         )
         return confs
 
+    # Energy Thresholds
     cut_over_thr_max(confs, protocol.number, protocol.thrGMAX, log)
 
     if DEBUG:
@@ -197,11 +234,23 @@ def check_ensemble(confs: list, protocol, log) -> list:
 
     controller = {}
 
-    for idx, i in enumerate(confs):
-        if not i.active:
+    # OneToOne CHECK
+    for idx, check in enumerate(confs):
+        if not check.active:
             continue  # Not check the non active conformers
+
+        mirror = check.last_geometry.copy()
+        mirror[...,2] *= -1
+        check_mirror = Conformer.load_raw(check.__dict__)
+        check_mirror.last_geometry = mirror
+
         for j in range(0, idx):
-            if check(i, confs[j], protocol, controller):
+
+            if exclude_enantiomers: 
+                if check_enantiomer(check=check_mirror, conf_ref=confs[j], controller=controller):
+                    break
+
+            if check_dE_dB(check=check, conf_ref=confs[j], protocol=protocol, controller=controller, include_H=include_H):
                 break
 
     controller = refactor_dict(controller)

@@ -20,7 +20,7 @@ import datetime
 import logging
 from tabulate import tabulate
 import os
-from typing import Union
+from typing import Union, List
 import shutil
 
 MAX_TRY = 5
@@ -103,7 +103,7 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
     )
 
 
-def run_protocol(conformers, p, temperature, cpu, log) -> None:
+def run_protocol(conformers, p, temperature, cpu, log, include_H, exclude_enantiomers) -> None:
     """
     Run the protocol for each conformer
 
@@ -150,30 +150,34 @@ def run_protocol(conformers, p, temperature, cpu, log) -> None:
 
     if p.cluster and DEBUG: 
         perform_PCA(
-            [i for i in conformers if i.active],
-            5,
-            f"PCA_before_pruning_protocol_{p.number}.png",
-            f"PCA before pruning protocol {p.number}",
-            log,
-            set=False
+            confs = [i for i in conformers if i.active],
+            ncluster = p.cluster if type(p.cluster) is int else None,
+            fname = f"PCA_before_pruning_protocol_{p.number}.png",
+            title = f"PCA before pruning protocol {p.number}",
+            log = log,
+            set = False,
+            include_H  = include_H
         )
     if DEBUG:
         create_summary("Summary", conformers, log)
-        conformers = check_ensemble(conformers, p, log)
+
     
     log.debug("Start Pruning")
+
+    conformers = check_ensemble(conformers, p, log, include_H, exclude_enantiomers)
     conformers = sort_conformers_by_energy(conformers, temperature)
-    # conformers = sort_conformers_by_energy(conformers, temperature)
+
 
     save_snapshot(f"ensemble_after_{p.number}.xyz", conformers, log)
 
     if p.cluster:
         perform_PCA(
-            [i for i in conformers if i.active],
-        p.cluster if type(p.cluster) is int else 5,
-            f"PCA_after_pruning_protocol_{p.number}.png",
-            f"PCA after pruning protocol {p.number}",
-            log,
+            confs = [i for i in conformers if i.active],
+            ncluster = p.cluster if type(p.cluster) is int else None,
+            fname = f"PCA_after_pruning_protocol_{p.number}.png",
+            title = f"PCA after pruning protocol {p.number}",
+            log = log,
+            include_H  = include_H
         )
     if type(p.cluster) is int:
         conformers = get_ensemble(conformers)
@@ -253,9 +257,11 @@ def start_calculation(
     log,
     final_lambda=800.0,
     definition=4,
-    FWHM: Union[None, float] = None,
-    shift: Union[None, float] = None,
+    FWHM: Union[None, float, List[float]] = None,
+    shift: Union[None, float, List[float]] = None,
     invert=False,
+    include_H=True,
+    exclude_enantiomers=False,
 ) -> None:
     """
     Main calculation loop
@@ -272,6 +278,10 @@ def start_calculation(
     :type start_from: int
     :param log: logger instance
     :type log: logger
+    :param include_H: include the hydrogen atoms in the PCA and RSMD
+    :type include_H: bool
+    :param exclude_enantiomers: exclude enantiomeric conformers
+    :type exclude_enantiomers: bool
 
     :return: None
     """
@@ -284,7 +294,7 @@ def start_calculation(
         with open("last_protocol", "w") as f:
             f.write(str(p.number))
 
-        run_protocol(conformers, p, temperature, cpu, log)
+        run_protocol(conformers, p, temperature, cpu, log, include_H, exclude_enantiomers)
 
         log.debug("Getting data for graph")
         get_data_for_graph(conformers=conformers, protocol=p, log=log)
@@ -466,6 +476,8 @@ def main():
             "fwhm": args.fwhm,
             "shift": args.shift,
             "invert": args.invert,
+            "include_H" : not args.exclude_H,
+            "exclude_enantiomers" : args.exclude_enantiomers,
         }
         json.dump(settings, open("settings.json", "w"), indent=4)
 
@@ -476,13 +488,6 @@ def main():
         else ".".join(settings.get("output", args.output).split(".")[:-1])
         + "_restart.out"
     )
-    cpu = settings.get("cpu", args.cpu)
-    temperature = settings.get("temperature", args.temperature)
-    final_lambda = settings.get("final_lambda", 800)
-    definition = settings.get("definition", 4)
-    fwhm = settings.get("fwhm", None)
-    shift = settings.get("shift", None)
-    invert = settings.get("invert", False)
 
     # initiate the log
     log = create_log(output)
@@ -514,15 +519,17 @@ def main():
     start_calculation(
         conformers=conformers,
         protocol=protocol,
-        cpu=cpu,
-        temperature=temperature,
         start_from=int(start_from),
         log=log,
-        final_lambda=final_lambda,
-        definition=definition,
-        FWHM=fwhm,
-        shift=shift,
-        invert=invert,
+        cpu = settings.get("cpu", args.cpu),
+        temperature = settings.get("temperature", args.temperature),
+        final_lambda = settings.get("final_lambda", 800),
+        definition = settings.get("definition", 4),
+        fwhm = settings.get("fwhm", None),
+        shift = settings.get("shift", None),
+        invert = settings.get("invert", False),
+        include_H = settings.get("include_H", True),
+        exclude_enantiomers = settings.get("exclude_enantiomers", False)
     )
 
     for j in ["IR", "VCD", "UV", "ECD"]:

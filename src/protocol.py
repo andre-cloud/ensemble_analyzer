@@ -1,24 +1,10 @@
 import json
 import os
-import sys, shutil
-from ase.calculators.orca import ORCA
 
-try:
-    from ase.calculators.orca import OrcaProfile
-except ImportError:
-    pass
+from src._calculators.base import CALCULATOR_REGISTRY
 
 
 DEBUG = os.getenv("DEBUG")
-
-try:
-    ORCA_COMMAND = os.getenv('ORCACOMMAND') or shutil.which("orca")
-    orca_profile = OrcaProfile(command=ORCA_COMMAND)
-except TypeError:
-    orca_profile = None
-except NameError:
-    orca_profile = None
-
 
 def load_protocol(file: str):  # pragma: no cover
     default = "ensemble_analyser/parameters_file/default_protocol.json"
@@ -77,6 +63,7 @@ class Protocol:
         thrG: float = None,
         thrB: float = None,
         thrGMAX: float = None,
+        thrRMSD_enantio : float = None,
         constrains: list = [],
         maxstep: float = 0.2,
         fmax: float = 0.05,
@@ -96,6 +83,7 @@ class Protocol:
         self.thrG = thrG
         self.thrB = thrB
         self.thrGMAX = thrGMAX
+        self.thrRMSD_enantio = thrRMSD_enantio
         self.get_thrs(self.load_threshold())
         self.calculator = calculator
         self.constrains = constrains
@@ -171,13 +159,25 @@ class Protocol:
         :type conf: Conformer
         """
 
-        calc = {
-            "orca": {
-                "opt": self.orca_opt,
-                "freq": self.orca_freq,
-                "energy": self.calc_orca_std,
-            },
+        calc_name = self.calculator.lower()
+        if calc_name not in CALCULATOR_REGISTRY:
+            raise ValueError(f"Calculator '{calc_name}' not yet registered. "
+                            f"Availables: {list(CALCULATOR_REGISTRY.keys())}")
+
+        calc_class = CALCULATOR_REGISTRY[calc_name]
+        calc_instance = calc_class(self, cpu, conf)
+
+        mode_map = {
+            "opt": calc_instance.optimisation,
+            "freq": calc_instance.frequency,
+            "energy": calc_instance.single_point,
         }
+
+        if mode not in mode_map:
+            raise ValueError(f"Mode '{mode}' not recognized. "
+                            f"Possibilities: {list(mode_map.keys())}")
+
+        return mode_map[mode]()
 
         return calc[self.calculator][mode](cpu, conf)
 
@@ -195,6 +195,8 @@ class Protocol:
             self.thrB = thr_json[c]["thrB"]
         if not self.thrGMAX:
             self.thrGMAX = thr_json[c]["thrGMAX"]
+        if not self.thrRMSD_enantio:
+            self.thrRMSD_enantio = thr_json[c]["thrRMSD_enantio"]
 
     def __str__(self):  # pragma: no cover
         if self.solvent:
@@ -205,101 +207,6 @@ class Protocol:
         if self.solvent:
             return f"{self.functional}/{self.basis} - {self.solvent}"
         return f"{self.functional}/{self.basis}"
-
-    # ORCA CALCULATOR
-
-    def orca_common_str(self, cpu):
-        """ORCA common string for the input
-
-        :param cpu: number of CPU
-        :type cpu: int
-        :return: input string
-        :rtype: str
-        """
-
-        if self.solvent:
-            if "xtb" in self.functional.lower():
-                solv = f"ALPB({self.solvent.solvent})"
-            elif self.solvent.solvent.strip():
-                solv = f" {self.solvent}"
-            else:
-                solv = f" CPCM"
-        else:
-            solv = ""
-
-        si = f"{self.functional} {self.basis} {solv} nopop"
-
-
-        ob = (
-            f"%pal nprocs {cpu} end "
-            + self.add_input
-            + (" %maxcore 5000" if "maxcore" not in self.add_input else "")
-        )
-
-        return si, ob
-
-    def calc_orca_std(self, cpu: int, conf=None):
-        """Standard calculator
-
-        :param cpu: CPU number
-        :type cpu: int
-        :return: calculator and label
-        :rtype: tuple
-        """
-
-        simple_input, ob = self.orca_common_str(cpu)
-        label = "orca"
-        calculator = ORCA(
-            profile=orca_profile,
-            label=label,
-            orcasimpleinput=simple_input,
-            orcablocks=ob,
-            charge=self.charge,
-            mult=self.mult,
-        )
-        if self.read_orbitals:
-            calculator.parameters['orcasimpleinput'] += " moread"
-            calculator.parameters["orcablocks"] += f'\n%moinp "{conf.folder}/protocol_{self.read_orbitals}.gbw"\n'
-
-        if 'freq' in self.add_input.lower(): 
-            calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"
-
-        return calculator, label
-
-    def orca_opt(self, cpu: int, conf=None):
-        """Optimization calculator
-
-        :param cpu: CPU number
-        :type cpu: int
-        :param charge: charge of the molecule
-        :type charge: int
-        :param mult: multiplicity of the molecule
-        :type mult: int
-        :return: calculator and label
-        :rtype: tuple
-        """
-        calculator, label = self.calc_orca_std(cpu, conf)
-        calculator.parameters["orcasimpleinput"] += " engrad"
-
-        return calculator, label
-
-    def orca_freq(self, cpu: int, conf=None):
-        """Frequency calculator
-
-        :param cpu: CPU number
-        :type cpu: int
-        :param charge: charge of the molecule
-        :type charge: int
-        :param mult: multiplicity of the molecule
-        :type mult: int
-        :return: calculator and label
-        :rtype: tuple
-        """
-        calculator, label = self.calc_orca_std(cpu, conf)
-        calculator.parameters["orcasimpleinput"] += " freq"
-        calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"
-
-        return calculator, label
 
     @staticmethod
     def load_raw(json):
