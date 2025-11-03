@@ -230,10 +230,10 @@ def calc_average_ensemble(conformers: list, number, T, log) -> None:
     dG_boltz = boltz(dG, T)
 
     averages = [
-        float(np.sum(dE * dE_boltz)[0]) / EH_TO_KCAL,
-        float(np.sum(dE_ZPVE * dE_ZPVE_boltz)[0]) / EH_TO_KCAL,
-        float(np.sum(dH * dH_boltz)[0]) / EH_TO_KCAL,
-        float(np.sum(dG * dG_boltz)[0]) / EH_TO_KCAL,
+        float(np.sum(dE * dE_boltz)) / EH_TO_KCAL,
+        float(np.sum(dE_ZPVE * dE_ZPVE_boltz)) / EH_TO_KCAL,
+        float(np.sum(dH * dH_boltz)) / EH_TO_KCAL,
+        float(np.sum(dG * dG_boltz)) / EH_TO_KCAL,
     ]
 
     rows = [
@@ -332,9 +332,11 @@ def create_summary(title, conformers, protocol, log):
         "Pop [%]",
         "Elap. time [sec]",
         "# Cluster",
-    ] + list(protocol.verbal_internals())
+    ] + [i for i in list(protocol.verbal_internals())]
 
     log.debug(f'{protocol.verbal_internals()=}')
+    log.debug(f'{headers=}')
+    log.debug([i.create_log(protocol.monitor_internals) for i in conformers if i.active])
 
     log.info(title)
     log.info("")
