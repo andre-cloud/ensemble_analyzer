@@ -213,7 +213,7 @@ class Protocol:
     def verbal_internals(self): 
         internals = []
         for internal in self.monitor_internals: 
-            internals.append(f'{self.INTERNALS} {"-".join([str(i) for i in internal])}')
+            internals.append(f'{self.INTERNALS[len(internal)]} {"-".join([str(i) for i in internal])}')
         return internals
 
     @staticmethod
