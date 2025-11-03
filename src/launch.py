@@ -152,7 +152,7 @@ def run_protocol(
 
     log.info("\nEnded Calculations\n")
     log.info(
-        f"\nTotal elapsed time for protocol {ordinal(int(protocol.number))}: "
+        f"\nTotal elapsed time for protocol {ordinal(int(p.number))}: "
         + str(
             datetime.timedelta(
                 seconds=sum([i._last_energy["time"] for i in conformers if i.active])

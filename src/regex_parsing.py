@@ -40,7 +40,7 @@ regex_parsing = {
     "gaussian": {
         "B": "",
         "m": "",
-        "E": "",
+        "E": r"SCF Done:.+ (-?\d*\.\d+)",
         "start_spec": "",
         "end_spec": "",
         "s_UV": "",
