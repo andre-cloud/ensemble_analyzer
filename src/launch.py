@@ -171,7 +171,7 @@ def run_protocol(
                 set=False,
                 include_H=include_H,
             )
-        create_summary("Summary", conformers, log)
+        create_summary("Summary", conformers, p, log)
 
     log.debug("Start Pruning")
 
