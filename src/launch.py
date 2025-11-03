@@ -271,7 +271,7 @@ def calc_average_ensemble(conformers: list, number, T, log) -> None:
     log.info("Ensemble Avarages")
     log.info(
         tabulate(
-            averages,
+            (averages,),
             headers=["E_av [Eh]", "E+ZPVE_av [Eh]", "H_av [Eh]", "G_av [Eh]"],
             floatfmt=".10f",
         )
