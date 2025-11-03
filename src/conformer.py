@@ -173,7 +173,7 @@ class Conformer:
 
         if g:
             g /= 627.51
-        return number, e / 627.51, g_e, g, b, erel, pop, time, cluster, monitor
+        return number, e / 627.51, g_e, g, b, erel, pop, time, cluster, *monitor
 
     @staticmethod
     def load_raw(json):
