@@ -2,7 +2,7 @@ import json
 import os
 
 from src._calculators.base import CALCULATOR_REGISTRY
-
+from typing import Union, List
 
 DEBUG = os.getenv("DEBUG")
 
@@ -46,6 +46,8 @@ class Solvent:
 
 
 class Protocol:
+    INTERNALS = {2:'B', 3:'A', 4:'D'}
+
     def __init__(
         self,
         number: int,
@@ -72,6 +74,7 @@ class Protocol:
         comment: str = "",
         read_orbitals = "",
         read_population: str|None = None,
+        monitor_internals: List[List[int]] = [],
     ): 
         self.number = number
         self.functional = functional.upper()
@@ -95,6 +98,7 @@ class Protocol:
         self.comment = comment
         self.read_orbitals = read_orbitals # number of protocol to read orbitals from
         self.read_population = read_population
+        self.monitor_internals = monitor_internals
         
         assert self.mult > 0, "Multiplicity must be greater than 0"
 
@@ -147,7 +151,7 @@ class Protocol:
         )
         return json.load(open(default))
 
-    def get_calculator(self, cpu, mode: str, conf=None):
+    def get_calculator(self, cpu, conf=None):
         """
         Get the calculator from the user selector
 
@@ -172,14 +176,13 @@ class Protocol:
             "freq": calc_instance.frequency,
             "energy": calc_instance.single_point,
         }
+     
+        if self.opt: 
+            return mode_map["opt"](protocol=self, cpu=cpu)
+        if self.freq: 
+            return mode_map["freq"](protocol=self, cpu=cpu)
+        return mode_map["energy"](protocol=self, cpu=cpu)
 
-        if mode not in mode_map:
-            raise ValueError(f"Mode '{mode}' not recognized. "
-                            f"Possibilities: {list(mode_map.keys())}")
-
-        return mode_map[mode]()
-
-        return calc[self.calculator][mode](cpu, conf)
 
     def get_thrs(self, thr_json):
         """
@@ -207,6 +210,12 @@ class Protocol:
         if self.solvent:
             return f"{self.functional}/{self.basis} - {self.solvent}"
         return f"{self.functional}/{self.basis}"
+
+    def verbal_internals(self): 
+        internals = []
+        for internal in self.monitor_internals: 
+            internals.append(f'{self.INTERNALS} {"-".join(internal)}')
+        return internals
 
     @staticmethod
     def load_raw(json):

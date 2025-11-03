@@ -111,7 +111,7 @@ def tranform_float(freq):
     return f"{freq:.2f}"
 
 
-def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
+def get_conf_parameters(conf, number: int, output:str, p, time, temp: float, log) -> bool:
     """
     Obtain the parameters for a conformer: E, G, B, m
 
@@ -132,7 +132,7 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
     :rtype: bool
     """
 
-    with open(os.path.join(conf.folder, f"protocol_{number}.out")) as f:
+    with open(os.path.join(conf.folder, output)) as f:
         fl = f.readlines()
 
     try:
@@ -212,7 +212,7 @@ def get_conf_parameters(conf, number: int, p, time, temp: float, log) -> bool:
         "time": time,  # elapsed time [sec]
         "G-E" : (g-e) if g and e else None,  # G-E [Eh]
         "zpve": zpve, # Zero Point Energy [Eh]
-        "H": H, # Enthalpy correction [Eh]
+        "H": H-e, # Enthalpy correction [Eh]
         "S": S, # Entropy [Eh]
     }
 

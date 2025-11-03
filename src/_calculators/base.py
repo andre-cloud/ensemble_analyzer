@@ -13,11 +13,11 @@ def register_calculator(name):
 class BaseCalc(ABC):
 
 
-    def __init__(self, protocol, cpu: int, conf=None, constrains:list=None):
+    def __init__(self, protocol, cpu: int, conf=None):
         self.protocol = protocol
         self.cpu = cpu
         self.conf = conf
-        self.constrains = constrains
+        self.constrains = protocol.constrains
 
     @abstractmethod
     def common_str(self):

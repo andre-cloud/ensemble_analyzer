@@ -36,5 +36,29 @@ regex_parsing = {
 ---------------------------------""",
         "finish": "ORCA TERMINATED NORMALLY",
         "ext": "out",
+    },
+    "gaussian": {
+        "B": "",
+        "m": "",
+        "E": "",
+        "start_spec": "",
+        "end_spec": "",
+        "s_UV": "", 
+        "s_ECD": "", 
+        "s_IR": "",
+        "s_VCD": "",
+        "break": "",
+        "idx_en_tddft": 3,  # index for energy in the UV & ECD table in eV
+        "idx_imp_tddft": 6,  # index for oscillator strength in the UV table
+        "idx_en_ir": 1,  # index for energy in the IR table in cm**-1
+        "idx_imp_ir": 3,  # index for oscillator strength in the IR table
+        "idx_imp_vcd": 2,  # index for oscillator strength in the VCD table
+        "s_freq": "",
+        "e_freq": "",
+        "idx_freq": 1,  # index for frequency in frequency table
+        "opt_done": "",
+        "geom_start": "",
+        "finish": "",
+        "ext": "log",
     }
 }

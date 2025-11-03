@@ -138,7 +138,7 @@ class Conformer:
 
         return txt
 
-    def create_log(self):
+    def create_log(self, monitor_internals):
         """Generate all the information needed for the tabulation
 
         :return: a long tuple with all the information. (Number, E, G, B, Erel, Pop, Elapsed Time)
@@ -156,9 +156,25 @@ class Conformer:
             en.get("Pop", float(0)),
             self.cluster,
         )
+
+        if len(monitor_internals) > 0: 
+            monitor = []
+            atoms = Atoms(
+                symbols="".join(list(self.atoms)),
+                positions=self.last_geometry,
+            )
+            for internal in monitor_internals: 
+                if len(internal) == 2: 
+                    monitor.append(float(atoms.get_distance(*internal)))
+                if len(internal) == 2: 
+                    monitor.append(float(atoms.get_angle(*internal)))
+                if len(internal) == 4: 
+                    monitor.append(float(atoms.get_dihedral(*internal)))
+
         if g:
             g /= 627.51
         return number, e / 627.51, g_e, g, b, erel, pop, time, cluster
+
 
     @staticmethod
     def load_raw(json):

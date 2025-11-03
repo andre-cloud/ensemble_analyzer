@@ -3,16 +3,16 @@ from src.ioFile import read_ensemble, save_snapshot
 from src.logger import create_log, ordinal, DEBUG
 from src.parser_arguments import parser_arguments
 from src.parser_parameter import get_conf_parameters, get_data_for_graph
-from src.IOsystem import SerialiseEncoder, mkdir
+from src.IOsystem import SerialiseEncoder, move_files
 from src.protocol import Protocol, load_protocol
 from src.pruning import calculate_rel_energies, check_ensemble
 from src.graph import main_graph, Compared
+from src.regex_parsing import regex_parsing
 
-# from src.grapher import Graph, plot_conv_graph
 from src.clustering import perform_PCA, get_ensemble
 from src.title import title
-from src.calculations import optimize, calc_freq, single_point
 
+from src.constants import R, MAX_TRY, EH_TO_KCAL
 
 import time
 import json
@@ -21,9 +21,8 @@ import logging
 from tabulate import tabulate
 import os
 from typing import Union, List
-import shutil
+import numpy as np
 
-MAX_TRY = 5
 
 
 def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> None:
@@ -51,37 +50,29 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
     log.info(
         f"{idx}. Running {ordinal(int(protocol.number))} PROTOCOL -> CONF{conf.number}"
     )
+
+    #### Run actual calculation
+    calc, label = protocol.get_calculator(cpu=cpu, conf=conf)
+    atoms = conf.get_ase_atoms(calc)
     st = time.perf_counter()
-
-    if protocol.opt:
-        _, label = optimize(conf, protocol, cpu=cpu, log=log)
-
-    if protocol.freq:
-        _, label = calc_freq(conf, protocol, cpu=cpu, log=log)
-
-    if not (protocol.opt or protocol.freq):
-        _, label = single_point(conf, protocol, cpu=cpu, log=log)
-
+    try:
+        atoms.get_potential_energy()
+    except Exception as e:
+        pass
     end = time.perf_counter()
+    ####
 
-    files = [str(f) for f in os.listdir(os.getcwd()) if str(f).startswith(label)]
-    dest_folder = os.path.join(os.getcwd(),conf.folder,f'protocol_{protocol.number}')
-    mkdir(os.path.join(os.getcwd(),conf.folder,f'protocol_{protocol.number}'))
-    for file in files: 
-        src = os.path.join(os.getcwd(), file)
-        dst = os.path.join(dest_folder, f"{conf.number}_p{protocol.number}_{file}")
-        shutil.copyfile(src, dst)
+    move_files(conf, protocol, label)
 
+    output_file = os.path.join(os.getcwd(),conf.folder,f'protocol_{protocol.number}',f'{conf.number}_p{protocol.number}_{label}.{regex_parsing[protocol.calculator]["ext"]}')
 
-    os.rename(f"{label}.out", f"{conf.folder}/protocol_{protocol.number}.out")
-    if protocol.freq:
-        os.rename(f"{label}.hess", f"{conf.folder}/protocol_{protocol.number}.hess")
-    os.rename(f"{label}.gbw", f"{conf.folder}/protocol_{protocol.number}.gbw")
-    os.rename(f"{label}.densities", f"{conf.folder}/protocol_{protocol.number}.densities")
-    os.rename(f"{label}.densitiesinfo", f"{conf.folder}/protocol_{protocol.number}.densitiesinfo")
+    if not get_conf_parameters(conf=conf, number=protocol.number, output=output_file, protocol=protocol, time=end - st, temp=temp, log=log):
+        
+        # È da capire PERCHÉ il conformero non ha i parametri...
+        # Qui i parametri sono già stati divisi e parsati, quindi il calcolo ha finito. Questo è il punto in si può fare il displacement sulla frequenza negativa (da capire la se TS oppure no...) o altre manipolazioni se il conto non ha trovato il minimo/sella. 
 
-    if not get_conf_parameters(conf, protocol.number, protocol, end - st, temp, log):
         if try_num <= MAX_TRY:
+
             log.error(
                 f"ERROR: During calculation of CONF_{conf.number} a server error occur and the energy could not be parsed; re-running protocol {protocol.number} on the same conformer for the {ordinal(try_num)} time"
             )
@@ -89,11 +80,12 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
             launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num=try_num + 1)
         else:
             log.critical(
-                f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nMax number of re-run ({MAX_TRY}) executed for CONF_{conf.number}.{'='*20}\nExiting\n{'='*20}"
+                f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nMax number of re-run ({MAX_TRY}) executed for CONF_{conf.number}.\n{'='*20}\nExiting\n{'='*20}"
             )
             raise RuntimeError(
                 f"Max number of re-run ({MAX_TRY}) executed for CONF_{conf.number}. Exiting"
             )
+
 
     json.dump(
         {i.number: i.__dict__ for i in ensemble},
@@ -102,8 +94,7 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
         cls=SerialiseEncoder,
     )
 
-
-def run_protocol(conformers, p, temperature, cpu, log, include_H, exclude_enantiomers) -> None:
+def run_protocol(conformers: List[Conformer], p: Protocol, temperature: float, cpu: int, log, include_H: bool, ) -> None: #exclude_enantiomers
     """
     Run the protocol for each conformer
 
@@ -125,6 +116,9 @@ def run_protocol(conformers, p, temperature, cpu, log, include_H, exclude_enanti
     log.info(
         f"\nActive conformers for this phase: {len([i for i in conformers if i.active])}\n"
     )
+
+    # No enumerate cause conformers are both active and inactive
+
     count = 1
     for i in conformers:
         if not i.active:
@@ -138,7 +132,7 @@ def run_protocol(conformers, p, temperature, cpu, log, include_H, exclude_enanti
 
     log.info("\nEnded Calculations\n")
     log.info(
-        "\nTotal elapsed time: "
+        f"\nTotal elapsed time for protocol {ordinal(int(protocol.number))}: "
         + str(
             datetime.timedelta(
                 seconds=sum([i._last_energy["time"] for i in conformers if i.active])
@@ -146,25 +140,24 @@ def run_protocol(conformers, p, temperature, cpu, log, include_H, exclude_enanti
         )
     )
 
-    # TODO: print the various averaged values of the energies (E, ZPVE, H, S, G)
 
-    if p.cluster and DEBUG: 
-        perform_PCA(
-            confs = [i for i in conformers if i.active],
-            ncluster = p.cluster if type(p.cluster) is int else None,
-            fname = f"PCA_before_pruning_protocol_{p.number}.png",
-            title = f"PCA before pruning protocol {p.number}",
-            log = log,
-            set = False,
-            include_H  = include_H
-        )
-    if DEBUG:
+    if DEBUG: 
+        if p.cluster: 
+            perform_PCA(
+                confs = [i for i in conformers if i.active],
+                ncluster = p.cluster if type(p.cluster) is int else None,
+                fname = f"PCA_before_pruning_protocol_{p.number}.png",
+                title = f"PCA before pruning protocol {p.number}",
+                log = log,
+                set = False,
+                include_H  = include_H
+            )
         create_summary("Summary", conformers, log)
 
     
     log.debug("Start Pruning")
 
-    conformers = check_ensemble(conformers, p, log, include_H, exclude_enantiomers)
+    conformers = check_ensemble(conformers, p, log, include_H)#, exclude_enantiomers)
     conformers = sort_conformers_by_energy(conformers, temperature)
 
 
@@ -177,17 +170,57 @@ def run_protocol(conformers, p, temperature, cpu, log, include_H, exclude_enanti
             fname = f"PCA_after_pruning_protocol_{p.number}.png",
             title = f"PCA after pruning protocol {p.number}",
             log = log,
-            include_H  = include_H
+            include_H  = include_H, 
+            set_=True
         )
     if type(p.cluster) is int:
         conformers = get_ensemble(conformers)
 
     create_summary("Summary After Pruning", conformers, log)
 
+    calc_average_ensemble(conformers, protocol.number,temperature,log)
+
     log.info(f'{"="*15}\nEND PROTOCOL {p.number}\n{"="*15}\n\n')
 
     return None
 
+def calc_average_ensemble(conformers:list, number, T, log) -> None:
+
+    # ∆E, ∆(E+ZPVE), ∆H, ∆G
+    CONFS = [i for i in conformers if i.active]
+
+    dE = np.array([i.energies[str(number)]['E'] for i in CONFS])
+    dE_ZPVE = np.array([i.energies[str(number)]['E']+i.energies[str(number)]['zpve']*EH_TO_KCAL for i in CONFS])
+    dH = np.array([i.energies[str(number)]['E']+i.energies[str(number)]['H']*EH_TO_KCAL for i in CONFS])
+    dG = np.array([i.energies[str(number)]['G'] for i in CONFS])
+
+    # Boltzmann populations
+    dE_boltz = boltz(dE, T)
+    dE_ZPVE_boltz = boltz(dE_ZPVE, T)
+    dH_boltz = boltz(dH, T)
+    dG_boltz = boltz(dG, T)
+
+    averages = [
+        np.sum(dE*dE_boltz)/EH_TO_KCAL,
+        np.sum(dE_ZPVE*dE_ZPVE_boltz)/EH_TO_KCAL,
+        np.sum(dH*dH_boltz)/EH_TO_KCAL,
+        np.sum(dG*dG_boltz)/EH_TO_KCAL,
+                ]
+
+    rows = [[f'Conf {i}', dE[idx], f'{dE_boltz[idx]*100:.2f}', dE_ZPVE[idx], f'{dE_ZPVE_boltz[idx]*100:.2f}', dH[idx], f'{dH_boltz[idx]*100:.2f}' , dG[idx], f'{dG_boltz[idx]*100:.2f}'] for idx, i in enumerate(CONFS)]
+    log.info("Energetic Summary of the active conformers")
+    log.info(tabulate(rows, headers=['Conformer', '∆E [Eh]', 'Boltzamnn Pop. on ∆E', '∆(E+ZPVE) [Eh]', 'Boltzamnn Pop. on ∆(E+ZPVE)', '∆H [Eh]', 'Boltzamnn Pop. on ∆H', '∆G [Eh]', 'Boltzamnn Pop. on ∆G'],floatfmt='.10f'))
+    log.info("Ensemble Avarages")
+    log.info(tabulate(averages, headers=['E_av [Eh]', 'E+ZPVE_av [Eh]', 'H_av [Eh]', 'G_av [Eh]'], floatfmt='.10f'))
+
+
+    return 
+
+def boltz(energy:np.ndarray, T):
+    ens = np.array(energy)
+    ens -= min(ens)
+    bolz = np.exp((-ens * 4186) / (R * T))
+    return bolz / np.sum(bolz)
 
 def last_protocol_completed(conf, idx: int) -> bool:
     """
@@ -210,7 +243,7 @@ def last_protocol_completed(conf, idx: int) -> bool:
     return len([tmp]) == 0
 
 
-def create_summary(title, conformers, log):
+def create_summary(title, conformers, protocol, log):
     """
     Create the summary of a ensemble information
 
@@ -224,12 +257,7 @@ def create_summary(title, conformers, log):
     :return: None
     """
 
-    log.info(title)
-    log.info("")
-    log.info(
-        tabulate(
-            [i.create_log() for i in conformers if i.active],
-            headers=[
+    headers = [
                 "Conformers",
                 "E [Eh]",
                 "G-E [Eh]",
@@ -239,7 +267,14 @@ def create_summary(title, conformers, log):
                 "Pop [%]",
                 "Elap. time [sec]",
                 "# Cluster",
-            ],
+            ] + (protocol.verbal_internals())
+    
+    log.info(title)
+    log.info("")
+    log.info(
+        tabulate(
+            [i.create_log(protocol.monitor_internals) for i in conformers if i.active],
+            headers=headers,
             floatfmt=".5f",
         )
     )
@@ -261,7 +296,7 @@ def start_calculation(
     shift: Union[None, float, List[float]] = None,
     invert=False,
     include_H=True,
-    exclude_enantiomers=False,
+    # exclude_enantiomers=False,
 ) -> None:
     """
     Main calculation loop
@@ -294,7 +329,7 @@ def start_calculation(
         with open("last_protocol", "w") as f:
             f.write(str(p.number))
 
-        run_protocol(conformers, p, temperature, cpu, log, include_H, exclude_enantiomers)
+        run_protocol(conformers, p, temperature, cpu, log, include_H)#, exclude_enantiomers)
 
         log.debug("Getting data for graph")
         get_data_for_graph(conformers=conformers, protocol=p, log=log)
@@ -430,7 +465,7 @@ def check_protocol(
 
     if not func:
         log.critical(
-            f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nFUNCTIONAL key must be passed in order to calculate energy.\nDFT functional or HF for Hartree-Fock calculation or semi-empirical methods (XTB1/XTB2/PM3/AM1 or similar supported by the calculator) (Problem at {ordinal(int(idx))} protocol definition)\n{'='*20}\nExiting\n{'='*20}\n"
+            f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nFUNCTIONAL key must be passed in order to calculate energy.\nDFT functional, HF for Hartree-Fock calculation or semi-empirical methods (XTB1/XTB2/PM3/AM1 or similar supported by the calculator) (Problem at {ordinal(int(idx))} protocol definition)\n{'='*20}\nExiting\n{'='*20}\n"
         )
         raise IOError(
             "There is an error in the input file with the definition of the functional. See the output file."
@@ -477,7 +512,7 @@ def main():
             "shift": args.shift,
             "invert": args.invert,
             "include_H" : not args.exclude_H,
-            "exclude_enantiomers" : args.exclude_enantiomers,
+            # "exclude_enantiomers" : args.exclude_enantiomers,
         }
         json.dump(settings, open("settings.json", "w"), indent=4)
 

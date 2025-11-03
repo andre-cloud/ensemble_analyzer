@@ -1,9 +1,9 @@
-from ase.build import minimize_rotation_and_translation
-from scipy.constants import R
+
+
 from tabulate import tabulate
 
 import numpy as np
-
+from src.constants import *
 
 try:
     from src.ioFile import save_snapshot
@@ -196,7 +196,7 @@ def refactor_dict(controller: dict) -> dict:
     return d
 
 
-def check_ensemble(confs: list, protocol, log, include_H, exclude_enantiomers) -> list:
+def check_ensemble(confs: list, protocol, log, include_H) -> list: #exclude_enantiomers
     """
     Check the ensemble:
 
@@ -246,9 +246,9 @@ def check_ensemble(confs: list, protocol, log, include_H, exclude_enantiomers) -
 
         for j in range(0, idx):
 
-            if exclude_enantiomers: 
-                if check_enantiomer(check=check_mirror, conf_ref=confs[j], controller=controller):
-                    break
+            # if exclude_enantiomers: 
+            #     if check_enantiomer(check=check_mirror, conf_ref=confs[j], controller=controller):
+            #         break
 
             if check_dE_dB(check=check, conf_ref=confs[j], protocol=protocol, controller=controller, include_H=include_H):
                 break

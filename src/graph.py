@@ -2,13 +2,13 @@ import numpy as np
 from types import UnionType
 import os
 import pickle as pl
-from scipy.constants import c, h, electron_volt, R
+
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize, differential_evolution
 
-FACTOR_EV_NM = h * c / (10**-9 * electron_volt)
-FACTOR_EV_CM_1 = 1 / 8065.544  # to yield eV
-CHIRALS = ['VCD', 'ECD']
+from src.constants import * 
+
+
 
 def eV_to_nm(eV):
     return FACTOR_EV_NM / eV

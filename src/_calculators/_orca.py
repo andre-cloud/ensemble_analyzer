@@ -61,7 +61,16 @@ class OrcaCalc(BaseCalc):
     def optimisation(self):
         calc, label = self._std_calc()
         calc.parameters["orcasimpleinput"] += " opt"
-        if self.constrains
+        if self.constrains:
+            text = '%geom Constraints '
+            for i in self.constrains:
+                text += ' {C '+str(i)+' C}'
+            text += 'end end\n'
+            calc.parameters["orcasimpleinput"] += text
+        if self.protocol.freq: 
+            calc.parameters["orcasimpleinput"] += " freq"
+            calc.parameters["orcablocks"] += "\n%freq vcd true end\n"
+
         return calc, label
 
     def frequency(self):
