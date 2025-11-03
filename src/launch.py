@@ -334,6 +334,8 @@ def create_summary(title, conformers, protocol, log):
         "# Cluster",
     ] + list(protocol.verbal_internals())
 
+    log.debug(f'{protocol.verbal_internals()=}')
+
     log.info(title)
     log.info("")
     log.info(
