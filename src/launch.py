@@ -194,7 +194,7 @@ def run_protocol(
     if type(p.cluster) is int:
         conformers = get_ensemble(conformers)
 
-    create_summary("Summary After Pruning", conformers, log)
+    create_summary("Summary After Pruning", conformers, p, log)
 
     calc_average_ensemble(conformers, protocol.number, temperature, log)
 
