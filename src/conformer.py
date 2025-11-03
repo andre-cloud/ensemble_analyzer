@@ -165,7 +165,7 @@ class Conformer:
             for internal in monitor_internals:
                 if len(internal) == 2:
                     monitor.append(float(atoms.get_distance(*internal)))
-                if len(internal) == 2:
+                if len(internal) == 3:
                     monitor.append(float(atoms.get_angle(*internal)))
                 if len(internal) == 4:
                     monitor.append(float(atoms.get_dihedral(*internal)))
