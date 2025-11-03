@@ -230,23 +230,23 @@ def calc_average_ensemble(conformers: list, number, T, log) -> None:
     dG_boltz = boltz(dG, T)
 
     averages = [
-        np.sum(dE * dE_boltz) / EH_TO_KCAL,
-        np.sum(dE_ZPVE * dE_ZPVE_boltz) / EH_TO_KCAL,
-        np.sum(dH * dH_boltz) / EH_TO_KCAL,
-        np.sum(dG * dG_boltz) / EH_TO_KCAL,
+        float(np.sum(dE * dE_boltz)[0]) / EH_TO_KCAL,
+        float(np.sum(dE_ZPVE * dE_ZPVE_boltz)[0]) / EH_TO_KCAL,
+        float(np.sum(dH * dH_boltz)[0]) / EH_TO_KCAL,
+        float(np.sum(dG * dG_boltz)[0]) / EH_TO_KCAL,
     ]
 
     rows = [
         [
             f"Conf {i}",
             dE[idx],
-            f"{dE_boltz[idx]*100:.2f}",
+            f"{round(dE_boltz[idx]*100, 2)}",
             dE_ZPVE[idx],
-            f"{dE_ZPVE_boltz[idx]*100:.2f}",
+            f"{round(dE_ZPVE_boltz[idx]*100, 2)}",
             dH[idx],
-            f"{dH_boltz[idx]*100:.2f}",
+            f"{round(dH_boltz[idx]*100, 2)}",
             dG[idx],
-            f"{dG_boltz[idx]*100:.2f}",
+            f"{round(dG_boltz[idx]*100, 2)}",
         ]
         for idx, i in enumerate(CONFS)
     ]
