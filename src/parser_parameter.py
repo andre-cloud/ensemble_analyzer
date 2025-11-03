@@ -214,9 +214,9 @@ def get_conf_parameters(
         "m": M if M else 1,  # dipole momenti [Debye]
         "time": time,  # elapsed time [sec]
         "G-E": (g - e) if g and e else None,  # G-E [Eh]
-        "zpve": zpve,  # Zero Point Energy [Eh]
-        "H": H - e,  # Enthalpy correction [Eh]
-        "S": S,  # Entropy [Eh]
+        "zpve": zpve if g else 0,  # Zero Point Energy [Eh]
+        "H": H - e if g else 0,  # Enthalpy correction [Eh]
+        "S": S if g else 0,  # Entropy [Eh]
     }
 
     return True

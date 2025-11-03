@@ -60,7 +60,7 @@ regex_parsing = {
         "idx_freq": 1,  # index for frequency in frequency table
         "opt_done": "",
         "geom_start": "",
-        "finish": "",
+        "finish": "Normal termination of Gaussian",
         "ext": "log",
     },
 }
