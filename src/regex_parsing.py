@@ -49,7 +49,7 @@ regex_parsing = {
         "s_ECD": "",
         "s_IR": "",
         "s_VCD": "",
-        "break": "",
+        "break": "---",
         "idx_en_tddft": 3,  # index for energy in the UV & ECD table in eV
         "idx_imp_tddft": 6,  # index for oscillator strength in the UV table
         "idx_en_ir": 1,  # index for energy in the IR table in cm**-1
@@ -59,7 +59,11 @@ regex_parsing = {
         "e_freq": "",
         "idx_freq": 1,  # index for frequency in frequency table
         "opt_done": "",
-        "geom_start": "",
+        "geom_start": """Input orientation:                          
+ ---------------------------------------------------------------------
+ Center     Atomic      Atomic             Coordinates (Angstroms)
+ Number     Number       Type             X           Y           Z
+ ---------------------------------------------------------------------""",
         "finish": "Normal termination of Gaussian",
         "ext": "log",
     },

@@ -94,6 +94,8 @@ def get_opt_geometry(fl: str, calc: str, log) -> np.ndarray:
 
     if calc == "orca":
         geom = np.array([i.split()[1:] for i in fl if i], dtype=float)
+    if calc == "gaussian":
+        geom = np.array([i.split()[3:] for i in fl if i], dtype=float)
 
     return geom
 

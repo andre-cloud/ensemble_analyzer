@@ -67,6 +67,9 @@ class GaussianCalc(BaseCalc):
 
         calc, label = self._std_calc()
         calc.parameters["extra"] += " opt"
+        if self.protocol.frequency: 
+            calc.parameters["extra"] += " freq=(vcd)"
+
         return calc, label
 
     def frequency(self):
