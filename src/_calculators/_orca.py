@@ -1,9 +1,10 @@
 from ase.calculators.orca import ORCA, OrcaProfile
 from src._calculators.base import BaseCalc, register_calculator
-import shutil, os
+import shutil
+import os
 
 try:
-    ORCA_COMMAND = os.getenv('ORCACOMMAND') or shutil.which("orca")
+    ORCA_COMMAND = os.getenv("ORCACOMMAND") or shutil.which("orca")
     orca_profile = OrcaProfile(command=ORCA_COMMAND)
 except Exception:
     orca_profile = None
@@ -11,7 +12,8 @@ except Exception:
 
 @register_calculator("orca")
 class OrcaCalc(BaseCalc):
-    label = 'orca'
+    label = "orca"
+
     def common_str(self):
 
         if self.protocol.solvent:
@@ -48,9 +50,11 @@ class OrcaCalc(BaseCalc):
 
         if self.protocol.read_orbitals:
             calculator.parameters["orcasimpleinput"] += " moread"
-            calculator.parameters["orcablocks"] += f'\n%moinp "{self.conf.folder}/protocol_{self.protocol.read_orbitals}.gbw"\n'
+            calculator.parameters[
+                "orcablocks"
+            ] += f'\n%moinp "{self.conf.folder}/protocol_{self.protocol.read_orbitals}.gbw"\n'
 
-        if 'freq' in self.protocol.add_input.lower():
+        if "freq" in self.protocol.add_input.lower():
             calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"
 
         return calculator, "orca"
@@ -62,12 +66,12 @@ class OrcaCalc(BaseCalc):
         calc, label = self._std_calc()
         calc.parameters["orcasimpleinput"] += " opt"
         if self.constrains:
-            text = '%geom Constraints '
+            text = "%geom Constraints "
             for i in self.constrains:
-                text += ' {C '+str(i)+' C}'
-            text += 'end end\n'
+                text += " {C " + str(i) + " C}"
+            text += "end end\n"
             calc.parameters["orcasimpleinput"] += text
-        if self.protocol.freq: 
+        if self.protocol.freq:
             calc.parameters["orcasimpleinput"] += " freq"
             calc.parameters["orcablocks"] += "\n%freq vcd true end\n"
 

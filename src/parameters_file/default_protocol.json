@@ -7,7 +7,9 @@
         "solvent" : {
             "solvent": "toluene",
             "smd":false
-        }
+        }, 
+        "calculator": "gaussian",
+        "monitor_internals": [[0,3]]
     },
     "1": {
         "functional": "b3lyp d4",

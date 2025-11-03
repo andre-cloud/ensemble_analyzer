@@ -7,7 +7,7 @@ from src._calculators.base import BaseCalc, register_calculator
 class GaussianCalc(BaseCalc):
     """
     ASE-compatible Gaussian calculator wrapper.
-    This class follows the same structure as OrcaCalc, 
+    This class follows the same structure as OrcaCalc,
     encapsulating the logic for SP, OPT, and FREQ calculations.
     """
 
@@ -32,9 +32,8 @@ class GaussianCalc(BaseCalc):
         if self.protocol.add_input.strip():
             route += " " + self.protocol.add_input.strip()
 
-
         if self.protocol.read_orbitals:
-            route += ' guess=read'
+            route += " guess=read"
 
         # Default options: no population output
         route += " pop=none"
@@ -46,14 +45,16 @@ class GaussianCalc(BaseCalc):
 
         calc = Gaussian(
             label="gaussian",
-            mem=f'{self.cpu*2}GB',
+            mem=f"{self.cpu*2}GB",
             extra=route,
             charge=self.protocol.charge,
             mult=self.protocol.mult,
             nprocshared=self.cpu,
         )
         if self.protocol.read_orbitals:
-            calc.oldchk = f"{self.conf.folder}/protocol_{self.protocol.read_orbitals}.chk"
+            calc.oldchk = (
+                f"{self.conf.folder}/protocol_{self.protocol.read_orbitals}.chk"
+            )
 
         return calc, "gaussian"
 
@@ -69,7 +70,7 @@ class GaussianCalc(BaseCalc):
         return calc, label
 
     def frequency(self):
-        
+
         calc, label = self._std_calc()
         calc.parameters["extra"] += " freq=(vcd)"
         return calc, label

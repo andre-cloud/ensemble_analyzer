@@ -59,9 +59,7 @@ def read_ensemble(file, log, raw=False) -> list:
         if i == old_idx:
             continue
         atoms, geom, e = _parse_xyz_str(fl[old_idx:i], raw=raw)
-        confs.append(
-            Conformer(counter, geom=geom, atoms=atoms)
-        )
+        confs.append(Conformer(counter, geom=geom, atoms=atoms))
         if raw:
             confs[-1].energies = {"0": {"E": e * 627.51, "G": e * 627.51}}
         old_idx = i

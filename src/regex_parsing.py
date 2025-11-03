@@ -43,8 +43,8 @@ regex_parsing = {
         "E": "",
         "start_spec": "",
         "end_spec": "",
-        "s_UV": "", 
-        "s_ECD": "", 
+        "s_UV": "",
+        "s_ECD": "",
         "s_IR": "",
         "s_VCD": "",
         "break": "",
@@ -60,5 +60,5 @@ regex_parsing = {
         "geom_start": "",
         "finish": "",
         "ext": "log",
-    }
+    },
 }

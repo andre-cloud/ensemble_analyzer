@@ -67,14 +67,12 @@ def tail(file_path, num_lines=100):
 
 def move_files(conf, protocol, label):
     files = [str(f) for f in os.listdir(os.getcwd()) if str(f).startswith(label)]
-    dest_folder = os.path.join(os.getcwd(),conf.folder,f'protocol_{protocol.number}')
-    mkdir(os.path.join(os.getcwd(),conf.folder,f'protocol_{protocol.number}'))
-    for file in files: 
+    dest_folder = os.path.join(os.getcwd(), conf.folder, f"protocol_{protocol.number}")
+    mkdir(os.path.join(os.getcwd(), conf.folder, f"protocol_{protocol.number}"))
+    for file in files:
         src = os.path.join(os.getcwd(), file)
         dst = os.path.join(dest_folder, f"{conf.number}_p{protocol.number}_{file}")
         shutil.copyfile(src, dst)
-
-
 
 
 if __name__ == "__main__":

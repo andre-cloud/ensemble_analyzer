@@ -2,8 +2,6 @@ import numpy as np
 from src.constants import *
 
 
-
-
 def calc_damp(frequency: np.ndarray, cut_off: float, alpha: int) -> np.ndarray:
     r"""
     Damping factor proportionate to frequency
@@ -375,7 +373,7 @@ if __name__ == "__main__":
         freq = get_freq(fl, calc)
         im_freq = freq[freq < 0]
 
-        g = free_gibbs_energy(SCF=e, T=float(T), freq=freq[freq>0], mw=mw, B=B, m=1)
+        g = free_gibbs_energy(SCF=e, T=float(T), freq=freq[freq > 0], mw=mw, B=B, m=1)
         print(
-            f'{i} --- G with mRRHO @ T={T}: {g} Eh     Calculation ended with {len(im_freq)} imaginary frequencies {" ".join(list(map(str, im_freq))) if len(im_freq)>0 else ""}'
+            f'{i} --- G with mRRHO @ T={T}: {g} Eh     Calculation ended with {len(im_freq)} imaginary frequencies {" ".join(list(map(str, im_freq))) if len(im_freq) > 0 else ""}'
         )

@@ -1,5 +1,3 @@
-
-
 from tabulate import tabulate
 
 import numpy as np
@@ -71,13 +69,17 @@ def rmsd(check, ref, include_H=False) -> float:
     :return: RMSD
     :rtype: float
     """
-    ref_pos, check_pos = ref.distance_matrix(include_H), check.distance_matrix(include_H)
+    ref_pos, check_pos = ref.distance_matrix(include_H), check.distance_matrix(
+        include_H
+    )
     eva_ref, _ = np.linalg.eig(ref_pos)
     eva_check, _ = np.linalg.eig(check_pos)
-    return np.sqrt(1 / len(eva_ref) * np.sum((eva_ref-eva_check)**2))
+    return np.sqrt(1 / len(eva_ref) * np.sum((eva_ref - eva_check) ** 2))
 
 
-def dict_compare(check, conf_ref, include_H, deactivate=True, RMSD=None) -> dict:  # pragma: no cover
+def dict_compare(
+    check, conf_ref, include_H, deactivate=True, RMSD=None
+) -> dict:  # pragma: no cover
     """
     Create a default dictionary for the comparison
 
@@ -94,7 +96,7 @@ def dict_compare(check, conf_ref, include_H, deactivate=True, RMSD=None) -> dict
     }
 
 
-def check_dE_dB(check, conf_ref, protocol, controller: dict, include_H:bool) -> bool:
+def check_dE_dB(check, conf_ref, protocol, controller: dict, include_H: bool) -> bool:
     """
     Control conformer against a reference. Both the following asserts MUST be matched to deactivate the conformer:
 
@@ -116,13 +118,12 @@ def check_dE_dB(check, conf_ref, protocol, controller: dict, include_H:bool) -> 
 
     if not conf_ref.active:
         return False
-    if check.rotatory == 1: 
+    if check.rotatory == 1:
         return False
-
 
     l = len(controller)
 
-    controller[l] = dict_compare(check, conf_ref, deactivate=False,include_H=include_H)
+    controller[l] = dict_compare(check, conf_ref, deactivate=False, include_H=include_H)
 
     if (
         controller[l]["∆E [kcal/mol]"] < protocol.thrG
@@ -136,6 +137,7 @@ def check_dE_dB(check, conf_ref, protocol, controller: dict, include_H:bool) -> 
     controller.pop(l)
 
     return False
+
 
 def check_enantiomer(check, ref, protocol, controller: dict) -> bool:
     """Check if two conformers are enatiomeric conformations
@@ -158,7 +160,9 @@ def check_enantiomer(check, ref, protocol, controller: dict) -> bool:
     l = len(controller)
 
     RMSD = rmsd(check, ref, include_H=False)
-    controller[l] = dict_compare(check, ref, deactivate=False, include_H=False, RMSD=RMSD)
+    controller[l] = dict_compare(
+        check, ref, deactivate=False, include_H=False, RMSD=RMSD
+    )
 
     if RMSD < protocol.thrRMSD_enantio:
         check.active = False
@@ -196,7 +200,9 @@ def refactor_dict(controller: dict) -> dict:
     return d
 
 
-def check_ensemble(confs: list, protocol, log, include_H) -> list: #exclude_enantiomers
+def check_ensemble(
+    confs: list, protocol, log, include_H
+) -> list:  # exclude_enantiomers
     """
     Check the ensemble:
 
@@ -240,17 +246,23 @@ def check_ensemble(confs: list, protocol, log, include_H) -> list: #exclude_enan
             continue  # Not check the non active conformers
 
         mirror = check.last_geometry.copy()
-        mirror[...,2] *= -1
+        mirror[..., 2] *= -1
         check_mirror = Conformer.load_raw(check.__dict__)
         check_mirror.last_geometry = mirror
 
         for j in range(0, idx):
 
-            # if exclude_enantiomers: 
+            # if exclude_enantiomers:
             #     if check_enantiomer(check=check_mirror, conf_ref=confs[j], controller=controller):
             #         break
 
-            if check_dE_dB(check=check, conf_ref=confs[j], protocol=protocol, controller=controller, include_H=include_H):
+            if check_dE_dB(
+                check=check,
+                conf_ref=confs[j],
+                protocol=protocol,
+                controller=controller,
+                include_H=include_H,
+            ):
                 break
 
     controller = refactor_dict(controller)

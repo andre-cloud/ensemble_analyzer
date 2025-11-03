@@ -3,15 +3,18 @@ from abc import ABC, abstractmethod
 
 CALCULATOR_REGISTRY = {}
 
+
 def register_calculator(name):
-    """Decorator to register each calculator """
+    """Decorator to register each calculator"""
+
     def decorator(cls):
         CALCULATOR_REGISTRY[name.lower()] = cls
         return cls
+
     return decorator
 
-class BaseCalc(ABC):
 
+class BaseCalc(ABC):
 
     def __init__(self, protocol, cpu: int, conf=None):
         self.protocol = protocol

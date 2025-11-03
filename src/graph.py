@@ -6,8 +6,7 @@ import pickle as pl
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize, differential_evolution
 
-from src.constants import * 
-
+from src.constants import *
 
 
 def eV_to_nm(eV):
@@ -18,7 +17,16 @@ class Graph:
     START = {"IR": 0.1, "VCD": 0.1, "UV": 0.1, "ECD": 0.1}  # cm-1  # cm-1  # eV  # eV
     END = {"IR": 6000, "VCD": 6000, "UV": 9, "ECD": 9}  # cm-1  # cm-1  # eV  # eV
 
-    def __init__(self, graph_type, log=None, protocol=None, definition=4, norm=1, read_pop = None, **kwargs):
+    def __init__(
+        self,
+        graph_type,
+        log=None,
+        protocol=None,
+        definition=4,
+        norm=1,
+        read_pop=None,
+        **kwargs,
+    ):
         assert graph_type in list(self.START.keys())
 
         self.protocol = protocol
@@ -76,8 +84,17 @@ class Computed(Graph):
         "ECD": 0.25,  # FWHM in eV
     }
 
-    def __init__(self, conf, invert, convolution=None, shift=None, fwhm=None, read_pop=None, **kwargs):
-        
+    def __init__(
+        self,
+        conf,
+        invert,
+        convolution=None,
+        shift=None,
+        fwhm=None,
+        read_pop=None,
+        **kwargs,
+    ):
+
         # kwargs.update({'shift': shift, 'fwmh':fwhm})
         super().__init__(**kwargs)
 
@@ -85,10 +102,16 @@ class Computed(Graph):
         self.g = convolution if convolution else self.graph_type
         self.conformers = conf
         idx_first_valid_conf = [idx for idx, i in enumerate(conf) if i.active][0]
-        if conf[idx_first_valid_conf].energies[self.protocol].get("graph", None) is None:
+        if (
+            conf[idx_first_valid_conf].energies[self.protocol].get("graph", None)
+            is None
+        ):
             return
         elif (
-            conf[idx_first_valid_conf].energies[self.protocol].get("graph").get(self.graph_type, None)
+            conf[idx_first_valid_conf]
+            .energies[self.protocol]
+            .get("graph")
+            .get(self.graph_type, None)
             is None
         ):
             return
@@ -101,14 +124,14 @@ class Computed(Graph):
         self.auto = os.path.exists(
             os.path.join(os.getcwd(), f"{self.graph_type.lower()}_ref.dat")
         )
-        
+
         if self.auto:
-            kwargs.update({'log': self.log})
+            kwargs.update({"log": self.log})
             self.ref = Experimental(**kwargs)
             self.autoconvolute()
         else:
             self.y = self.CONV[self.g](self.x, self.y_comp, self.DEFs[self.graph_type])
-            if self.invert: 
+            if self.invert:
                 self.y *= -1
             self.y = self.normalize()
             # self.shift = 0
@@ -122,12 +145,18 @@ class Computed(Graph):
                 continue
             x = np.array(i.energies[self.protocol]["graph"][self.graph_type]["x"])
             y = np.array(i.energies[self.protocol]["graph"][self.graph_type]["y"])
-            
-            pop = i.energies[self.protocol]["Pop"] if not self.read_pop else i.energies[self.read_pop]["Pop"]
+
+            pop = (
+                i.energies[self.protocol]["Pop"]
+                if not self.read_pop
+                else i.energies[self.read_pop]["Pop"]
+            )
 
             conv_graph = conv_func(x, y, self.DEFs[self.graph_type])
 
-            with open(os.path.join(i.folder,f'p{self.protocol}_{self.graph_type}.xy'), "w") as f:
+            with open(
+                os.path.join(i.folder, f"p{self.protocol}_{self.graph_type}.xy"), "w"
+            ) as f:
                 for x, y in zip(self.x, self.y_comp):
                     f.write(f"{x:.6f} {y:.6f}\n")
 
@@ -141,7 +170,7 @@ class Computed(Graph):
             x = self.x + shift if self.graph_type in ["UV", "ECD"] else self.x * shift
 
             y = f(x, self.y_comp, fwhm)
-            if self.invert: 
+            if self.invert:
                 y *= -1
 
             y_norm = y / np.max(np.abs(y[self.ref.x_min_idx : self.ref.x_max_idx]))
@@ -162,7 +191,6 @@ class Computed(Graph):
             ss = self.shift
         if hasattr(self, "fwhm"):
             sf = self.fwhm
-
 
         # Shift
         if type(self.shift) == list:
@@ -206,9 +234,10 @@ class Computed(Graph):
             self.y = self.CONV[self.graph_type](x, self.y_comp, self.fwhm)
             self.y = self.normalize()
             self.log.info(
-                f"{'='*20}\nResults for {self.graph_type} graph calcualted in Protocol {self.protocol}\n{'='*20}\n" +
-                f"Optimal shift: {self.shift:.3f}, Optimal FWHM: {self.fwhm:.3f}, Similarity: {((1 if self.graph_type not in CHIRALS else 2)-result.fun)/(1 if self.graph_type not in CHIRALS else 2)*100:.2f}%\n"+
-                "="*20+'\n'
+                f"{'='*20}\nResults for {self.graph_type} graph calcualted in Protocol {self.protocol}\n{'='*20}\n"
+                + f"Optimal shift: {self.shift:.3f}, Optimal FWHM: {self.fwhm:.3f}, Similarity: {((1 if self.graph_type not in CHIRALS else 2)-result.fun)/(1 if self.graph_type not in CHIRALS else 2)*100:.2f}%\n"
+                + "=" * 20
+                + "\n"
             )
         else:
             self.log.error("Optimization failed. Convolution with defaul values")
@@ -220,7 +249,10 @@ class Computed(Graph):
             self.y = self.normalize()
 
     def diversity_function(self, a, b):
-        return (np.sqrt(np.mean((a - b) ** 2))) / (1 if self.graph_type not in CHIRALS else 2) # RMSD
+        # RMSD
+        return (np.sqrt(np.mean((a - b) ** 2))) / (
+            1 if self.graph_type not in CHIRALS else 2
+        )
 
 
 class Experimental(Graph):
@@ -353,10 +385,15 @@ class Compared(Graph):
                 self.ref.x_max + self.BUFFER[self.graph_type],
             )
 
-            m, M = -np.max(np.abs(self.ref.y)) if self.graph_type in [
-                "ECD",
-                "VCD",
-            ] else 0, np.max(np.abs(self.ref.y))
+            m, M = (
+                -np.max(np.abs(self.ref.y))
+                if self.graph_type
+                in [
+                    "ECD",
+                    "VCD",
+                ]
+                else 0
+            ), np.max(np.abs(self.ref.y))
             self.axis.vlines(
                 self.ref.x[self.ref.x_min_idx], m, M, color="grey", ls="dashed", lw=1
             )
@@ -388,13 +425,11 @@ class Compared(Graph):
         plt.title(self.title)
 
         plt.tight_layout()
-        
-        with open(f"{self.graph_type.lower()}_comparison.pickle", 'wb') as f:
-            pl.dump(self.fig, f)
-        
-        plt.savefig(f"{self.graph_type.lower()}_comparison.png", dpi=300)
 
-        
+        with open(f"{self.graph_type.lower()}_comparison.pickle", "wb") as f:
+            pl.dump(self.fig, f)
+
+        plt.savefig(f"{self.graph_type.lower()}_comparison.png", dpi=300)
 
     def eV_to_nm(eV):
         return FACTOR_EV_NM / eV
@@ -403,7 +438,7 @@ class Compared(Graph):
         return FACTOR_EV_NM / nm
 
 
-def main_graph(ensemble, p, log, invert, shift = None, fwhm = None, read_pop = None):
+def main_graph(ensemble, p, log, invert, shift=None, fwhm=None, read_pop=None):
     for j in ["IR", "VCD", "UV", "ECD"]:
         graph = Computed(
             ensemble,
@@ -413,7 +448,7 @@ def main_graph(ensemble, p, log, invert, shift = None, fwhm = None, read_pop = N
             shift=shift,
             fwhm=fwhm,
             log=log,
-            read_pop = read_pop
+            read_pop=read_pop,
         )
 
         if not hasattr(graph, "y_comp"):
@@ -440,7 +475,6 @@ if __name__ == "__main__":
 
     ensemble, protocol, _ = restart()
     calculate_rel_energies(ensemble, 298.15)
-
 
     log = create_log("test.out")
     for i in protocol:

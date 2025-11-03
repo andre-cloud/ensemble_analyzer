@@ -26,7 +26,6 @@ class Conformer:
         self.number = number
         self._initial_geometry = geom.copy()
 
-
         self.last_geometry = geom.copy()
         self.atoms = atoms.copy()
         self.energies = {}
@@ -97,13 +96,13 @@ class Conformer:
     def distance_matrix(self, include_H, geom=None):
         if geom:
             geo = geom
-        else: 
+        else:
             geo = self.last_geometry
-            
+
         if include_H:
             geo = np.array(geo)
         else:
-            mask = self.atoms != 'H'
+            mask = self.atoms != "H"
             geo = np.array(geo)[mask]
 
         dm = np.linalg.norm(geo[:, None, :] - geo[None, :, :], axis=-1)
@@ -157,24 +156,23 @@ class Conformer:
             self.cluster,
         )
 
-        if len(monitor_internals) > 0: 
+        if len(monitor_internals) > 0:
             monitor = []
             atoms = Atoms(
                 symbols="".join(list(self.atoms)),
                 positions=self.last_geometry,
             )
-            for internal in monitor_internals: 
-                if len(internal) == 2: 
+            for internal in monitor_internals:
+                if len(internal) == 2:
                     monitor.append(float(atoms.get_distance(*internal)))
-                if len(internal) == 2: 
+                if len(internal) == 2:
                     monitor.append(float(atoms.get_angle(*internal)))
-                if len(internal) == 4: 
+                if len(internal) == 4:
                     monitor.append(float(atoms.get_dihedral(*internal)))
 
         if g:
             g /= 627.51
         return number, e / 627.51, g_e, g, b, erel, pop, time, cluster
-
 
     @staticmethod
     def load_raw(json):

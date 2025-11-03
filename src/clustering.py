@@ -48,12 +48,12 @@ MARKERS = [
 
 
 def calc_distance_matrix(coords, atoms, include_H=True):
-    natoms = coords[0].shape if include_H else coords[0][atoms!='H'].shape
+    natoms = coords[0].shape if include_H else coords[0][atoms != "H"].shape
     dist = np.zeros((coords.shape[0], natoms[0], natoms[0]))
     evalue_dist, evector_dist = [], []
 
     for idx, _ in enumerate(coords):
-        c = coords[idx] if include_H else coords[idx][atoms!='H']
+        c = coords[idx] if include_H else coords[idx][atoms != "H"]
         dist[idx] = distance_matrix(c, c)
         eva, eve = np.linalg.eig(dist[idx])
         evalue_dist.append(eva)
@@ -88,7 +88,13 @@ def get_best_ncluster(coords):
     return k_range[np.argmax(silhouette_scores)]
 
 
-def calc_pca(confs: list, cluster=False, ncluster: Union[int, None] = None, set = True, include_H = True) -> tuple:
+def calc_pca(
+    confs: list,
+    cluster=False,
+    ncluster: Union[int, None] = None,
+    set=True,
+    include_H=True,
+) -> tuple:
     """
     Function that execute the actual PCA analysis.
     It wants to understand how conformations differ from each other based on their overall Cartesian coordinates
@@ -111,7 +117,9 @@ def calc_pca(confs: list, cluster=False, ncluster: Union[int, None] = None, set 
     energy = np.array([conf.get_energy for conf in confs if conf.active])
     energy -= min(energy)
 
-    evalue_dist, _ = calc_distance_matrix(data, atoms=confs[0].atoms, include_H=include_H)
+    evalue_dist, _ = calc_distance_matrix(
+        data, atoms=confs[0].atoms, include_H=include_H
+    )
 
     # perform PCA analysis with number of components as minimum between number of
     # n. confs and whole geom
@@ -130,7 +138,7 @@ def calc_pca(confs: list, cluster=False, ncluster: Union[int, None] = None, set 
         if not confs[0].cluster:
             kmeans = KMeans(n_clusters=n_c, n_init=10)
             clusters = kmeans.fit_predict(pca_scores)
-            if set: 
+            if set:
                 for idx, conf in enumerate(confs):
                     conf.cluster = int(clusters[idx])
         else:
@@ -161,7 +169,7 @@ def save_PCA_snapshot(
     colors: list,
     numbers: list,
     z: list,
-    legend: bool = True
+    legend: bool = True,
 ):
     """
     Graph and save the image of the PCA analysis
@@ -180,14 +188,12 @@ def save_PCA_snapshot(
     :rtype: None
     """
 
-    fig = plt.figure(figsize=(10,8))
+    fig = plt.figure(figsize=(10, 8))
     if legend:
         plt.subplots_adjust(bottom=0.3, right=0.6, left=0.115)
     rcParams.update({"figure.autolayout": True})
-    
-    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 0.1], hspace=0.3)
-    
 
+    gs = gridspec.GridSpec(2, 1, height_ratios=[3, 0.1], hspace=0.3)
 
     ax = fig.add_subplot(gs[0])
     color_axis = fig.add_subplot(gs[1])
@@ -228,7 +234,7 @@ def save_PCA_snapshot(
 
     ax.set_xlim(x)
     ax.set_ylim(y)
-    if legend: 
+    if legend:
         ax.legend(
             loc="upper left",
             bbox_to_anchor=(1.05, 1.0),
@@ -241,15 +247,23 @@ def save_PCA_snapshot(
     else:
         plt.tight_layout()
 
-
-    with open(fname.replace('.png', '.pickle'), 'wb') as f:
-            pl.dump(fig, f)
+    with open(fname.replace(".png", ".pickle"), "wb") as f:
+        pl.dump(fig, f)
 
     plt.savefig(fname, dpi=300)
     return None
 
 
-def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log, set_=True, include_H=True, legend=True) -> None:
+def perform_PCA(
+    confs: list,
+    ncluster: int,
+    fname: str,
+    title: str,
+    log,
+    set_=True,
+    include_H=True,
+    legend=True,
+) -> None:
     """
     Perform a PCA analysis
 
@@ -271,23 +285,27 @@ def perform_PCA(confs: list, ncluster: int, fname: str, title: str, log, set_=Tr
     nc = ncluster if len(confs) > ncluster else None
 
     if nc:
-        log.info(f'\tUsing number_of_cluster={nc}.')
+        log.info(f"\tUsing number_of_cluster={nc}.")
     else:
-        log.info(f'\tEstimating the best number for clustering.')
+        log.info(f"\tEstimating the best number for clustering.")
 
-    log.info(f'\tThe cluster will be set: {set_}.\t\nPCA will include hydrogen atoms: {include_H}')
+    log.info(
+        f"\tThe cluster will be set: {set_}.\t\nPCA will include hydrogen atoms: {include_H}"
+    )
 
     pca_scores, clusters, colors, numbers, energy = calc_pca(
         confs, ncluster=nc, cluster=True, set=set_, include_H=include_H
     )
 
-    save_PCA_snapshot(fname, title, pca_scores, clusters, colors, numbers, energy, legend=legend)
+    save_PCA_snapshot(
+        fname, title, pca_scores, clusters, colors, numbers, energy, legend=legend
+    )
 
     return None
 
 
 def get_ensemble(confs, sort=False):
-    if sort: 
+    if sort:
         tmp = sorted(confs)
     else:
         tmp = confs[:]
@@ -312,17 +330,35 @@ if __name__ == "__main__":  # pragma: no cover:
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('file', help='Ensemble to be clusterd')
-    parser.add_argument('-nc', '--ncluster', help='Number of families to cluster. Defaults 5', default=5, type=int)
-    parser.add_argument('--no-H', help='Exclude hydrogen atoms in the PCA', action='store_false')
-    parser.add_argument('--no-legend', help='Exclude legend from PCA graph', action='store_false')
-    parser.add_argument('--title', help='Title for the PCA graph', default='Cluster')
+    parser.add_argument("file", help="Ensemble to be clusterd")
+    parser.add_argument(
+        "-nc",
+        "--ncluster",
+        help="Number of families to cluster. Defaults 5",
+        default=5,
+        type=int,
+    )
+    parser.add_argument(
+        "--no-H", help="Exclude hydrogen atoms in the PCA", action="store_false"
+    )
+    parser.add_argument(
+        "--no-legend", help="Exclude legend from PCA graph", action="store_false"
+    )
+    parser.add_argument("--title", help="Title for the PCA graph", default="Cluster")
     args = parser.parse_args()
 
     # Load the XYZ file
     xyz_file = read_ensemble(args.file, mock.MagicMock(), raw=True)
 
-    perform_PCA(xyz_file, args.ncluster, "cluster.png", args.title, mock.MagicMock(), include_H=args.no_H, legend=args.no_legend)
+    perform_PCA(
+        xyz_file,
+        args.ncluster,
+        "cluster.png",
+        args.title,
+        mock.MagicMock(),
+        include_H=args.no_H,
+        legend=args.no_legend,
+    )
 
     xyz_file_new = get_ensemble(xyz_file)
 

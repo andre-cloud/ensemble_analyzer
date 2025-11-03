@@ -6,6 +6,7 @@ from typing import Union, List
 
 DEBUG = os.getenv("DEBUG")
 
+
 def load_protocol(file: str):  # pragma: no cover
     default = "ensemble_analyser/parameters_file/default_protocol.json"
     return json.load(open(default if not file else file))
@@ -46,7 +47,7 @@ class Solvent:
 
 
 class Protocol:
-    INTERNALS = {2:'B', 3:'A', 4:'D'}
+    INTERNALS = {2: "B", 3: "A", 4: "D"}
 
     def __init__(
         self,
@@ -65,20 +66,20 @@ class Protocol:
         thrG: float = None,
         thrB: float = None,
         thrGMAX: float = None,
-        thrRMSD_enantio : float = None,
+        thrRMSD_enantio: float = None,
         constrains: list = [],
         maxstep: float = 0.2,
         fmax: float = 0.05,
-        cluster: bool|int = False,
+        cluster: bool | int = False,
         no_prune: bool = False,
         comment: str = "",
-        read_orbitals = "",
-        read_population: str|None = None,
+        read_orbitals="",
+        read_population: str | None = None,
         monitor_internals: List[List[int]] = [],
-    ): 
+    ):
         self.number = number
         self.functional = functional.upper()
-        self.basis = basis.upper() if 'xtb' not in functional.lower() else ""
+        self.basis = basis.upper() if "xtb" not in functional.lower() else ""
         self.solvent = Solvent(solvent) if solvent else None
         self.opt = opt
         self.freq = freq
@@ -96,12 +97,11 @@ class Protocol:
         self.mult = mult
         self.charge = charge
         self.comment = comment
-        self.read_orbitals = read_orbitals # number of protocol to read orbitals from
+        self.read_orbitals = read_orbitals  # number of protocol to read orbitals from
         self.read_population = read_population
         self.monitor_internals = monitor_internals
-        
-        assert self.mult > 0, "Multiplicity must be greater than 0"
 
+        assert self.mult > 0, "Multiplicity must be greater than 0"
 
         if fmax != 0.05:
             self.fmax = fmax
@@ -115,13 +115,17 @@ class Protocol:
 
     @property
     def calculation_level(self):
-        return LEVEL_DEFINITION[self.number_level].upper() + (f'-> {self.comment}' if self.comment else "")
+        return LEVEL_DEFINITION[self.number_level].upper() + (
+            f"-> {self.comment}" if self.comment else ""
+        )
 
     @property
     def level(self):
-        return f"{self.functional}/{self.basis}" + (
-            ("["+str(self.solvent))+"]" if self.solvent else ""
-        ) + (f'-> {self.comment}' if self.comment else "")
+        return (
+            f"{self.functional}/{self.basis}"
+            + (("[" + str(self.solvent)) + "]" if self.solvent else "")
+            + (f"-> {self.comment}" if self.comment else "")
+        )
 
     @property
     def thr(self):
@@ -165,8 +169,10 @@ class Protocol:
 
         calc_name = self.calculator.lower()
         if calc_name not in CALCULATOR_REGISTRY:
-            raise ValueError(f"Calculator '{calc_name}' not yet registered. "
-                            f"Availables: {list(CALCULATOR_REGISTRY.keys())}")
+            raise ValueError(
+                f"Calculator '{calc_name}' not yet registered. "
+                f"Availables: {list(CALCULATOR_REGISTRY.keys())}"
+            )
 
         calc_class = CALCULATOR_REGISTRY[calc_name]
         calc_instance = calc_class(self, cpu, conf)
@@ -176,13 +182,12 @@ class Protocol:
             "freq": calc_instance.frequency,
             "energy": calc_instance.single_point,
         }
-     
-        if self.opt: 
+
+        if self.opt:
             return mode_map["opt"](protocol=self, cpu=cpu)
-        if self.freq: 
+        if self.freq:
             return mode_map["freq"](protocol=self, cpu=cpu)
         return mode_map["energy"](protocol=self, cpu=cpu)
-
 
     def get_thrs(self, thr_json):
         """
@@ -211,9 +216,9 @@ class Protocol:
             return f"{self.functional}/{self.basis} - {self.solvent}"
         return f"{self.functional}/{self.basis}"
 
-    def verbal_internals(self): 
+    def verbal_internals(self):
         internals = []
-        for internal in self.monitor_internals: 
+        for internal in self.monitor_internals:
             internals.append(f'{self.INTERNALS} {"-".join(internal)}')
         return internals
 

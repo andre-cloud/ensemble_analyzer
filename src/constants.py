@@ -5,7 +5,7 @@ from scipy.constants import physical_constants
 MAX_TRY = 5
 
 
-### Physical CONSTANTS
+# Physical CONSTANTS
 
 # R = 8.314462618 J/(mol K)
 # h = 6.62607015e-34 J*s
@@ -22,4 +22,4 @@ EH_TO_KCAL = 627.5096080305927
 
 FACTOR_EV_NM = h * c / (10**-9 * electron_volt)
 FACTOR_EV_CM_1 = 1 / 8065.544  # to yield eV
-CHIRALS = ['VCD', 'ECD']
+CHIRALS = ["VCD", "ECD"]

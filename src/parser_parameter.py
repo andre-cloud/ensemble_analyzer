@@ -111,7 +111,9 @@ def tranform_float(freq):
     return f"{freq:.2f}"
 
 
-def get_conf_parameters(conf, number: int, output:str, p, time, temp: float, log) -> bool:
+def get_conf_parameters(
+    conf, number: int, output: str, p, time, temp: float, log
+) -> bool:
     """
     Obtain the parameters for a conformer: E, G, B, m
 
@@ -145,14 +147,17 @@ def get_conf_parameters(conf, number: int, output:str, p, time, temp: float, log
         log.error(e)
         return False
 
-    if 'opt' in p.functional.lower().split()+p.add_input.lower().split() or 'optts' in p.functional.lower().split()+p.add_input.lower().split():
+    if (
+        "opt" in p.functional.lower().split() + p.add_input.lower().split()
+        or "optts" in p.functional.lower().split() + p.add_input.lower().split()
+    ):
         conf.last_geometry = get_opt_geometry(fl, p.calculator, log)
 
     freq = np.array([])
-    if p.freq or ("freq" in p.functional.lower().split()+p.add_input.lower().split()):
+    if p.freq or ("freq" in p.functional.lower().split() + p.add_input.lower().split()):
         freq = get_freq(fl, p.calculator) * p.freq_fact
         log.info(
-            f"{conf.number} has {freq[freq<0].size} imaginary frequency(s): {', '.join(list(map(tranform_float, freq[freq<0])))}"
+            f"{conf.number} has {freq[freq < 0].size} imaginary frequency(s): {', '.join(list(map(tranform_float, freq[freq < 0])))}"
         )
         if freq.size == 0:
             log.error(("\n".join(fl[-6:])).strip())
@@ -170,8 +175,8 @@ def get_conf_parameters(conf, number: int, output:str, p, time, temp: float, log
             dtype=float,
         )
         b = np.linalg.norm(B)
-    except Exception: 
-        log.warning('\tB not found')
+    except Exception:
+        log.warning("\tB not found")
         b = 1
 
     try:
@@ -185,24 +190,27 @@ def get_conf_parameters(conf, number: int, output:str, p, time, temp: float, log
             )
         )
     except Exception:
-        log.warning('\tM not found')
+        log.warning("\tM not found")
         M = 1
 
     g = ""
     zpve, H, S = 0, 0, 0
     if freq.size > 0:
         g, zpve, H, S = free_gibbs_energy(
-                SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B, m=p.mult
-            )
-        H = H - (e/EH_TO_KCAL)
+            SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B, m=p.mult
+        )
+        H = H - (e / EH_TO_KCAL)
     else:
-        g_e = conf.energies.get(str(int(number)-1), {}).get("G-E")
+        g_e = conf.energies.get(str(int(number) - 1), {}).get("G-E")
         if g_e is not None:
             g = e + g_e
-            for i in ['zpve', 'H', 'S']:
-                if i == 'zpve': zpve = conf.energies.get(str(int(number)-1), {}).get(i)
-                elif i == 'H': H = conf.energies.get(str(int(number)-1), {}).get(i)
-                elif i == 'S': S = conf.energies.get(str(int(number)-1), {}).get(i)
+            for i in ["zpve", "H", "S"]:
+                if i == "zpve":
+                    zpve = conf.energies.get(str(int(number) - 1), {}).get(i)
+                elif i == "H":
+                    H = conf.energies.get(str(int(number) - 1), {}).get(i)
+                elif i == "S":
+                    S = conf.energies.get(str(int(number) - 1), {}).get(i)
 
     conf.energies[str(number)] = {
         "E": e * EH_TO_KCAL if e else e,  # Electronic Energy [kcal/mol]
@@ -210,10 +218,10 @@ def get_conf_parameters(conf, number: int, output:str, p, time, temp: float, log
         "B": b if b else 1,  # Rotatory Constant [cm-1]
         "m": M if M else 1,  # dipole momenti [Debye]
         "time": time,  # elapsed time [sec]
-        "G-E" : (g-e) if g and e else None,  # G-E [Eh]
-        "zpve": zpve, # Zero Point Energy [Eh]
-        "H": H-e, # Enthalpy correction [Eh]
-        "S": S, # Entropy [Eh]
+        "G-E": (g - e) if g and e else None,  # G-E [Eh]
+        "zpve": zpve,  # Zero Point Energy [Eh]
+        "H": H - e,  # Enthalpy correction [Eh]
+        "S": S,  # Entropy [Eh]
     }
 
     return True
@@ -221,7 +229,11 @@ def get_conf_parameters(conf, number: int, output:str, p, time, temp: float, log
 
 def get_data_for_graph(conformers, protocol, log):
     confs = [i for i in conformers if i.active]
-    if protocol.freq or "tddft" in protocol.add_input.lower() or "freq" in protocol.add_input.lower():
+    if (
+        protocol.freq
+        or "tddft" in protocol.add_input.lower()
+        or "freq" in protocol.add_input.lower()
+    ):
         for i in confs:
             with open(
                 os.path.join(os.getcwd(), i.folder, f"protocol_{protocol.number}.out")
@@ -303,6 +315,7 @@ if __name__ == "__main__":  # pragma: no cover:
 
     # from launch import restart
     from logger import create_log
+
     # import json
     # from IOsystem import SerialiseEncoder
 
@@ -331,8 +344,7 @@ if __name__ == "__main__":  # pragma: no cover:
     #         Computed(ensemble, False, graph_type='UV', protocol=i.number)
     #         Computed(ensemble, False, graph_type='ECD', protocol=i.number)
 
-
-    with open('files/opt.out') as f:
+    with open("files/opt.out") as f:
         fl = f.read()
-    
-    print(get_opt_geometry(fl, 'orca', log))
+
+    print(get_opt_geometry(fl, "orca", log))
