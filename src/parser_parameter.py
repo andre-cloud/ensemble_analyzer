@@ -177,15 +177,13 @@ def get_conf_parameters(
         b = 1
 
     try:
-        M = np.linalg.norm(
-            np.array(
-                list(filter(lambda x: get_param(x, p.calculator, "m"), fl))[-1]
-                .strip()
-                .split(":")[-1]
-                .split(),
-                dtype=float,
-            )
-        )
+        match = re.findall(regex_parsing[p.calculator]['m'], "".join(fl))
+        if match:
+            X, Y, Z = map(float, match[-1])
+            M = np.linalg.norm([X, Y, Z])
+        else:
+            log.warning("\tM not found")
+            M = 1
     except Exception:
         log.warning("\tM not found")
         M = 1
@@ -341,21 +339,19 @@ if __name__ == "__main__":  # pragma: no cover:
     #         Computed(ensemble, False, graph_type='UV', protocol=i.number)
     #         Computed(ensemble, False, graph_type='ECD', protocol=i.number)
 
-    with open("/Users/andrea/Desktop/scratch/protocol_0_1_p0_gaussian.log") as f:
-    # with open("/Users/andrea/Desktop/Ensemble_Analyser/files/opt.out") as f:
+    # with open("/Users/andrea/Desktop/scratch/protocol_0_1_p0_gaussian.log") as f:
+    with open("/Users/andrea/Desktop/Ensemble_Analyser/files/opt.out") as f:
         fl = f.readlines()
 
     # print(get_opt_geometry(fl, "orca", log))
 
-    B = np.array(
-            list(filter(lambda x: get_param(x, 'gaussian', "B"), fl))[-1]
-            .strip()
-            .split(":")[-1]
-            .split(),
-            dtype=float,
-        )
-    if regex_parsing['gaussian']['units_B'] != 'cm-1':
-        B /= CONVERT_B[regex_parsing['gaussian']['units_B']]
-    b = np.linalg.norm(B)
-    print(B)
-    print(b)
+    match = re.findall(regex_parsing['orca']['m'], "".join(fl))
+    if match:
+        X, Y, Z = map(float, match[-1])
+        M = np.linalg.norm([X, Y, Z])
+    else:
+        log.warning("\tM not found")
+        M = 1
+
+    print(match[-1])
+    print(M)

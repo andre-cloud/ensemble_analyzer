@@ -2,7 +2,7 @@ regex_parsing = {
     "orca": {
         "B": "Rotational constants in cm-1",
         'units_B': 'cm-1',
-        "m": "Total Dipole Moment",
+        "m": r"Total Dipole Moment\s*:\s*([+-]?\d+(?:\.\d+)?)\s+([+-]?\d+(?:\.\d+)?)\s+([+-]?\d+(?:\.\d+)?)",
         "E": r"FINAL SINGLE POINT ENERGY\s*(-?\d*.\d*)",
         "start_spec": "SPECTRA",
         "end_spec": "***",
@@ -41,7 +41,7 @@ regex_parsing = {
     "gaussian": {
         "B": "Rotational constants",
         'units_B': 'GHz',
-        "m": "",
+        "m": r"Dipole moment \(field-independent basis, Debye\):[\s\S]*?X=\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s+Y=\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)\s+Z=\s*([+-]?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)",
         "E": r" SCF Done:.+ (-?\d+.\d+)",
         "start_spec": "",
         "end_spec": "",
