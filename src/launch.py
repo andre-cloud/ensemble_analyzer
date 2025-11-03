@@ -335,6 +335,8 @@ def create_summary(title, conformers, protocol, log):
     ] + [i for i in list(protocol.verbal_internals())]
 
     log.debug(f'{protocol.verbal_internals()=}')
+    log.debug(f'{protocol.monitor_internals=}')
+    log.debug(f'{len(protocol.monitor_internals)=}')
     log.debug(f'{headers=}')
     log.debug([i.create_log(protocol.monitor_internals) for i in conformers if i.active])
 
