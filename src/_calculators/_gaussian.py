@@ -36,7 +36,7 @@ class GaussianCalc(BaseCalc):
             route += " guess=read"
 
         # Default options: no population output
-        route += " pop=none"
+        # route += " pop=none"
 
         return route
 

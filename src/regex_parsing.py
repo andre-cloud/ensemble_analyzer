@@ -1,8 +1,9 @@
 regex_parsing = {
     "orca": {
         "B": "Rotational constants in cm-1",
+        'units_B': 'cm-1',
         "m": "Total Dipole Moment",
-        "E": "FINAL SINGLE POINT ENERGY",
+        "E": r"FINAL SINGLE POINT ENERGY\s*(-?\d*.\d*)",
         "start_spec": "SPECTRA",
         "end_spec": "***",
         "s_UV": """ABSORPTION SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS    
@@ -38,9 +39,10 @@ regex_parsing = {
         "ext": "out",
     },
     "gaussian": {
-        "B": "",
+        "B": "Rotational constants",
+        'units_B': 'GHz',
         "m": "",
-        "E": r"SCF Done:.+ (-?\d*\.\d+)",
+        "E": r" SCF Done:.+ (-?\d+.\d+)",
         "start_spec": "",
         "end_spec": "",
         "s_UV": "",

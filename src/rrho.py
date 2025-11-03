@@ -1,6 +1,8 @@
 import numpy as np
-from src.constants import *
-
+try:
+    from src.constants import *
+except ModuleNotFoundError: 
+    from constants import *
 
 def calc_damp(frequency: np.ndarray, cut_off: float, alpha: int) -> np.ndarray:
     r"""

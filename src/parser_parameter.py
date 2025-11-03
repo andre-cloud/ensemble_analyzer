@@ -5,17 +5,16 @@ import numpy as np
 try:
     from src.regex_parsing import regex_parsing
     from src.rrho import free_gibbs_energy
+    from src.constants import * 
 except ImportError as e:  # pragma: no cover
     print(e)
     from regex_parsing import regex_parsing
     from rrho import free_gibbs_energy
-
-EH_TO_KCAL = 627.5096080305927
-
+    from constants import * 
 
 def get_param(x, calculator, param):
     """
-    Parsing for Rotational Constant. Thought for a map function
+    Parsing. Thought for a map function
 
     :param x: line of the output
     :type x: str
@@ -29,7 +28,7 @@ def get_param(x, calculator, param):
 
     """
     if re.search(regex_parsing[calculator][param], x):
-        return x
+        return True
 
 
 def get_freq(fl: str, calc: str) -> np.ndarray:
@@ -138,11 +137,7 @@ def get_conf_parameters(
         fl = f.readlines()
 
     try:
-        e = float(
-            list(filter(lambda x: get_param(x, p.calculator, "E"), fl))[-1]
-            .strip()
-            .split()[-1]
-        )
+        e = float(re.findall(regex_parsing[p.calculator]['E'], list(filter(lambda x: get_param(x, p.calculator, "E"), fl))[-1])[-1])
     except Exception as e:  # pragma: no cover:
         log.error(e)
         return False
@@ -174,6 +169,8 @@ def get_conf_parameters(
             .split(),
             dtype=float,
         )
+        if regex_parsing[p.calculator]['units_B'] != 'cm-1':
+            B /= CONVERT_B[regex_parsing[p.calculator]['units_B']]
         b = np.linalg.norm(B)
     except Exception:
         log.warning("\tB not found")
@@ -344,7 +341,21 @@ if __name__ == "__main__":  # pragma: no cover:
     #         Computed(ensemble, False, graph_type='UV', protocol=i.number)
     #         Computed(ensemble, False, graph_type='ECD', protocol=i.number)
 
-    with open("files/opt.out") as f:
-        fl = f.read()
+    with open("/Users/andrea/Desktop/scratch/protocol_0_1_p0_gaussian.log") as f:
+    # with open("/Users/andrea/Desktop/Ensemble_Analyser/files/opt.out") as f:
+        fl = f.readlines()
 
-    print(get_opt_geometry(fl, "orca", log))
+    # print(get_opt_geometry(fl, "orca", log))
+
+    B = np.array(
+            list(filter(lambda x: get_param(x, 'gaussian', "B"), fl))[-1]
+            .strip()
+            .split(":")[-1]
+            .split(),
+            dtype=float,
+        )
+    if regex_parsing['gaussian']['units_B'] != 'cm-1':
+        B /= CONVERT_B[regex_parsing['gaussian']['units_B']]
+    b = np.linalg.norm(B)
+    print(B)
+    print(b)

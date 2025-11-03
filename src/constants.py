@@ -23,3 +23,9 @@ EH_TO_KCAL = 627.5096080305927
 FACTOR_EV_NM = h * c / (10**-9 * electron_volt)
 FACTOR_EV_CM_1 = 1 / 8065.544  # to yield eV
 CHIRALS = ["VCD", "ECD"]
+
+
+
+CONVERT_B = {
+    'GHz': 29.979000,
+}
