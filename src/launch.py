@@ -631,7 +631,7 @@ def main():
         shift=settings.get("shift", None),
         invert=settings.get("invert", False),
         include_H=settings.get("include_H", True),
-        exclude_enantiomers=settings.get("exclude_enantiomers", False),
+        # exclude_enantiomers=settings.get("exclude_enantiomers", False),
     )
 
     for j in ["IR", "VCD", "UV", "ECD"]:
