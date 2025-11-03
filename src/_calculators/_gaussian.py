@@ -67,7 +67,7 @@ class GaussianCalc(BaseCalc):
 
         calc, label = self._std_calc()
         calc.parameters["extra"] += " opt"
-        if self.protocol.frequency: 
+        if self.protocol.freq: 
             calc.parameters["extra"] += " freq=(vcd)"
 
         return calc, label
