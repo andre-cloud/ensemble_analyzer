@@ -196,7 +196,7 @@ def run_protocol(
 
     create_summary("Summary After Pruning", conformers, p, log)
 
-    calc_average_ensemble(conformers, protocol.number, temperature, log)
+    calc_average_ensemble(conformers, p.number, temperature, log)
 
     log.info(f'{"="*15}\nEND PROTOCOL {p.number}\n{"="*15}\n\n')
 
@@ -332,7 +332,7 @@ def create_summary(title, conformers, protocol, log):
         "Pop [%]",
         "Elap. time [sec]",
         "# Cluster",
-    ] + (protocol.verbal_internals())
+    ] + list(protocol.verbal_internals())
 
     log.info(title)
     log.info("")
