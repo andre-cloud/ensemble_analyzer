@@ -197,8 +197,8 @@ class Protocol:
             self.thrB = thr_json[c]["thrB"]
         if not self.thrGMAX:
             self.thrGMAX = thr_json[c]["thrGMAX"]
-        if not self.thrRMSD_enantio:
-            self.thrRMSD_enantio = thr_json[c]["thrRMSD_enantio"]
+        # if not self.thrRMSD_enantio:
+        #     self.thrRMSD_enantio = thr_json[c]["thrRMSD_enantio"]
 
     def __str__(self):  # pragma: no cover
         if self.solvent:
