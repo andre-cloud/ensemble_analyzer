@@ -37,7 +37,7 @@ def cut_over_thr_max(confs: list, number: str, thrGMAX: float, log) -> None:
         if i.energies.get(str(number)):
             e_tmp = (
                 i.energies[str(number)]["G"]
-                if i.energies[str(number)]["G"]
+                if i.energies[str(number)]["G"] not in [None, np.nan, 0]
                 else i.energies[str(number)]["E"]
             )
         en.append(e_tmp)
