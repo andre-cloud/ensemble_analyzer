@@ -268,6 +268,7 @@ def calc_average_ensemble(conformers: list, number, T, log) -> None:
             floatfmt=".10f",
         )
     )
+    log.info("\n")
     log.info("Ensemble Avarages")
     log.info(
         tabulate(
@@ -276,6 +277,7 @@ def calc_average_ensemble(conformers: list, number, T, log) -> None:
             floatfmt=".10f",
         )
     )
+    log.info("\n\n")
 
     return
 
@@ -344,7 +346,7 @@ def create_summary(title, conformers, protocol, log):
             floatfmt=".5f",
         )
     )
-    log.info("")
+    log.info("\n\n")
 
     return None
 
@@ -409,7 +411,8 @@ def start_calculation(
     # sort the final ensemble
     c_ = sort_conformers_by_energy(conformers, temperature)
     save_snapshot("final_ensemble.xyz", c_, log)
-    create_summary("Final Summary", c_, log)
+
+    create_summary("Final Summary", c_, p, log)
 
     log.info("\n\n\n\n")
     log.info(
