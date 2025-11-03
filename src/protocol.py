@@ -177,10 +177,10 @@ class Protocol:
         }
      
         if self.opt: 
-            return mode_map["opt"](protocol=self, cpu=cpu)
+            return mode_map["opt"]
         if self.freq: 
-            return mode_map["freq"](protocol=self, cpu=cpu)
-        return mode_map["energy"](protocol=self, cpu=cpu)
+            return mode_map["freq"]
+        return mode_map["energy"]
 
 
     def get_thrs(self, thr_json):
