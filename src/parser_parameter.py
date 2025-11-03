@@ -209,14 +209,14 @@ def get_conf_parameters(
 
     conf.energies[str(number)] = {
         "E": e * EH_TO_KCAL if e else e,  # Electronic Energy [kcal/mol]
-        "G": g * EH_TO_KCAL if g else None,  # Free Gibbs Energy [kcal/mol]
+        "G": g * EH_TO_KCAL if g else np.nan,  # Free Gibbs Energy [kcal/mol]
         "B": b if b else 1,  # Rotatory Constant [cm-1]
         "m": M if M else 1,  # dipole momenti [Debye]
         "time": time,  # elapsed time [sec]
-        "G-E": (g - e) if g and e else None,  # G-E [Eh]
-        "zpve": zpve if g else 0,  # Zero Point Energy [Eh]
-        "H": H - e if g else 0,  # Enthalpy correction [Eh]
-        "S": S if g else 0,  # Entropy [Eh]
+        "G-E": (g - e) if g and e else np.nan,  # G-E [Eh]
+        "zpve": zpve if g else np.nan,  # Zero Point Energy [Eh]
+        "H": H - e if g else np.nan,  # Enthalpy correction [Eh]
+        "S": S if g else np.nan,  # Entropy [Eh]
     }
 
     return True
