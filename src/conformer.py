@@ -72,7 +72,7 @@ class Conformer:
     @property
     def get_energy(self):
         en = self._last_energy
-        if en["G"]:
+        if en["G"] not in [np.nan, 0]:
             return en["G"]
         return en["E"]
 
