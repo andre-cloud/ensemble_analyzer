@@ -20,7 +20,7 @@ class GaussianCalc(BaseCalc):
         # Construct solvent model (if any)
         solv = ""
         if self.protocol.solvent:
-            if self.protocol.smd:
+            if self.protocol.solvent.smd:
                 solv = f" SCRF=(SMD,Solvent={self.protocol.solvent.solvent})"
             else:
                 solv = f" SCRF=(CPCM,Solvent={self.protocol.solvent.solvent})"
