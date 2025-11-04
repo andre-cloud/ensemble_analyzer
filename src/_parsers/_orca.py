@@ -141,7 +141,7 @@ State  Energy     Wavelength     R         MX        MY        MZ
     def parse_freq(self) -> List:
         
         if not self.regex['s_freq'] in self.fl: 
-            return np.array([]), np.array([]), np.array([])
+            return np.array([]), np.zeros(shape=(2,)), np.zeros(shape=(2,))
 
         fl = self.get_filtered_text(self.regex['s_freq'], end='\n\n\n')
     
@@ -166,7 +166,7 @@ State  Energy     Wavelength     R         MX        MY        MZ
     def parse_tddft(self):
 
         if not self.regex['start_spec'] in self.fl: 
-            return np.array([]), np.array([])
+            return np.zeros(shape=(2,)), np.zeros(shape=(2,))
         
         spectras = self.get_filtered_text(start = self.regex['start_spec'], end = self.regex['end_spec'])
 
