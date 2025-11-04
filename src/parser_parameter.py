@@ -74,10 +74,10 @@ def get_conf_parameters(
             raise IOError("No frequency in the output file")
          
         freq *= p.freq_fact
+        log.info(
+            f"{conf.number} has {freq[freq < 0].size} imaginary frequency(s): {', '.join(list(map(tranform_float, freq[freq < 0])))}"
+        )
         if freq[freq < 0].size > 0:
-            log.info(
-                f"{conf.number} has {freq[freq < 0].size} imaginary frequency(s): {', '.join(list(map(tranform_float, freq[freq < 0])))}"
-            )
             log.info(
                 f"\tThese are excluded from qRRHO calculation."
             )
