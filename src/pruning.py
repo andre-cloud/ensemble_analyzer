@@ -31,17 +31,10 @@ def cut_over_thr_max(confs: list, number: str, thrGMAX: float, log) -> None:
     :rtype: list
     """
 
-    en = []
-    for i in confs:
-        e_tmp = -np.inf
-        if i.energies.get(str(number)):
-            e_tmp = (
-                i.energies[str(number)]["G"]
-                if i.energies[str(number)]["G"] not in [None, np.nan, 0]
-                else i.energies[str(number)]["E"]
-            )
-        en.append(e_tmp)
-    ens = np.array([(i, j) for i, j in zip(confs, en) if i.active])
+    ens = np.array([(j, (j.energies[str(number)]["G"]
+                if not np.isnan(j.energies[str(number)]["G"])
+                else j.energies[str(number)]["E"])) for j in confs if i.active])
+    
     ens[:, 1] = ens[:, 1] - min(ens[:, 1])
 
     log.info(
