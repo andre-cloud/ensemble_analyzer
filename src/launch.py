@@ -618,7 +618,7 @@ def main():
         conformers = read_ensemble(args.ensemble, log)
         if len(conformers) > 3:
             perform_PCA(
-                conformers, 5, "initial_pca", "PCA analysis of Conf Search", log
+                conformers, None, "initial_pca", "PCA analysis of Conf Search", log
             )
 
     # start the loop

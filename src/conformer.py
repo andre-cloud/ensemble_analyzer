@@ -7,8 +7,7 @@ except ImportError as e:  # pragma: no cover
 import numpy as np
 import random
 from ase.atoms import Atoms
-
-EH_TO_KCAL = 627.5096080305927
+from src.constants import * 
 
 
 class Conformer:
@@ -112,7 +111,7 @@ class Conformer:
     def _last_energy(self):
         if self.energies:
             return self.energies[list(self.energies.keys())[-1]]
-        return {"E": 0, "G": None}
+        return {"E": 0, "G": np.nan}
 
     def write_xyz(self):
         """Write the XYZ string to be stored in a file
@@ -124,7 +123,7 @@ class Conformer:
             return ""
 
         # Header
-        header = f'{len(self.atoms)}\nCONFORMER {self.number} {"  {:.10f}".format(self._last_energy["G"]/EH_TO_KCAL) if self._last_energy["G"] else "  {:.10f}".format(self._last_energy["E"]/EH_TO_KCAL)}'
+        header = f'{len(self.atoms)}\nCONFORMER {self.number} {"  {:.10f}".format(self._last_energy["G"]/EH_TO_KCAL) if not np.isnan(self._last_energy["G"]) else "  {:.10f}".format(self._last_energy["E"]/EH_TO_KCAL)}'
 
         # Atoms and positions
         atom_lines = [
@@ -146,19 +145,18 @@ class Conformer:
         en = self._last_energy
         number, e, g_e, g, b, erel, time, pop, cluster = (
             self.number,
-            en.get("E", float(0)),
-            en.get("G-E", float(0)),
-            en.get("G", float(0)),
-            en.get("B", float(0)),
-            en.get("Erel", float(0)),
+            en.get("E", np.nan),
+            en.get("G-E", np.nan),
+            en.get("G", np.nan),
+            en.get("B", np.nan),
+            en.get("Erel", np.nan),
             en.get("time"),
-            en.get("Pop", float(0)),
+            en.get("Pop", np.nan),
             self.cluster,
         )
 
-        monitor = None
+        monitor = []
         if len(monitor_internals) > 0:
-            monitor = []
             atoms = Atoms(
                 symbols="".join(list(self.atoms)),
                 positions=self.last_geometry,
@@ -170,10 +168,11 @@ class Conformer:
                     monitor.append(float(atoms.get_angle(*internal)))
                 if len(internal) == 4:
                     monitor.append(float(atoms.get_dihedral(*internal)))
+                    
+        if len(monitor)==0:
+            monitor = None
 
-        if g:
-            g /= 627.51
-        return number, e / 627.51, g_e, g, b, erel, pop, time, cluster, *monitor
+        return number, e / EH_TO_KCAL, g_e, g/EH_TO_KCAL, b, erel, pop, time, cluster, *monitor
 
     @staticmethod
     def load_raw(json):
