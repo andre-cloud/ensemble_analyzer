@@ -170,7 +170,7 @@ class Conformer:
                     monitor.append(float(atoms.get_dihedral(*internal)))
                     
         if len(monitor)==0:
-            monitor = None
+            return number, e / EH_TO_KCAL, g_e, g/EH_TO_KCAL, b, erel, pop, time, cluster
 
         return number, e / EH_TO_KCAL, g_e, g/EH_TO_KCAL, b, erel, pop, time, cluster, *monitor
 
