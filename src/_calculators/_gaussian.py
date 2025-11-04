@@ -77,8 +77,3 @@ class GaussianCalc(BaseCalc):
         calc, label = self._std_calc()
         calc.parameters["extra"] += " freq=(HPModes,vcd)"
         return calc, label
-
-
-    def parse_geom(self, fl):
-
-        
