@@ -2,7 +2,7 @@ from src.conformer import Conformer
 from src.ioFile import read_ensemble, save_snapshot
 from src.logger import create_log, ordinal, DEBUG
 from src.parser_arguments import parser_arguments
-from src.parser_parameter import get_conf_parameters, get_data_for_graph
+from src.parser_parameter import get_conf_parameters
 from src.IOsystem import SerialiseEncoder, move_files
 from src.protocol import Protocol, load_protocol
 from src.pruning import calculate_rel_energies, check_ensemble
@@ -401,8 +401,6 @@ def start_calculation(
             conformers, p, temperature, cpu, log, include_H
         )  # , exclude_enantiomers)
 
-        log.debug("Getting data for graph")
-        get_data_for_graph(conformers=conformers, protocol=p, log=log)
         log.debug("Creating graph")
 
         # TODO: incorporate FWHM and shift from settings as bounds
