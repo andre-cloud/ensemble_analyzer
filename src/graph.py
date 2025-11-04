@@ -5,7 +5,10 @@ import pickle as pl
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
 
-from src.constants import *
+try:
+    from src.constants import *
+except ModuleNotFoundError: 
+    from constants import *
 
 
 def eV_to_nm(eV):
@@ -296,17 +299,20 @@ class Experimental(Graph):
         self.x_max = float(max(self.data[:, 0]))
         self.x_max_idx = np.argmax(self.data[:, 0])
 
-        self.convert = (
-            len(self.data[self.data[:, 0] > self.DEFs[self.graph_type], :]) != 0
-        )
+        self.convert = (self.graph_type in ["UV", "ECD"] and np.mean(self.data[:,0]) > 20)
 
+        print(f'{self.convert=}')
+        print(f'{self.data[:, 0]=}')
         if self.convert:
-            assert self.graph_type not in ["IR", "VCD"]
-            self.x_exp = self.FACTOR[self.graph_type] / self.data[:, 0]
-            self.x_max, self.x_min = (
-                self.FACTOR[self.graph_type] / self.x_min,
-                self.FACTOR[self.graph_type] / self.x_max,
-            )
+            if self.graph_type not in ["IR", "VCD"]:
+                print(f'{self.FACTOR[self.graph_type] =}')
+                self.x_exp = self.FACTOR[self.graph_type] / self.data[:, 0]
+                print(f'{self.x_exp=}')
+                print(f'{self.FACTOR[self.graph_type] / self.data[0, 0]=}')
+                self.x_max, self.x_min = (
+                    self.FACTOR[self.graph_type] / self.x_min,
+                    self.FACTOR[self.graph_type] / self.x_max,
+                )
 
         else:
             self.x_exp = self.data[:, 0]
@@ -323,7 +329,10 @@ class Experimental(Graph):
 
         self.y = self.interpolate()
         tmp = (self.x > self.x_min) & (self.x < self.x_max)
-
+        
+        print(f'{self.x_max=}', f'{self.x_min=}')
+        print(f'{tmp=}')
+        print(f'{self.x=}')
         self.x_min_idx = np.where(self.x == np.min(self.x[tmp]))[0][0]
         self.x_max_idx = np.where(self.x == np.max(self.x[tmp]))[0][0]
 
@@ -475,16 +484,19 @@ def main_graph(ensemble, p, log, invert, shift=None, fwhm=None, read_pop=None):
 
 
 if __name__ == "__main__":
-    from launch import restart
-    from pruning import calculate_rel_energies
-    from logger import create_log
+    # from launch import restart
+    # from pruning import calculate_rel_energies
+    # from logger import create_log
 
-    ensemble, protocol, _ = restart()
-    calculate_rel_energies(ensemble, 298.15)
+    # ensemble, protocol, _ = restart()
+    # calculate_rel_energies(ensemble, 298.15)
 
-    log = create_log("test.out")
-    for i in protocol:
-        main_graph(ensemble, i, log=log)
-    for j in ["IR", "VCD", "UV", "ECD"]:
-        g = Compared(protocol, graph_type=j, log=log)
-        g.save_graph()
+    # log = create_log("test.out")
+    # for i in protocol:
+    #     main_graph(ensemble, i, log=log)
+    # for j in ["IR", "VCD", "UV", "ECD"]:
+    #     g = Compared(protocol, graph_type=j, log=log)
+    #     g.save_graph()
+
+    import mock 
+    Experimental(graph_type='UV', log=mock.MagicMock(), convert=True )

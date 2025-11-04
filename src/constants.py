@@ -13,6 +13,9 @@ MAX_TRY = 5
 # Boltzmann = 1.380649e-23 J/K
 # J_TO_H = 2.2937122783963e+17 Eh/J
 # AMU_TO_KG = 1.6605390666e-27 kg*mol/g
+FACTOR_EV_NM = h * c / (10**-9 * electron_volt)
+FACTOR_EV_CM_1 = 1 / 8065.544  # to yield eV
+
 
 c = c * 100  # convert speed of light in cm/s
 J_TO_H = physical_constants["joule-hartree relationship"][0]
@@ -20,8 +23,6 @@ AMU_TO_KG = physical_constants["atomic mass constant"][0]
 
 EH_TO_KCAL = 627.5096080305927
 
-FACTOR_EV_NM = h * c / (10**-9 * electron_volt)
-FACTOR_EV_CM_1 = 1 / 8065.544  # to yield eV
 CHIRALS = ["VCD", "ECD"]
 
 GRAPHS = ['IR', 'VCD', 'UV', 'ECD']
