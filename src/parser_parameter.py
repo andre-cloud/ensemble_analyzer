@@ -122,8 +122,9 @@ def get_conf_parameters(
     freq, ir, vcd = parser.parse_freq()
     uv, ecd = parser.parse_tddft()
     conf.energies[str(number)]["graph"] = {}
+    print(ecd)
     for label, graph in zip(GRAPHS, [ir, vcd, uv, ecd]):
-        print(graph, graph.shape)
+        print(label, graph, graph.shape)
         conf.energies[str(number)]["graph"][label] = {'x': graph[:,0], 'y':graph[:,1]}
     
     return True

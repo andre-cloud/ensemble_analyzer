@@ -42,7 +42,7 @@ class OrcaParser(BaseParser):
         "idx_imp_tddft": 6,  # index for oscillator strength in the UV table
         "idx_en_ir": 1,  # index for energy in the IR table in cm**-1
         "idx_imp_ir": 3,  # index for oscillator strength in the IR table
-        "idx_en_vcd": 0,  # index for energy in the VCD table in cm**-1
+        "idx_en_vcd": 1,  # index for energy in the VCD table in cm**-1
         "idx_imp_vcd": 2,  # index for oscillator strength in the VCD table
         "s_freq": "VIBRATIONAL FREQUENCIES",
         "e_freq": "------------",
