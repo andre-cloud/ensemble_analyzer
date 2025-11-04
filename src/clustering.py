@@ -282,7 +282,9 @@ def perform_PCA(
     """
     log.info("Starting PCA analysis")
 
-    nc = ncluster if len(confs) > ncluster else None
+    nc = None
+    if ncluster:
+        nc = ncluster if len(confs) > ncluster else None
 
     if nc:
         log.info(f"\tUsing number_of_cluster={nc}.")

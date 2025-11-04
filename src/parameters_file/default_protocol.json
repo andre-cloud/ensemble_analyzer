@@ -1,44 +1,16 @@
 {
     "0": {
         "functional": "b97-3c",
-        "basis": "def2-svp",
-        "opt": false,
-        "freq": false, 
-        "solvent" : {
-            "solvent": "toluene",
-            "smd":false
-        }, 
-        "calculator": "gaussian",
-        "monitor_internals": [[0,3]]
+        "basis": "def2-mTZVP"
     },
     "1": {
-        "functional": "b3lyp d4",
-        "basis": "def2-svp",
-        "opt": false,
-        "freq": false, 
-        "solvent" : {
-            "solvent": "toluene",
-            "smd":false
-        }
+        "functional": "r2scan-3c",
+        "basis": "def2-mTZVPP",
+        "opt": true,
+        "freq": false
     },
     "2": {
-    	"functional": "wb97x-d4",
-        "basis": "def2-svp",
-        "opt": true,
-        "freq": false, 
-        "solvent" : {
-            "solvent": "toluene",
-            "smd":false
-        }
-    },
-    "3": {
-    	"functional": "wb97x-d4",
-        "basis": "def2-svp",
-        "opt": false,
-        "freq": true, 
-        "solvent" : {
-            "solvent": "toluene",
-            "smd":false
-        }
+    	"functional": "wb97x-d4rev",
+        "basis": "def2-qzvpp"
     }
 }
