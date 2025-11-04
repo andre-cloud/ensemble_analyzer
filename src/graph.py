@@ -357,15 +357,22 @@ class Compared(Graph):
         ):
             self.ref = Experimental(**kwargs)
 
-        self.comps = {
+        comps = {
             int(os.path.basename(i).split("_")[1]): np.loadtxt(i)
             for i in os.listdir(os.getcwd())
             if self.graph_type.lower() in str(i).lower()
             and "comp" in str(i).lower()
             and "xy" in str(i).lower()
         }
+        self.comps = {}
+        
+        for i in comps:
+            if np.any(np.abs(comps[i][:, 1]) > 0):
+                self.comps[i] = comps[i].copy()
+
+
         self.comps = dict(sorted(self.comps.items()))
-        self.labels += [f"{protocol[i].functional}" for i in self.comps.keys()]
+        self.labels += [f"Protocol {i} @ {protocol[i].functional}" for i in self.comps.keys()]
 
         self.title = f"{self.graph_type.upper()} graph comparison"
 
