@@ -123,8 +123,8 @@ State  Energy     Wavelength     R         MX        MY        MZ
         match_B = re.findall(self.regex['B'], self.fl)
         if match_B:
             B = np.array(match_B[-1], dtype=float)
-            if self.regex['unit_B'] != 'cm-1':
-                B /= CONVERT_B[self.regex['unit_B']]
+            if self.regex['units_B'] != 'cm-1':
+                B /= CONVERT_B[self.regex['units_B']]
         else:
             self.log.warning("\tB not found, storing a versor")
             B = np.array([1,0,0])
