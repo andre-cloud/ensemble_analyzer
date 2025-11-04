@@ -41,14 +41,3 @@ class BaseCalc(ABC):
     def frequency(self):
         """Add to the calculator the opt flag"""
         pass
-
-    @abstractmethod
-    def parse_geom(self):
-        """Parse the last geometry"""
-        pass
-    
-    @abstractmethod
-    def parse_B_and_M(self):
-        """Parse the rotational constant and magnetic dipole"""
-        pass
-
