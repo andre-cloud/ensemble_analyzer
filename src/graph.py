@@ -1,10 +1,9 @@
 import numpy as np
-from types import UnionType
 import os
 import pickle as pl
 
 import matplotlib.pyplot as plt
-from scipy.optimize import minimize, differential_evolution
+from scipy.optimize import minimize
 
 from src.constants import *
 

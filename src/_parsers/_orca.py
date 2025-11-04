@@ -156,7 +156,7 @@ State  Energy     Wavelength     R         MX        MY        MZ
 
         # VCD
         if self.version == '5' or self.regex['s_VCD'] not in self.fl:
-            vcd = np.zeros(freq[freq>0].shape)
+            vcd = np.zeros(shape=(1,2))
         else: 
             vcd_text = self.get_filtered_text(start=self.regex['s_VCD'], end='\n\n').splitlines()
             vcd = np.array(self.parse_table(vcd_text, [self.regex['idx_en_vcd'], self.regex['idx_imp_vcd']]), dtype=np.float64)

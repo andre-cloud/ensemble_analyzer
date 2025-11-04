@@ -1,11 +1,23 @@
 from ase.calculators.orca import ORCA, OrcaProfile
 from src._calculators.base import BaseCalc, register_calculator
-import shutil
-import os
+import shutil, subprocess
+import os, re
+
+
+def get_orca_version(orca_command): 
+    if orca_command is None: 
+        return None
+    result = subprocess.run([orca_command, 'tmp'], capture_output=True, check=False)
+    print(result.stdout.decode())
+    match = re.findall(r'Program Version (\d)', result.stdout.decode())
+    if match: 
+        return int(match[-1])
+    return None
 
 try:
     ORCA_COMMAND = os.getenv("ORCACOMMAND") or shutil.which("orca")
     orca_profile = OrcaProfile(command=ORCA_COMMAND)
+    VERSION = get_orca_version(ORCA_COMMAND)
 except Exception:
     orca_profile = None
 
@@ -80,5 +92,6 @@ class OrcaCalc(BaseCalc):
     def frequency(self):
         calc, label = self._std_calc()
         calc.parameters["orcasimpleinput"] += " freq"
-        calc.parameters["orcablocks"] += "\n%freq vcd true end\n"
+        if VERSION > 5:
+            calc.parameters["orcablocks"] += "\n%freq vcd true end\n"
         return calc, label

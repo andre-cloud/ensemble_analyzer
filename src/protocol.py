@@ -2,7 +2,7 @@ import json
 import os
 
 from src._calculators.base import CALCULATOR_REGISTRY
-from typing import Union, List
+from typing import Union, List, Optional
 
 DEBUG = os.getenv("DEBUG")
 def load_protocol(file: str):  # pragma: no cover
@@ -51,29 +51,27 @@ class Protocol:
         self,
         number: int,
         functional: str,
-        basis: str = "def2-svp",
-        solvent: dict = {},
-        opt: bool = False,
-        freq: bool = False,
-        add_input: str = "",
-        freq_fact: float = 1,
+        basis: Optional[str],
+        solvent: Optional[dict] = {},
+        opt: Optional[bool] = False,
+        freq: Optional[bool] = False,
+        add_input: Optional[str] = "",
+        freq_fact: Optional[float] = 1,
         mult: int = 1,
         charge: int = 0,
-        graph: bool = False,
+        graph: Optional[bool] = False,
         calculator: str = "orca",
-        thrG: float = None,
-        thrB: float = None,
-        thrGMAX: float = None,
+        thrG: Optional[float] = None,
+        thrB: Optional[float] = None,
+        thrGMAX: Optional[float] = None,
         # thrRMSD_enantio : float = None,
-        constrains: list = [],
-        maxstep: float = 0.2,
-        fmax: float = 0.05,
-        cluster: bool|int = False,
-        no_prune: bool = False,
-        comment: str = "",
-        read_orbitals = "",
-        read_population: str|None = None,
-        monitor_internals: List[List[int]] = [],
+        constrains: Optional[list] = [],
+        cluster: Optional[bool|int] = False,
+        no_prune: Optional[bool] = False,
+        comment: Optional[str] = "",
+        read_orbitals: Optional[str] = "",
+        read_population: Optional[str|None] = None,
+        monitor_internals: Optional[List[List[int]]] = [],
     ): 
         self.number = number
         self.functional = functional.upper()
@@ -89,7 +87,6 @@ class Protocol:
         self.get_thrs(self.load_threshold())
         self.calculator = calculator
         self.constrains = constrains
-        self.maxstep = maxstep
         self.cluster = cluster
         self.no_prune = no_prune
         self.mult = mult
@@ -101,39 +98,8 @@ class Protocol:
         
         assert self.mult > 0, "Multiplicity must be greater than 0"
 
-
-        if fmax != 0.05:
-            self.fmax = fmax
-        elif self.constrains:
-            self.fmax = 0.1
-        else:  # if an opt freeze, the max force convergence will be lifted.
-            self.fmax = fmax
-
         self.freq_fact = freq_fact
         self.graph = graph
-
-    @property
-    def calculation_level(self):
-        return LEVEL_DEFINITION[self.number_level].upper() + (f'-> {self.comment}' if self.comment else "")
-
-    @property
-    def level(self):
-        return f"{self.functional}/{self.basis}" + (
-            ("["+str(self.solvent))+"]" if self.solvent else ""
-        ) + (f'-> {self.comment}' if self.comment else "")
-
-    @property
-    def thr(self):
-        return f"\tthrG    : {self.thrG} kcal/mol\n\tthrB    : {self.thrB} cm-1\n\tthrGMAX : {self.thrGMAX} kcal/mol\n"
-
-    @property
-    def number_level(self):
-        c = 0
-        if self.opt:
-            c += 1
-        if self.freq:
-            c += 2
-        return c
 
     def load_threshold(self) -> dict:
         """
@@ -200,6 +166,40 @@ class Protocol:
         # if not self.thrRMSD_enantio:
         #     self.thrRMSD_enantio = thr_json[c]["thrRMSD_enantio"]
 
+    def verbal_internals(self): 
+        internals = []
+        for internal in self.monitor_internals: 
+            internals.append(f'{self.INTERNALS[len(internal)]} {"-".join([str(i) for i in internal])}')
+        return internals
+    
+    ## Properties
+
+    @property
+    def calculation_level(self):
+        return LEVEL_DEFINITION[self.number_level].upper() + (f'-> {self.comment}' if self.comment else "")
+
+    @property
+    def level(self):
+        return f"{self.functional}/{self.basis}" + (
+            ("["+str(self.solvent))+"]" if self.solvent else ""
+        ) + (f'-> {self.comment}' if self.comment else "")
+
+    @property
+    def thr(self):
+        return f"\tthrG    : {self.thrG} kcal/mol\n\tthrB    : {self.thrB} cm-1\n\tthrGMAX : {self.thrGMAX} kcal/mol\n"
+
+    @property
+    def number_level(self):
+        c = 0
+        if self.opt:
+            c += 1
+        if self.freq:
+            c += 2
+        return c
+
+
+    ## Repr methods
+
     def __str__(self):  # pragma: no cover
         if self.solvent:
             return f"{self.functional}/{self.basis} - {self.solvent}"
@@ -210,11 +210,7 @@ class Protocol:
             return f"{self.functional}/{self.basis} - {self.solvent}"
         return f"{self.functional}/{self.basis}"
 
-    def verbal_internals(self): 
-        internals = []
-        for internal in self.monitor_internals: 
-            internals.append(f'{self.INTERNALS[len(internal)]} {"-".join([str(i) for i in internal])}')
-        return internals
+    ## Statics
 
     @staticmethod
     def load_raw(json):

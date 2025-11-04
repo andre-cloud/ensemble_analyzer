@@ -7,7 +7,7 @@
         "functional": "r2scan-3c",
         "basis": "def2-mTZVPP",
         "opt": true,
-        "freq": false
+        "freq": true
     },
     "2": {
     	"functional": "wb97x-d4rev",
