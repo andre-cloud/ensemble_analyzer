@@ -87,7 +87,7 @@ def get_conf_parameters(
     b = np.linalg.norm(B_vec)
     m = np.linalg.norm(M_vec)
 
-    g = ""
+    g = np.nan
     zpve, H, S = np.nan, np.nan, np.nan
     if freq.size > 0:
         g, zpve, H, S = free_gibbs_energy(
