@@ -25,6 +25,7 @@ except Exception:
 @register_calculator("orca")
 class OrcaCalc(BaseCalc):
     label = "orca"
+    VERSION = VERSION if VERSION else 0
 
     def common_str(self):
 
@@ -85,13 +86,14 @@ class OrcaCalc(BaseCalc):
             calc.parameters["orcasimpleinput"] += text
         if self.protocol.freq:
             calc.parameters["orcasimpleinput"] += " freq"
-            calc.parameters["orcablocks"] += "\n%freq vcd true end\n"
+            if self.VERSION > 5:
+                calc.parameters["orcablocks"] += "\n%freq vcd true end\n"
 
         return calc, label
 
     def frequency(self):
         calc, label = self._std_calc()
         calc.parameters["orcasimpleinput"] += " freq"
-        if VERSION > 5:
+        if self.VERSION > 5:
             calc.parameters["orcablocks"] += "\n%freq vcd true end\n"
         return calc, label
