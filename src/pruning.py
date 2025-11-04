@@ -33,7 +33,7 @@ def cut_over_thr_max(confs: list, number: str, thrGMAX: float, log) -> None:
 
     ens = np.array([(j, (j.energies[str(number)]["G"]
                 if not np.isnan(j.energies[str(number)]["G"])
-                else j.energies[str(number)]["E"])) for j in confs if i.active])
+                else j.energies[str(number)]["E"])) for j in confs if j.active])
     
     ens[:, 1] = ens[:, 1] - min(ens[:, 1])
 
