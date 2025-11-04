@@ -60,12 +60,12 @@ def get_conf_parameters(
     
     e = parser.parse_energy()
     
-    if p.opt or 'opt' in p.add_input.lower() or 'opt' in p.function.lower():
+    if p.opt or 'opt' in p.add_input.lower() or 'opt' in p.functional.lower():
         conf.last_geometry = parser.parse_geom().copy()
         # TODO: LOGICA PER UN'OTTIMIZZAZIONE NON COMPLETATA
         # Si potrebbe rilanciare l'ottimizzazione... 
 
-    if p.freq or 'freq' in p.add_input.lower() or 'freq' in p.function.lower():
+    if p.freq or 'freq' in p.add_input.lower() or 'freq' in p.functional.lower():
         freq, ir, vcd = parser.parse_freq()
         if freq.size == 0: 
             log.critical(
