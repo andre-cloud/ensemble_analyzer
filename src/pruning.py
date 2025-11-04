@@ -124,7 +124,7 @@ def check_dE_dB(check, conf_ref, protocol, controller: dict, include_H: bool) ->
     ):
         check.active = False
         check.diactivated_by = conf_ref.number
-        controller[l] = dict_compare(check, conf_ref)
+        controller[l] = dict_compare(check, conf_ref, include_H=include_H)
         return True
 
     controller.pop(l)
