@@ -1,7 +1,6 @@
 
-# from src._parsers.base import BaseParser, register_parser
-from base import BaseParser, register_parser
-# from src.constants import * 
+from src._parsers.base import BaseParser, register_parser
+from src.constants import * 
 
 
 import re
