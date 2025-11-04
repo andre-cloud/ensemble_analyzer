@@ -65,6 +65,7 @@ def get_conf_parameters(
         # TODO: LOGICA PER UN'OTTIMIZZAZIONE NON COMPLETATA
         # Si potrebbe rilanciare l'ottimizzazione... 
 
+    freq= np.array([])
     if p.freq or 'freq' in p.add_input.lower() or 'freq' in p.functional.lower():
         freq, ir, vcd = parser.parse_freq()
         if freq.size == 0: 
@@ -75,7 +76,7 @@ def get_conf_parameters(
          
         freq *= p.freq_fact
         log.info(
-            f"{conf.number} has {freq[freq < 0].size} imaginary frequency(s): {', '.join(list(map(tranform_float, freq[freq < 0])))}"
+            f"\tConf {conf.number} has {freq[freq < 0].size} imaginary frequency(s): {', '.join(list(map(tranform_float, freq[freq < 0])))}"
         )
         if freq[freq < 0].size > 0:
             log.info(
