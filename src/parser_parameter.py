@@ -67,7 +67,7 @@ def get_conf_parameters(
 
     if p.freq or 'freq' in p.add_input.lower() or 'freq' in p.function.lower():
         freq, ir, vcd = parser.parse_freq()
-        if not freq: 
+        if freq.size == 0: 
             log.critical(
                 f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nNo frequency present in the calculation output.\n{'='*20}\nExiting\n{'='*20}\n"
             )

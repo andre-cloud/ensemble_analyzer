@@ -141,7 +141,7 @@ State  Energy     Wavelength     R         MX        MY        MZ
     def parse_freq(self) -> List:
         
         if not self.regex['s_freq'] in self.fl: 
-            return None, np.array([]), np.array([])
+            return np.array([]), np.array([]), np.array([])
 
         fl = self.get_filtered_text(self.regex['s_freq'], end='\n\n\n')
     
