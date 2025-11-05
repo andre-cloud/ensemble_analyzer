@@ -239,13 +239,13 @@ def calc_average_ensemble(conformers: list, number, T, log) -> None:
     rows = [
         [
             f"Conf {i}",
-            dE[idx],
+            dE[idx] / EH_TO_KCAL,
             f"{round(dE_boltz[idx]*100, 2)}",
-            dE_ZPVE[idx],
+            dE_ZPVE[idx] / EH_TO_KCAL,
             f"{round(dE_ZPVE_boltz[idx]*100, 2)}",
-            dH[idx],
+            dH[idx] / EH_TO_KCAL,
             f"{round(dH_boltz[idx]*100, 2)}",
-            dG[idx],
+            dG[idx] / EH_TO_KCAL,
             f"{round(dG_boltz[idx]*100, 2)}",
         ]
         for idx, i in enumerate(CONFS)
