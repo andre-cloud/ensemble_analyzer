@@ -134,10 +134,8 @@ def calc_pca(
         else:
             n_c = ncluster
 
-        # Cluster the data
-        if not confs[0].cluster:
-            kmeans = KMeans(n_clusters=n_c, n_init="auto")
-            clusters = kmeans.fit_predict(pca_scores)
+        kmeans = KMeans(n_clusters=n_c, n_init="auto")
+        clusters = kmeans.fit_predict(pca_scores)
         if set_:
             for idx, conf in enumerate(confs):
                 conf.cluster = int(clusters[idx])
