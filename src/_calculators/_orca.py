@@ -55,7 +55,7 @@ class OrcaCalc(BaseCalc):
             calculator.parameters["orcasimpleinput"] += " moread"
             calculator.parameters[
                 "orcablocks"
-            ] += f'\n%moinp "{self.conf.folder}/protocol_{self.protocol.read_orbitals}.gbw"\n'
+            ] += f'\n%moinp "{self.conf.folder}/protocol_{self.protocol.read_orbitals}/{self.conf.number}_p{self.protocol.read_orbitals}_orca.gbw"\n'
 
         if "freq" in self.protocol.add_input.lower():
             calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"
