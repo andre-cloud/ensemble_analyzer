@@ -16,7 +16,7 @@ def _parse_xyz_str(fl: str, raw=False):
     """
     e = None
     if raw:
-        e = float(re.findall(r'([- ]\d*.\d*)$', fl[1].strip()))
+        e = float(re.findall(r'([- ]\d*.\d*)$', fl[1].strip())[0])
     fl = fl[2:]
     atoms, geom = [], []
     for line in fl:
