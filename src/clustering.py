@@ -92,7 +92,7 @@ def calc_pca(
     confs: list,
     cluster=False,
     ncluster: Union[int, None] = None,
-    set=True,
+    set_=True,
     include_H=True,
 ) -> tuple:
     """
@@ -138,9 +138,9 @@ def calc_pca(
         if not confs[0].cluster:
             kmeans = KMeans(n_clusters=n_c, n_init="auto")
             clusters = kmeans.fit_predict(pca_scores)
-            if set:
-                for idx, conf in enumerate(confs):
-                    conf.cluster = int(clusters[idx])
+        if set_:
+            for idx, conf in enumerate(confs):
+                conf.cluster = int(clusters[idx])
         else:
             clusters = [conf.cluster for conf in confs]
 
