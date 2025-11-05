@@ -6,8 +6,8 @@ import os
 try:
     ORCA_COMMAND = os.getenv("ORCACOMMAND") or shutil.which("orca")
     orca_profile = OrcaProfile(command=ORCA_COMMAND)
-    VERSION = os.getenv("ORCAVERSION")[0]
-    
+    VERSION = int(os.getenv("ORCAVERSION")[0])
+
 except Exception:
     orca_profile = None
 
