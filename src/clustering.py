@@ -296,7 +296,7 @@ def perform_PCA(
     )
 
     pca_scores, clusters, colors, numbers, energy = calc_pca(
-        confs, ncluster=nc, cluster=True, set=set_, include_H=include_H
+        confs, ncluster=nc, cluster=True, set_=set_, include_H=include_H
     )
 
     save_PCA_snapshot(
