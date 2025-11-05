@@ -17,7 +17,7 @@ class OrcaParser(BaseParser):
         "B": r"Rotational constants in cm-1:\s*(-?\d+.\d*)\s*(-?\d+.\d*)\s*(-?\d+.\d*)",
         'units_B': 'cm-1',
         "m": r"Total Dipole Moment\s*:\s*([+-]?\d+(?:\.\d+)?)\s+([+-]?\d+(?:\.\d+)?)\s+([+-]?\d+(?:\.\d+)?)",
-        "E": r"FINAL SINGLE POINT ENERGY\s*(-?\d*.\d*)",
+        "E": r"FINAL SINGLE POINT ENERGY.*?(-?\d+(?:\.\d+)?(?:[Ee][+-]?\d+)?)",
         "start_spec": "SPECTRA",
         "end_spec": "***",
         "s_UV": """ABSORPTION SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS    
