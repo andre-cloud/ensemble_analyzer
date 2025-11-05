@@ -337,7 +337,7 @@ if __name__ == "__main__":  # pragma: no cover:
         "-nc",
         "--ncluster",
         help="Number of families to cluster. Defaults 5",
-        default=5,
+        default=None,
         type=int,
     )
     parser.add_argument(
