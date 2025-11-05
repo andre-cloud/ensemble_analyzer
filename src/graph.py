@@ -127,16 +127,18 @@ class Computed(Graph):
             os.path.join(os.getcwd(), f"{self.graph_type.lower()}_ref.dat")
         )
 
-        if self.auto:
-            kwargs.update({"log": self.log})
-            self.ref = Experimental(**kwargs)
-            self.autoconvolute()
-        else:
-            self.y = self.CONV[self.g](self.x, self.y_comp, self.DEFs[self.graph_type])
-            if self.invert:
-                self.y *= -1
-            self.y = self.normalize()
-            # self.shift = 0
+        self.y = self.CONV[self.g](self.x, self.y_comp, self.DEFs[self.graph_type])
+        if not set(self.y) == set([0,]):
+            if self.auto:
+                kwargs.update({"log": self.log})
+                self.ref = Experimental(**kwargs)
+                self.autoconvolute()
+            else:
+                self.y = self.CONV[self.g](self.x, self.y_comp, self.DEFs[self.graph_type])
+                if self.invert:
+                    self.y *= -1
+                self.y = self.normalize()
+                # self.shift = 0
             # self.fwhm = self.DEFs[self.graph_type]
 
     def retrive_data(self):
