@@ -168,7 +168,7 @@ def run_protocol(
                 fname=f"PCA_before_pruning_protocol_{p.number}.png",
                 title=f"PCA before pruning protocol {p.number}",
                 log=log,
-                set=False,
+                set_=False,
                 include_H=include_H,
             )
         create_summary("Summary", conformers, p, log)
