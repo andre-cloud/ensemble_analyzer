@@ -66,7 +66,11 @@ class GaussianCalc(BaseCalc):
     def optimisation(self):
 
         calc, label = self._std_calc()
-        calc.parameters["extra"] += " opt"
+        if not self.protocol.constrains:
+            calc.parameters["extra"] += " opt"
+        else:
+            calc.parameters["extra"] += " opt=(modredudant)"
+        
         if self.protocol.freq: 
             calc.parameters["extra"] += " freq=(HPModes,vcd)"
 

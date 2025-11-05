@@ -51,7 +51,7 @@ class Protocol:
         self,
         number: int,
         functional: str,
-        basis: Optional[str],
+        basis: Optional[str] = "",
         solvent: Optional[dict] = {},
         opt: Optional[bool] = False,
         freq: Optional[bool] = False,
