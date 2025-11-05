@@ -1,13 +1,14 @@
 try:
     from src.IOsystem import mkdir
+    from src.constants import * 
 except ImportError as e:  # pragma: no cover
     print(e)
+    from constants import * 
     from IOsystem import mkdir
 
 import numpy as np
 import random
 from ase.atoms import Atoms
-from src.constants import * 
 
 
 class Conformer:
