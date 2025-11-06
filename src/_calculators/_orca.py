@@ -3,11 +3,12 @@ from src._calculators.base import BaseCalc, register_calculator
 import shutil
 import os
 
+VERSION = None
+
 try:
     ORCA_COMMAND = os.getenv("ORCACOMMAND") or shutil.which("orca")
     orca_profile = OrcaProfile(command=ORCA_COMMAND)
     VERSION = int(os.getenv("ORCAVERSION")[0])
-
 except Exception:
     orca_profile = None
 
