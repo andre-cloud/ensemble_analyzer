@@ -161,7 +161,6 @@ class Computed(Graph):
         self.auto = os.path.exists(
             os.path.join(os.getcwd(), f"{self.graph_type.lower()}_ref.dat")
         )
-        self.ref = None
         if not np.all(self.y_comp == 0):
             if self.auto:
                 kwargs = dict(kwargs)
