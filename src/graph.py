@@ -145,8 +145,19 @@ class Computed(Graph):
         self.auto = os.path.exists(
             os.path.join(os.getcwd(), f"{self.graph_type.lower()}_ref.dat")
         )
-        fwhm_val = self.fwhm if self.fwhm is not None else self.DEFAULT_FWHM[self.graph_type]
-        self.y = self.CONV[self.g](self.x, self.y_comp, fwhm_val)
+
+        if self.graph_type in ['UV', 'ECD']:
+            if self.fwhm: 
+                if isinstance(self.fwhm, list):
+                    fwhm_val = self.fwhm[0]
+                else:
+                    fwhm_val = self.fwhm
+            else:
+                fwhm_val = self.DEFAULT_FWHM[self.graph_type]
+        else:
+            fwhm_val = self.DEFAULT_FWHM[self.graph_type]
+
+        # self.y = self.CONV[self.g](self.x, self.y_comp, fwhm_val)
         if not set(self.y) == {0}:
             if self.auto:
                 kwargs.update({"log": self.log})
