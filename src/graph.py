@@ -77,9 +77,6 @@ class Graph:
             for x, y in zip(self.x, self.y):
                 f.write(f"{x:.6f} {y:.6f}\n")
 
-
-import logging
-
 class Computed(Graph):
     """
     Computed spectrum from conformers with optional convolution and (auto-)optimization.
@@ -127,7 +124,7 @@ class Computed(Graph):
         self.g = convolution if convolution else self.graph_type
         self.conformers = conf
         self.read_pop = read_pop
-        self._log = self.log or logging.getLogger(__name__)
+        print = self.log
 
         # Validate at least one conformer is active and has required data
         idx_first_valid_conf = None
@@ -136,14 +133,14 @@ class Computed(Graph):
                 idx_first_valid_conf = idx
                 break
         if idx_first_valid_conf is None:
-            self._log.error("No active conformers found.")
+            print("No active conformers found.")
             return
         conf0 = conf[idx_first_valid_conf]
         if conf0.energies[self.protocol].get("graph", None) is None:
-            self._log.error("No 'graph' key in conformer energies.")
+            print("No 'graph' key in conformer energies.")
             return
         if conf0.energies[self.protocol]["graph"].get(self.graph_type, None) is None:
-            self._log.error(f"No '{self.graph_type}' data in conformer energies.")
+            print(f"No '{self.graph_type}' data in conformer energies.")
             return
 
         # Only allow shift/fwhm for UV/ECD as input
@@ -195,12 +192,12 @@ class Computed(Graph):
                     else i.energies[self.read_pop]["Pop"]
                 )
             except Exception as e:
-                self._log.warning(f"Skipping conformer due to error: {e}")
+                print(f"Skipping conformer due to error: {e}")
                 continue
             # Interpolate conformer contribution to self.x grid
             y_interp = np.interp(self.x, xvals, yvals, left=0, right=0)
             self.y_comp += y_interp * float(pop)
-        self._log.debug(f"Retrieved and summed conformer data for {self.graph_type}.")
+        print(f"Retrieved and summed conformer data for {self.graph_type}.")
 
     def compute_convolution(self, shift=None, fwhm=None):
         """
@@ -233,7 +230,7 @@ class Computed(Graph):
         Optimize shift/fwhm to best match experimental spectrum.
         Uses grid search + local optimization (L-BFGS-B).
         """
-        self._log.info(f"Starting autoconvolution for {self.graph_type}.")
+        print(f"Starting autoconvolution for {self.graph_type}.")
         conv_func = self.CONV[self.graph_type]
         # Define bounds and initial guess for shift/fwhm
         # UV/ECD: shift is additive, IR/VCD: shift is multiplicative
@@ -296,7 +293,7 @@ class Computed(Graph):
                 y_norm[self.ref.x_min_idx:self.ref.x_max_idx],
                 ref_norm[self.ref.x_min_idx:self.ref.x_max_idx],
             )
-            self._log.debug(f"Shift: {s:.4f}, FWHM: {f:.4f}, RMSD: {rmsd:.6f}")
+            print(f"Shift: {s:.4f}, FWHM: {f:.4f}, RMSD: {rmsd:.6f}")
             return rmsd
         res = minimize(
             opt_fun,
@@ -314,13 +311,13 @@ class Computed(Graph):
                 self.y *= -1
             self.y = self.normalize()
             similarity = ((1 if self.graph_type not in CHIRALS else 2) - res.fun) / (1 if self.graph_type not in CHIRALS else 2) * 100
-            self._log.info(
+            print(
                 f"{'='*20}\nResults for {self.graph_type} graph calculated in Protocol {self.protocol}\n{'='*20}\n"
                 + f"Optimal shift: {self.shift:.4f}, Optimal FWHM: {self.fwhm:.4f}, Similarity: {similarity:.2f}%\n"
                 + "="*20
             )
         else:
-            self._log.error("Optimization failed. Using default convolution.")
+            print("Optimization failed. Using default convolution.")
             self.shift = 0.0 if self.graph_type in ["UV", "ECD"] else 1.0
             self.fwhm = self.DEFs[self.graph_type]
             self.y = self.compute_convolution(shift=self.shift, fwhm=self.fwhm)
@@ -381,14 +378,9 @@ class Experimental(Graph):
 
         self.convert = (self.graph_type in ["UV", "ECD"] and np.mean(self.data[:,0]) > 20)
 
-        print(f'{self.convert=}')
-        print(f'{self.data[:, 0]=}')
         if self.convert:
             if self.graph_type not in ["IR", "VCD"]:
-                print(f'{self.FACTOR[self.graph_type] =}')
                 self.x_exp = self.FACTOR[self.graph_type] / self.data[:, 0]
-                print(f'{self.x_exp=}')
-                print(f'{self.FACTOR[self.graph_type] / self.data[0, 0]=}')
                 self.x_max, self.x_min = (
                     self.FACTOR[self.graph_type] / self.x_min,
                     self.FACTOR[self.graph_type] / self.x_max,
@@ -409,10 +401,7 @@ class Experimental(Graph):
 
         self.y = self.interpolate()
         tmp = (self.x > self.x_min) & (self.x < self.x_max)
-        
-        print(f'{self.x_max=}', f'{self.x_min=}')
-        print(f'{tmp=}')
-        print(f'{self.x=}')
+
         self.x_min_idx = np.where(self.x == np.min(self.x[tmp]))[0][0]
         self.x_max_idx = np.where(self.x == np.max(self.x[tmp]))[0][0]
 
