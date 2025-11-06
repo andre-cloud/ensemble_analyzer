@@ -13,6 +13,7 @@ MAX_TRY = 5
 # Boltzmann = 1.380649e-23 J/K
 # J_TO_H = 2.2937122783963e+17 Eh/J
 # AMU_TO_KG = 1.6605390666e-27 kg*mol/g
+
 FACTOR_EV_NM = h * c / (10**-9 * electron_volt)
 FACTOR_EV_CM_1 = 1 / 8065.544  # to yield eV
 
