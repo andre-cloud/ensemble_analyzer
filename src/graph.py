@@ -193,9 +193,11 @@ class Computed(Graph):
         ss, sf = 0, self.DEFs[self.graph_type]
 
         if hasattr(self, "shift"):
-            ss = self.shift
+            if self.shift:
+                ss = self.shift
         if hasattr(self, "fwhm"):
-            sf = self.fwhm
+            if self.fwhm:
+                sf = self.fwhm
 
         # Shift
         if type(self.shift) == list:
