@@ -5,7 +5,6 @@ from src.logger import create_log
 from src.protocol import Protocol
 from src.graph import main_graph, Compared
 from src.pruning import calculate_rel_energies
-from src.parser_parameter import get_data_for_graph
 
 import json, logging
 import argparse, os
@@ -52,7 +51,7 @@ if args.read_boltz:
 
 for i in protocol:
     print(f"Retriving datas for Protocol {i.number}")
-    get_data_for_graph(conformers=ensemble, protocol=i, log=log)
+    # get_data_for_graph(conformers=ensemble, protocol=i, log=log)
     print(f"Creating graphs for Protocol {i.number}")
     print(settings['shift'])
     main_graph(ensemble, i, log=log, invert=invert, shift=settings['shift'], fwhm=settings['fwhm'])
