@@ -77,17 +77,13 @@ class Graph:
             for x, y in zip(self.x, self.y):
                 f.write(f"{x:.6f} {y:.6f}\n")
 
+
 class Computed(Graph):
-    """
-    Computed spectrum from conformers with optional convolution and (auto-)optimization.
-    Handles shift and fwhm for UV/ECD as additive (shift in eV), and for IR/VCD as multiplicative (shift as scaling factor).
-    Provides grid search + local optimization (L-BFGS-B) for best shift/fwhm against experimental data.
-    """
     DEFs = {
-        "IR": 50,    # σ in cm-1
-        "VCD": 50,   # σ in cm-1
+        "IR": 50,  # σ in cm-1
+        "VCD": 50,  # σ in cm-1
         "UV": 0.25,  # FWHM in eV
-        "ECD": 0.25, # FWHM in eV
+        "ECD": 0.25,  # FWHM in eV
     }
 
     def __init__(
@@ -100,244 +96,167 @@ class Computed(Graph):
         read_pop=None,
         **kwargs,
     ):
-        """
-        Parameters
-        ----------
-        conf : list
-            List of conformer objects.
-        invert : bool
-            Whether to invert the spectrum (for chiral).
-        convolution : str or None
-            Convolution type (defaults to graph_type).
-        shift : None, float, or list
-            For UV/ECD: additive shift in eV (None, float, or [min,max]).
-            For IR/VCD: ignored.
-        fwhm : None, float, or list
-            FWHM for convolution (None, float, or [min,max]).
-        read_pop : str or None
-            Population protocol to read.
-        kwargs : dict
-            Passed to Graph and Experimental.
-        """
+
+        # kwargs.update({'shift': shift, 'fwmh':fwhm})
         super().__init__(**kwargs)
+
         self.invert = invert
         self.g = convolution if convolution else self.graph_type
         self.conformers = conf
-        self.read_pop = read_pop
-        print = self.log
-
-        # Validate at least one conformer is active and has required data
-        idx_first_valid_conf = None
-        for idx, i in enumerate(conf):
-            if i.active:
-                idx_first_valid_conf = idx
-                break
-        if idx_first_valid_conf is None:
-            print("No active conformers found.")
+        idx_first_valid_conf = [idx for idx, i in enumerate(conf) if i.active][0]
+        
+        if (
+            conf[idx_first_valid_conf].energies[self.protocol].get("graph", None)
+            is None
+        ):
             return
-        conf0 = conf[idx_first_valid_conf]
-        if conf0.energies[self.protocol].get("graph", None) is None:
-            print("No 'graph' key in conformer energies.")
-            return
-        if conf0.energies[self.protocol]["graph"].get(self.graph_type, None) is None:
-            print(f"No '{self.graph_type}' data in conformer energies.")
+        elif (
+            conf[idx_first_valid_conf]
+            .energies[self.protocol]
+            .get("graph")
+            .get(self.graph_type, None)
+            is None
+        ):
             return
 
-        # Only allow shift/fwhm for UV/ECD as input
-        if self.graph_type in ["UV", "ECD"]:
-            self.shift = shift if (shift is None or isinstance(shift, (float, list))) else None
-            self.fwhm = fwhm if (fwhm is None or isinstance(fwhm, (float, list))) else None
-        else:
-            self.shift = None
-            self.fwhm = fwhm if (fwhm is None or isinstance(fwhm, (float, list))) else None
+        self.shift = shift or None
+        self.fwhm = fwhm or None
 
-        # Retrieve conformer data (no convolution, no file output)
-        self.retrieve_data()
+        self.retrive_data()
 
-        # Check if experimental data exists for autoconvolution
         self.auto = os.path.exists(
             os.path.join(os.getcwd(), f"{self.graph_type.lower()}_ref.dat")
         )
-        if not np.all(self.y_comp == 0):
-            if (isinstance(self.fwhm, float) or isinstance(self.fwhm, int)) and (isinstance(self.shift, float) or isinstance(self.shift, int)):
-                self.y = self.compute_convolution(
-                    shift=self.shift,
-                    fwhm=self.fwhm
-                )
-                
-                if self.invert:
-                    self.y *= -1
-                self.y = self.normalize()
-            elif self.auto:
-                kwargs = dict(kwargs)
+
+        self.y = self.CONV[self.g](self.x, self.y_comp, self.DEFs[self.graph_type])
+        if not set(self.y) == set([0,]):
+            if self.auto:
                 kwargs.update({"log": self.log})
                 self.ref = Experimental(**kwargs)
                 self.autoconvolute()
             else:
-                # Use default convolution
-                self.y = self.compute_convolution(
-                    shift=None,
-                    fwhm=self.fwhm if self.fwhm is not None else self.DEFs[self.graph_type]
-                )
+                self.y = self.CONV[self.g](self.x, self.y_comp, self.DEFs[self.graph_type])
                 if self.invert:
                     self.y *= -1
                 self.y = self.normalize()
+                # self.shift = 0
+            # self.fwhm = self.DEFs[self.graph_type]
 
-    def retrieve_data(self):
-        """
-        Collects and sums the raw data from all active conformers, weighted by population.
-        No convolution or file output is performed here.
-        """
+    def retrive_data(self):
         self.y_comp = np.zeros(self.x.shape)
+        conv_func = self.CONV[self.graph_type]
         for i in self.conformers:
             if not i.active:
                 continue
-            try:
-                xvals = np.array(i.energies[self.protocol]["graph"][self.graph_type]["x"])
-                yvals = np.array(i.energies[self.protocol]["graph"][self.graph_type]["y"])
-                pop = (
-                    i.energies[self.protocol]["Pop"]
-                    if not self.read_pop
-                    else i.energies[self.read_pop]["Pop"]
-                )
-            except Exception as e:
-                print(f"Skipping conformer due to error: {e}")
-                continue
-            # Interpolate conformer contribution to self.x grid
-            y_interp = np.interp(self.x, xvals, yvals, left=0, right=0)
-            self.y_comp += y_interp * float(pop)
-        print(f"Retrieved and summed conformer data for {self.graph_type}.")
+            x = np.array(i.energies[self.protocol]["graph"][self.graph_type]["x"])
+            y = np.array(i.energies[self.protocol]["graph"][self.graph_type]["y"])
 
-    def compute_convolution(self, shift=None, fwhm=None):
-        """
-        Apply convolution to the composite spectrum, with shift/fwhm.
-        For UV/ECD: x + shift (additive).
-        For IR/VCD: x * shift (multiplicative), but shift is always 1 unless optimized.
-        """
-        conv_func = self.CONV[self.g]
+            pop = (
+                i.energies[self.protocol]["Pop"]
+                if not self.read_pop
+                else i.energies[self.read_pop]["Pop"]
+            )
 
-        if fwhm:
-            if isinstance(fwhm, list):
-                fwhm_val = fwhm[0]
-            else:
-                fwhm_val = fwhm
-        else: 
-            fwhm_val = self.DEFs[self.graph_type]
+            conv_graph = conv_func(x, y, self.DEFs[self.graph_type])
 
-        # For shift: only relevant for UV/ECD, else use 1.0
-        if self.graph_type in ["UV", "ECD"]:
-            shift_val = shift if shift is not None else 0.0
-            x_conv = self.x + shift_val
-        else:
-            shift_val = shift if shift is not None else 1.0
-            x_conv = self.x * shift_val
-        y = conv_func(x_conv, self.y_comp, fwhm_val)
-        return y
+            with open(
+                os.path.join(i.folder, f"p{self.protocol}_{self.graph_type}.xy"), "w"
+            ) as f:
+                for x, y in zip(self.x, self.y_comp):
+                    f.write(f"{x:.6f} {y:.6f}\n")
+
+            self.y_comp += conv_graph * float(pop)
 
     def autoconvolute(self):
-        """
-        Optimize shift/fwhm to best match experimental spectrum.
-        Uses grid search + local optimization (L-BFGS-B).
-        """
-        print(f"Starting autoconvolution for {self.graph_type}.")
-        conv_func = self.CONV[self.graph_type]
-        # Define bounds and initial guess for shift/fwhm
-        # UV/ECD: shift is additive, IR/VCD: shift is multiplicative
-        if self.graph_type in ["UV", "ECD"]:
-            # Shift: None/float/list
-            if isinstance(self.shift, list) and len(self.shift) == 2:
-                shift_bounds = (self.shift[0], self.shift[1])
-                shift_init = np.mean(self.shift)
-            elif isinstance(self.shift, float):
-                shift_bounds = (self.shift, self.shift)
-                shift_init = self.shift
-            else:
-                shift_bounds = (-0.2, 0.2)
-                shift_init = 0.0
-        else:
-            # For IR/VCD, shift is scaling factor (multiplicative)
-            shift_bounds = (0.95, 1.05)
-            shift_init = 1.0
+        f = self.CONV[self.graph_type]
 
-        if isinstance(self.fwhm, list) and len(self.fwhm) == 2:
-            fwhm_bounds = (self.fwhm[0], self.fwhm[1])
-            fwhm_init = np.mean(self.fwhm)
-        elif isinstance(self.fwhm, float):
-            fwhm_bounds = (self.fwhm, self.fwhm)
-            fwhm_init = self.fwhm
-        else:
-            fwhm_bounds = (0.2, self.DEFs[self.graph_type] * 2)
-            fwhm_init = self.DEFs[self.graph_type]
+        def wrapper(variables):
+            shift, fwhm = variables
+            x = self.x + shift if self.graph_type in ["UV", "ECD"] else self.x * shift
 
-        # Grid search (coarse) + local optimization
-        best_rmsd = np.inf
-        best_params = (shift_init, fwhm_init)
-        grid_n = 5
-        shift_grid = np.linspace(shift_bounds[0], shift_bounds[1], grid_n)
-        fwhm_grid = np.linspace(fwhm_bounds[0], fwhm_bounds[1], grid_n)
-        for s in shift_grid:
-            for f in fwhm_grid:
-                y = self.compute_convolution(shift=s, fwhm=f)
-                if self.invert:
-                    y = -y
-                # Normalize in the experimental window
-                y_norm = y / np.max(np.abs(y[self.ref.x_min_idx:self.ref.x_max_idx]))
-                ref_norm = self.ref.y / np.max(np.abs(self.ref.y[self.ref.x_min_idx:self.ref.x_max_idx]))
-                rmsd = self.diversity_function(
-                    y_norm[self.ref.x_min_idx:self.ref.x_max_idx],
-                    ref_norm[self.ref.x_min_idx:self.ref.x_max_idx],
-                )
-                if rmsd < best_rmsd:
-                    best_rmsd = rmsd
-                    best_params = (s, f)
-        # Now local optimization from best grid point
-        def opt_fun(params):
-            s, f = params
-            y = self.compute_convolution(shift=s, fwhm=f)
+            y = f(x, self.y_comp, fwhm)
             if self.invert:
-                y = -y
-            y_norm = y / np.max(np.abs(y[self.ref.x_min_idx:self.ref.x_max_idx]))
-            ref_norm = self.ref.y / np.max(np.abs(self.ref.y[self.ref.x_min_idx:self.ref.x_max_idx]))
-            rmsd = self.diversity_function(
-                y_norm[self.ref.x_min_idx:self.ref.x_max_idx],
-                ref_norm[self.ref.x_min_idx:self.ref.x_max_idx],
+                y *= -1
+
+            y_norm = y / np.max(np.abs(y[self.ref.x_min_idx : self.ref.x_max_idx]))
+            ref_norm = self.ref.y / np.max(
+                np.abs(self.ref.y[self.ref.x_min_idx : self.ref.x_max_idx])
             )
-            print(f"Shift: {s:.4f}, FWHM: {f:.4f}, RMSD: {rmsd:.6f}")
-            return rmsd
-        res = minimize(
-            opt_fun,
-            best_params,
-            bounds=[shift_bounds, fwhm_bounds],
-            options={"maxiter": 500},
+            d = self.diversity_function(
+                y_norm[self.ref.x_min_idx : self.ref.x_max_idx],
+                ref_norm[self.ref.x_min_idx : self.ref.x_max_idx],
+            )
+            print(f"Shift: {shift:.4f}, FWHM: {fwhm:.4f}, RMSD: {d:.6f}")
+            return d  # Minimizzare questa funzione
+
+        sb, fb = 0.2, 0.3
+        ss, sf = 0, self.DEFs[self.graph_type]
+
+        if hasattr(self, "shift"):
+            if self.shift:
+                ss = self.shift
+        if hasattr(self, "fwhm"):
+            if self.fwhm:
+                sf = self.fwhm
+
+        # Shift
+        if type(self.shift) == list:
+            shift_bounds = (self.shift[0], self.shift[1])
+            ss = ss[0]
+        elif type(self.shift) == float:
+            shift_bounds = (self.shift, self.shift)
+        elif self.graph_type in ["UV", "ECD"]:
+            shift_bounds = (-sb + ss, sb + ss)
+        elif self.graph_type in ["IR", "VCD"]:
+            shift_bounds = (0.5, 1)
+
+        # FWHM
+        if type(self.fwhm) == list:
+            fwhm_bounds = (self.fwhm[0], self.fwhm[1])
+            sf = sf[0]
+        elif type(self.fwhm) == float:
+            fwhm_bounds = (self.fwhm, self.fwhm)
+        else:
+            fwhm_bounds = (0.2, sf + fb)
+
+        initial_guess = [ss, sf]  # RED SHIFT NEGATIVE
+        bounds = [shift_bounds, fwhm_bounds]
+
+        result = minimize(
+            wrapper,
+            initial_guess,
+            bounds=bounds,
+            options={"maxiter": 1000},
             method="L-BFGS-B",
         )
-        if res.success:
-            opt_shift, opt_fwhm = res.x
-            self.shift = opt_shift
-            self.fwhm = opt_fwhm
-            self.y = self.compute_convolution(shift=opt_shift, fwhm=opt_fwhm)
-            if self.invert:
-                self.y *= -1
+        # result = minimize(wrapper, initial_guess, bounds=bounds, options={'maxiter': 1000}, method='Nelder-Mead')
+
+        if result.success:
+            self.shift, self.fwhm = result.x
+            x = (
+                self.x + self.shift
+                if self.graph_type in ["UV", "ECD"]
+                else self.x * self.shift
+            )
+            self.y = self.CONV[self.graph_type](x, self.y_comp, self.fwhm)
             self.y = self.normalize()
-            similarity = ((1 if self.graph_type not in CHIRALS else 2) - res.fun) / (1 if self.graph_type not in CHIRALS else 2) * 100
-            print(
-                f"{'='*20}\nResults for {self.graph_type} graph calculated in Protocol {self.protocol}\n{'='*20}\n"
-                + f"Optimal shift: {self.shift:.4f}, Optimal FWHM: {self.fwhm:.4f}, Similarity: {similarity:.2f}%\n"
-                + "="*20
+            self.log.info(
+                f"{'='*20}\nResults for {self.graph_type} graph calcualted in Protocol {self.protocol}\n{'='*20}\n"
+                + f"Optimal shift: {self.shift:.3f}, Optimal FWHM: {self.fwhm:.3f}, Similarity: {((1 if self.graph_type not in CHIRALS else 2)-result.fun)/(1 if self.graph_type not in CHIRALS else 2)*100:.2f}%\n"
+                + "=" * 20
+                + "\n"
             )
         else:
-            print("Optimization failed. Using default convolution.")
-            self.shift = 0.0 if self.graph_type in ["UV", "ECD"] else 1.0
-            self.fwhm = self.DEFs[self.graph_type]
-            self.y = self.compute_convolution(shift=self.shift, fwhm=self.fwhm)
-            if self.invert:
-                self.y *= -1
+            self.log.error("Optimization failed. Convolution with defaul values")
+            self.shift, self.fwhm = 0, self.DEFs[self.graph_type]
+            x = self.x + self.shift if self.graph_type in ["UV", "ECD"] else self.x
+            self.y = self.CONV[self.graph_type](
+                self.x + self.shift, self.y_comp, self.fwhm
+            )
             self.y = self.normalize()
 
     def diversity_function(self, a, b):
-        """
-        Compute normalized RMSD between two spectra arrays.
-        """
+        # RMSD
         return (np.sqrt(np.mean((a - b) ** 2))) / (
             1 if self.graph_type not in CHIRALS else 2
         )
@@ -387,9 +306,14 @@ class Experimental(Graph):
 
         self.convert = (self.graph_type in ["UV", "ECD"] and np.mean(self.data[:,0]) > 20)
 
+        print(f'{self.convert=}')
+        print(f'{self.data[:, 0]=}')
         if self.convert:
             if self.graph_type not in ["IR", "VCD"]:
+                print(f'{self.FACTOR[self.graph_type] =}')
                 self.x_exp = self.FACTOR[self.graph_type] / self.data[:, 0]
+                print(f'{self.x_exp=}')
+                print(f'{self.FACTOR[self.graph_type] / self.data[0, 0]=}')
                 self.x_max, self.x_min = (
                     self.FACTOR[self.graph_type] / self.x_min,
                     self.FACTOR[self.graph_type] / self.x_max,
@@ -410,7 +334,10 @@ class Experimental(Graph):
 
         self.y = self.interpolate()
         tmp = (self.x > self.x_min) & (self.x < self.x_max)
-
+        
+        print(f'{self.x_max=}', f'{self.x_min=}')
+        print(f'{tmp=}')
+        print(f'{self.x=}')
         self.x_min_idx = np.where(self.x == np.min(self.x[tmp]))[0][0]
         self.x_max_idx = np.where(self.x == np.max(self.x[tmp]))[0][0]
 
