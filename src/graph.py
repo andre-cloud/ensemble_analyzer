@@ -159,7 +159,16 @@ class Computed(Graph):
             os.path.join(os.getcwd(), f"{self.graph_type.lower()}_ref.dat")
         )
         if not np.all(self.y_comp == 0):
-            if self.auto:
+            if (isinstance(self.fwhm, float) or isinstance(self.fwhm, int)) and (isinstance(self.shift, float) or isinstance(self.shift, int)):
+                self.y = self.compute_convolution(
+                    shift=self.shift,
+                    fwhm=self.fwhm
+                )
+                
+                if self.invert:
+                    self.y *= -1
+                self.y = self.normalize()
+            elif self.auto:
                 kwargs = dict(kwargs)
                 kwargs.update({"log": self.log})
                 self.ref = Experimental(**kwargs)
