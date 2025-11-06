@@ -209,7 +209,15 @@ class Computed(Graph):
         For IR/VCD: x * shift (multiplicative), but shift is always 1 unless optimized.
         """
         conv_func = self.CONV[self.g]
-        fwhm_val = fwhm if fwhm is not None else self.DEFs[self.graph_type]
+
+        if fwhm:
+            if isinstance(fwhm, list):
+                fwhm_val = fwhm[0]
+            else:
+                fwhm_val = fwhm
+        else: 
+            fwhm_val = self.DEFs[self.graph_type]
+
         # For shift: only relevant for UV/ECD, else use 1.0
         if self.graph_type in ["UV", "ECD"]:
             shift_val = shift if shift is not None else 0.0
