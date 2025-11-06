@@ -157,7 +157,7 @@ class Computed(Graph):
         else:
             fwhm_val = self.DEFAULT_FWHM[self.graph_type]
 
-        # self.y = self.CONV[self.g](self.x, self.y_comp, fwhm_val)
+        self.y = self.CONV[self.g](self.x, self.y_comp, fwhm_val)
         if not set(self.y) == {0}:
             if self.auto:
                 kwargs.update({"log": self.log})
