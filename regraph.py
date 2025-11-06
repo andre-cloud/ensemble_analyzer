@@ -53,7 +53,6 @@ for i in protocol:
     print(f"Retriving datas for Protocol {i.number}")
     # get_data_for_graph(conformers=ensemble, protocol=i, log=log)
     print(f"Creating graphs for Protocol {i.number}")
-    print(settings['shift'])
     main_graph(ensemble, i, log=log, invert=invert, shift=settings['shift'], fwhm=settings['fwhm'])
 
 for j in ["IR", "VCD", "UV", "ECD"]:
