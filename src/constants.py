@@ -16,7 +16,8 @@ MAX_TRY = 5
 
 FACTOR_EV_NM = h * c / (10**-9 * electron_volt)
 FACTOR_EV_CM_1 = 1 / 8065.544  # to yield eV
-
+def eV_to_nm(eV):
+    return FACTOR_EV_NM / eV
 
 c = c * 100  # convert speed of light in cm/s
 J_TO_H = physical_constants["joule-hartree relationship"][0]

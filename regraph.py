@@ -3,16 +3,20 @@
 from src.launch import restart
 from src.logger import create_log
 from src.protocol import Protocol
-from src.graph import main_graph, Compared
+from src.graph import main_spectra#, Compared
 from src.pruning import calculate_rel_energies
+from src.constants import GRAPHS
+from src._spectral.compare import ComparedGraph
 
 import json, logging
 import argparse, os
 
+from collections import defaultdict
+import pickle
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument('idx', nargs='+', help="Protocol's number to (re-)generate the graphs")
+parser.add_argument('idx', nargs='+', help="Protocol's number to (re-)generate the graphs", type=int)
 parser.add_argument('-rb', '--read-boltz', help='Read Boltzmann population from a specific protocol', type=int)
 args = parser.parse_args()
 
@@ -49,12 +53,20 @@ if args.read_boltz:
         for p in protocol: 
             conf.energies[str(p.number)]["Pop"] = conf.energies[str(args.read_boltz)]["Pop"]
 
-for i in protocol:
-    print(f"Retriving datas for Protocol {i.number}")
-    # get_data_for_graph(conformers=ensemble, protocol=i, log=log)
-    print(f"Creating graphs for Protocol {i.number}")
-    main_graph(ensemble, i, log=log, invert=invert, shift=settings['shift'], fwhm=settings['fwhm'])
 
-for j in ["IR", "VCD", "UV", "ECD"]:
-    g = Compared(protocol, graph_type=j, log=log)
-    g.save_graph()
+for i in args.idx:
+    prot_obj = protocol[i]
+    main_spectra(ensemble, prot_obj, log=log, invert=invert, shift=settings['shift'], fwhm=settings['fwhm'])
+
+
+plot_comparative_graphs(log)
+
+    
+    
+
+    
+    
+    # for j in GRAPHS:
+    #     graph = Compared(protocol=protocol, graph_type=j)
+    #     graph.save_graph()
+

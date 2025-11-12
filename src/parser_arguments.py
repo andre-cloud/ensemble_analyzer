@@ -125,11 +125,6 @@ def parser_arguments():
     )
 
     graph_group = parser.add_argument_group("Graph Parameters")
-    graph_group.add_argument(
-        "--final_lambda",
-        help="Define the upper limit for the convolution. Default: %(default)s nm",
-        default=800,
-    )
 
     graph_group.add_argument(
         "--definition",

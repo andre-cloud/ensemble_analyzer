@@ -6,7 +6,7 @@ from src.parser_parameter import get_conf_parameters
 from src.IOsystem import SerialiseEncoder, move_files
 from src.protocol import Protocol, load_protocol
 from src.pruning import calculate_rel_energies, check_ensemble
-from src.graph import main_graph, Compared
+from src.graph import main_spectra, plot_comparative_graphs
 from src.regex_parsing import regex_parsing
 
 from src.clustering import perform_PCA, get_ensemble
@@ -24,7 +24,7 @@ from typing import Union, List
 import numpy as np
 
 
-def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> None:
+def single_conf_calculation(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> None:
     """
     Run the calculation for each conformer
 
@@ -89,7 +89,7 @@ def launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num: int = 1) -> N
                 f"ERROR: During calculation of CONF_{conf.number} a server error occur and the energy could not be parsed; re-running protocol {protocol.number} on the same conformer for the {ordinal(try_num)} time"
             )
             time.sleep(10)
-            launch(idx, conf, protocol, cpu, log, temp, ensemble, try_num=try_num + 1)
+            single_conf_calculation(idx, conf, protocol, cpu, log, temp, ensemble, try_num=try_num + 1)
         else:
             log.critical(
                 f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nMax number of re-run ({MAX_TRY}) executed for CONF_{conf.number}.\n{'='*20}\nExiting\n{'='*20}"
@@ -145,7 +145,7 @@ def run_protocol(
             continue
         if i.energies.get(str(p.number)):
             continue
-        launch(count, i, p, cpu, log, temperature, conformers)
+        single_conf_calculation(count, i, p, cpu, log, temperature, conformers)
         count += 1
 
     conformers = sorted(conformers)
@@ -358,7 +358,6 @@ def start_calculation(
     temperature: float,
     start_from: int,
     log,
-    final_lambda=800.0,
     definition=4,
     FWHM: Union[None, float, List[float]] = None,
     shift: Union[None, float, List[float]] = None,
@@ -403,8 +402,7 @@ def start_calculation(
 
         log.debug("Creating graph")
 
-        # TODO: incorporate FWHM and shift from settings as bounds
-        main_graph(conformers, p, log, invert=invert, read_pop=p.read_population)
+        main_spectra(conformers, p, log, invert=invert, read_pop=p.read_population, fwhm=FWHM, shift=shift, definition=definition)
 
     # sort the final ensemble
     c_ = sort_conformers_by_energy(conformers, temperature)
@@ -416,6 +414,8 @@ def start_calculation(
     log.info(
         f"Final ensemble has {len([i for i in conformers if i.active])} conformers"
     )
+
+    plot_comparative_graphs(log)
 
     t = 0
     for i in conformers:
@@ -575,7 +575,6 @@ def main():
             "output": args.output,
             "cpu": args.cpu,
             "temperature": args.temperature,
-            "final_lambda": args.final_lambda,
             "definition": args.definition,
             "fwhm": args.fwhm,
             "shift": args.shift,
@@ -627,7 +626,6 @@ def main():
         log=log,
         cpu=settings.get("cpu", args.cpu),
         temperature=settings.get("temperature", args.temperature),
-        final_lambda=settings.get("final_lambda", 800),
         definition=settings.get("definition", 4),
         FWHM=settings.get("fwhm", None),
         shift=settings.get("shift", None),
@@ -636,9 +634,8 @@ def main():
         # exclude_enantiomers=settings.get("exclude_enantiomers", False),
     )
 
-    for j in ["IR", "VCD", "UV", "ECD"]:
-        g = Compared(protocol, graph_type=j)
-        g.save_graph()
+
+
 
 
 if __name__ == "__main__":
