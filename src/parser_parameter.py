@@ -100,8 +100,8 @@ def get_conf_parameters(
 
         if not np.isnan(g_e):
             g = e / EH_TO_KCAL + g_e
-            zpve = prev_energies.get("zpve", np.nan)
-            H = prev_energies.get("H", np.nan)
+            zpve = e / EH_TO_KCAL + prev_energies.get("zpve", np.nan)
+            H = e / EH_TO_KCAL + prev_energies.get("H", np.nan)
             S = prev_energies.get("S", np.nan)
         else:
             log.warning(
