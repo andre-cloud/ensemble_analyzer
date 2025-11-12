@@ -1,4 +1,4 @@
-#!/opt/miniconda3/envs/enan/bin/python
+#!/opt/miniconda3/bin/python
 
 from src.launch import restart
 from src.logger import create_log
