@@ -3,9 +3,6 @@ scipy
 matplotlib
 tabulate
 ase@git+https://gitlab.com/ase/ase.git@master
-autopep8
-black
-coverage
 mock
 scikit-learn
-pytest
+numba
