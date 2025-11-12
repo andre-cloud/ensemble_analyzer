@@ -50,7 +50,10 @@ class GaussianParser(BaseParser):
         super().__init__(output_name, log)
         
         self.regex = self.REGEX
+        self.correct_exiting = self.normal_termination()
 
+        if not self.correct_exiting: 
+            self.log.warning(self.skip_message)
 
     def parse_geom(self):
         fl = self.get_filtered_text(start=self.regex['geom_start'], end='--')
