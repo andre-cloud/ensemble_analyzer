@@ -102,7 +102,7 @@ class GaussianParser(BaseParser):
         ir_inten    = np.array([float(x) for m in ir_pattern.findall(fl) for x in m.split()])
         rot_str     = np.array([float(x) for m in rot_pattern.findall(fl) for x in m.split()])
 
-        return frequencies, ir_inten, rot_str
+        return frequencies, np.column_stack((frequencies,ir_inten)), np.column_stack((frequencies,rot_str))
 
     def parse_tddft(self):
 
