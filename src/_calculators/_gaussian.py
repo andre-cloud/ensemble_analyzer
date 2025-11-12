@@ -45,6 +45,7 @@ class GaussianCalc(BaseCalc):
 
         calc = Gaussian(
             label="gaussian",
+            output_type='N',
             mem=f"{self.cpu*2}GB",
             extra=route,
             charge=self.protocol.charge,
