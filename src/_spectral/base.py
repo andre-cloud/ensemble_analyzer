@@ -116,8 +116,8 @@ class BaseGraph:
         self.retrieve_data(self.protocol)
 
         # after retrieving data, ensure we actually have peaks
-        if self.energies.size == 0:
-            self.log.debug(f'{"-"*30}\nNo calculation of {self.graph_type} graphs. Skipping (no peaks found)\n{"-"*30}\n')
+        if self.energies.size == 0 or self.energies[self.energies!=0].size == 0:
+            self.log.debug(f'{"-"*30}\nNo calculation of {self.graph_type} graphs. Skipping (no peaks found)\n{"-"*30}')
             return
 
         if self.ref: 
@@ -135,9 +135,9 @@ class BaseGraph:
             self.log.info(f'{"-"*30}\n{self.graph_type} Reference Spectra convolution NOT found -> Using default parameters:\nShift: {self.SHIFT:.2f}\tFWHM: {self.FWHM:.2f}\n{"-"*30}')
 
 
-        self.log.debug(f'Saving {self.graph_type} spectra convoluted')
-        
-        self.dump_XY_data(self.X, self.Y, f'{self.graph_type}_p{self.protocol.number}_comp.xy')
+        if self.Y[~np.isnan(self.Y)].size > 0:
+            self.log.debug(f'Saving {self.graph_type} spectra convoluted')
+            self.dump_XY_data(self.X, self.Y, f'{self.graph_type}_p{self.protocol.number}_comp.xy')
 
 
     def autoconvolution(self):
@@ -181,7 +181,7 @@ class BaseGraph:
             self.log.info(f'{"-"*30}\n{self.graph_type} Spectra convolution results:\nShift: {self.SHIFT:.2f}\tFWHM: {self.FWHM:.2f}\tSimilarity: {similarity:.2f}%\nTime: {end-st}\tCycles: {result.nfev}\n{"-"*30}')
 
         else: 
-            self.SHIFT, self.FWHM = self.defaults.shift, self.defaults.fwhm[self.graph_type]
+            self.SHIFT, self.FWHM = self.defaults.shift, self.defaults.fwhm
 
             Y = self.convolute(energies=self.energies, impulses=self.impulse, shift=self.SHIFT, fwhm=self.FWHM)
             self.Y = self.normalize(Y, idx_min=self.ref.x_min_idx, idx_max=self.ref.x_max_idx)

@@ -1,6 +1,6 @@
 from scipy.constants import R, c, h, electron_volt, Boltzmann, N_A
 from scipy.constants import physical_constants
-
+import numpy as np
 
 MAX_TRY = 5
 
@@ -16,7 +16,9 @@ MAX_TRY = 5
 
 FACTOR_EV_NM = h * c / (10**-9 * electron_volt)
 FACTOR_EV_CM_1 = 1 / 8065.544  # to yield eV
+
 def eV_to_nm(eV):
+    eV = np.maximum(eV, 1e-2)
     return FACTOR_EV_NM / eV
 
 c = c * 100  # convert speed of light in cm/s
@@ -31,4 +33,11 @@ GRAPHS = ['IR', 'VCD', 'UV', 'ECD']
 
 CONVERT_B = {
     'GHz': 29.979000,
+}
+
+VIBRO_OR_ELECTRO = {
+    'IR': 'vibro', 
+    'VCD': 'vibro', 
+    'UV': 'electro', 
+    'ECD': 'electro', 
 }

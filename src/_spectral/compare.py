@@ -2,6 +2,7 @@ import os
 import numpy as np
 import matplotlib.pyplot as plt
 import pickle as pl
+from typing import Optional, Union, List
 from dataclasses import dataclass, field
 from src.constants import eV_to_nm, CHIRALS
 
@@ -12,6 +13,8 @@ class ComparedGraph:
     graph_type: str
     experimental_file: str = None
     log: any = None
+    protocol_index: Optional[Union[List[str], None]] = None
+
 
     def __post_init__(self):
         self.Xr, self.Yr, self.bounders = self._load_experimental()
@@ -19,20 +22,26 @@ class ComparedGraph:
         self.data = self._load_computed()
 
         self.defaults = GraphDefault(self.graph_type)
-
-    
+        
     def _load_computed(self):
         data = {}
         for f in os.listdir():
             if f.endswith('.xy') and f"{self.graph_type.upper()}_p" in f:
-                print(f)
                 proto = f.split("_p")[1].split("_")[0]
-                X, Y = np.loadtxt(f, unpack=True)
+
+                if self.protocol_index is not None: 
+                    if int(proto) not in self.protocol_index:
+                        self.log.info(f'Protocol {proto} skipped')
+                        continue
+                    
+                X, Y = np.loadtxt(f, unpack=True, dtype=np.float64)
 
                 if isinstance(self.bounders, np.ndarray):
                     max_y = np.max(np.abs(Y[int(self.bounders[0]):int(self.bounders[1])]))
                     Y /= max_y
+
                 data[proto] = (X, Y)
+
         if self.log:
             self.log.info(f"Loaded {len(data)} computed {self.graph_type} spectra.")
         return data
@@ -55,7 +64,8 @@ class ComparedGraph:
             ax.set_xlim(self.Xr[int(self.bounders[0])]-self.defaults.X_buffer,self.Xr[int(self.bounders[1])]+self.defaults.X_buffer)
         
         for proto, (X, Y) in self.data.items():
-            ax.plot(X, Y, lw=1, label=f"Protocol {proto}", alpha=.75)
+            if Y[~np.isnan(Y)].size > 0:
+                ax.plot(X, Y, lw=1, label=f"Protocol {proto}", alpha=.75)
 
         ax.legend(fancybox=True, shadow=True)
 
@@ -86,7 +96,7 @@ class ComparedGraph:
         plt.tight_layout()
 
         if save:
-            fname = f"{self.graph_type.lower()}_comparison.png"
+            fname = f"{self.graph_type.upper()}_comparison.png"
             plt.savefig(fname, dpi=300)
             if self.log:
                 self.log.info(f"Saved {fname}")

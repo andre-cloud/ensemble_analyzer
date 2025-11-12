@@ -66,6 +66,3 @@ class ExperimentalGraph(BaseGraph):
         self.x_max_idx = int(np.argmax((self.X - self.x_max)>0))
         # if convert: 
         #     self.x_min_idx, self.x_max_idx = self.x_max_idx, self.x_min_idx
-
-        print(self.x_min_idx, self.x_max_idx)
-        print(self.X[self.x_min_idx], self.X[self.x_max_idx])

@@ -133,15 +133,26 @@ def parser_arguments():
     )
 
     graph_group.add_argument(
-        "--fwhm",
-        help="Definte the Full Width @ Half Maximum (FWHM) for the gaussian convolution. If not defined and reference graph is present, will be calculated automatically.",
+        "--fwhm-vibro",
+        help="Define the Full Width @ Half Maximum (FWHM) for the lorentzian convolution. This can be a single value, a list, or None.  If int/float",
+        default=None,
+        type=float,
+    )
+    graph_group.add_argument(
+        "--fwhm-electro",
+        help="Define the Full Width @ Half Maximum (FWHM) for the gaussian convolution. This can be a single value, a list, or None.  If int/float",
         default=None,
         type=float,
     )
 
     graph_group.add_argument(
-        "--shift",
-        help="Definte the shift of the graph after the convolution. If not defined and reference graph is present, will be calculated automatically.",
+        "--shift-vibro",
+        help="Define the multiplier of the vibronic graph after the convolution. This can be a single value, a list, or None.  If int/float",
+        default=None,
+    )
+    graph_group.add_argument(
+        "--shift-electro",
+        help="Define the shift of the electronic graph after the convolution. This can be a single value, a list, or None.  If int/float",
         default=None,
     )
 

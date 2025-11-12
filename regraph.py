@@ -3,10 +3,8 @@
 from src.launch import restart
 from src.logger import create_log
 from src.protocol import Protocol
-from src.graph import main_spectra#, Compared
+from src.graph import main_spectra, plot_comparative_graphs
 from src.pruning import calculate_rel_energies
-from src.constants import GRAPHS
-from src._spectral.compare import ComparedGraph
 
 import json, logging
 import argparse, os
@@ -35,6 +33,9 @@ temperature = settings.get("temperature", 298.15)
 
 invert = settings.get("invert", False)
 
+FWHM={'vibro':settings.get("fwhm_vibro", None), "electro":settings.get("fwhm_electro", None)}
+SHIFT={'vibro':settings.get("shift_vibro", None), "electro":settings.get("shift_electro", None)}
+
 calculate_rel_energies(ensemble, 298.15)
 
 # initiate the log
@@ -56,10 +57,11 @@ if args.read_boltz:
 
 for i in args.idx:
     prot_obj = protocol[i]
-    main_spectra(ensemble, prot_obj, log=log, invert=invert, shift=settings['shift'], fwhm=settings['fwhm'])
+    log.info(f'{"-"*30}\nProtocol {prot_obj.number}\n{"-"*30}')
+    main_spectra(ensemble, prot_obj, log=log, invert=invert, shift=SHIFT, fwhm=FWHM)
 
 
-plot_comparative_graphs(log)
+plot_comparative_graphs(log, args.idx, show=True)
 
     
     

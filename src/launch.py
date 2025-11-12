@@ -107,7 +107,7 @@ def single_conf_calculation(idx, conf, protocol, cpu, log, temp, ensemble, try_n
 
 
 # exclude_enantiomers
-def run_protocol(
+def run_single_protocol(
     conformers: List[Conformer],
     p: Protocol,
     temperature: float,
@@ -171,7 +171,7 @@ def run_protocol(
                 set_=False,
                 include_H=include_H,
             )
-        create_summary("Summary", conformers, p, log)
+        create_protocol_summary("Summary", conformers, p, log)
 
     log.debug("Start Pruning")
 
@@ -194,7 +194,7 @@ def run_protocol(
     if type(p.cluster) is int:
         conformers = get_ensemble(conformers)
 
-    create_summary("Summary After Pruning", conformers, p, log)
+    create_protocol_summary("Summary After Pruning", conformers, p, log)
 
     calc_average_ensemble(conformers, p.number, temperature, log)
 
@@ -310,7 +310,7 @@ def last_protocol_completed(conf, idx: int) -> bool:
     return len([tmp]) == 0
 
 
-def create_summary(title, conformers, protocol, log):
+def create_protocol_summary(title, conformers, protocol, log):
     """
     Create the summary of a ensemble information
 
@@ -351,7 +351,7 @@ def create_summary(title, conformers, protocol, log):
     return None
 
 
-def start_calculation(
+def initiate_calculation_loop(
     conformers,
     protocol,
     cpu: int,
@@ -390,13 +390,13 @@ def start_calculation(
     if start_from != 0:
         if last_protocol_completed(conformers, start_from):
             conformers = check_ensemble(conformers, protocol[start_from], log)
-            create_summary("Summary", conformers, log)
+            create_protocol_summary("Summary", conformers, log)
 
     for p in protocol[start_from:]:
         with open("last_protocol", "w") as f:
             f.write(str(p.number))
 
-        run_protocol(
+        run_single_protocol(
             conformers, p, temperature, cpu, log, include_H
         )  # , exclude_enantiomers)
 
@@ -408,7 +408,7 @@ def start_calculation(
     c_ = sort_conformers_by_energy(conformers, temperature)
     save_snapshot("final_ensemble.xyz", c_, log)
 
-    create_summary("Final Summary", c_, p, log)
+    create_protocol_summary("Final Summary", c_, p, log)
 
     log.info("\n\n\n\n")
     log.info(
@@ -576,8 +576,10 @@ def main():
             "cpu": args.cpu,
             "temperature": args.temperature,
             "definition": args.definition,
-            "fwhm": args.fwhm,
-            "shift": args.shift,
+            "fwhm_vibro": args.fwhm_vibro,
+            "fwhm_electro": args.fwhm_electro,
+            "shift_vibro": args.shift_vibro,
+            "shift_electro": args.shift_electro,
             "invert": args.invert,
             "include_H": not args.exclude_H,
             # "exclude_enantiomers" : args.exclude_enantiomers,
@@ -618,8 +620,7 @@ def main():
                 conformers, None, "initial_pca", "PCA analysis of Conf Search", log, set_=True, include_H=settings['include_H']
             )
 
-    # start the loop
-    start_calculation(
+    initiate_calculation_loop(
         conformers=conformers,
         protocol=protocol,
         start_from=int(start_from),
@@ -627,8 +628,8 @@ def main():
         cpu=settings.get("cpu", args.cpu),
         temperature=settings.get("temperature", args.temperature),
         definition=settings.get("definition", 4),
-        FWHM=settings.get("fwhm", None),
-        shift=settings.get("shift", None),
+        FWHM={'vibro':settings.get("fwhm_vibro", None), "electro":settings.get("fwhm_electro", None)},
+        shift={'vibro':settings.get("shift_vibro", None), "electro":settings.get("shift_electro", None)},
         invert=settings.get("invert", False),
         include_H=settings.get("include_H", True),
         # exclude_enantiomers=settings.get("exclude_enantiomers", False),

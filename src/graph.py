@@ -36,6 +36,8 @@ class_ = {
 }
 
 
+
+
 def main_spectra(ensemble, protocol, log, invert, shift=None, fwhm=None, read_pop=None, definition=4):
     
     for graph_type in list(class_.keys()):
@@ -54,16 +56,16 @@ def main_spectra(ensemble, protocol, log, invert, shift=None, fwhm=None, read_po
             protocol=protocol,
             ref=ref,
             invert=(graph_type in CHIRALS) and invert,
-            shift_user=shift,
-            fwhm_user=fwhm,
+            shift_user=shift.get(VIBRO_OR_ELECTRO[graph_type], None),
+            fwhm_user=fwhm.get(VIBRO_OR_ELECTRO[graph_type], None),
             read_population=read_pop,
             definition=definition
         )
 
         graph.compute_spectrum()
 
-def plot_comparative_graphs(log):
+def plot_comparative_graphs(log, idxs=None, show=False):
     for graph_type in GRAPHS:
         experimental_file = f"{graph_type.lower()}_ref_norm.xy" if os.path.exists(f"{graph_type.lower()}_ref_norm.xy") else None
-        comp = ComparedGraph(graph_type=graph_type, experimental_file=experimental_file, log=log)
-        comp.plot()
+        comp = ComparedGraph(graph_type=graph_type, experimental_file=experimental_file, log=log, protocol_index=idxs)
+        comp.plot(show=show)
