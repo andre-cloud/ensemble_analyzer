@@ -88,12 +88,13 @@ def get_conf_parameters(
     m = np.linalg.norm(M_vec)
 
     g = np.nan
-    zpve, H, S = np.nan, np.nan, np.nan
+    g_e, zpve, H, S = np.nan, np.nan, np.nan, np.nan
     if freq.size > 0:
         g, zpve, H, S = free_gibbs_energy(
             SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B_vec, m=p.mult
         )
         H = H - (e / EH_TO_KCAL)
+        g_e = (g - e) / EH_TO_KCAL
     else:
         prev_energies = conf.energies.get(str(int(number) - 1), {})
         g_e = prev_energies.get('G-E',np.nan)
@@ -114,7 +115,7 @@ def get_conf_parameters(
         "B": b if b else 1,  # Rotatory Constant [cm-1]
         "m": m if m else 1,  # dipole momenti [Debye]
         "time": time,  # elapsed time [sec]
-        "G-E": (g - e) if not np.isnan(g) and e else np.nan,  # G-E [Eh]
+        "G-E": g_e if not np.isnan(g) and e else np.nan,  # G-E [Eh]
         "zpve": zpve if not np.isnan(g) else np.nan,  # Zero Point Energy [Eh]
         "H": H - e if not np.isnan(g) else np.nan,  # Enthalpy correction [Eh]
         "S": S if not np.isnan(g) else np.nan,  # Entropy [Eh]
