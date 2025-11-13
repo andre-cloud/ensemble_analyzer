@@ -26,6 +26,8 @@ J_TO_H = physical_constants["joule-hartree relationship"][0]
 AMU_TO_KG = physical_constants["atomic mass constant"][0]
 
 EH_TO_KCAL = 627.5096080305927
+CAL_TO_J = 4.186
+
 
 CHIRALS = ["VCD", "ECD"]
 
