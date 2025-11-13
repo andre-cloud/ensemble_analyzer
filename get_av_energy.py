@@ -38,10 +38,10 @@ for conf in data:
             protocols[p].append(data[conf]['energies'][p].get('E'))
 
 for key in protocols.keys(): 
-    e = np.array(protocols[key]) * 1000 * CAL_TO_J
+    e = np.array(protocols[key]) * 1000 * CAL_TO_J * EH_TO_KCAL
     pop = boltz(e, T)
     av = np.sum(e*pop)
-    avs[key]['Average'] = av/(CAL_TO_J*1000*EH_TO_KCAL)
+    avs[key]['Average'] = av/(CAL_TO_J*1000)
     avs[key]['Number confs'] = len(e)
 
 

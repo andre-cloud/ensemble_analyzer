@@ -12,7 +12,7 @@ from src.regex_parsing import regex_parsing
 from src.clustering import perform_PCA, get_ensemble
 from src.title import title
 
-from src.constants import R, MAX_TRY, EH_TO_KCAL
+from src.constants import R, MAX_TRY, EH_TO_KCAL, CAL_TO_J
 
 import time
 import json
@@ -211,13 +211,13 @@ def calc_average_ensemble(conformers: list, number, T, log) -> None:
     dE = np.array([i.energies[str(number)]["E"] for i in CONFS])
     dE_ZPVE = np.array(
         [
-            i.energies[str(number)]["E"] + i.energies[str(number)]["zpve"] * EH_TO_KCAL
+            i.energies[str(number)]["E"] + i.energies[str(number)]["zpve"]
             for i in CONFS
         ]
     )
     dH = np.array(
         [
-            i.energies[str(number)]["E"] + i.energies[str(number)]["H"] * EH_TO_KCAL
+            i.energies[str(number)]["E"] + i.energies[str(number)]["H"]
             for i in CONFS
         ]
     )
@@ -230,22 +230,22 @@ def calc_average_ensemble(conformers: list, number, T, log) -> None:
     dG_boltz = boltz(dG, T)
 
     averages = [
-        float(np.sum(dE * dE_boltz)) / EH_TO_KCAL,
-        float(np.sum(dE_ZPVE * dE_ZPVE_boltz)) / EH_TO_KCAL,
-        float(np.sum(dH * dH_boltz)) / EH_TO_KCAL,
-        float(np.sum(dG * dG_boltz)) / EH_TO_KCAL,
+        float(np.sum(dE * dE_boltz)),
+        float(np.sum(dE_ZPVE * dE_ZPVE_boltz)),
+        float(np.sum(dH * dH_boltz)),
+        float(np.sum(dG * dG_boltz)),
     ]
 
     rows = [
         [
             f"Conf {i}",
-            dE[idx] / EH_TO_KCAL,
+            dE[idx],
             f"{round(dE_boltz[idx]*100, 2)}",
-            dE_ZPVE[idx] / EH_TO_KCAL,
+            dE_ZPVE[idx],
             f"{round(dE_ZPVE_boltz[idx]*100, 2)}",
-            dH[idx] / EH_TO_KCAL,
+            dH[idx],
             f"{round(dH_boltz[idx]*100, 2)}",
-            dG[idx] / EH_TO_KCAL,
+            dG[idx],
             f"{round(dG_boltz[idx]*100, 2)}",
         ]
         for idx, i in enumerate(CONFS)
@@ -285,7 +285,7 @@ def calc_average_ensemble(conformers: list, number, T, log) -> None:
 def boltz(energy: np.ndarray, T):
     ens = np.array(energy)
     ens -= min(ens)
-    bolz = np.exp((-ens * 4186) / (R * T))
+    bolz = np.exp((-ens * EH_TO_KCAL * 1000 * CAL_TO_J) / (R * T))
     return bolz / np.sum(bolz)
 
 

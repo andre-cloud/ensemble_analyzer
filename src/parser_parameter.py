@@ -93,16 +93,16 @@ def get_conf_parameters(
         g, zpve, H, S = free_gibbs_energy(
             SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B_vec, m=p.mult
         )
-        H = H - (e / EH_TO_KCAL)
-        g_e = (g - e) / EH_TO_KCAL
+        H = H - e
+        g_e = g - e
     else:
         prev_energies = conf.energies.get(str(int(number) - 1), {})
         g_e = prev_energies.get('G-E',np.nan)
 
         if not np.isnan(g_e):
-            g = e / EH_TO_KCAL + g_e
-            zpve = e / EH_TO_KCAL + prev_energies.get("zpve", np.nan)
-            H = e / EH_TO_KCAL + prev_energies.get("H", np.nan)
+            g = e + g_e
+            zpve = e + prev_energies.get("zpve", np.nan)
+            H = e + prev_energies.get("H", np.nan)
             S = prev_energies.get("S", np.nan)
         else:
             log.warning(
@@ -110,8 +110,8 @@ def get_conf_parameters(
             )
 
     conf.energies[str(number)] = {
-        "E": e * EH_TO_KCAL if e else e,  # Electronic Energy [kcal/mol]
-        "G": g * EH_TO_KCAL if not np.isnan(g) else np.nan,  # Free Gibbs Energy [kcal/mol]
+        "E": e if e else e,  # Electronic Energy [Eh]
+        "G": g if not np.isnan(g) else np.nan,  # Free Gibbs Energy [Eh]
         "B": b if b else 1,  # Rotatory Constant [cm-1]
         "m": m if m else 1,  # dipole momenti [Debye]
         "time": time,  # elapsed time [sec]
