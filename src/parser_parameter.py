@@ -101,8 +101,8 @@ def get_conf_parameters(
 
         if not np.isnan(g_e):
             g = e + g_e
-            zpve = e + prev_energies.get("zpve", np.nan)
-            H = e + prev_energies.get("H", np.nan)
+            zpve = prev_energies.get("zpve", np.nan)
+            H = prev_energies.get("H", np.nan)
             S = prev_energies.get("S", np.nan)
         else:
             log.warning(
@@ -117,7 +117,7 @@ def get_conf_parameters(
         "time": time,  # elapsed time [sec]
         "G-E": g_e if not np.isnan(g) and e else np.nan,  # G-E [Eh]
         "zpve": zpve if not np.isnan(g) else np.nan,  # Zero Point Energy [Eh]
-        "H": H - e if not np.isnan(g) else np.nan,  # Enthalpy correction [Eh]
+        "H": H if not np.isnan(g) else np.nan,  # Enthalpy correction [Eh]
         "S": S if not np.isnan(g) else np.nan,  # Entropy [Eh]
     }
 

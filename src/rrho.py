@@ -329,7 +329,8 @@ def free_gibbs_energy(
     U_rot = calc_rotational_energy(T, linear) if zpve > 0 else 0
     U_vib = calc_vibrational_energy(freq, T, cut_off, alpha)
 
-    H = SCF + zpve + U_trans + U_rot + U_vib + Boltzmann * T * J_TO_H
+    h = zpve + U_trans + U_rot + U_vib + Boltzmann * T * J_TO_H
+    H = SCF + h
 
     S_elec = calc_electronic_entropy(m)
     S_vib = calc_vibrational_entropy(freq, T, B, cut_off, alpha)
@@ -338,7 +339,7 @@ def free_gibbs_energy(
 
     S = S_trans + S_rot + S_vib + S_elec
 
-    return H - T * S, zpve, H, S
+    return H - T * S, zpve, h, S
 
 
 if __name__ == "__main__":
