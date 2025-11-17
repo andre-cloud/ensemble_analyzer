@@ -615,9 +615,9 @@ def main():
             cls=SerialiseEncoder,
         )
         conformers = read_ensemble(args.ensemble, log)
-        if len(conformers) > 10:
+        if len(conformers) > 30:
             perform_PCA(
-                conformers, None, "initial_pca", "PCA analysis of Conf Search", log, set_=True, include_H=settings['include_H']
+                conformers, None, "initial_pca", "PCA analysis of Conf Search", log, set_=False, include_H=settings['include_H']
             )
 
     initiate_calculation_loop(
