@@ -81,7 +81,7 @@ def get_best_ncluster(coords):
     silhouette_scores = []
 
     for k in k_range:
-        kmeans = KMeans(n_clusters=k, n_init=10)
+        kmeans = KMeans(n_clusters=k, n_init='auto')
         labels = kmeans.fit_predict(coords)
         score = silhouette_score(coords, labels)
         silhouette_scores.append(score)
