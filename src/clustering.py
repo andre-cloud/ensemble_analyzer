@@ -189,7 +189,7 @@ def save_PCA_snapshot(
     cbar = plt.colorbar(im, cax=color_axis, orientation="horizontal")
     cbar.set_label("Potential energy [kcal/mol]")
 
-    print(obtain_markers_from_cluster)
+    print(obtain_markers_from_cluster, clusters)
     for x, y, m, c, n in zip(
         pca_scores[:, 0],
         pca_scores[:, 1],
