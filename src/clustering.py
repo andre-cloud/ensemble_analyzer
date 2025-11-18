@@ -119,7 +119,7 @@ def calc_pca(
             for idx, conf in enumerate(confs):
                 conf.cluster = int(clusters[idx])
         else:
-            if not (any([conf.cluster for conf in confs]) is None): 
+            if not any([conf.cluster is None  for conf in confs]): 
                 clusters = [conf.cluster for conf in confs]
             else:
                 clusters = [1 for _ in confs]
