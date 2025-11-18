@@ -19,31 +19,13 @@ import pickle as pl
 plt.set_loglevel("error")
 
 MARKERS = [
-    ".",
-    ",",
-    "o",
-    "v",
-    "^",
-    "<",
-    ">",
-    "1",
-    "2",
-    "3",
-    "4",
-    "8",
-    "s",
-    "p",
-    "*",
-    "h",
-    "H",
-    "+",
-    "x",
-    "D",
-    "d",
-    "|",
-    "_",
-    "P",
-    "X",
+    ".", ",",
+    "o", "v", "^", "<",
+    ">", "1", "2", "3",
+    "4", "8", "s", "p",
+    "*", "h", "H", "+",
+    "x", "D", "d", "|",
+    "_", "P", "X",
 ]
 
 
@@ -58,10 +40,6 @@ def calc_distance_matrix(coords, atoms, include_H=True):
         eva, eve = np.linalg.eig(dist[idx])
         evalue_dist.append(eva)
         evector_dist.append(eve)
-
-    # diff = coords[:, :, np.newaxis, :] - coords[:, np.newaxis, :, :]
-    # dist = np.linalg.norm(diff, axis=-1)
-    # print(dist)
 
     return np.array(evalue_dist), np.array(evector_dist)
 
@@ -211,6 +189,7 @@ def save_PCA_snapshot(
     cbar = plt.colorbar(im, cax=color_axis, orientation="horizontal")
     cbar.set_label("Potential energy [kcal/mol]")
 
+    print(obtain_markers_from_cluster)
     for x, y, m, c, n in zip(
         pca_scores[:, 0],
         pca_scores[:, 1],
