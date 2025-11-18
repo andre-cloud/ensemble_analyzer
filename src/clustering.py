@@ -118,7 +118,6 @@ def calc_pca(
         if set_:
             for idx, conf in enumerate(confs):
                 conf.cluster = int(clusters[idx])
-                
         else:
             if not (any([conf.cluster for conf in confs]) is None): 
                 clusters = [conf.cluster for conf in confs]
@@ -127,6 +126,8 @@ def calc_pca(
 
     else:
         clusters = [1 for _ in confs]
+
+    print(clusters)
 
     return pca_scores, clusters, colors, numbers, energy
 
