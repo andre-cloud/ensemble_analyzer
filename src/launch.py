@@ -191,7 +191,7 @@ def run_single_protocol(
             include_H=include_H,
             set_=True,
         )
-    if type(p.cluster) is int:
+    if (type(p.cluster) is int or p.cluster):
         conformers = get_ensemble(conformers)
 
     create_protocol_summary("Summary After Pruning", conformers, p, log)
