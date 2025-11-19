@@ -93,7 +93,7 @@ def get_conf_parameters(
         g, zpve, H, S = free_gibbs_energy(
             SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B_vec, m=p.mult
         )
-        H = H - e
+        H = H
         g_e = g - e
     else:
         prev_energies = conf.energies.get(str(int(number) - 1), {})
