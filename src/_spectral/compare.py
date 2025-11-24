@@ -21,13 +21,17 @@ class ComparedGraph:
         self._validate_graph_type()
         self.Xr, self.Yr, self.bounders = self._load_experimental()
         self.data = self._load_computed()
+        
+        if len(self.data) == 0: 
+            return
+        
         self.defaults = GraphDefault(self.graph_type)
         
     def _validate_graph_type(self) -> None:
 
         valid_types = ["UV", "IR", "ECD", "VCD"]
         if self.graph_type.upper() not in valid_types:
-            raise ValueError(f"Graph_Type not included: {valid_types}")
+            raise ValueError(f"Graph_Type ({self.graph_type.upper()}) not included: {valid_types}")
     
     def _load_computed(self) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
         data = {}
@@ -49,7 +53,7 @@ class ComparedGraph:
             data[proto] = (X, Y)
 
         if self.log:
-            self.log.info(f"Loaded {len(data)} computed {self.graph_type} spectra.")
+            self.log.info(f"Loaded {len(data)} computed {self.graph_type} spectra. Skipping")
         
         return data
     
