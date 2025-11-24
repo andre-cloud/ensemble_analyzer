@@ -70,5 +70,5 @@ def plot_comparative_graphs(log, idxs=None, show=False, nm=True):
         
         comp = ComparedGraph(graph_type=graph_type, experimental_file=experimental_file, log=log, protocol_index=idxs, nm=True)
         print(comp.data, graph_type)
-        if len(comp.data) == 0:
+        if len(comp.data) > 0:
             comp.plot(show=show)
