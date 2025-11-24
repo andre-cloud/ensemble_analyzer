@@ -23,9 +23,11 @@ class ComparedGraph:
         self.data = self._load_computed()
         
         if len(self.data) == 0: 
-            return
+            print('No')
+            return None
         
         self.defaults = GraphDefault(self.graph_type)
+        
         
     def _validate_graph_type(self) -> None:
 
