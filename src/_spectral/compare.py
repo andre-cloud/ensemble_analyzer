@@ -33,8 +33,12 @@ class ComparedGraph:
     def _load_computed(self) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
         data = {}
         pattern = f"{self.graph_type.upper()}_p"
-        
-        for filepath in Path('.').glob('*.xy'):
+        files = sorted(
+            Path('.').glob('*.xy'),
+            key=lambda p: int(p.stem.split('_p')[1].split('_')[0]) if pattern in p.name else float('inf')
+        )
+
+        for filepath in files:
             if pattern not in filepath.name:
                 continue
                 
