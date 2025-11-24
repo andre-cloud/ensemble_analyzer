@@ -94,7 +94,7 @@ class ComparedGraph:
     def _plot_spectrum(self, save: bool, show: bool, in_nm: bool = False) -> None:
 
         plt.style.use("seaborn-v0_8-paper")
-        fig, ax = plt.subplots(figsize=(10, 6))
+        fig, ax = plt.subplots()
         
         self._plot_computed_data(ax, in_nm)
         
