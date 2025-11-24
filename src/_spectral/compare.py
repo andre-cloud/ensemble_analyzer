@@ -124,8 +124,9 @@ class ComparedGraph:
             if self.Xr is not None:
                 ax.plot(FACTOR_EV_NM/self.Xr[int(self.bounders[0]):int(self.bounders[1])], self.Yr[int(self.bounders[0]):int(self.bounders[1])], color='black', lw=1.5, label='Experimental')
                 ax.set_xlim(FACTOR_EV_NM/(self.Xr[int(self.bounders[1])]+self.defaults.X_buffer), FACTOR_EV_NM/(self.Xr[int(self.bounders[0])]-self.defaults.X_buffer))
-
-                secax.set_xlim(eV_to_nm(self.ref.x_max-self.defaults.X_buffer), eV_to_nm(self.ref.x_min+self.defaults.X_buffer))
+                
+                if hasattr(self, "ref"):
+                    secax.set_xlim(eV_to_nm(self.ref.x_max-self.defaults.X_buffer), eV_to_nm(self.ref.x_min+self.defaults.X_buffer))
     
             if self.graph_type in CHIRALS:
                 ax.set_ylim([-1.05,1.05])
