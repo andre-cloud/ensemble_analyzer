@@ -20,12 +20,7 @@ class ComparedGraph:
     def __post_init__(self):
         self._validate_graph_type()
         self.Xr, self.Yr, self.bounders = self._load_experimental()
-        self.data = self._load_computed()
-        
-        if len(self.data) == 0: 
-            print('No')
-            return None
-        
+        self.data = self._load_computed()        
         self.defaults = GraphDefault(self.graph_type)
         
         
