@@ -35,7 +35,7 @@ class ComparedGraph:
         pattern = f"{self.graph_type.upper()}_p"
         files = sorted(
             Path('.').glob('*.xy'),
-            key=lambda p: int(p.stem.split('_p')[1].split('_')[0]) if pattern in p.name else float('inf')
+            key=lambda p: int(self._extract_protocol_number(p.stem)) if pattern in p.name else float('inf')
         )
 
         for filepath in files:
