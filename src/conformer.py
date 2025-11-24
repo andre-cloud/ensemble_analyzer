@@ -76,23 +76,6 @@ class Conformer:
             return en["G"]
         return en["E"]
 
-    # def distance_matrix(self, exclude_H=False):
-    #     if exclude_H:
-    #         n = len(self.atoms[self.atoms != 'H'])
-    #         dm = np.zeros((n, n))
-    #         geo = self.last_geometry[self.atoms != 'H']
-    #         for i, pos1 in enumerate(geo):
-    #             for j, pos2 in enumerate(geo):
-    #                 if i==j: continue
-    #                 if dm[i,j]: continue
-    #                 dist = np.linalg.norm(pos1 - pos2)
-    #                 dm[i, j] = dist
-    #                 dm[j, i] = dist
-    #     else:
-    #         dm = np.linalg.norm(self.last_geometry[:, None, :] - self.last_geometry[None, :, :], axis=-1)
-
-    #     return dm
-
     def distance_matrix(self, include_H, geom=None):
         if geom:
             geo = geom
@@ -124,7 +107,7 @@ class Conformer:
             return ""
 
         # Header
-        header = f'{len(self.atoms)}\nCONFORMER {self.number} {"  {:.10f}".format(self._last_energy["G"]/EH_TO_KCAL) if not np.isnan(self._last_energy["G"]) else "  {:.10f}".format(self._last_energy["E"]/EH_TO_KCAL)}'
+        header = f'{len(self.atoms)}\nCONFORMER {self.number} {"  {:.10f}".format(self._last_energy["G"]) if not np.isnan(self._last_energy["G"]) else "  {:.10f}".format(self._last_energy["E"])}'
 
         # Atoms and positions
         atom_lines = [

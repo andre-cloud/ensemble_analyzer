@@ -10,7 +10,18 @@
         "freq": true
     },
     "2": {
-    	"functional": "wb97x-d4rev",
+        "functional": "wb97x-d4rev",
         "basis": "def2-qzvpp"
+    },
+    "3": {
+        "functional": "B3LYP D4",
+        "basis": "def2-QZVPPD",
+        "freq": true
+    },
+    "4": {
+        "functional": "B3LYP D4",
+        "basis": "def2-QZVPP",
+        "freq": true,
+        "read_orbitals": "3"
     }
 }

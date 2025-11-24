@@ -61,7 +61,7 @@ for i in args.idx:
     main_spectra(ensemble, prot_obj, log=log, invert=invert, shift=SHIFT, fwhm=FWHM)
 
 
-plot_comparative_graphs(log, args.idx, show=True)
+plot_comparative_graphs(log, args.idx, show=False, nm=True)
 
     
     

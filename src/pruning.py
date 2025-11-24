@@ -282,7 +282,7 @@ def calculate_rel_energies(conformers: list, T: float) -> None:
     c = [i for i in conformers if i.active]
     ens = np.array([i.get_energy for i in conformers if i.active])
     ens -= min(ens)
-    bolz = np.exp((-ens * 4186) / (R * T))
+    bolz = np.exp((-ens * CAL_TO_J * 1000 * EH_TO_KCAL) / (R * T))
     pop = (bolz / np.sum(bolz)) * 100
     for idx, i in enumerate(list(ens)):
         c[idx]._last_energy["Erel"] = i
