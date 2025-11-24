@@ -69,4 +69,5 @@ def plot_comparative_graphs(log, idxs=None, show=False, nm=True):
         experimental_file = f"{graph_type.upper()}_ref_norm.xy" if os.path.exists(f"{graph_type.upper()}_ref_norm.xy") else None
         
         comp = ComparedGraph(graph_type=graph_type, experimental_file=experimental_file, log=log, protocol_index=idxs, nm=True)
-        comp.plot(show=show)
+        if comp:
+            comp.plot(show=show)
