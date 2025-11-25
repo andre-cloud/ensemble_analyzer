@@ -50,10 +50,10 @@ class GraphDefault:
 
         # Default interval for the shift
         self.shift_intervals = {
-            'IR':   [0.93, 1.05], 
-            'VCD':  [0.93, 1.05], 
-            'UV':   [-0.3, 0.3], 
-            'ECD':  [-0.3, 0.3],
+            'IR':   [0.85, 1.05], 
+            'VCD':  [0.85, 1.05], 
+            'UV':   [-0.5, 0.5], 
+            'ECD':  [-0.5, 0.5],
         }[self.graph_type]
         
         # Default interval for the FWHM
