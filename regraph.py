@@ -7,10 +7,7 @@ from src.graph import main_spectra, plot_comparative_graphs
 from src.pruning import calculate_rel_energies
 
 import json, logging
-import argparse, os
-
-from collections import defaultdict
-import pickle
+import argparse
 
 parser = argparse.ArgumentParser()
 

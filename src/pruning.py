@@ -238,10 +238,10 @@ def check_ensemble(
         if not check.active:
             continue  # Not check the non active conformers
 
-        mirror = check.last_geometry.copy()
-        mirror[..., 2] *= -1
-        check_mirror = Conformer.load_raw(check.__dict__)
-        check_mirror.last_geometry = mirror
+        # mirror = check.last_geometry.copy()
+        # mirror[..., 2] *= -1
+        # check_mirror = Conformer.load_raw(check.__dict__)
+        # check_mirror.last_geometry = mirror
 
         for j in range(0, idx):
 

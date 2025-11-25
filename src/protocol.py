@@ -72,11 +72,12 @@ class Protocol:
         read_orbitals: Optional[str] = "",
         read_population: Optional[str|None] = None,
         monitor_internals: Optional[List[List[int]]] = [],
+        skip_opt_fail: Optional[bool] = False
     ): 
         self.number = number
         self.functional = functional.upper()
         self.basis = basis.upper() if 'xtb' not in functional.lower() else ""
-        self.solvent = Solvent(solvent) if solvent else None
+        self.solvent = Solvent(solvent) if solvent.get('solvent', None) else None
         self.opt = opt
         self.freq = freq
         self.add_input = add_input.replace("'", '"')
@@ -95,6 +96,7 @@ class Protocol:
         self.read_orbitals = read_orbitals # number of protocol to read orbitals from
         self.read_population = read_population
         self.monitor_internals = monitor_internals
+        self.skip_opt_fail = skip_opt_fail
         
         assert self.mult > 0, "Multiplicity must be greater than 0"
 

@@ -62,6 +62,13 @@ def get_conf_parameters(
     
     if p.opt or 'opt' in p.add_input.lower() or 'opt' in p.functional.lower():
         conf.last_geometry = parser.parse_geom().copy()
+        
+        if p.skip_opt_fail: 
+            if not parser.opt_done():
+                conf.active = False
+
+                return True
+            
         # TODO: LOGICA PER UN'OTTIMIZZAZIONE NON COMPLETATA
         # Si potrebbe rilanciare l'ottimizzazione... 
 

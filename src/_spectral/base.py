@@ -28,6 +28,7 @@ class BaseGraph:
 
     read_population: Optional[Union[int, float, str]] = None
     definition: Optional[int] = 4
+    interested_area: Optional[list] = None
 
     def __post_init__(self):
         self.defaults = GraphDefault(self.graph_type)
@@ -109,6 +110,8 @@ class BaseGraph:
             self.fwhm_bounds = [self.fwhm_user, self.fwhm_user]
         elif not self.fwhm_user:
             self.fwhm_bounds = self.defaults.fwhm_intervals
+
+        
 
     def compute_spectrum(self):
 
