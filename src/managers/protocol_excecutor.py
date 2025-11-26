@@ -244,13 +244,13 @@ class ProtocolExecutor:
             [
                 f"Conf {i}",
                 dE[idx],
-                f"{round(dE_boltz[idx]*100, 2)}",
+                f"{dE_boltz[idx]*100:.2f}",
                 dE_ZPVE[idx],
-                f"{round(dE_ZPVE_boltz[idx]*100, 2)}",
+                f"{dE_ZPVE_boltz[idx]*100:.2f}",
                 dH[idx],
-                f"{round(dH_boltz[idx]*100, 2)}",
+                f"{dH_boltz[idx]*100:.2f}",
                 dG[idx],
-                f"{round(dG_boltz[idx]*100, 2)}",
+                f"{dG_boltz[idx]*100:.2f}",
             ]
             for idx, i in enumerate(CONFS)
         ]
