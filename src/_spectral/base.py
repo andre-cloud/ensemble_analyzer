@@ -252,8 +252,6 @@ def lorentzian_njit(X, x0, I, fwhm):
 
 @njit(fastmath=True, cache=True)
 def diversity_function_njit(a, b, weight, max_val):
-    print(a, b, weight, max_val)
-    print(a.size, b.size, weight.size, max_val)
     diff = a - b
     s = 0.0
     n = diff.shape[0]
