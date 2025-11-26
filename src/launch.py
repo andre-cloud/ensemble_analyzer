@@ -106,7 +106,7 @@ def main():
     )
     
     # Log application start
-    log.application_start({
+    log.calculation_start({
         "temperature": config.temperature,
         "cpu": config.cpu,
         "conformers": len(conformers),
