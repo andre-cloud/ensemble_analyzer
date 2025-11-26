@@ -87,8 +87,8 @@ class GraphDefault:
         }[self.graph_type]
 
         self.interested_area = {
-            "IR":   [1400, 1100],
-            "VCD":  [1400, 1100],
+            "IR":   [1100, 1400],
+            "VCD":  [1100, 1400],
             "UV":   [190, 250],
             "ECD":  [190, 250],
         }[self.graph_type]
