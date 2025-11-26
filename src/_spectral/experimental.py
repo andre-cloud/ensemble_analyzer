@@ -30,6 +30,8 @@ class ExperimentalGraph(BaseGraph):
         self.Y = self.interpolate()
         self.calc_weighting_function()
 
+        self.dump_XY_data(self.X, self.weight, f'{self.graph_type}_weighted.xy')
+
         self.dump_XY_data(self.X, self.Y, f'{self.graph_type}_ref_norm.xy')
         np.savetxt(f'{self.graph_type.upper()}_index_lim.xy', np.array([self.x_min_idx, self.x_max_idx]))
 

@@ -19,7 +19,7 @@ class ComparedGraph:
 
     def __post_init__(self):
         self._validate_graph_type()
-        self.Xr, self.Yr, self.bounders = self._load_experimental()
+        self.Xr, self.Yr, self.bounders, self.weighted = self._load_experimental()
         self.data = self._load_computed()        
         self.defaults = GraphDefault(self.graph_type)
         
@@ -79,16 +79,17 @@ class ComparedGraph:
 
     def _load_experimental(self) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
         if not self.experimental_file:
-            return None, None, None
+            return None, None, None, None
         
         try:
             X, Y = np.loadtxt(self.experimental_file, unpack=True)
             bounders = np.loadtxt(f'{self.graph_type.upper()}_index_lim.xy')
-            return X, Y, bounders
+            _, weighted = np.loadtxt(f'{self.graph_type}_weighted.xy', unpack=True)
+            return X, Y, bounders, weighted
         except FileNotFoundError as e:
             if self.log:
                 self.log.error(f"File not found: {e}")
-            return None, None, None
+            return None, None, None, None
 
     def plot(self, save: bool = True, show: bool = False, show_ref_weight: bool = False) -> None:
         self._plot_spectrum(save, show, in_nm=False, show_ref_weight=show_ref_weight)
@@ -137,6 +138,9 @@ class ComparedGraph:
             x_exp = FACTOR_EV_NM / x_exp
             
         ax.plot(x_exp, y_exp, color='black', lw=1.5, label='Experimental')
+        if show_ref_weight: 
+            ax.plot(x_exp, weighted, color='black', lw=.4, label='Weighting function', alpha=0.5)
+
     
     def _configure_axes(self, ax: plt.Axes, in_nm: bool) -> None:
 
