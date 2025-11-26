@@ -16,11 +16,11 @@ level_default = logging.DEBUG if DEBUG else logging.INFO
 
 
 
-class Logger: 
+class Logger(logging.Logger): 
 
     def __init__(self, name:str, level=level_default):
-        super().__init__(name)
-        
+        super().__init__(name, level=level)
+
         self._timers: Dict[str, float] = {}
 
     # ===

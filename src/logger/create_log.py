@@ -20,8 +20,6 @@ def create_logger(
     Returns:
         Logger instance (subclass of logging.Logger)
     """
-    global DEBUG
-    DEBUG = debug
     
     # Create logger instance
     log = Logger(name=output_file)
