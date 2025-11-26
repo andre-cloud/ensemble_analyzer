@@ -56,7 +56,7 @@ def main():
     )
     
     # Initialize structured logging
-    logger = create_logger(output_file=Path(output),debug=DEBUG, also_console=False)
+    logger = create_logger(output_file=Path(output),debug=DEBUG)
     
     logger.info(title)
     
