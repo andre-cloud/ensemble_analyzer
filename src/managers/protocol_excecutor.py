@@ -232,13 +232,13 @@ class ProtocolExecutor:
         dH_boltz = bolzmann(dH, T)
         dG_boltz = bolzmann(dG, T)
 
-        averages = [
+        averages = [[
             T,
             float(np.sum(dE * dE_boltz)),
             float(np.sum(dE_ZPVE * dE_ZPVE_boltz)),
             float(np.sum(dH * dH_boltz)),
             float(np.sum(dG * dG_boltz)),
-        ]
+        ]]
 
         rows = [
             [
@@ -271,7 +271,7 @@ class ProtocolExecutor:
             data=averages,
             headers=headers, 
             witdh=50, 
-            char = '*'
+            char = '*',
         )
 
         return
