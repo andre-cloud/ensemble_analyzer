@@ -112,9 +112,7 @@ def get_conf_parameters(
             H = prev_energies.get("H", np.nan)
             S = prev_energies.get("S", np.nan)
         else:
-            log.warning(
-                f"No previous thermochemical data found for conformer {conf.number - 1}: setting G, H, S, ZPVE to NaN."
-            )
+            log.missing_previous_thermo(conformer_id = conf.number-1)
 
     conf.energies[str(number)] = {
         "E": e if e else e,  # Electronic Energy [Eh]

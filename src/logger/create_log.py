@@ -1,4 +1,5 @@
 from .logger import Logger
+from .formatter import ColoredFormatter
 import logging
 import sys
 from src.constants import DEBUG, LOG_FORMAT
@@ -27,7 +28,7 @@ def create_logger(
     # File handler
     handler = logging.FileHandler(output_file, mode="w")
     handler.setLevel(logging.DEBUG if debug else logging.INFO)
-    formatter = logging.Formatter(LOG_FORMAT)
+    formatter = logging.Formatter(ColoredFormatter(LOG_FORMAT))
     handler.setFormatter(formatter)
 
     # Attach

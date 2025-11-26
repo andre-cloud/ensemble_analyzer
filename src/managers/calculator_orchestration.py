@@ -11,7 +11,7 @@ from src.graph import plot_comparative_graphs
 from src.clustering import perform_PCA
 
 
-from src.managers.manager_checkpoint import CheckpointManager
+from src.managers.checkpoint_manager import CheckpointManager
 from src.managers.protocol_manager import ProtocolManager
 from src.managers.protocol_excecutor import ProtocolExecutor
 from src.managers.calculation_config import CalculationConfig

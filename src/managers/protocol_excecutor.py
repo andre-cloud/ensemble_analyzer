@@ -13,7 +13,7 @@ from src.graph import main_spectra, plot_comparative_graphs
 from src.clustering import perform_PCA, get_ensemble
 
 from src.managers.calculation_config import CalculationConfig
-from src.managers.manager_checkpoint import CheckpointManager
+from src.managers.checkpoint_manager import CheckpointManager
 from src.managers.calculation_excetuer import CalculationExecutor
 
 from src.constants import DEBUG
@@ -169,6 +169,8 @@ class ProtocolExecutor:
             self.checkpoint_manager.save(conformers, self.logger)
             
             count += 1
+            
+        self.checkpoint_manager.save(conformers, self.logger, log=True)
     
     def _sort_conformers_by_energy(
         self,

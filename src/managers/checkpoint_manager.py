@@ -20,7 +20,7 @@ class CheckpointManager:
     def __init__(self, checkpoint_file: str = "checkpoint.json"):
         self.checkpoint_file = Path(checkpoint_file)
     
-    def save(self, ensemble: List[Conformer], logger: Logger) -> None:
+    def save(self, ensemble: List[Conformer], logger: Logger, log: bool = False) -> None:
         """
         Save checkpoint atomically.
         
@@ -46,11 +46,8 @@ class CheckpointManager:
         # Atomic move
         shutil.move(str(tmp_path), str(self.checkpoint_file))
         
-        # Log checkpoint
-        file_size_mb = self.checkpoint_file.stat().st_size / (1024 * 1024)
-        logger.checkpoint_saved(
-            conformer_count=len(ensemble),
-        )
+        if log:
+            logger.checkpoint_saved(conformer_count=len(ensemble))
     
     def load(self) -> List[Conformer]:
         """

@@ -47,10 +47,7 @@ class CalculationExecutor:
         Returns:
             True if successful, False otherwise
         """
-        success = self._single_attempt(
-            idx, conf, protocol, ensemble
-        )
-        return success
+        return self._single_attempt(idx, conf, protocol, ensemble)
         
                 
     def _single_attempt(
@@ -58,13 +55,12 @@ class CalculationExecutor:
         idx: int,
         conf: Conformer,
         protocol: Protocol,
-        ensemble: List[Conformer],
     ) -> bool:
         """Single calculation attempt."""
         self.logger.calculation_start(
             conformer_id=conf.number,
             protocol_number=protocol.number,
-            cpu=self.config.cpu,
+            count=idx,
         )
         
         # Setup calculator

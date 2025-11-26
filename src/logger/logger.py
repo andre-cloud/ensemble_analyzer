@@ -70,19 +70,23 @@ class Logger(logging.Logger):
     # Calculation Events
     # ===
 
-    def calculation_start(self, conformer_id: int, protocol_number: int, cpu: int):
-        self.info(f"  → CONF {conformer_id:03d} | Protocol {protocol_number} | CPU {cpu}")
+    def calculation_start(self, conformer_id: int, protocol_number: int, count: int):
+        self.info(f"{count}.→ CONF {conformer_id:03d} | Protocol {protocol_number}")
         self._start_timer(f"calc_{conformer_id}_{protocol_number}")
     
     def calculation_success(self, conformer_id: int, protocol_number: int, energy: float, elapsed_time: float):
         self._stop_timer(f"calc_{conformer_id}_{protocol_number}")
-        self.info(f"    ✓ CONF {conformer_id:03d} | E = {energy:.8f} Eh | Time: {elapsed_time:.1f}s")
+        self.info(f"\t✓ E = {energy:.8f} Eh | Time: {elapsed_time:.1f}s")
     
     def calculation_failure(self, conformer_id: int, error: str):
         status = "FAILED"
         self.error(f"    ✗ CONF {conformer_id:03d} [{status}] | Error: \n{error[:60]}")
 
+    def missing_previous_thermo(self, conformer_id:int):
+        self.warning(f'⊗ No previous thermochemical data found for conformer {conformer_id}: setting G, H, S, ZPVE to NaN.')
 
+    def missing_param(self, param:str, action:str):
+        self.warning(f'⊗ {param} not found. {action}')
     # ===
     # Pruning Events
     # ===

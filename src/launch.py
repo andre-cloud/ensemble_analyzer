@@ -13,7 +13,7 @@ from src.title import title
 from src.constants import DEBUG
 
 
-from src.managers.manager_checkpoint import CheckpointManager
+from src.managers.checkpoint_manager import CheckpointManager
 from src.managers.protocol_manager import ProtocolManager
 from src.managers.calculation_config import CalculationConfig
 from src.managers.calculator_orchestration import CalculationOrchestrator
