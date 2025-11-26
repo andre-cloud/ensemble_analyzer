@@ -91,8 +91,10 @@ class ExperimentalGraph(BaseGraph):
         else: 
             raise ValueError("Invalid format for interested_area")
 
-        sigma1 = self._calc_sigma(LIM_EXP1, INT1)
-        sigma2 = self._calc_sigma(LIM_EXP2, INT2)
+        # sigma1 = self._calc_sigma(LIM_EXP1, INT1)
+        # sigma2 = self._calc_sigma(LIM_EXP2, INT2)
+        sigma1 = .4
+        sigma2 = .4
 
         gau1 = self.gau(INT1, sigma1)
         gau2 = self.gau(INT2, sigma2)
