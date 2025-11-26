@@ -73,6 +73,7 @@ class ExperimentalGraph(BaseGraph):
     def calc_weighting_function(self): 
 
         LIM_EXP1, LIM_EXP2 = self.X[self.x_min_idx], self.X[self.x_max_idx]
+        print(LIM_EXP1, LIM_EXP2)
         self.weight = np.zeros_like(self.X)
         ia = self.interested_area
 
