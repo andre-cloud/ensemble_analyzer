@@ -8,7 +8,7 @@ from src.regex_parsing import regex_parsing
 from src.parser_parameter import get_conf_parameters
 
 import os
-from types import List
+from typing import List
 
 import time
 
