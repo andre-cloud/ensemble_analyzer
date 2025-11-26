@@ -74,7 +74,7 @@ class ExperimentalGraph(BaseGraph):
 
         LIM_EXP1, LIM_EXP2 = self.X[self.x_min_idx], self.X[self.x_max_idx]
         self.weight = np.zeros_like(self.X)
-        ia = self.interested_area
+        ia = sorted(self.interested_area)
 
         if ia is None: 
             self.weight[(self.X >= LIM_EXP1) & (self.X <= LIM_EXP2)] = 1
