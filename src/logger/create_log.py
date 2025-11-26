@@ -22,10 +22,13 @@ def create_logger(
     """
     
     # Create logger instance
-    log = Logger(name=output_file)
-    
-    # Configure handlers
-    formatter = logging.Formatter(LOG_FORMAT)
+    log = Logger(name=logger_name)
+    log.basicConfig(
+        filename=output_file,
+        level=logging.DEBUG if DEBUG else logging.INFO,
+        format=LOG_FORMAT,
+        filemode="w",
+    )
     
     # Disable noisy third-party loggers
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
