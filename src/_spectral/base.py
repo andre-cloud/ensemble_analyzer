@@ -89,10 +89,11 @@ class BaseGraph:
         return True 
     
 
-    def diversity_function(self, a, b):
+    def diversity_function(self, a, b, w):
         # RMSD
         MAX = 1 if self.graph_type not in CHIRALS else 2
-        return diversity_function_njit(a=a, b=b, weight=self.ref.weight, max_val=MAX)
+        w = self.ref.weight if not w else w
+        return diversity_function_njit(a=a, b=b, weight=w, max_val=MAX)
 
 
     def set_boundaries(self): 
@@ -178,7 +179,8 @@ class BaseGraph:
             Y = self.convolute(energies=self.energies, impulses=self.impulse, shift=self.SHIFT, fwhm=self.FWHM)
             self.Y = self.normalize(Y, idx_min=self.ref.x_min_idx, idx_max=self.ref.x_max_idx)
 
-            diversity = self.diversity_function(self.Y, ref_norm)
+            diversity = self.diversity_function(self.Y[self.x_min_idx, self.x_max_idx], ref_norm[self.x_min_idx, self.x_max_idx], w=np.ones_like(self.Y[self.x_min_idx, self.x_max_idx]))
+
             similarity = ((1 if self.graph_type not in CHIRALS else 2)-diversity)/(1 if self.graph_type not in CHIRALS else 2)*100
 
             self.log.info(f'{"-"*30}\n{self.graph_type} Spectra convolution results:\nShift: {self.SHIFT:.2f}\tFWHM: {self.FWHM:.2f}\tSimilarity: {similarity:.2f}%\nTime: {end-st}\tCycles: {result.nfev}\n{"-"*30}')
@@ -189,8 +191,9 @@ class BaseGraph:
             Y = self.convolute(energies=self.energies, impulses=self.impulse, shift=self.SHIFT, fwhm=self.FWHM)
             self.Y = self.normalize(Y, idx_min=self.ref.x_min_idx, idx_max=self.ref.x_max_idx)
 
-            RMSD = self.diversity_function(Y, ref_norm)
-            similarity = ((1 if self.graph_type not in CHIRALS else 2)-RMSD)/(1 if self.graph_type not in CHIRALS else 2)*100
+            diversity = self.diversity_function(self.Y[self.x_min_idx, self.x_max_idx], ref_norm[self.x_min_idx, self.x_max_idx], w=np.ones_like(self.Y[self.x_min_idx, self.x_max_idx]))
+
+            similarity = ((1 if self.graph_type not in CHIRALS else 2)-diversity)/(1 if self.graph_type not in CHIRALS else 2)*100
 
             self.log.info(f'{"-"*30}\n{self.graph_type} Spectra convolution did NOT converged. Using default parameters:\nShift: {self.SHIFT:.2f}\tFWHM: {self.FWHM:.2f}\tSimilarity: {similarity:.2}%\n{"-"*30}')
 
