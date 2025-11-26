@@ -90,20 +90,20 @@ class ComparedGraph:
                 self.log.error(f"File not found: {e}")
             return None, None, None
 
-    def plot(self, save: bool = True, show: bool = False) -> None:
-        self._plot_spectrum(save, show, in_nm=False)
+    def plot(self, save: bool = True, show: bool = False, show_ref_weight: bool = False) -> None:
+        self._plot_spectrum(save, show, in_nm=False, show_ref_weight=show_ref_weight)
         
         if self.graph_type.upper() in ["UV", "ECD"] and self.nm:
-            self._plot_spectrum(save, show, in_nm=True)
+            self._plot_spectrum(save, show, in_nm=True, show_ref_weight=show_ref_weight)
     
-    def _plot_spectrum(self, save: bool, show: bool, in_nm: bool = False) -> None:
+    def _plot_spectrum(self, save: bool, show: bool, in_nm: bool = False, show_ref_weight:bool = False) -> None:
 
         plt.style.use("seaborn-v0_8-paper")
         fig, ax = plt.subplots()
         
         self._plot_computed_data(ax, in_nm)
         
-        self._plot_experimental_data(ax, in_nm)
+        self._plot_experimental_data(ax, in_nm, show_ref_weight)
         
         self._configure_axes(ax, in_nm)
         self._configure_limits(ax, in_nm)
@@ -124,7 +124,7 @@ class ComparedGraph:
                 x_values = FACTOR_EV_NM / X if in_nm else X
                 ax.plot(x_values, Y, lw=1, label=f"Protocol {proto}", alpha=.75)
     
-    def _plot_experimental_data(self, ax: plt.Axes, in_nm: bool) -> None:
+    def _plot_experimental_data(self, ax: plt.Axes, in_nm: bool, show_ref_weight:bool = False) -> None:
 
         if self.Xr is None or self.bounders is None:
             return

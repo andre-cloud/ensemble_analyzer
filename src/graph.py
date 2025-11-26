@@ -69,10 +69,10 @@ def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: logging.Log
 
         graph.compute_spectrum()
 
-def plot_comparative_graphs(log, idxs=None, show=False, nm=True):
+def plot_comparative_graphs(log, idxs=None, show=False, nm=True, show_ref_weight=False):
     for graph_type in GRAPHS:
         experimental_file = f"{graph_type.upper()}_ref_norm.xy" if os.path.exists(f"{graph_type.upper()}_ref_norm.xy") else None
         
         comp = ComparedGraph(graph_type=graph_type, experimental_file=experimental_file, log=log, protocol_index=idxs, nm=nm)
         if len(comp.data) > 0:
-            comp.plot(show=show)
+            comp.plot(show=show, show_ref_weight=show_ref_weight)

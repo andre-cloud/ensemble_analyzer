@@ -14,6 +14,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('idx', nargs='+', help="Protocol's number to (re-)generate the graphs", type=int)
 parser.add_argument('-rb', '--read-boltz', help='Read Boltzmann population from a specific protocol', type=int)
 parser.add_argument('-no-nm', '--no-nm', help='Do not save the nm graphs', action='store_false')
+parser.add_argument('-w', '--weight', help='Show Weighting function', action='store_true')
 args = parser.parse_args()
 
 
@@ -61,5 +62,5 @@ for i in args.idx:
     main_spectra(ensemble, prot_obj, log=log, invert=invert, shift=SHIFT, fwhm=FWHM, interested_area=INTERESTED_AREA)
 
 
-plot_comparative_graphs(log, args.idx, show=False, nm=args.no_nm)
+plot_comparative_graphs(log, args.idx, show=False, nm=args.no_nm, show_ref_weight=args.weight)
 
