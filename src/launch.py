@@ -581,6 +581,10 @@ def main():
             "fwhm_electro": args.fwhm_electro,
             "shift_vibro": args.shift_vibro,
             "shift_electro": args.shift_electro,
+            "shift_vibro": args.shift_vibro,
+            "shift_electro": args.shift_electro,
+            "interested_vibro": args.interest_vibro ,
+            "interested_electro": args.interest_electro ,
             "invert": args.invert,
             "include_H": args.exclude_H,
             # "exclude_enantiomers" : args.exclude_enantiomers,
@@ -633,7 +637,7 @@ def main():
         shift={'vibro':settings.get("shift_vibro", None), "electro":settings.get("shift_electro", None)},
         invert=settings.get("invert", False),
         include_H=settings.get("include_H", True),
-        interested_area={'vibro': settings.get('area_vibro', None), "electro": settings.get('area_electro', None)},
+        interested_area={'vibro': settings.get('interested_vibro', None), "electro": settings.get('interested_electro', None)},
         # exclude_enantiomers=settings.get("exclude_enantiomers", False),
     )
 

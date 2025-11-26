@@ -34,7 +34,7 @@ invert = settings.get("invert", False)
 FWHM={'vibro':settings.get("fwhm_vibro", None), "electro":settings.get("fwhm_electro", None)}
 SHIFT={'vibro':settings.get("shift_vibro", None), "electro":settings.get("shift_electro", None)}
 
-INTERESTED_AREA = {'vibro': settings.get('area_vibro', None), "electro": settings.get('area_electro', None)}
+INTERESTED_AREA = {'vibro': settings.get('interested_vibro', None), "electro": settings.get('interested_electro', None)}
 
 calculate_rel_energies(ensemble, 298.15)
 

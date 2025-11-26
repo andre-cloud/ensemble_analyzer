@@ -246,6 +246,8 @@ def mix_type(values):
             return [float(v) for v in values]
         except ValueError: 
             raise ValueError(f'Cannot convert values {values=} to a float list.')
+    if len(values) >2 : 
+        raise ValueError(f'Too many arguments given')
 
 
 if __name__ == "__main__":  # pragma: no cover:
