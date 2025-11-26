@@ -112,7 +112,7 @@ def get_conf_parameters(
             H = prev_energies.get("H", np.nan)
             S = prev_energies.get("S", np.nan)
         else:
-            log.missing_previous_thermo(conformer_id = conf.number-1)
+            log.missing_previous_thermo(conformer_id = conf.number)
 
     conf.energies[str(number)] = {
         "E": e if e else e,  # Electronic Energy [Eh]
