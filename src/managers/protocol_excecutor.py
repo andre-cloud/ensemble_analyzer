@@ -163,13 +163,13 @@ class ProtocolExecutor:
             if conf.energies.get(str(protocol.number)):
                 continue
             
-            self.calculator.execute(count, conf, protocol, conformers)
+            self.calculator.execute(count, conf, protocol)
             
             # Save checkpoint after each calculation
             self.checkpoint_manager.save(conformers, self.logger)
             
             count += 1
-            
+
         self.checkpoint_manager.save(conformers, self.logger, log=True)
     
     def _sort_conformers_by_energy(

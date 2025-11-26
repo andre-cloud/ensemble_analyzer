@@ -33,7 +33,6 @@ class CalculationExecutor:
         idx: int,
         conf: Conformer,
         protocol: Protocol,
-        ensemble: List[Conformer]
     ) -> bool:
         """
         Execute calculation with retry logic.
@@ -42,12 +41,11 @@ class CalculationExecutor:
             idx: Display index (1-based)
             conf: Conformer to calculate
             protocol: Protocol to use
-            ensemble: Full ensemble (for checkpoint)
         
         Returns:
             True if successful, False otherwise
         """
-        return self._single_attempt(idx, conf, protocol, ensemble)
+        return self._single_attempt(idx, conf, protocol)
         
                 
     def _single_attempt(
