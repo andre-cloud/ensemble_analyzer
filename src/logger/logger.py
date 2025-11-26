@@ -2,10 +2,12 @@ import logging
 import sys
 import time
 from pathlib import Path
-from typing import Optional, Any, Dict
+from typing import Optional, Any, Dict, List
 from contextlib import contextmanager
 from datetime import timedelta
 from functools import wraps
+
+
 
 from src.constants import DEBUG, ordinal
 from src.title import title
@@ -74,9 +76,12 @@ class Logger(logging.Logger):
         self.info(f"{count}.→ CONF {conformer_id:03d} | Protocol {protocol_number}")
         self._start_timer(f"calc_{conformer_id}_{protocol_number}")
     
-    def calculation_success(self, conformer_id: int, protocol_number: int, energy: float, elapsed_time: float):
+    def calculation_success(self, conformer_id: int, protocol_number: int, energy: float, elapsed_time: float, frequencies: List[float]):
         self._stop_timer(f"calc_{conformer_id}_{protocol_number}")
-        self.info(f"\t✓ E = {energy:.8f} Eh | Time: {elapsed_time:.1f}s")
+        text = f"\t✓ E = {energy:.8f} Eh | Time: {elapsed_time:.1f}s"
+        if frequencies.size > 0: 
+            text += f' | Imag. Freq {frequencies[frequencies<0]} ({", ".join([f"{i:.2f}" for i in frequencies[frequencies<0]])})'
+        self.info()
     
     def calculation_failure(self, conformer_id: int, error: str):
         status = "FAILED"

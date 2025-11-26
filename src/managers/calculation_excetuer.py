@@ -45,16 +45,7 @@ class CalculationExecutor:
         Returns:
             True if successful, False otherwise
         """
-        return self._single_attempt(idx, conf, protocol)
-        
-                
-    def _single_attempt(
-        self,
-        idx: int,
-        conf: Conformer,
-        protocol: Protocol,
-    ) -> bool:
-        """Single calculation attempt."""
+
         self.logger.calculation_start(
             conformer_id=conf.number,
             protocol_number=protocol.number,
@@ -104,6 +95,7 @@ class CalculationExecutor:
             self.logger.calculation_success(conformer_id=conf.number,
                 protocol_number=protocol.number,
                 energy=conf.energies[str(protocol.number)]["E"],
+                frequencies = conf.energies[str(protocol.number)]["Freq"],
                 elapsed_time=elapsed)
         
         return success

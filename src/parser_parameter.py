@@ -66,7 +66,7 @@ def get_conf_parameters(
         if p.skip_opt_fail: 
             if not parser.opt_done():
                 conf.active = False
-
+                # TODO: avvisare l'utente.
                 return True
             
         # TODO: LOGICA PER UN'OTTIMIZZAZIONE NON COMPLETATA
@@ -76,19 +76,13 @@ def get_conf_parameters(
     if p.freq or 'freq' in p.add_input.lower() or 'freq' in p.functional.lower():
         freq, ir, vcd = parser.parse_freq()
         if freq.size == 0: 
+            # TODO: creare un logger error per questa cosa
             log.critical(
                 f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nNo frequency present in the calculation output.\n{'='*20}\nExiting\n{'='*20}\n"
             )
             raise IOError("No frequency in the output file")
          
         freq *= p.freq_fact
-        log.info(
-            f"\tConf {conf.number} has {freq[freq < 0].size} imaginary frequency(s): {', '.join(list(map(tranform_float, freq[freq < 0])))}"
-        )
-        if freq[freq < 0].size > 0:
-            log.info(
-                f"\tThese are excluded from qRRHO calculation."
-            )
 
     B_vec, M_vec = parser.parse_B_m()
     b = np.linalg.norm(B_vec)
@@ -123,7 +117,8 @@ def get_conf_parameters(
         "G-E": g_e if not np.isnan(g) and e else np.nan,  # G-E [Eh]
         "zpve": zpve if not np.isnan(g) else np.nan,  # Zero Point Energy [Eh]
         "H": H if not np.isnan(g) else np.nan,  # Enthalpy correction [Eh]
-        "S": S if not np.isnan(g) else np.nan,  # Entropy [Eh]
+        "S": S if not np.isnan(g) else np.nan,  # Entropy [Eh], 
+        "Freq": freq, # Frequencies
     }
 
     freq, ir, vcd = parser.parse_freq()
