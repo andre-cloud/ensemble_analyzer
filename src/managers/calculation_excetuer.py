@@ -59,14 +59,12 @@ class CalculationExecutor:
         conf: Conformer,
         protocol: Protocol,
         ensemble: List[Conformer],
-        attempt: int
     ) -> bool:
         """Single calculation attempt."""
         self.logger.calculation_start(
             conformer_id=conf.number,
             protocol_number=protocol.number,
             cpu=self.config.cpu,
-            attempt=attempt
         )
         
         # Setup calculator
