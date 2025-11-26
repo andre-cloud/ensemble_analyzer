@@ -20,11 +20,16 @@ level_default = logging.DEBUG if DEBUG else logging.INFO
 
 class Logger(logging.Logger): 
 
+    ARROW = "→"
+    TICK = "✓"
+    FAIL = "✗"
+    WARNING = "⊗"
+
+
     def __init__(self, name:str, level=level_default):
         super().__init__(name, level=level)
 
         self._timers: Dict[str, float] = {}
-
     # ===
     # Application Event
     # ===
@@ -35,11 +40,15 @@ class Logger(logging.Logger):
     def application_input_recieved(self, config: Dict[str,Any]): 
         self._separator("Calculation Input")
         self.info(f"Ensemble: {config.get('conformers', 'N/A')} confromer(s)")
-        self.info(f'Protocols: {config.get('protocols', 'N/A')}')
+        self.info(f'Protocols: {config.get('len_protocols', 'N/A')}')
         self.info(f"Temperature: {config.get('temperature', 'N/A')} K")
         self.info(f"CPU cores: {config.get('cpu', 'N/A')}")
         if config.get('restart'):
             self.info("Mode: RESTART")
+        self.info('')
+        self.info('Protocol Steps:')
+        for protocol in config.get('protocols', []):
+            self.info(f"{self.ARROW} {protocol.number}: {str(protocol)} - {protocol.calculation_level}\n {protocol.thr}")            
         self._separator()
 
     def application_correct_end(self, total_time: timedelta, total_conformers: int):
@@ -73,25 +82,25 @@ class Logger(logging.Logger):
     # ===
 
     def calculation_start(self, conformer_id: int, protocol_number: int, count: int):
-        self.info(f"{count:03d}. → CONF {conformer_id:03d} | Protocol {protocol_number}")
+        self.info(f"{count:03d}. {self.ARROW} CONF {conformer_id:03d} | Protocol {protocol_number}")
         self._start_timer(f"calc_{conformer_id}_{protocol_number}")
     
     def calculation_success(self, conformer_id: int, protocol_number: int, energy: float, elapsed_time: float, frequencies: List[float]):
         self._stop_timer(f"calc_{conformer_id}_{protocol_number}")
-        text = f"\t✓ E = {energy:.8f} Eh | Time: {elapsed_time:.1f}s"
+        text = f"\t{self.TICK} E = {energy:.8f} Eh | Time: {elapsed_time:.1f}s"
         if frequencies.size > 0: 
             text += f' | Imag. Freq {frequencies[frequencies<0]} ({", ".join([f"{i:.2f}" for i in frequencies[frequencies<0]])})'
         self.info(text)
     
     def calculation_failure(self, conformer_id: int, error: str):
         status = "FAILED"
-        self.error(f"    ✗ CONF {conformer_id:03d} [{status}] | Error: \n{error[:60]}")
+        self.error(f"    {self.FAIL} CONF {conformer_id:03d} [{status}] | Error: \n{error[:60]}")
 
     def missing_previous_thermo(self, conformer_id:int):
-        self.warning(f'⊗ No previous thermochemical data found for conformer {conformer_id}: setting G, H, S, ZPVE to NaN.')
+        self.warning(f'{self.WARNING} No previous thermochemical data found for conformer {conformer_id}: setting G, H, S, ZPVE to NaN.')
 
     def missing_param(self, param:str, action:str):
-        self.warning(f'⊗ {param} not found. {action}')
+        self.warning(f'{self.WARNING} {param} not found. {action}')
     
     
     # ===
@@ -113,14 +122,14 @@ class Logger(logging.Logger):
             details.append(f"ΔB={delta_rotatory:.3f} cm⁻¹")
         detail_str = f" [{', '.join(details)}]" if details else ""
         
-        self.debug(f"  ⊗ CONF {conformer_id:03d} deactivated | {reason}{ref_str}{detail_str}")
+        self.debug(f"  {self.WARNING} CONF {conformer_id:03d} deactivated | {reason}{ref_str}{detail_str}")
 
     def pruning_summary(self, protocol_number: int, initial_count: int, final_count: int, deactivated_count: int):
         elapsed = self._stop_timer(f"pruning_{protocol_number}")
         retention = (final_count / initial_count * 100) if initial_count > 0 else 0
         
         self.info(f"Pruning completed in {elapsed:.2f}s")
-        self.info(f"Initial: {initial_count} → Final: {final_count} ({retention:.1f}% retained)"
+        self.info(f"Initial: {initial_count} {self.ARROW} Final: {final_count} ({retention:.1f}% retained)"
         )
         self.info(f"Deactivated: {deactivated_count}")
         self.info("")
@@ -139,7 +148,7 @@ class Logger(logging.Logger):
         self.info(f"  Output: {output_file}")
     
     def spectra_generation(self, graph_type: str, output_file: str):
-        self.debug(f"  Generated {graph_type} spectrum → {output_file}")
+        self.debug(f"  Generated {graph_type} spectrum {self.ARROW} {output_file}")
 
     # ===
     # Checkpoint Events

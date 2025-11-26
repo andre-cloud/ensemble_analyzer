@@ -119,7 +119,7 @@ class CalculationOrchestrator:
         # Log completion
         self.logger.application_correct_end(
             total_time=total_time,
-            conformer_count=final_count
+            total_conformers=final_count
         )
         
-        self.logger._separator(f"CALCULATIONS COMPLETED SUCCESSFULLY")
+        self.logger._separator(f"CALCULATIONS COMPLETED SUCCESSFULLY", char="*")

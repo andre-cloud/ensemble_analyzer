@@ -110,8 +110,9 @@ def main():
         "temperature": config.temperature,
         "cpu": config.cpu,
         "conformers": len(conformers),
-        "protocols": len(protocols),
-        "restart": args.restart
+        "len_protocols": len(protocols),
+        "restart": args.restart, 
+        "protocols": protocols
     })
     
     # Create and run orchestrator
