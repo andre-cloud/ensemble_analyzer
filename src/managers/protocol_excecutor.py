@@ -150,7 +150,7 @@ class ProtocolExecutor:
         )
 
         # If retention rate is lower than 30% and TODO: setting per disabilitarlo
-        if (initial_active - final_active)/initial_active < 0.3:
+        if final_active/initial_active < 0.3:
             self.logger.critical('✗ Ensemble reduce more than 70%. Calculation will stop.')
             raise 
     
