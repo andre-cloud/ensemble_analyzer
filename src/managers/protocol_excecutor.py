@@ -134,7 +134,7 @@ class ProtocolExecutor:
         
         self.generate_report("Summary After Pruning", conformers=conformers, protocol=protocol)
 
-        self.generate_energy_report(conformers, )
+        self.generate_energy_report(conformers=conformers, protocol_number=protocol.number, T=self.config.temperature)
 
 
         # Generate spectra
