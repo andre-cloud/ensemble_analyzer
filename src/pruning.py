@@ -1,6 +1,7 @@
 from tabulate import tabulate
 
 import numpy as np
+from typing import List
 from src.constants import *
 
 try:
@@ -281,7 +282,7 @@ def calculate_rel_energies(conformers: list, T: float) -> None:
 
     c = [i for i in conformers if i.active]
     ens = np.array([i.get_energy for i in conformers if i.active])
-    ens, pop = bolzmann(c, T)
+    ens, pop = bolzmann(ens, T)
     for idx, i in enumerate(list(ens)):
         c[idx]._last_energy["Erel"] = i
         c[idx]._last_energy["Pop"] = pop[idx] * 100
@@ -289,7 +290,7 @@ def calculate_rel_energies(conformers: list, T: float) -> None:
     return None
 
 
-def bolzmann(energies: np.ndarray, T:float) -> np.ndarray:
+def bolzmann(energies: List[float], T:float) -> np.ndarray:
     rel_ens = energies - min(energies)
     bolz = np.exp((-rel_ens * CAL_TO_J * 1000 * EH_TO_KCAL) / (R * T))
     pop = (bolz / np.sum(bolz))
