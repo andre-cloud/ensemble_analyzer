@@ -5,12 +5,12 @@ from src.constants import *
 
 try:
     from src.ioFile import save_snapshot
-    from src.logger import DEBUG, ordinal
+    from src.constants import DEBUG, ordinal
     from src.conformer import Conformer
 except ImportError as e:  # pragma: no cover
     print(e)
     from ioFile import save_snapshot
-    from logger import DEBUG, ordinal
+    from constants import DEBUG, ordinal
     from conformer import Conformer
 
 
