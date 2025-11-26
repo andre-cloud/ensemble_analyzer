@@ -147,7 +147,7 @@ class BaseGraph:
     def autoconvolution(self):
         
         self.log.debug('Start to autoconvolute')
-        ref_norm = self.ref.Y[self.ref.x_min_idx:self.ref.x_max_idx]
+        ref_norm = self.ref.Y
 
         def callback_optimizer(params):
             shift, fwhm = params
