@@ -139,7 +139,7 @@ class ComparedGraph:
             
         ax.plot(x_exp, y_exp, color='black', lw=1.5, label='Experimental')
         if show_ref_weight: 
-            ax.plot(x_exp, weighted, color='black', lw=.4, label='Weighting function', alpha=0.5)
+            ax.plot(x_exp, self.weighted, color='black', lw=.4, label='Weighting function', alpha=0.5)
 
     
     def _configure_axes(self, ax: plt.Axes, in_nm: bool) -> None:
