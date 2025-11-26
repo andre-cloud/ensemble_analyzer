@@ -80,8 +80,8 @@ class GraphDefault:
         }[self.graph_type]
 
         self.X_buffer = {
-            "IR":   0.1,
-            "VCD":  0.1,
+            "IR":   100,
+            "VCD":  100,
             "UV":   0.2,
             "ECD":  0.2,
         }[self.graph_type]
