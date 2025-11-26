@@ -179,7 +179,7 @@ class BaseGraph:
             Y = self.convolute(energies=self.energies, impulses=self.impulse, shift=self.SHIFT, fwhm=self.FWHM)
             self.Y = self.normalize(Y, idx_min=self.ref.x_min_idx, idx_max=self.ref.x_max_idx)
 
-            diversity = self.diversity_function(self.Y[self.ref.x_min_idx:self.ref.x_max_idx], ref_norm)
+            diversity = self.diversity_function(self.Y, ref_norm)
             similarity = ((1 if self.graph_type not in CHIRALS else 2)-diversity)/(1 if self.graph_type not in CHIRALS else 2)*100
 
             self.log.info(f'{"-"*30}\n{self.graph_type} Spectra convolution results:\nShift: {self.SHIFT:.2f}\tFWHM: {self.FWHM:.2f}\tSimilarity: {similarity:.2f}%\nTime: {end-st}\tCycles: {result.nfev}\n{"-"*30}')
@@ -190,7 +190,7 @@ class BaseGraph:
             Y = self.convolute(energies=self.energies, impulses=self.impulse, shift=self.SHIFT, fwhm=self.FWHM)
             self.Y = self.normalize(Y, idx_min=self.ref.x_min_idx, idx_max=self.ref.x_max_idx)
 
-            RMSD = self.diversity_function(Y[self.ref.x_min_idx:self.ref.x_max_idx], ref_norm)
+            RMSD = self.diversity_function(Y, ref_norm)
             similarity = ((1 if self.graph_type not in CHIRALS else 2)-RMSD)/(1 if self.graph_type not in CHIRALS else 2)*100
 
             self.log.info(f'{"-"*30}\n{self.graph_type} Spectra convolution did NOT converged. Using default parameters:\nShift: {self.SHIFT:.2f}\tFWHM: {self.FWHM:.2f}\tSimilarity: {similarity:.2}%\n{"-"*30}')
