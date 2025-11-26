@@ -20,7 +20,7 @@ import datetime
 import logging
 from tabulate import tabulate
 import os
-from typing import Union, List
+from typing import Union, List, Optional, Dict
 import numpy as np
 
 
@@ -358,6 +358,7 @@ def initiate_calculation_loop(
     temperature: float,
     start_from: int,
     log,
+    interested_area: Dict[str, Union[None, List[float]]],
     definition=4,
     FWHM: Union[None, float, List[float]] = None,
     shift: Union[None, float, List[float]] = None,
@@ -398,11 +399,11 @@ def initiate_calculation_loop(
 
         run_single_protocol(
             conformers, p, temperature, cpu, log, include_H
-        )  # , exclude_enantiomers)
+        )  # , exclude_enantiomers
 
         log.debug("Creating graph")
 
-        main_spectra(conformers, p, log, invert=invert, read_pop=p.read_population, fwhm=FWHM, shift=shift, definition=definition)
+        main_spectra(conformers, p, log, invert=invert, read_pop=p.read_population, fwhm=FWHM, shift=shift, definition=definition, interested_area=interested_area)
 
     # sort the final ensemble
     c_ = sort_conformers_by_energy(conformers, temperature)
@@ -581,7 +582,7 @@ def main():
             "shift_vibro": args.shift_vibro,
             "shift_electro": args.shift_electro,
             "invert": args.invert,
-            "include_H": not args.exclude_H,
+            "include_H": args.exclude_H,
             # "exclude_enantiomers" : args.exclude_enantiomers,
         }
         json.dump(settings, open("settings.json", "w"), indent=4)
@@ -632,6 +633,7 @@ def main():
         shift={'vibro':settings.get("shift_vibro", None), "electro":settings.get("shift_electro", None)},
         invert=settings.get("invert", False),
         include_H=settings.get("include_H", True),
+        interested_area={'vibro': settings.get('area_vibro', None), "electro": settings.get('area_electro', None)},
         # exclude_enantiomers=settings.get("exclude_enantiomers", False),
     )
 

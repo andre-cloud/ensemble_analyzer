@@ -105,7 +105,7 @@ def parser_arguments():
         "-no-H",
         "--exclude-H",
         help="Exclude hydrogen atoms for the PCA analysis and for the RSMD calculation. Default %(default)s: All atoms are considered for PCA and RMSD",
-        action="store_true",
+        action="store_false",
     )
     # molecule_group.add_argument('-no-enantio', '--exclude-enantiomers', help='Exclude the enantiomeric conformation. Default %(default)s: no check with others conformation\'s mirror image is performed', action='store_true')
 
@@ -134,31 +134,52 @@ def parser_arguments():
 
     graph_group.add_argument(
         "--fwhm-vibro",
-        help="Define the Full Width @ Half Maximum (FWHM) for the lorentzian convolution. This can be a single value, a list, or None.  If int/float",
+        help="Define the Full Width @ Half Maximum (FWHM) for the lorentzian convolution. This can be a single value, a list, or None.",
         default=None,
-        type=float,
+        type=mix_type, 
+        nargs='+'
     )
     graph_group.add_argument(
         "--fwhm-electro",
-        help="Define the Full Width @ Half Maximum (FWHM) for the gaussian convolution. This can be a single value, a list, or None.  If int/float",
+        help="Define the Full Width @ Half Maximum (FWHM) for the gaussian convolution. This can be a single value, a list, or None.",
         default=None,
-        type=float,
+        type=mix_type, 
+        nargs='+'
     )
 
     graph_group.add_argument(
         "--shift-vibro",
-        help="Define the multiplier of the vibronic graph after the convolution. This can be a single value, a list, or None.  If int/float",
+        help="Define the multiplier of the vibronic graph after the convolution. This can be a single value, a list, or None.",
         default=None,
+        type=mix_type, 
+        nargs='+'
     )
     graph_group.add_argument(
         "--shift-electro",
-        help="Define the shift of the electronic graph after the convolution. This can be a single value, a list, or None.  If int/float",
+        help="Define the shift of the electronic graph after the convolution. This can be a single value, a list, or None.",
         default=None,
+        type=mix_type, 
+        nargs='+'
+    )
+
+    graph_group.add_argument(
+        "--interest-vibro",
+        help="Define the interested area of the vibronic graph, so that these area can can be centered. This can be a single value, a list, or None.",
+        default=None,
+        type=mix_type, 
+        nargs='+'
+    )
+    graph_group.add_argument(
+        "--interest-electro",
+        help="Define the interested area of the electronic graph, so that these area can can be centered. This can be a single value, a list, or None.",
+        default=None,
+        type=mix_type, 
+        nargs='+'
     )
 
     graph_group.add_argument(
         "--invert",
-        help="Invert the ECD reference graph",
+        help="Invert the CHIRAL computed graph",
         action="store_true",
         default=False,
     )
@@ -199,6 +220,32 @@ def parser_arguments():
         return print_help_threshold()
 
     return parser.parse_args()
+
+
+def mix_type(values): 
+
+    if values is None: 
+        return None 
+    if len(values) == 0: 
+        return True
+
+    if len(values) == 1:
+        v = values[0].lower()
+        if v in ["true", "t", "yes", "y", "1"]:
+            return True
+        if v in ["false", "f", "no", "n", "0"]:
+            return False
+
+        # Float singolo
+        try:
+            return float(values[0])
+        except ValueError:
+            raise ValueError(f"Cannot convert '{values[0]}' to float or boolean.")
+    if len(values) == 2: 
+        try: 
+            return [float(v) for v in values]
+        except ValueError: 
+            raise ValueError(f'Cannot convert values {values=} to a float list.')
 
 
 if __name__ == "__main__":  # pragma: no cover:

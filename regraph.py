@@ -34,6 +34,8 @@ invert = settings.get("invert", False)
 FWHM={'vibro':settings.get("fwhm_vibro", None), "electro":settings.get("fwhm_electro", None)}
 SHIFT={'vibro':settings.get("shift_vibro", None), "electro":settings.get("shift_electro", None)}
 
+INTERESTED_AREA = {'vibro': settings.get('area_vibro', None), "electro": settings.get('area_electro', None)}
+
 calculate_rel_energies(ensemble, 298.15)
 
 # initiate the log
@@ -56,7 +58,7 @@ if args.read_boltz:
 for i in args.idx:
     prot_obj = protocol[i]
     log.info(f'{"-"*30}\nProtocol {prot_obj.number}\n{"-"*30}')
-    main_spectra(ensemble, prot_obj, log=log, invert=invert, shift=SHIFT, fwhm=FWHM)
+    main_spectra(ensemble, prot_obj, log=log, invert=invert, shift=SHIFT, fwhm=FWHM, interested_area=INTERESTED_AREA)
 
 
 plot_comparative_graphs(log, args.idx, show=False, nm=args.no_nm)

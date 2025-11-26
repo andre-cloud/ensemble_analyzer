@@ -4,6 +4,7 @@ import pickle as pl
 
 import matplotlib.pyplot as plt
 from scipy.optimize import minimize
+from typing import Optional, List, Union
 import logging
 
 logging.getLogger("matplotlib").disabled = False
@@ -17,12 +18,16 @@ try:
     from src._spectral.comp_electronic import ComputedElectronic
     from src._spectral.comp_vibronic import ComputedVibronic
     from src._spectral.compare import ComparedGraph
+    from src.protocol import Protocol
+    from src.conformer import Conformer
 except ModuleNotFoundError: 
     from constants import *
     from _spectral.experimental import ExperimentalGraph
     from _spectral.comp_electronic import ComputedElectronic
     from _spectral.comp_vibronic import ComputedVibronic
     from _spectral.compare import ComparedGraph
+    from protocol import Protocol
+    from conformer import Conformer
 
 
 def eV_to_nm(eV):
@@ -38,14 +43,14 @@ class_ = {
 
 
 
-def main_spectra(ensemble, protocol, log, invert, shift=None, fwhm=None, read_pop=None, definition=4):
+def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: logging.Logger, invert: bool, interested_area: List[float], shift: Optional[Union[List[float],float,None]] = None, fwhm: Optional[Union[List[float],float,None]] = None, read_pop: Optional[str] = None, definition: Optional[int] = 4):
     
     for graph_type in list(class_.keys()):
         log.info("\n")
         ref = None
         fname = f"{graph_type.lower()}_ref.dat"
         if os.path.exists(os.path.join(os.getcwd(), fname)):
-            ref = ExperimentalGraph(confs=[], protocol=protocol, graph_type=graph_type, log=log)
+            ref = ExperimentalGraph(confs=[], protocol=protocol, graph_type=graph_type, log=log, interested_area=interested_area.get(VIBRO_OR_ELECTRO[graph_type]))
             ref.read()
 
 
@@ -59,8 +64,7 @@ def main_spectra(ensemble, protocol, log, invert, shift=None, fwhm=None, read_po
             shift_user=shift.get(VIBRO_OR_ELECTRO[graph_type], None),
             fwhm_user=fwhm.get(VIBRO_OR_ELECTRO[graph_type], None),
             read_population=read_pop,
-            definition=definition,
-            # interested_area=interested_area
+            definition=definition
         )
 
         graph.compute_spectrum()

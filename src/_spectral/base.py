@@ -155,7 +155,7 @@ class BaseGraph:
             e1 = datetime.now()
             Y_conv = self.normalize(Y_conv, idx_min=self.ref.x_min_idx, idx_max=self.ref.x_max_idx)
             e2 = datetime.now()
-            rmsd = self.diversity_function(Y_conv[self.ref.x_min_idx:self.ref.x_max_idx], ref_norm)
+            rmsd = self.diversity_function(Y_conv, self.ref.weight, ref_norm)
             e3 = datetime.now()
             self.log.debug(f'{shift=:.2f}\t{fwhm=:.2f}\t{rmsd=:.2f}\t{e1-st}\t{e2-e1}\t{e2-st}\t{e3-st}')
             return rmsd
@@ -250,9 +250,12 @@ def lorentzian_njit(X, x0, I, fwhm):
     return Y
 
 @njit(fastmath=True, cache=True)
-def diversity_function_njit(a, b, max_val):
+def diversity_function_njit(a, b, weight, max_val):
     diff = a - b
     s = 0.0
-    for i in prange(diff.shape[0]):
-        s += diff[i] * diff[i]
-    return np.sqrt(s / diff.shape[0]) / max_val
+    n = diff.shape[0]
+    for i in prange(n):
+        s += weight[i] * diff[i] * diff[i]
+
+    return np.sqrt(s / n) / max_val
+
