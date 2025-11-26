@@ -1,15 +1,15 @@
 import logging
 import sys
+from tabulate import tabulate
 import time
 from pathlib import Path
 from typing import Optional, Any, Dict, List
 from contextlib import contextmanager
 from datetime import timedelta
-from functools import wraps
 
 
 
-from src.constants import DEBUG, ordinal
+from src.constants import DEBUG
 from src.title import title
 
 
@@ -179,7 +179,7 @@ class Logger(logging.Logger):
     # Formatting
     # ===
 
-    def _separator(self, title: str = "", char: str = "=", width: int = 70):
+    def _separator(self, title: str = "", char: str = "=", width: int = 70, **kwargs):
         """Print a separator line."""
         if title:
             self.info(f"\n{char * width}")
@@ -188,7 +188,7 @@ class Logger(logging.Logger):
         else:
             self.info(f"{char * width}")
     
-    def table(self, data, headers):
+    def table(self, title: str, data: List[Any], headers: List[str], **kwargs):
         """
         Log tabulated data (backward compatible with tabulate).
         
@@ -196,8 +196,8 @@ class Logger(logging.Logger):
             data: List of rows
             headers: List of column headers
         """
-        from tabulate import tabulate
-        self.info("\n" + tabulate(data, headers=headers, floatfmt=".5f"))
+        self._separator(title, **kwargs)
+        self.info("\n" + tabulate(data, headers=headers, floatfmt=".10f", disable_numparse=True))
 
 
     @contextmanager

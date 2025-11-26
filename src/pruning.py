@@ -281,11 +281,17 @@ def calculate_rel_energies(conformers: list, T: float) -> None:
 
     c = [i for i in conformers if i.active]
     ens = np.array([i.get_energy for i in conformers if i.active])
-    ens -= min(ens)
-    bolz = np.exp((-ens * CAL_TO_J * 1000 * EH_TO_KCAL) / (R * T))
-    pop = (bolz / np.sum(bolz)) * 100
+    ens, pop = bolzmann(c, T)
     for idx, i in enumerate(list(ens)):
         c[idx]._last_energy["Erel"] = i
-        c[idx]._last_energy["Pop"] = pop[idx]
+        c[idx]._last_energy["Pop"] = pop[idx] * 100
 
     return None
+
+
+def bolzmann(energies: np.ndarray, T:float) -> np.ndarray:
+    rel_ens -= min(energies)
+    bolz = np.exp((-rel_ens * CAL_TO_J * 1000 * EH_TO_KCAL) / (R * T))
+    pop = (bolz / np.sum(bolz))
+
+    return rel_ens, pop

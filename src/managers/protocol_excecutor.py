@@ -1,14 +1,16 @@
 
-from typing import List
+from typing import List, Union
 import time
 import datetime
 import os
+
+import numpy as np
 
 from src.conformer import Conformer
 from src.protocol import Protocol
 from src.logger.logger import Logger
 from src.ioFile import save_snapshot
-from src.pruning import calculate_rel_energies, check_ensemble
+from src.pruning import calculate_rel_energies, check_ensemble, bolzmann
 from src.graph import main_spectra, plot_comparative_graphs
 from src.clustering import perform_PCA, get_ensemble
 
@@ -110,6 +112,7 @@ class ProtocolExecutor:
             deactivated_count=initial_active - final_active
         )
         
+        self.generate_report("Summary Before Pruning", conformers=conformers, protocol=protocol)
         # Save snapshot
         save_snapshot(f"ensemble_after_{protocol.number}.xyz", conformers, self.logger)
         
@@ -129,6 +132,11 @@ class ProtocolExecutor:
         if isinstance(protocol.cluster, int) or protocol.cluster:
             get_ensemble(conformers)
         
+        self.generate_report("Summary After Pruning", conformers=conformers, protocol=protocol)
+
+        self.generate_energy_report(conformers, )
+
+
         # Generate spectra
         main_spectra(
             conformers,
@@ -183,3 +191,103 @@ class ProtocolExecutor:
         """Sort conformers by energy."""
         calculate_rel_energies(conformers, self.config.temperature)
         return sorted(conformers)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    def generate_energy_report(self, conformers: List[Conformer], protocol_number: Union[str,int], T:float):
+
+        CONFS = [i for i in conformers if i.active]
+
+        dE = np.array([i.energies[str(protocol_number)]["E"] for i in CONFS])
+        dE_ZPVE = np.array(
+            [
+                i.energies[str(protocol_number)]["E"] + i.energies[str(protocol_number)]["zpve"]
+                for i in CONFS
+            ]
+        )
+        dH = np.array(
+            [
+                i.energies[str(protocol_number)]["E"] + i.energies[str(protocol_number)]["H"]
+                for i in CONFS
+            ]
+        )
+        dG = np.array([i.energies[str(protocol_number)]["G"] for i in CONFS])
+
+        # Boltzmann populations
+        dE_boltz = bolzmann(dE, T)
+        dE_ZPVE_boltz = bolzmann(dE_ZPVE, T)
+        dH_boltz = bolzmann(dH, T)
+        dG_boltz = bolzmann(dG, T)
+
+        averages = [
+            T,
+            float(np.sum(dE * dE_boltz)),
+            float(np.sum(dE_ZPVE * dE_ZPVE_boltz)),
+            float(np.sum(dH * dH_boltz)),
+            float(np.sum(dG * dG_boltz)),
+        ]
+
+        rows = [
+            [
+                f"Conf {i}",
+                dE[idx],
+                f"{round(dE_boltz[idx]*100, 2)}",
+                dE_ZPVE[idx],
+                f"{round(dE_ZPVE_boltz[idx]*100, 2)}",
+                dH[idx],
+                f"{round(dH_boltz[idx]*100, 2)}",
+                dG[idx],
+                f"{round(dG_boltz[idx]*100, 2)}",
+            ]
+            for idx, i in enumerate(CONFS)
+        ]
+
+        headers=["Conformer", "∆E [Eh]", "Boltzamnn Pop. on ∆E", "∆(E+ZPVE) [Eh]", "Boltzamnn Pop. on ∆(E+ZPVE)", "∆H [Eh]", "Boltzamnn Pop. on ∆H", "∆G [Eh]", "Boltzamnn Pop. on ∆G",],
+
+        self.logger.table(
+            title="Energetic Summary of the active conformers", 
+            data= rows, 
+            headers=headers,
+            witdh=50, 
+            char = '*'
+        )
+
+        headers=["T [K]", "E_av [Eh]", "E+ZPVE_av [Eh]", "H_av [Eh]", "G_av [Eh]"],
+        self.logger.table(
+            title="Ensemble Average Energies", 
+            data=averages,
+            headers=headers, 
+            witdh=50, 
+            char = '*'
+        )
+
+        return
+
+
+    def generate_report(self, title:str, conformers: List[Conformer], protocol: Protocol):
+        headers = ["Conformers",
+        "E [Eh]",
+        "G-E [Eh]",
+        "G [Eh]",
+        "B [cm-1]",
+        "∆G [kcal/mol]",
+        "Pop [%]",
+        "Elap. time [sec]",
+        "# Cluster",] + [i for i in list(protocol.verbal_internals())]
+
+        rows = [i.create_log(protocol.monitor_internals) for i in conformers if i.active]
+
+        self.logger.table(title=title, data=rows, headers=headers, witdh=50, char = '*')
