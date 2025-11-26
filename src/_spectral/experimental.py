@@ -76,7 +76,7 @@ class ExperimentalGraph(BaseGraph):
         print(LIM_EXP1, LIM_EXP2)
         self.weight = np.zeros_like(self.X)
         ia = self.interested_area
-        print(ia)
+
 
         if ia is None: 
             self.weight[(self.X >= LIM_EXP1) & (self.X <= LIM_EXP2)] = 1
@@ -92,6 +92,7 @@ class ExperimentalGraph(BaseGraph):
             INT1, INT2 = self.interested_area, self.interested_area
         else: 
             raise ValueError("Invalid format for interested_area")
+        print(INT1, INT2)
 
         # sigma1 = self._calc_sigma(LIM_EXP1, INT1)
         # sigma2 = self._calc_sigma(LIM_EXP2, INT2)
