@@ -92,6 +92,7 @@ class BaseGraph:
     def diversity_function(self, a, b):
         # RMSD
         MAX = 1 if self.graph_type not in CHIRALS else 2
+        print(self.ref.weight)
         return diversity_function_njit(a=a, b=b, weight=self.ref.weight, max_val=MAX)
 
 
