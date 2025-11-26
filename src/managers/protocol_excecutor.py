@@ -255,7 +255,7 @@ class ProtocolExecutor:
             for idx, i in enumerate(CONFS)
         ]
 
-        headers=["Conformer", "∆E [Eh]", "Boltzamnn Pop. on ∆E", "∆(E+ZPVE) [Eh]", "Boltzamnn Pop. on ∆(E+ZPVE)", "∆H [Eh]", "Boltzamnn Pop. on ∆H", "∆G [Eh]", "Boltzamnn Pop. on ∆G",],
+        headers=["Conformer", "∆E [Eh]", "Boltzamnn Pop. on ∆E", "∆(E+ZPVE) [Eh]", "Boltzamnn Pop. on ∆(E+ZPVE)", "∆H [Eh]", "Boltzamnn Pop. on ∆H", "∆G [Eh]", "Boltzamnn Pop. on ∆G"]
 
         self.logger.table(
             title="Energetic Summary of the active conformers", 
@@ -265,7 +265,7 @@ class ProtocolExecutor:
             char = '*'
         )
 
-        headers=["T [K]", "E_av [Eh]", "E+ZPVE_av [Eh]", "H_av [Eh]", "G_av [Eh]"],
+        headers=["T [K]", "E_av [Eh]", "E+ZPVE_av [Eh]", "H_av [Eh]", "G_av [Eh]"]
         self.logger.table(
             title="Ensemble Average Energies", 
             data=averages,
