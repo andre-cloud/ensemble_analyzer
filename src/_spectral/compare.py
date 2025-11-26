@@ -137,7 +137,7 @@ class ComparedGraph:
         
         if in_nm:
             x_exp = FACTOR_EV_NM / x_exp
-            x_exp_weigh = FACTOR_EV_NM / x_exp
+            x_exp_weigh = FACTOR_EV_NM / x_exp_weigh
             
         ax.plot(x_exp, y_exp, color='black', lw=1.5, label='Experimental')
         if show_ref_weight: 
