@@ -81,7 +81,7 @@ class Logger(logging.Logger):
         text = f"\t✓ E = {energy:.8f} Eh | Time: {elapsed_time:.1f}s"
         if frequencies.size > 0: 
             text += f' | Imag. Freq {frequencies[frequencies<0]} ({", ".join([f"{i:.2f}" for i in frequencies[frequencies<0]])})'
-        self.info()
+        self.info(text)
     
     def calculation_failure(self, conformer_id: int, error: str):
         status = "FAILED"
