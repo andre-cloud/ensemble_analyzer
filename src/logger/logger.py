@@ -73,7 +73,7 @@ class Logger(logging.Logger):
     # ===
 
     def calculation_start(self, conformer_id: int, protocol_number: int, count: int):
-        self.info(f"{count}.→ CONF {conformer_id:03d} | Protocol {protocol_number}")
+        self.info(f"{count:03d}. → CONF {conformer_id:03d} | Protocol {protocol_number}")
         self._start_timer(f"calc_{conformer_id}_{protocol_number}")
     
     def calculation_success(self, conformer_id: int, protocol_number: int, energy: float, elapsed_time: float, frequencies: List[float]):
