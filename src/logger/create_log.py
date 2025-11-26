@@ -24,8 +24,7 @@ def create_logger(
     DEBUG = debug
     
     # Create logger instance
-    logger = logging.getLogger(logger_name)
-    logger.setLevel(logging.DEBUG if debug else logging.INFO)
+    log = Logger(name=output_file)
     
     # Configure handlers
     formatter = logging.Formatter(LOG_FORMAT)
@@ -34,6 +33,6 @@ def create_logger(
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
     logging.getLogger("numba").setLevel(logging.WARNING)
     
-    logger.debug(f"Logger initialized | Debug: {debug} | Output: {output_file}")
+    log.debug(f"Logger initialized | Debug: {debug} | Output: {output_file}")
     
-    return logger
+    return log
