@@ -101,7 +101,7 @@ def main():
         interested={
             'vibro': settings.get("interested_vibro"),
             'electro': settings.get("interested_electro")
-        }
+        },
         invert=settings.get("invert", False)
     )
     
