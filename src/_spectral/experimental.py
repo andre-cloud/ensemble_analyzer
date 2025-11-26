@@ -97,7 +97,9 @@ class ExperimentalGraph(BaseGraph):
         sigma2 = 5
 
         gau1 = self.gau(INT1, sigma1)
+        gau1 /= np.max(gau1)
         gau2 = self.gau(INT2, sigma2)
+        gau2 /= np.max(gau2)
 
         self.weight[(LIM_EXP1 < self.X) & (self.X < INT1)] = gau1[(LIM_EXP1 < self.X) & (self.X < INT1)]
         self.weight[(INT1 <= self.X) & (self.X <= INT2)] = 1
@@ -116,6 +118,6 @@ class ExperimentalGraph(BaseGraph):
         return abs(x1 - x0) / np.sqrt(2 * np.log(A/v))
     
     def gau(self, x0, sigma):
-        return np.exp(-0.5*((self.X - x0)**2)/sigma**2)
+        return 1/(sigma*np.sqrt(2*np.pi)) * np.exp(-0.5*((self.X - x0)**2)/sigma**2)
 
 
