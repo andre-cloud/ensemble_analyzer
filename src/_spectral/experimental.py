@@ -83,7 +83,7 @@ class ExperimentalGraph(BaseGraph):
         if ia is True: 
             INT1, INT2 = self.defaults.interested_area
 
-        elif isinstance(ia, (list, tuple, np.array)) and len(ia) == 2:
+        elif isinstance(ia, Union[list, tuple, np.array]) and len(ia) == 2:
             INT1, INT2 = sorted(self.interested_area)
 
         elif isinstance(ia, (int, float)): 
