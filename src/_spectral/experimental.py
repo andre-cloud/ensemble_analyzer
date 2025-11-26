@@ -93,8 +93,8 @@ class ExperimentalGraph(BaseGraph):
 
         # sigma1 = self._calc_sigma(LIM_EXP1, INT1)
         # sigma2 = self._calc_sigma(LIM_EXP2, INT2)
-        sigma1 = 5
-        sigma2 = 5
+        sigma1 = int(np.abs(LIM_EXP1-INT1) * .2)
+        sigma2 = int(np.abs(LIM_EXP2-INT2) * .2)
 
         gau1 = self.gau(INT1, sigma1)
         gau1 /= np.max(gau1)
