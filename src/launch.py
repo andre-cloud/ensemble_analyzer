@@ -106,7 +106,8 @@ def main():
     )
     
     # Log application start
-    log.calculation_start({
+    log.application_input_recieved({
+        "ensemble_file": args.ensemble,
         "temperature": config.temperature,
         "cpu": config.cpu,
         "conformers": len(conformers),

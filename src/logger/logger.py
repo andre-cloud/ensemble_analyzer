@@ -32,7 +32,8 @@ class Logger(logging.Logger):
 
     def application_input_recieved(self, config: Dict[str,Any]): 
         self._separator("Calculation Input")
-        self.info(f"Ensemble: {config.get('ensemble_file', 'N/A')}")
+        self.info(f"Ensemble: {config.get('conformers', 'N/A')} confromer(s)")
+        self.indo(f'Protocols: {config.get('protocols', 'N/A')}')
         self.info(f"Temperature: {config.get('temperature', 'N/A')} K")
         self.info(f"CPU cores: {config.get('cpu', 'N/A')}")
         if config.get('restart'):
