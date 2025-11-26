@@ -138,7 +138,8 @@ class ProtocolExecutor:
             read_pop=protocol.read_population,
             fwhm=self.config.fwhm,
             shift=self.config.shift,
-            definition=self.config.definition
+            definition=self.config.definition,
+            interested_area=self.config.interested
         )
         
         # Protocol end
