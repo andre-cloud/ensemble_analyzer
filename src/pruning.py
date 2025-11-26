@@ -290,7 +290,7 @@ def calculate_rel_energies(conformers: list, T: float) -> None:
 
 
 def bolzmann(energies: np.ndarray, T:float) -> np.ndarray:
-    rel_ens -= min(energies)
+    rel_ens = energies - min(energies)
     bolz = np.exp((-rel_ens * CAL_TO_J * 1000 * EH_TO_KCAL) / (R * T))
     pop = (bolz / np.sum(bolz))
 
