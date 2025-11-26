@@ -117,11 +117,9 @@ class CalculationOrchestrator:
         final_count = len([c for c in self.conformers if c.active])
         
         # Log completion
-        self.logger.application_end(
+        self.logger.application_correct_end(
             total_time=total_time,
             conformer_count=final_count
         )
         
-        self.logger.info(f"\n{'='*60}")
-        self.logger.info("CALCULATIONS COMPLETED SUCCESSFULLY")
-        self.logger.info(f"{'='*60}\n")
+        self.logger._separator(f"CALCULATIONS COMPLETED SUCCESSFULLY")
