@@ -133,13 +133,15 @@ class ComparedGraph:
         idx_start, idx_end = int(self.bounders[0]), int(self.bounders[1])
         x_exp = self.Xr[idx_start:idx_end]
         y_exp = self.Yr[idx_start:idx_end]
+        x_exp_weigh = self.Xr
         
         if in_nm:
             x_exp = FACTOR_EV_NM / x_exp
+            x_exp_weigh = FACTOR_EV_NM / x_exp
             
         ax.plot(x_exp, y_exp, color='black', lw=1.5, label='Experimental')
         if show_ref_weight: 
-            ax.plot(self.Xr, self.weighted, color='black', lw=.4, label='Weighting function', alpha=0.5)
+            ax.plot(x_exp_weigh, self.weighted, color='black', lw=.4, label='Weighting function', alpha=0.5)
 
     
     def _configure_axes(self, ax: plt.Axes, in_nm: bool) -> None:
