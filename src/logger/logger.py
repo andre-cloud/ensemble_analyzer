@@ -197,7 +197,7 @@ class Logger(logging.Logger):
             headers: List of column headers
         """
         self._separator(title, **kwargs)
-        self.info("\n" + tabulate(data, headers=headers, floatfmt=".10f", disable_numparse=True))
+        self.info("\n" + tabulate(data, headers=headers, floatfmt=".10f"))#, disable_numparse=True))
 
 
     @contextmanager
