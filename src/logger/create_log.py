@@ -23,17 +23,20 @@ def create_logger(
     
     # Create logger instance
     log = Logger(name=logger_name)
-    log.basicConfig(
-        filename=output_file,
-        level=logging.DEBUG if DEBUG else logging.INFO,
-        format=LOG_FORMAT,
-        filemode="w",
-    )
-    
+
+    # File handler
+    handler = logging.FileHandler(output_file, mode="w")
+    handler.setLevel(logging.DEBUG if debug else logging.INFO)
+    formatter = logging.Formatter(LOG_FORMAT)
+    handler.setFormatter(formatter)
+
+    # Attach
+    log.setLevel(logging.DEBUG if debug else logging.INFO)
+    log.addHandler(handler)
+
     # Disable noisy third-party loggers
     logging.getLogger("matplotlib").setLevel(logging.WARNING)
     logging.getLogger("numba").setLevel(logging.WARNING)
-    
+
     log.debug(f"Logger initialized | Debug: {debug} | Output: {output_file}")
-    
     return log
