@@ -184,11 +184,14 @@ class BaseGraph:
         Y = self.convolute(energies=self.energies, impulses=self.impulse, shift=self.SHIFT, fwhm=self.FWHM)
         self.Y = self.normalize(Y, idx_min=self.ref.x_min_idx, idx_max=self.ref.x_max_idx)
 
-        diversity = self.diversity_function(self.Y[self.ref.x_min_idx:self.ref.x_max_idx], ref_norm[self.ref.x_min_idx:self.ref.x_max_idx], w=np.ones_like(self.Y[self.ref.x_min_idx:self.ref.x_max_idx]))
-
+        diversity = self.diversity_function(self.Y[self.ref.x_min_idx:self.ref.x_max_idx], ref_norm[self.ref.x_min_idx:self.ref.x_max_idx])
         similarity = ((1 if self.graph_type not in CHIRALS else 2)-diversity)/(1 if self.graph_type not in CHIRALS else 2)*100
 
-        self.log.info(f'{"-"*30}\n{self.graph_type} {t}\nShift: {self.SHIFT:.2f}\tFWHM: {self.FWHM:.2f}\tSimilarity: {similarity:.2f}%\nTime: {end-st}\tCycles: {result.nfev}\n{"-"*30}')
+        diversity_unw = self.diversity_function(self.Y[self.ref.x_min_idx:self.ref.x_max_idx], ref_norm[self.ref.x_min_idx:self.ref.x_max_idx], w=np.ones_like(self.Y[self.ref.x_min_idx:self.ref.x_max_idx]))
+        similarity_unw = ((1 if self.graph_type not in CHIRALS else 2)-diversity_unw)/(1 if self.graph_type not in CHIRALS else 2)*100
+
+
+        self.log.info(f'{"-"*30}\n{self.graph_type} {t}\nShift: {self.SHIFT:.2f}\tFWHM: {self.FWHM:.2f}\tSimilarity: {similarity:.2f}%\tSimilarity Unweighted:{similarity_unw:.2f}%\nTime: {end-st}\tCycles: {result.nfev}\n{"-"*30}')
 
 
 
