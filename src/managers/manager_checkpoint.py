@@ -50,7 +50,6 @@ class CheckpointManager:
         file_size_mb = self.checkpoint_file.stat().st_size / (1024 * 1024)
         logger.checkpoint_saved(
             conformer_count=len(ensemble),
-            file_size_mb=file_size_mb
         )
     
     def load(self) -> List[Conformer]:
