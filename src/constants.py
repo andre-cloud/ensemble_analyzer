@@ -2,6 +2,9 @@ from scipy.constants import R, c, h, electron_volt, Boltzmann, N_A
 from scipy.constants import physical_constants
 import numpy as np
 
+import os
+
+DEBUG = bool(os.getenv("DEBUG"))
 MAX_TRY = 5
 
 
@@ -16,6 +19,7 @@ MAX_TRY = 5
 
 FACTOR_EV_NM = h * c / (10**-9 * electron_volt)
 FACTOR_EV_CM_1 = 1 / 8065.544  # to yield eV
+
 
 def eV_to_nm(eV):
     eV = np.maximum(eV, 1e-2)
@@ -43,3 +47,12 @@ VIBRO_OR_ELECTRO = {
     'UV': 'electro', 
     'ECD': 'electro', 
 }
+
+
+
+
+# Logger constants
+LOG_FORMAT = "%(message)s"
+
+def ordinal(n):
+    return "%d-%s" % (n, "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10 :: 4])
