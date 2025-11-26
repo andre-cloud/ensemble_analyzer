@@ -145,7 +145,6 @@ class ProtocolExecutor:
         # Protocol end
         self.logger.protocol_end(
             number=protocol.number,
-            elapsed_time=datetime.timedelta(seconds=protocol_elapsed),
             active_conformers=final_active,
             deactivated=initial_active - final_active
         )
