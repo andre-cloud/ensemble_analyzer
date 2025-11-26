@@ -24,6 +24,7 @@ class Logger(logging.Logger):
     TICK = "✓"
     FAIL = "✗"
     WARNING = "⊗"
+    SPLIT = "|"
 
 
     def __init__(self, name:str, level=level_default):
@@ -48,7 +49,7 @@ class Logger(logging.Logger):
         self.info('')
         self.info('Protocol Steps:')
         for protocol in config.get('protocols', []):
-            self.info(f"{self.ARROW} {protocol.number}: {str(protocol)} - {protocol.calculation_level}\n {protocol.thr}")            
+            self.info(f"{protocol.number:030d}. {self.ARROW} {str(protocol)} {self.SPLIT} {protocol.calculation_level}\n {protocol.thr}")            
         self._separator()
 
     def application_correct_end(self, total_time: timedelta, total_conformers: int):
@@ -73,7 +74,7 @@ class Logger(logging.Logger):
         elapsed = self._stop_timer(f"protocol_{number}")
         self.info("")
         self.info(f"Protocol {number} completed in {timedelta(seconds=elapsed)}")
-        self.info(f"Active: {active_conformers} | Deactivated: {deactivated}")
+        self.info(f"Active: {active_conformers} {self.SPLIT} Deactivated: {deactivated}")
         self._separator(f"END PROTOCOL {number}")
         self.info("")
 
@@ -82,19 +83,19 @@ class Logger(logging.Logger):
     # ===
 
     def calculation_start(self, conformer_id: int, protocol_number: int, count: int):
-        self.info(f"{count:03d}. {self.ARROW} CONF {conformer_id:03d} | Protocol {protocol_number}")
+        self.info(f"{count:03d}. {self.ARROW} CONF {conformer_id:03d} {self.SPLIT} Protocol {protocol_number}")
         self._start_timer(f"calc_{conformer_id}_{protocol_number}")
     
     def calculation_success(self, conformer_id: int, protocol_number: int, energy: float, elapsed_time: float, frequencies: List[float]):
         self._stop_timer(f"calc_{conformer_id}_{protocol_number}")
-        text = f"\t{self.TICK} E = {energy:.8f} Eh | Time: {elapsed_time:.1f}s"
+        text = f"\t{self.TICK} E = {energy:.8f} Eh {self.SPLIT} Time: {elapsed_time:.1f}s"
         if frequencies.size > 0: 
-            text += f' | Imag. Freq {frequencies[frequencies<0]} ({", ".join([f"{i:.2f}" for i in frequencies[frequencies<0]])})'
+            text += f' {self.SPLIT} Imag. Freq {frequencies[frequencies<0]} ({", ".join([f"{i:.2f}" for i in frequencies[frequencies<0]])})'
         self.info(text)
     
     def calculation_failure(self, conformer_id: int, error: str):
         status = "FAILED"
-        self.error(f"    {self.FAIL} CONF {conformer_id:03d} [{status}] | Error: \n{error[:60]}")
+        self.error(f"    {self.FAIL} CONF {conformer_id:03d} [{status}] {self.SPLIT} Error: \n{error[:60]}")
 
     def missing_previous_thermo(self, conformer_id:int):
         self.warning(f'{self.WARNING} No previous thermochemical data found for conformer {conformer_id}: setting G, H, S, ZPVE to NaN.')
@@ -122,7 +123,7 @@ class Logger(logging.Logger):
             details.append(f"ΔB={delta_rotatory:.3f} cm⁻¹")
         detail_str = f" [{', '.join(details)}]" if details else ""
         
-        self.debug(f"  {self.WARNING} CONF {conformer_id:03d} deactivated | {reason}{ref_str}{detail_str}")
+        self.debug(f"  {self.WARNING} CONF {conformer_id:03d} deactivated {self.SPLIT} {reason}{ref_str}{detail_str}")
 
     def pruning_summary(self, protocol_number: int, initial_count: int, final_count: int, deactivated_count: int):
         elapsed = self._stop_timer(f"pruning_{protocol_number}")
