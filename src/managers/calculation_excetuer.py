@@ -1,3 +1,18 @@
+from src.managers.calculation_config import CalculationConfig
+from src.logger.logger import Logger
+
+from src.conformer import Conformer
+from src.protocol import Protocol
+from src.IOsystem import move_files
+from src.regex_parsing import regex_parsing
+from src.parser_parameter import get_conf_parameters
+
+import os
+from types import List
+
+import time
+
+
 class CalculationExecutor:
     """
     Executes single conformer calculations with retry logic.
@@ -9,7 +24,7 @@ class CalculationExecutor:
     - Log metrics
     """
     
-    def __init__(self, config: CalculationConfig, logger: EnsembleLogger):
+    def __init__(self, config: CalculationConfig, logger: Logger):
         self.config = config
         self.logger = logger
     
@@ -128,14 +143,9 @@ class CalculationExecutor:
         
         if success:
             # Log success
-            metrics = CalculationMetrics(
-                conformer_id=conf.number,
+            self.logger.calculation_success(conformer_id=conf.number,
                 protocol_number=protocol.number,
                 energy=conf.energies[str(protocol.number)]["E"],
-                elapsed_time=elapsed,
-                success=True,
-                attempt=attempt
-            )
-            self.logger.calculation_success(metrics)
+                elapsed_time=elapsed)
         
         return success
