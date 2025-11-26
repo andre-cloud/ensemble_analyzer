@@ -98,9 +98,11 @@ class ExperimentalGraph(BaseGraph):
 
         gau1 = self.gau(INT1, sigma1)
         gau2 = self.gau(INT2, sigma2)
+
         self.weight[(LIM_EXP1 < self.X) & (self.X < INT1)] = gau1[(LIM_EXP1 < self.X) & (self.X < INT1)]
         self.weight[(INT1 <= self.X) & (self.X <= INT2)] = 1
         self.weight[(INT2 < self.X) & (self.X < LIM_EXP2)] = gau2[(INT2 < self.X) & (self.X < LIM_EXP2)]
+        self.weight[self.weight < 0.1] = 0.1
 
         self.weight[self.X < LIM_EXP1] = 0
         self.weight[self.X > LIM_EXP2] = 0
