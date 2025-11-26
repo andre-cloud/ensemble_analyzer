@@ -16,6 +16,7 @@ from src.managers.calculation_config import CalculationConfig
 from src.managers.manager_checkpoint import CheckpointManager
 from src.managers.calculation_excetuer import CalculationExecutor
 
+from src.constants import DEBUG
 
 
 
@@ -69,7 +70,7 @@ class ProtocolExecutor:
         protocol_start_time = time.perf_counter()
         
         # Pre-pruning PCA (if DEBUG)
-        if os.getenv("DEBUG") and protocol.cluster:
+        if DEBUG and protocol.cluster:
             perform_PCA(
                 confs=[c for c in conformers if c.active],
                 ncluster=protocol.cluster if isinstance(protocol.cluster, int) else None,

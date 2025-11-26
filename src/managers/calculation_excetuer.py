@@ -47,46 +47,12 @@ class CalculationExecutor:
         Returns:
             True if successful, False otherwise
         """
-        for attempt in range(1, self.config.max_retries + 1):
-            try:
-                success = self._single_attempt(
-                    idx, conf, protocol, ensemble, attempt
-                )
-                if success:
-                    return True
-                
-            except Exception as e:
-                self.logger.calculation_failure(
-                    conformer_id=conf.number,
-                    protocol_number=protocol.number,
-                    error=str(e),
-                    attempt=attempt,
-                    will_retry=(attempt < self.config.max_retries)
-                )
-                
-                if attempt < self.config.max_retries:
-                    wait_time = min(10 * (2 ** (attempt - 1)), 300)
-                    self.logger.calculation_retry(
-                        conformer_id=conf.number,
-                        protocol_number=protocol.number,
-                        attempt=attempt + 1,
-                        max_attempts=self.config.max_retries,
-                        wait_seconds=wait_time
-                    )
-                    time.sleep(wait_time)
-                else:
-                    self.logger.critical_error(
-                        error_type="max_retries_exceeded",
-                        message=f"Max retries exceeded for CONF_{conf.number}",
-                        conformer_id=conf.number,
-                        protocol_number=protocol.number
-                    )
-                    raise RuntimeError(
-                        f"Max retries ({self.config.max_retries}) exceeded"
-                    ) from e
+        success = self._single_attempt(
+            idx, conf, protocol, ensemble
+        )
+        return success
         
-        return False
-    
+                
     def _single_attempt(
         self,
         idx: int,
@@ -111,7 +77,7 @@ class CalculationExecutor:
         start_time = time.perf_counter()
         
         with self.logger.track_operation(
-            "quantum_calculation",
+            "Single calculation",
             conformer_id=conf.number,
             protocol_number=protocol.number
         ):

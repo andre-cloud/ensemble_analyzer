@@ -187,3 +187,29 @@ class Logger(logging.Logger):
         """
         from tabulate import tabulate
         self.info("\n" + tabulate(data, headers=headers, floatfmt=".5f"))
+
+
+    @contextmanager
+    def track_operation(self, operation_name: str, **context):
+        """
+        Context manager to track operation duration.
+        """
+        start = time.perf_counter()
+        context_str = ", ".join(f"{k}={v}" for k, v in context.items())
+        self.debug(
+            f"Starting {operation_name}" + 
+            (f" ({context_str})" if context_str else "")
+        )
+        
+        try:
+            yield
+        except Exception as e:
+            elapsed = time.perf_counter() - start
+            self.error(
+                f"Operation '{operation_name}' failed after {elapsed:.2f}s: {e}"
+            )
+            raise
+        else:
+            elapsed = time.perf_counter() - start
+            self.debug(f"Completed {operation_name} in {elapsed:.2f}s")
+    
