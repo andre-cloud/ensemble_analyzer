@@ -56,9 +56,9 @@ def main():
     )
     
     # Initialize structured logging
-    logger = create_logger(output_file=Path(output),debug=DEBUG)
+    log = create_logger(output_file=Path(output),debug=DEBUG)
     
-    logger.info(title)
+    log.info(title)
     
     # Load or initialize data
     checkpoint_mgr = CheckpointManager()
@@ -69,7 +69,7 @@ def main():
         protocols = protocol_mgr.load()
         start_from = protocol_mgr.load_last_completed()
         
-        logger.checkpoint_loaded(
+        log.checkpoint_loaded(
             conformer_count=len(conformers),
             protocol_number=start_from
         )
@@ -80,7 +80,7 @@ def main():
         protocol_mgr.save(protocols)
         
         # Load ensemble
-        conformers = read_ensemble(args.ensemble, logger)
+        conformers = read_ensemble(args.ensemble, log)
         start_from = 0
     
     # Create configuration
@@ -106,7 +106,7 @@ def main():
     )
     
     # Log application start
-    logger.application_start({
+    log.application_start({
         "temperature": config.temperature,
         "cpu": config.cpu,
         "conformers": len(conformers),
@@ -119,7 +119,7 @@ def main():
         conformers=conformers,
         protocols=protocols,
         config=config,
-        logger=logger
+        logger=log
     )
     
     orchestrator.run()
