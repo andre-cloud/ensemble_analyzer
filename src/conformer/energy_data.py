@@ -26,6 +26,7 @@ class EnergyRecord:
             "E"     : self.E,
             "G"     : self.G,
             "H"     : self.H,
+            "S"     : self.S,
             "zpve"  : self.zpve,
             "B"     : self.B,
             "B_vec" : self.B_vec,
