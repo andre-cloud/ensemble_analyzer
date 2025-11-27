@@ -70,7 +70,7 @@ class OrcaCalc(BaseCalc):
         calc, label = self._std_calc()
         calc.parameters["orcasimpleinput"] += " opt"
         if self.constrains:
-            text = "%geom Constraints "
+            text = "\n%geom Constraints "
             for i in self.constrains:
                 text += " {C " + str(i) + " C}"
             text += "end end\n"

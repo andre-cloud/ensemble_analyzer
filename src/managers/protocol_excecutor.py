@@ -16,9 +16,9 @@ from src.clustering import perform_PCA, get_ensemble
 
 from src.managers.calculation_config import CalculationConfig
 from src.managers.checkpoint_manager import CheckpointManager
-from src.managers.calculation_excetuer import CalculationExecutor
+from src.managers.calculation_executor import CalculationExecutor
 
-from src.constants import DEBUG
+from src.constants import DEBUG, MIN_RETENTION_RATE
 
 
 
@@ -86,9 +86,6 @@ class ProtocolExecutor:
         # Run calculations
         self._run_calculations(conformers, protocol)
         
-        # Sort by energy
-        conformers.sort()
-        
         protocol_elapsed = time.perf_counter() - protocol_start_time
         
         self.logger.info(
@@ -96,12 +93,16 @@ class ProtocolExecutor:
             f"{datetime.timedelta(seconds=protocol_elapsed)}"
         )
         
+        conformers = self._sort_conformers_by_energy(conformers)
+
         # Pruning
         initial_active = len([c for c in conformers if c.active])
+        
+        self.generate_report("Summary Before Pruning", conformers=conformers, protocol=protocol)
+        
         self.logger.pruning_start(protocol.number, initial_active)
         
         check_ensemble(conformers, protocol, self.logger, self.config.include_H)
-        conformers = self._sort_conformers_by_energy(conformers)
         
         final_active = len([c for c in conformers if c.active])
         
@@ -112,7 +113,6 @@ class ProtocolExecutor:
             deactivated_count=initial_active - final_active
         )
         
-        self.generate_report("Summary Before Pruning", conformers=conformers, protocol=protocol)
         # Save snapshot
         save_snapshot(f"ensemble_after_{protocol.number}.xyz", conformers, self.logger)
         
@@ -158,9 +158,14 @@ class ProtocolExecutor:
         )
 
         # If retention rate is lower than 30% and TODO: setting per disabilitarlo
-        if final_active/initial_active < 0.3:
-            self.logger.critical('✗ Ensemble reduce more than 70%. Calculation will stop.')
-            raise 
+        retention_rate = final_active / initial_active if initial_active > 0 else 1.0
+
+        if retention_rate < MIN_RETENTION_RATE:
+            self.logger.critical(
+                f'✗ Ensemble reduce more than {(1-retention_rate)*100:.1f}%. Calculation will stop.\n'
+                f'\t{self.logger.WARNING} threshold: {MIN_RETENTION_RATE*100:.0f}%. Stopping.'
+            )
+            raise RuntimeError()
     
     def _run_calculations(
         self,
@@ -261,7 +266,7 @@ class ProtocolExecutor:
             title="Energetic Summary of the active conformers", 
             data= rows, 
             headers=headers,
-            witdh=50, 
+            width=50, 
             char = '*'
         )
 
@@ -270,7 +275,7 @@ class ProtocolExecutor:
             title="Ensemble Average Energies", 
             data=averages,
             headers=headers, 
-            witdh=50, 
+            width=50, 
             char = '*',
         )
 

@@ -38,7 +38,7 @@ class Logger(logging.Logger):
     def title_screen(self):
         self.info(title)
 
-    def application_input_recieved(self, config: Dict[str,Any]): 
+    def application_input_received(self, config: Dict[str,Any]): 
         self._separator("Calculation Input")
         self.info(f"Ensemble: {config.get('conformers', 'N/A')} confromer(s)")
         self.info(f'Protocols: {config.get('len_protocols', 'N/A')}')
@@ -110,6 +110,7 @@ class Logger(logging.Logger):
 
     def pruning_start(self, protocol_number: int, conformer_count: int):
         self.info("")
+        self._separator("Pruning sequence", width=30, char="~")
         self.info(f"Starting pruning for protocol {protocol_number}")
         self.info(f"Conformers before pruning: {conformer_count}")
         self._start_timer(f"pruning_{protocol_number}")
@@ -118,9 +119,9 @@ class Logger(logging.Logger):
         ref_str = f" (ref: CONF {reference_id})" if reference_id else ""
         details = []
         if delta_energy is not None:
-            details.append(f"ΔE={delta_energy:.3f} kcal/mol")
+            details.append(f"ΔE={delta_energy:.2f} kcal/mol")
         if delta_rotatory is not None:
-            details.append(f"ΔB={delta_rotatory:.3f} cm⁻¹")
+            details.append(f"ΔB={delta_rotatory:.2f} cm⁻¹")
         detail_str = f" [{', '.join(details)}]" if details else ""
         
         self.debug(f"  {self.WARNING} CONF {conformer_id:03d} deactivated {self.SPLIT} {reason}{ref_str}{detail_str}")

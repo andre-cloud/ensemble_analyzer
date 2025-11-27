@@ -3,6 +3,8 @@ from typing import List
 import time
 import datetime
 
+from dataclasses import dataclass
+
 from src.conformer import Conformer
 from src.protocol import Protocol
 from src.logger.logger import Logger
@@ -18,7 +20,7 @@ from src.managers.calculation_config import CalculationConfig
 
 
 
-
+@dataclass
 class CalculationOrchestrator:
     """
     Main orchestrator for ensemble calculations.
@@ -30,27 +32,19 @@ class CalculationOrchestrator:
     
     This is the single entry point that replaces initiate_calculation_loop().
     """
+    conformers: List[Conformer]
+    protocols: List[Protocol]
+    config: CalculationConfig
+    logger: Logger
+
     
-    def __init__(
-        self,
-        conformers: List[Conformer],
-        protocols: List[Protocol],
-        config: CalculationConfig,
-        logger: Logger
-    ):
-        self.conformers = conformers
-        self.protocols = protocols
-        self.config = config
-        self.logger = logger
-        
+    def __post_init__(self):        
         # Managers
         self.checkpoint_manager = CheckpointManager()
         self.protocol_manager = ProtocolManager()
         
         # Executor
-        self.protocol_executor = ProtocolExecutor(
-            config, logger, self.checkpoint_manager
-        )
+        self.protocol_executor = ProtocolExecutor(self.config, self.logger, self.checkpoint_manager)
     
     def run(self) -> None:
         """

@@ -49,6 +49,8 @@ VIBRO_OR_ELECTRO = {
 }
 
 
+MIN_RETENTION_RATE = 0.3
+
 
 
 # Logger constants

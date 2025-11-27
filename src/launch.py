@@ -106,7 +106,7 @@ def main():
     )
     
     # Log application start
-    log.application_input_recieved({
+    log.application_input_received({
         "temperature": config.temperature,
         "cpu": config.cpu,
         "conformers": len(conformers),
