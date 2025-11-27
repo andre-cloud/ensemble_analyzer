@@ -1,6 +1,12 @@
+
+from typing import List
+
+
 try:
     from src.IOsystem import _parse_xyz_str
     from src.conformer import Conformer
+    from src.conformer.conformer import Conformer
+    from src.logger.logger import Logger
 except ImportError as e:  # pragma: no cover
     print(e)
     from IOsystem import _parse_xyz_str
@@ -10,7 +16,7 @@ except ImportError as e:  # pragma: no cover
 import os
 
 
-def convert_file(file) -> str:
+def convert_file(file: str) -> str:
     """
     Convert the input file into xyz multigeometry XYZ file.
     OPENBABEL is required
@@ -26,7 +32,7 @@ def convert_file(file) -> str:
     return output
 
 
-def read_ensemble(file, log, raw=False) -> list:
+def read_ensemble(file: str, log:Logger, raw: bool=False) -> list:
     """
     Read the initial ensemble and return the ensemble list
     Not only XYZ file is supported. OBABEL is required
@@ -60,15 +66,13 @@ def read_ensemble(file, log, raw=False) -> list:
             continue
         atoms, geom, e = _parse_xyz_str(fl[old_idx:i], raw=raw)
         confs.append(Conformer(counter, geom=geom, atoms=atoms))
-        if raw:
-            confs[-1].energies = {"0": {"E": e * 627.51, "G": e * 627.51}}
         old_idx = i
         counter += 1
 
     return confs
 
 
-def save_snapshot(output, confs, log):
+def save_snapshot(output: str, confs: List[Conformer], log: Logger):
     """
     Save an XYZ file to store a bunch of geometries
 

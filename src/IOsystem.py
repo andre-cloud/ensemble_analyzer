@@ -3,8 +3,11 @@ import json
 import os, re
 import shutil
 
+from src.conformer.conformer import Conformer
+from src.protocol import Protocol
 
-def _parse_xyz_str(fl: str, raw=False):
+
+def _parse_xyz_str(fl: str, raw: bool =False):
     """
     Parse an xyz geom descriptor
 
@@ -49,7 +52,7 @@ class SerialiseEncoder(json.JSONEncoder):
         return obj.__dict__
 
 
-def tail(file_path, num_lines=100):
+def tail(file_path: str, num_lines:int=100):
     """Tail an output file
 
     :param file_path: output filename path
@@ -65,7 +68,7 @@ def tail(file_path, num_lines=100):
     return "".join(fl[-num_lines:])
 
 
-def move_files(conf, protocol, label):
+def move_files(conf: Conformer, protocol: Protocol, label: str):
     files = [str(f) for f in os.listdir(os.getcwd()) if str(f).startswith(label)]
     dest_folder = os.path.join(os.getcwd(), conf.folder, f"protocol_{protocol.number}")
     mkdir(os.path.join(os.getcwd(), conf.folder, f"protocol_{protocol.number}"))

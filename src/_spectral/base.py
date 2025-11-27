@@ -6,10 +6,10 @@ from scipy.optimize import minimize
 from numba import njit, prange
 
 from datetime import datetime
-import matplotlib.pyplot as plt
-plt.set_loglevel("error")
 
 from src._spectral.graph_default import GraphDefault
+from src.conformer.conformer import Conformer
+
 
 from src.protocol import Protocol
 from src.constants import *
@@ -17,7 +17,7 @@ from src.constants import *
 @dataclass
 class BaseGraph: 
 
-    confs: list  
+    confs: List[Conformer]  
     protocol : Protocol
     graph_type: Literal['IR', 'VCD', 'UV', 'ECD']
     log: logging  
@@ -39,16 +39,16 @@ class BaseGraph:
     def retrieve_data(self, protocol) -> None: 
         self.impulse = []
         self.energies = []
-        population = str(self.read_population) if self.read_population else str(protocol.number)
+        population_from = str(self.read_population) if self.read_population else str(protocol.number)
 
         for conf in self.confs:
 
             if not self.check_conf(conf, protocol):
                 continue           
 
-            p = conf.energies[population]['Pop']
-            x = np.array(conf.energies[str(protocol.number)]['graph'][self.graph_type]['x'])
-            y = np.array(conf.energies[str(protocol.number)]['graph'][self.graph_type]['y'])*p
+            p = conf.energies.__getitem__(protocol_number=population_from).Pop
+            x = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).X)
+            y = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).Y) * p
 
             if x.size < 1:
                 continue
