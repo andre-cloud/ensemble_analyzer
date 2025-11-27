@@ -135,7 +135,7 @@ class ProtocolExecutor:
         
         # Clustering
         if isinstance(protocol.cluster, int) or protocol.cluster:
-            get_ensemble(conformers)
+            conformers = get_ensemble(conformers)
         
         self.generate_report("Summary After Pruning", conformers=conformers, protocol=protocol)
 

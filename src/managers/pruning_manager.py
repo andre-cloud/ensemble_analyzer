@@ -97,7 +97,7 @@ class PruningManager:
     def _should_skip_pruning(self, protocol: Protocol) -> bool : 
         """Check id pruning should be skipped: protocol.no_prune or protocol.graph"""
         if protocol.graph or protocol.no_prune: 
-            self.logger.skip_pruning()
+            self.logger.skip_pruning(protocol_number=protocol.number)
             return True
         
         return False

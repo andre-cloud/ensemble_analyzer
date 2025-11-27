@@ -8,6 +8,7 @@ except ImportError as e:  # pragma: no cover
 
 import numpy as np
 import random
+from typing import Union, List
 from ase.atoms import Atoms
 
 
@@ -120,13 +121,22 @@ class Conformer:
 
         return txt
 
-    def create_log(self, monitor_internals):
+    def create_log(self, monitor_internals: list):
         """Generate all the information needed for the tabulation
 
         :return: a long tuple with all the information. (Number, E, G, B, Erel, Pop, Elapsed Time)
         :rtype: tuple
         """
         en = self._last_energy
+        number: Union[int, float] = 0
+        e: Union[int, float] = 0 
+        g_e: Union[int, float] = 0
+        g: Union[int, float] = 0
+        b: Union[int, float] = 0
+        erel: Union[int, float] = 0
+        time: Union[int, float] = 0
+        pop: Union[int, float] = 0
+        cluster: Union[int, float] = 0 
         number, e, g_e, g, b, erel, time, pop, cluster = (
             self.number,
             en.get("E", np.nan),
@@ -139,7 +149,7 @@ class Conformer:
             self.cluster,
         )
 
-        monitor = []
+        monitor : List[float] = []
         if len(monitor_internals) > 0:
             atoms = Atoms(
                 symbols="".join(list(self.atoms)),
