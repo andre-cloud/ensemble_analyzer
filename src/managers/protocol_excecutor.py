@@ -180,7 +180,7 @@ class ProtocolExecutor:
         for conf in conformers:
             if not conf.active:
                 continue
-            if conf.energies.get(str(protocol.number)):
+            if conf.energies.__getitem__(protocol_number=str(protocol.number)):
                 continue
             
             self.calculator.execute(count, conf, protocol)
