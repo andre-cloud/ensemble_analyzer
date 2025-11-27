@@ -12,16 +12,25 @@ class ColoredFormatter(logging.Formatter):
     }
     RESET = "\033[0m"
 
-    def __init__(self,disable_color):
-        super.__init__(self)
-        self.disable_color = disable_color
+    def __init__(self, fmt=None, datefmt=None, use_colors=None):
+        """
+        Args:
+            use_colors: None=auto-detect, True=force, False=disable
+        """
+        super().__init__(fmt, datefmt)
+        
+        if use_colors is None:
+            self.use_colors = self._should_use_colors()
+        else:
+            self.use_colors = use_colors
 
-    def format(self, record, disable_color):
-        if not disable_color:
-            color = self.COLORS.get(record.levelno, self.RESET)
-        else: 
-            color = ""
-            self.RESET = ""
-
+    def format(self, record):
         msg = super().format(record)
+        
+        if not self.use_colors:
+            return msg
+        
+        color = self.COLORS.get(record.levelno, self.RESET)
         return f"{color}{msg}{self.RESET}"
+    
+    
