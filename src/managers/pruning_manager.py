@@ -37,11 +37,12 @@ class ComparisonResult:
         }
     
 
-@dataclass
 class PruningManager:
-    logger : Logger
-    _deactivation_records: List[ComparisonResult] = []
-    include_H : bool = True
+
+    def __init__(self, logger : Logger, _deactivation_records: List[ComparisonResult] = [], include_H : bool = True): 
+        self.logger = logger
+        self._deactivation_records = _deactivation_records
+        self.incluse_H = include_H
 
     def prune_ensemble(self, conformers: List[Conformer], protocol: Protocol) -> List[Conformer]: 
         """Main pruning workflow
