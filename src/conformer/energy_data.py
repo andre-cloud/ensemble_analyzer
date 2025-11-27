@@ -52,7 +52,7 @@ class EnergyStore:
         return self.data[last_key]
 
     def __getitem__(self, protocol_number: int) -> EnergyRecord:
-        return self.data[int(protocol_number)]
+        return self.data.get(int(protocol_number), None)
 
     def __contains__(self, protocol_number: int) -> bool:
         return int(protocol_number) in self.data
