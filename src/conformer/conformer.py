@@ -121,11 +121,11 @@ class Conformer:
 
     @property
     def rotatory(self):
-        return self.energy.last().B
+        return self.energies.last().B
 
     @property
     def moment(self):
-        return self.energy.last().m
+        return self.energies.last().m
 
     @property
     def _last_energy(self):
