@@ -61,7 +61,7 @@ class Conformer:
     
     def create_log(self, protocol_number: int, monitor_internals: list):
         
-        e, g_e, g, b, erel, pop, time = self.energies.log_info()
+        e, g_e, g, b, erel, pop, time = self.energies.log_info(protocol_number=protocol_number)
 
         monitor : List[float] = []
         if len(monitor_internals) > 0:
