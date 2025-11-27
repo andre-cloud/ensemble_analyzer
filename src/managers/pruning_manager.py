@@ -111,7 +111,7 @@ class PruningManager:
             threshold (float): Max energy window [kcal/mol]
         """
         
-        active = [(conf, self.get_effective_energy(conf, protocol_number)) for conf in conformers if conf.active]
+        active = [(conf, self._get_effective_energy(conf, protocol_number)) for conf in conformers if conf.active]
         
         if len(active)==0: 
             return
