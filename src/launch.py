@@ -1,9 +1,11 @@
 from pathlib import Path
 import json
 import os
+from typing import Tuple, List
 
 from src.protocol import Protocol
 from src.logger.create_log import create_logger
+from src.logger.logger import Logger
 
 from src.parser_arguments import parser_arguments
 from src.protocol import load_protocol
@@ -11,7 +13,8 @@ from src.ioFile import read_ensemble
 from src.title import title
 
 from src.constants import DEBUG
-
+from src.conformer import Conformer
+from src.protocol import Protocol
 
 from src.managers.checkpoint_manager import CheckpointManager
 from src.managers.protocol_manager import ProtocolManager
@@ -65,14 +68,7 @@ def main():
     protocol_mgr = ProtocolManager()
     
     if args.restart:
-        conformers = checkpoint_mgr.load()
-        protocols = protocol_mgr.load()
-        start_from = protocol_mgr.load_last_completed()
-        
-        log.checkpoint_loaded(
-            conformer_count=len(conformers),
-            protocol_number=start_from
-        )
+        conformers, protocols, start_from = restart()
     else:
         # Load protocols
         protocol_data = load_protocol(args.protocol)
@@ -124,3 +120,16 @@ def main():
     )
     
     orchestrator.run()
+
+def restart(checkpoint_mgr: CheckpointManager, protocol_mgr: ProtocolManager, log: Logger) -> Tuple[List[Conformer], List[Protocol], int]: 
+        conformers = checkpoint_mgr.load()
+        protocols = protocol_mgr.load()
+        start_from = protocol_mgr.load_last_completed()
+        
+        log.checkpoint_loaded(
+            conformer_count=len(conformers),
+            protocol_number=start_from
+        )
+
+        return conformers, protocols, start_from
+
