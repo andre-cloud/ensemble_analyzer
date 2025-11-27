@@ -180,7 +180,7 @@ class ProtocolExecutor:
         for conf in conformers:
             if not conf.active:
                 continue
-            if conf.energies.__getitem__(protocol_number=str(protocol.number)):
+            if conf.energies.__contains__(protocol_number=str(protocol.number)):
                 continue
             
             self.calculator.execute(count, conf, protocol)
@@ -191,12 +191,6 @@ class ProtocolExecutor:
             count += 1
 
         self.checkpoint_manager.save(conformers, self.logger, log=True)
-
-
-
-
-
-
 
 
 
