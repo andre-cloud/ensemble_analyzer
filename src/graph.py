@@ -19,7 +19,7 @@ try:
     from src._spectral.comp_vibronic import ComputedVibronic
     from src._spectral.compare import ComparedGraph
     from src.protocol import Protocol
-    from src.conformer import Conformer
+    from src.conformer.conformer import Conformer
 except ModuleNotFoundError: 
     from constants import *
     from _spectral.experimental import ExperimentalGraph
