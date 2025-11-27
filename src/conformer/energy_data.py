@@ -62,7 +62,7 @@ class EnergyStore:
         return {k: v.as_dict() for k, v in self.data.items()}
     
     def get_energy(self) -> float: 
-        data = self.data.last()
+        data = self.last()
         if ~np.isnan(data.G) or data.G is not None: 
             return data.G
         return data.E
