@@ -95,14 +95,14 @@ def get_conf_parameters(
         H = H
         g_e = g - e
     else:
-        prev_energies = conf.energies.get(str(int(number) - 1), {})
-        g_e = prev_energies.get('G-E',np.nan)
+        prev_energies = conf.energies.__getitem__(str(int(number) - 1), {})
+        g_e = prev_energies.G_E
 
         if not np.isnan(g_e):
             g = e + g_e
-            zpve = prev_energies.get("zpve", np.nan)
-            H = prev_energies.get("H", np.nan)
-            S = prev_energies.get("S", np.nan)
+            zpve = prev_energies.zpve
+            H = prev_energies.H
+            S = prev_energies.S
         else:
             log.missing_previous_thermo(conformer_id = conf.number)
 
