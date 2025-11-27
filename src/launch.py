@@ -13,7 +13,7 @@ from src.ioFile import read_ensemble
 from src.title import title
 
 from src.constants import DEBUG
-from src.conformer import Conformer
+from src.conformer.conformer import Conformer
 from src.protocol import Protocol
 
 from src.managers.checkpoint_manager import CheckpointManager
