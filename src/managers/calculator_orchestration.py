@@ -5,7 +5,7 @@ import datetime
 
 from dataclasses import dataclass
 
-from src.conformer import Conformer
+from src.conformer.conformer import Conformer
 from src.protocol import Protocol
 from src.ioFile import save_snapshot
 from src.graph import plot_comparative_graphs

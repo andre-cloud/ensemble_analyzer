@@ -3,7 +3,7 @@ from typing import List
 from pathlib import Path
 import json
 
-from src.conformer import Conformer
+from src.conformer.conformer import Conformer
 from src.logger.logger import Logger
 from src.IOsystem import SerialiseEncoder
 

@@ -6,7 +6,7 @@ import os
 
 import numpy as np
 
-from src.conformer import Conformer
+from src.conformer.conformer import Conformer
 from src.protocol import Protocol
 from src.logger.logger import Logger
 from src.ioFile import save_snapshot

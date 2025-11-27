@@ -7,7 +7,7 @@ from src.constants import *
 try:
     from src.ioFile import save_snapshot
     from src.constants import DEBUG, ordinal
-    from src.conformer import Conformer
+    from src.conformer.conformer import Conformer
 except ImportError as e:  # pragma: no cover
     print(e)
     from ioFile import save_snapshot

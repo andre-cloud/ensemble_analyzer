@@ -4,7 +4,7 @@ import numpy as np
 
 from collections import defaultdict
 
-from src.conformer import Conformer
+from src.conformer.conformer import Conformer
 from src.protocol import Protocol
 from src.logger.logger import Logger
 from src.constants import R, EH_TO_KCAL, CAL_TO_J
