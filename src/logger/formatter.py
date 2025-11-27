@@ -12,11 +12,16 @@ class ColoredFormatter(logging.Formatter):
     }
     RESET = "\033[0m"
 
+    def __init__(self,disable_color):
+        super.__init__(self)
+        self.disable_color = disable_color
+
     def format(self, record, disable_color):
         if not disable_color:
             color = self.COLORS.get(record.levelno, self.RESET)
         else: 
             color = ""
-            
+            self.RESET = ""
+
         msg = super().format(record)
         return f"{color}{msg}{self.RESET}"
