@@ -5,7 +5,6 @@ from ase.atoms import Atoms
 
 
 from src.IOsystem import mkdir
-from src.constants import A
 from src._calculators.base import BaseCalc
 
 from .energy_data import EnergyRecord, EnergyStore
