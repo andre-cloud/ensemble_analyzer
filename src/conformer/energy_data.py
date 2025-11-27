@@ -42,8 +42,8 @@ class EnergyRecord:
 class EnergyStore:
     data: Dict[str, EnergyRecord] = field(default_factory=dict)
 
-    def add(self, protocol_number: Union[int, str], record: EnergyRecord):
-        self.data[str(protocol_number)] = record
+    def add(self, protocol_number: int, record: EnergyRecord):
+        self.data[int(protocol_number)] = record
 
     def last(self) -> EnergyRecord:
         if not self.data:
@@ -52,10 +52,10 @@ class EnergyStore:
         return self.data[last_key]
 
     def __getitem__(self, protocol_number: int) -> EnergyRecord:
-        return self.data[str(protocol_number)]
+        return self.data[int(protocol_number)]
 
-    def __contains__(self, protocol_number: Union[int, str]) -> bool:
-        return str(protocol_number) in self.data
+    def __contains__(self, protocol_number: int) -> bool:
+        return int(protocol_number) in self.data
 
     def as_dict(self):
         """Used for checkpoint serialization"""
