@@ -3,7 +3,7 @@ import json
 import os, re
 import shutil
 
-from src.conformer.conformer import Conformer
+
 from src.protocol import Protocol
 
 
@@ -68,7 +68,7 @@ def tail(file_path: str, num_lines:int=100):
     return "".join(fl[-num_lines:])
 
 
-def move_files(conf: Conformer, protocol: Protocol, label: str):
+def move_files(conf, protocol: Protocol, label: str):
     files = [str(f) for f in os.listdir(os.getcwd()) if str(f).startswith(label)]
     dest_folder = os.path.join(os.getcwd(), conf.folder, f"protocol_{protocol.number}")
     mkdir(os.path.join(os.getcwd(), conf.folder, f"protocol_{protocol.number}"))
