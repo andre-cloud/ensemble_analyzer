@@ -130,9 +130,9 @@ class PruningManager:
         
         if len(rows) > 0:
             self.logger.table(title="Conformers over energy window", data=rows, headers=header, char='*', width=30)
-            self.logger.info(f"{self.TICK} Deactivated {len(rows)} conformer(s)\n")
+            self.logger.info(f"{self.logger.TICK} Deactivated {len(rows)} conformer(s)\n")
         else:
-            self.logger.info(f"{self.TICK} No conformers above threshold\n")
+            self.logger.info(f"{self.logger.TICK} No conformers above threshold\n")
 
 
     def _remove_duplicates(self, conformers: List[Conformer], protocol: Protocol) -> None: 
