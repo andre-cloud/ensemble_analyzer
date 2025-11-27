@@ -23,7 +23,7 @@ class ComparisonResult:
     delta_rotatory: float  # cm⁻¹
     delta_moment: float  # Debye
     should_deactivate: bool
-    rmsd: Optional[float] = None
+    rmsd: Optional[float] = 0
     
     def to_dict(self) -> Dict:
         return {
