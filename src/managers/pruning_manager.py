@@ -111,7 +111,7 @@ class PruningManager:
             threshold (float): Max energy window [kcal/mol]
         """
         
-        active = [(conf, self._get_effective_energy(conf, protocol_number)) for conf in conformers if conf.active]
+        active = [(conf, self._get_effective_energy(conf)) for conf in conformers if conf.active]
         
         if len(active)==0: 
             return
@@ -169,7 +169,7 @@ class PruningManager:
             ref (Conformer): Reference conformer
             protocol (Protocol): Protocol with thresholds
         """
-        delta_e = abs(self._get_effective_energy(check, protocol_number=protocol.number) - self._get_effective_energy(ref, protocol_number=protocol.number)) * EH_TO_KCAL
+        delta_e = abs(self._get_effective_energy(check) - self._get_effective_energy(ref)) * EH_TO_KCAL
         delta_b = abs(check.rotatory - ref.rotatory)
         delta_m = abs(check.moment - ref.moment)
         
