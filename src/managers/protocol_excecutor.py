@@ -235,7 +235,6 @@ class ProtocolExecutor:
             float(np.sum(dG * dG_boltz)),
         ]]
 
-        print(dE_boltz)
         rows = [
             [
                 f"Conf {i}",
@@ -250,6 +249,8 @@ class ProtocolExecutor:
             ]
             for idx, i in enumerate(CONFS)
         ]
+        
+        self.logger.debug(rows)
 
         headers=["Conformer", "∆E [Eh]", "Boltzamnn Pop. on ∆E", "∆(E+ZPVE) [Eh]", "Boltzamnn Pop. on ∆(E+ZPVE)", "∆H [Eh]", "Boltzamnn Pop. on ∆H", "∆G [Eh]", "Boltzamnn Pop. on ∆G"]
 
@@ -284,6 +285,6 @@ class ProtocolExecutor:
         "Elap. time [sec]",
         "# Cluster",] + [i for i in list(protocol.verbal_internals())]
 
-        rows = [i.create_log(protocol.monitor_internals) for i in conformers if i.active]
+        rows = [[i.create_log(protocol.monitor_internals)] for i in conformers if i.active]
 
         self.logger.table(title=title, data=rows, headers=headers, witdh=50, char = '*')
