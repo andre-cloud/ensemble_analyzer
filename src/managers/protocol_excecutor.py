@@ -10,8 +10,8 @@ from src.conformer import Conformer
 from src.protocol import Protocol
 from src.logger.logger import Logger
 from src.ioFile import save_snapshot
-from src.pruning import calculate_rel_energies, check_ensemble, bolzmann
-from src.graph import main_spectra, plot_comparative_graphs
+from src.pruning import calculate_rel_energies, check_ensemble, boltzmann
+from src.graph import main_spectra
 from src.clustering import perform_PCA, get_ensemble
 
 from src.managers.calculation_config import CalculationConfig
@@ -232,10 +232,10 @@ class ProtocolExecutor:
         dG = np.array([i.energies[str(protocol_number)]["G"] for i in CONFS])
 
         # Boltzmann populations
-        dE_boltz = bolzmann(dE, T)
-        dE_ZPVE_boltz = bolzmann(dE_ZPVE, T)
-        dH_boltz = bolzmann(dH, T)
-        dG_boltz = bolzmann(dG, T)
+        dE_boltz = boltzmann(dE, T)
+        dE_ZPVE_boltz = boltzmann(dE_ZPVE, T)
+        dH_boltz = boltzmann(dH, T)
+        dG_boltz = boltzmann(dG, T)
 
         averages = [[
             T,
@@ -245,6 +245,7 @@ class ProtocolExecutor:
             float(np.sum(dG * dG_boltz)),
         ]]
 
+        print(dE_boltz)
         rows = [
             [
                 f"Conf {i}",
