@@ -9,6 +9,7 @@ class EnergyRecord:
     E       : float                     = 0.0
     G       : float                     = np.nan
     H       : float                     = np.nan
+    S       : float                     = np.nan
     G_E     : float                     = np.nan
     zpve    : float                     = np.nan
     B       : Optional[float]           = None
