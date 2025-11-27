@@ -41,7 +41,7 @@ class PruningManager:
 
     def __init__(self, logger : Logger, include_H : bool = True): 
         self.logger = logger
-        self.incluse_H = include_H
+        self.include_H = include_H
         self._deactivation_records : List[ComparisonResult] = []
 
     def prune_ensemble(self, conformers: List[Conformer], protocol: Protocol) -> List[Conformer]: 
