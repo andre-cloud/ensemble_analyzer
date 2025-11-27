@@ -29,10 +29,10 @@ class ComparisonResult:
         return {
             "Check": self.check_id,
             "Ref": self.reference_id,
-            "∆E [kcal/mol]": self.delta_energy,
-            "∆B [cm⁻¹]": self.delta_rotatory,
-            "∆m [Debye]": self.delta_moment,
-            "λi RMSD": self.rmsd,
+            "∆E [kcal/mol]": f'{self.delta_energy:.2f}',
+            "∆B [cm⁻¹]": f'{self.delta_rotatory:.2f}',
+            "∆m [Debye]": f'{self.delta_moment:.2f}',
+            "λi RMSD": f'{self.rmsd:.2f}',
             "Deactivate": self.should_deactivate,
         }
     
@@ -154,6 +154,7 @@ class PruningManager:
                     continue
 
                 result = self._compare_conformers(check, ref, protocol)
+                self.logger.debug(result.to_dict())
                 if result.should_deactivate:
                     check.active = False
                     check.diactivated_by = ref.number
@@ -168,7 +169,7 @@ class PruningManager:
             ref (Conformer): Reference conformer
             protocol (Protocol): Protocol with thresholds
         """
-        delta_e = (self._get_effective_energy(check, protocol_number=protocol.number) - self._get_effective_energy(ref, protocol_number=protocol.number)) * EH_TO_KCAL
+        delta_e = abs(self._get_effective_energy(check, protocol_number=protocol.number) - self._get_effective_energy(ref, protocol_number=protocol.number)) * EH_TO_KCAL
         delta_b = abs(check.rotatory - ref.rotatory)
         delta_m = abs(check.moment - ref.moment)
         
@@ -255,7 +256,6 @@ class PruningManager:
     # ===
 
     def _log_deactivations(self) -> None:
-        self.logger.info(f'{self.logger.TICK} Pruning ')
         if not self._deactivation_records: 
             self.logger.info("No conformers deactivated by similarity check")
             return
@@ -267,3 +267,5 @@ class PruningManager:
                 table_data[key].append(value)
 
         self.logger.table("Conformer pruned by ∆B and ∆E", data=table_data, headers="keys", char="*", width=30)
+        
+        self.logger.debug(f'{self.logger.TICK} Pruning ')

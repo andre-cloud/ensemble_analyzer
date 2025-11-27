@@ -111,15 +111,15 @@ class Logger(logging.Logger):
     def pruning_start(self, protocol_number: int, conformer_count: int):
         self.info("")
         self._separator("Pruning sequence", width=30, char="~")
-        self.info(f"Starting pruning for protocol {protocol_number}")
-        self.info(f"Conformers before pruning: {conformer_count}")
+        self.debug(f"Starting pruning for protocol {protocol_number}")
+        self.debug(f"Conformers before pruning: {conformer_count}\n")
         self._start_timer(f"pruning_{protocol_number}")
 
     def pruning_summary(self, protocol_number: int, initial_count: int, final_count: int, deactivated_count: int):
         elapsed = self._stop_timer(f"pruning_{protocol_number}")
         retention = (final_count / initial_count * 100) if initial_count > 0 else 0
         
-        self.info(f"Pruning completed in {elapsed:.2f}s")
+        self.info(f"\n{self.TICK} Pruning completed in {elapsed:.4f}s")
         self.info(f"Initial: {initial_count} {self.ARROW} Final: {final_count} ({retention:.1f}% retained)"
         )
         self.info(f"Deactivated: {deactivated_count}")
