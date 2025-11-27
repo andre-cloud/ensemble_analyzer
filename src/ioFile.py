@@ -1,16 +1,9 @@
 
 from typing import List
 
-
-try:
-    from src.IOsystem import _parse_xyz_str
-    from src.conformer import Conformer
-    from src.conformer.conformer import Conformer
-    from src.logger.logger import Logger
-except ImportError as e:  # pragma: no cover
-    print(e)
-    from IOsystem import _parse_xyz_str
-    from conformer import Conformer
+from src.IOsystem import _parse_xyz_str
+from src.conformer.conformer import Conformer
+from src.logger.logger import Logger
 
 
 import os
