@@ -122,19 +122,17 @@ class ProtocolExecutor:
         save_snapshot(f"ensemble_after_{protocol.number}.xyz", conformers, self.logger)
         
         # Post-pruning PCA
-        if protocol.cluster:
+        if isinstance(protocol.cluster, (float, int, bool)):
+            self.logger.debug("Starting PCA" + f"{protocol.cluster=}")
             perform_PCA(
                 confs=[c for c in conformers if c.active],
-                ncluster=protocol.cluster if isinstance(protocol.cluster, int) else None,
+                ncluster=int(protocol.cluster) if isinstance(protocol.cluster, (int, float)) else None,
                 fname=f"PCA_after_pruning_protocol_{protocol.number}.png",
                 title=f"PCA after pruning protocol {protocol.number}",
                 log=self.logger,
                 include_H=self.config.include_H,
                 set_=True
             )
-        
-        # Clustering
-        if isinstance(protocol.cluster, int) or protocol.cluster:
             conformers = get_ensemble(conformers)
         
         self.generate_report("Summary After Pruning", conformers=conformers, protocol=protocol)
