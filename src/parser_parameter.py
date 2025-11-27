@@ -121,6 +121,8 @@ def get_conf_parameters(
             H =  H if not np.isnan(g) else np.nan,  # Enthalpy correction [Eh]
             S =  S if not np.isnan(g) else np.nan,  # Entropy [Eh], 
             Freq =  freq, # Frequencies
+            B_vec = B_vec, # rotational vector constant [cm-1]
+            m_vec = M_vec, # Dipole moment vector [Debye]
         )
     )
     log.debug(f'{log.TICK} Energy Data are stored correctly')
