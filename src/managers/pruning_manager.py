@@ -39,10 +39,10 @@ class ComparisonResult:
 
 class PruningManager:
 
-    def __init__(self, logger : Logger, _deactivation_records: List[ComparisonResult] = [], include_H : bool = True): 
+    def __init__(self, logger : Logger, include_H : bool = True): 
         self.logger = logger
-        self._deactivation_records = _deactivation_records
         self.incluse_H = include_H
+        self._deactivation_records : List[ComparisonResult] = []
 
     def prune_ensemble(self, conformers: List[Conformer], protocol: Protocol) -> List[Conformer]: 
         """Main pruning workflow
@@ -58,7 +58,7 @@ class PruningManager:
         if self._should_skip_pruning(protocol):
             return conformers
         
-        self._deactivation_records.clear()
+        self._deactivation_records.clear() 
 
         # Energy window
         self._filter_by_energy_window(conformers, protocol.number, protocol.thrGMAX)
