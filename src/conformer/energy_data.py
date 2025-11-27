@@ -51,7 +51,7 @@ class EnergyStore:
         last_key = list(self.data.keys())[-1]
         return self.data[last_key]
 
-    def __getitem__(self, protocol_number: Union[int, str]) -> EnergyRecord:
+    def __getitem__(self, protocol_number: int) -> EnergyRecord:
         return self.data[str(protocol_number)]
 
     def __contains__(self, protocol_number: Union[int, str]) -> bool:
