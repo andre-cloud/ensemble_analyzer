@@ -196,16 +196,8 @@ class PruningManager:
     # ===
 
     @staticmethod
-    def _get_effective_energy(conf: Conformer, protocol_number:str) -> float: 
-        """Get G if available, otherwise E."""
-        energy_data = conf.energies.get(str(protocol_number))
-        if not energy_data:
-            return 0.0
-        
-        g = energy_data.get("G")
-        if g is not None and not np.isnan(g):
-            return g
-        return energy_data.get("E", 0.0)
+    def _get_effective_energy(conf: Conformer) -> float: 
+        return conf.energies.get_energy()
     
     @staticmethod
     def _calculate_rmsd(conf1: Conformer, conf2: Conformer, include_H: bool) -> float:
