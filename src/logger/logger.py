@@ -3,7 +3,7 @@ import sys
 from tabulate import tabulate
 import time
 from pathlib import Path
-from typing import Optional, Any, Dict, List
+from typing import Optional, Any, Dict, List, Union
 from contextlib import contextmanager
 from datetime import timedelta
 
@@ -115,17 +115,6 @@ class Logger(logging.Logger):
         self.info(f"Conformers before pruning: {conformer_count}")
         self._start_timer(f"pruning_{protocol_number}")
 
-    def conformer_deactivated(self, conformer_id: int, reason: str, reference_id: Optional[int] = None, delta_energy: Optional[float] = None, delta_rotatory: Optional[float] = None):
-        ref_str = f" (ref: CONF {reference_id})" if reference_id else ""
-        details = []
-        if delta_energy is not None:
-            details.append(f"ΔE={delta_energy:.2f} kcal/mol")
-        if delta_rotatory is not None:
-            details.append(f"ΔB={delta_rotatory:.2f} cm⁻¹")
-        detail_str = f" [{', '.join(details)}]" if details else ""
-        
-        self.debug(f"  {self.WARNING} CONF {conformer_id:03d} deactivated {self.SPLIT} {reason}{ref_str}{detail_str}")
-
     def pruning_summary(self, protocol_number: int, initial_count: int, final_count: int, deactivated_count: int):
         elapsed = self._stop_timer(f"pruning_{protocol_number}")
         retention = (final_count / initial_count * 100) if initial_count > 0 else 0
@@ -135,6 +124,9 @@ class Logger(logging.Logger):
         )
         self.info(f"Deactivated: {deactivated_count}")
         self.info("")
+
+    def skip_pruning(self, protocol_number: int): 
+        self.warning(f'{self.WARNING} Pruning skipped for Protocol Step {protocol_number}.')
 
     # ===
     # Analysis Events
@@ -199,7 +191,7 @@ class Logger(logging.Logger):
         else:
             self.info(f"{char * width}")
     
-    def table(self, title: str, data: List[Any], headers: List[str], **kwargs):
+    def table(self, title: str, data: List[Any], headers: Union[List[str], str], **kwargs):
         """
         Log tabulated data (backward compatible with tabulate).
         
@@ -208,7 +200,7 @@ class Logger(logging.Logger):
             headers: List of column headers
         """
         self._separator(title, **kwargs)
-        self.info("\n" + tabulate(data, headers=headers, floatfmt=".10f"))#, disable_numparse=True))
+        self.info("\n" + tabulate(data, headers=headers, floatfmt=".10f", disable_numparse=True))
 
 
     @contextmanager

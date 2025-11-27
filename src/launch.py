@@ -47,6 +47,7 @@ def main():
             "interested_electro": args.interest_electro ,
             "invert": args.invert,
             "include_H": args.exclude_H,
+            "disable_color": args.disable_color
         }
         json.dump(settings, open("settings.json", "w"), indent=4)
     
@@ -59,7 +60,7 @@ def main():
     )
     
     # Initialize structured logging
-    log = create_logger(output_file=Path(output),debug=DEBUG)
+    log = create_logger(output_file=Path(output),debug=DEBUG, disable_color=settings.get('disable_color', False))
     
     log.info(title)
     

@@ -8,7 +8,8 @@ from src.constants import DEBUG, LOG_FORMAT
 def create_logger(
     output_file: str,
     debug: bool = False,
-    logger_name: str = "enan"
+    logger_name: str = "enan", 
+    disable_color: bool = False,
 ) -> Logger:
     """
     Create enhanced logger
@@ -28,7 +29,7 @@ def create_logger(
     # File handler
     handler = logging.FileHandler(output_file, mode="w")
     handler.setLevel(logging.DEBUG if debug else logging.INFO)
-    formatter = ColoredFormatter(LOG_FORMAT)
+    formatter = ColoredFormatter(LOG_FORMAT, disable_color=disable_color)
     handler.setFormatter(formatter)
 
     # Attach

@@ -10,13 +10,15 @@ from src.conformer import Conformer
 from src.protocol import Protocol
 from src.logger.logger import Logger
 from src.ioFile import save_snapshot
-from src.pruning import calculate_rel_energies, check_ensemble, boltzmann
 from src.graph import main_spectra
 from src.clustering import perform_PCA, get_ensemble
 
 from src.managers.calculation_config import CalculationConfig
 from src.managers.checkpoint_manager import CheckpointManager
 from src.managers.calculation_executor import CalculationExecutor
+
+# from src.pruning import calculate_rel_energies, check_ensemble, boltzmann
+from src.managers.pruning_manager import PruningManager
 
 from src.constants import DEBUG, MIN_RETENTION_RATE
 
@@ -45,6 +47,7 @@ class ProtocolExecutor:
         self.logger = logger
         self.checkpoint_manager = checkpoint_manager
         self.calculator = CalculationExecutor(config, logger)
+        self.pruning_manager = PruningManager(logger, self.config.include_H)
     
     def execute(
         self,
@@ -93,16 +96,18 @@ class ProtocolExecutor:
             f"{datetime.timedelta(seconds=protocol_elapsed)}"
         )
         
-        conformers = self._sort_conformers_by_energy(conformers)
-
+        
         # Pruning
         initial_active = len([c for c in conformers if c.active])
-        
+
         self.generate_report("Summary Before Pruning", conformers=conformers, protocol=protocol)
         
         self.logger.pruning_start(protocol.number, initial_active)
         
-        check_ensemble(conformers, protocol, self.logger, self.config.include_H)
+        self.pruning_manager.prune_ensemble(conformers=conformers, protocol=protocol)
+        self.pruning_manager.calculate_relative_energies(conformers=conformers, temperature=self.config.temperature)
+        conformers = sorted(conformers)
+        
         
         final_active = len([c for c in conformers if c.active])
         
@@ -188,21 +193,6 @@ class ProtocolExecutor:
             count += 1
 
         self.checkpoint_manager.save(conformers, self.logger, log=True)
-    
-    def _sort_conformers_by_energy(
-        self,
-        conformers: List[Conformer]
-    ) -> List[Conformer]:
-        """Sort conformers by energy."""
-        calculate_rel_energies(conformers, self.config.temperature)
-        return sorted(conformers)
-
-
-
-
-
-
-
 
 
 
@@ -232,13 +222,13 @@ class ProtocolExecutor:
         dG = np.array([i.energies[str(protocol_number)]["G"] for i in CONFS])
 
         # Boltzmann populations
-        dE_boltz = boltzmann(dE, T)
-        dE_ZPVE_boltz = boltzmann(dE_ZPVE, T)
-        dH_boltz = boltzmann(dH, T)
-        dG_boltz = boltzmann(dG, T)
+        _, dE_boltz = self.pruning_manager._boltzmann_distribution(dE, T)
+        _, dE_ZPVE_boltz = self.pruning_manager._boltzmann_distribution(dE_ZPVE, T)
+        _, dH_boltz = self.pruning_manager._boltzmann_distribution(dH, T)
+        _, dG_boltz = self.pruning_manager._boltzmann_distribution(dG, T)
 
         averages = [[
-            T,
+            f'{T:.2f}',
             float(np.sum(dE * dE_boltz)),
             float(np.sum(dE_ZPVE * dE_ZPVE_boltz)),
             float(np.sum(dH * dH_boltz)),

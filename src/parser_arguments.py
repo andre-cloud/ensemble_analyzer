@@ -184,12 +184,18 @@ def parser_arguments():
         default=False,
     )
 
-    other_group = parser.add_argument_group("Other Parameters")
-    other_group.add_argument(
+    log_group = parser.add_argument_group("Parameters for the log")
+    log_group.add_argument(
         "-o",
         "--output",
         help="Define the output filename. Default: %(default)s",
         default="output.out",
+    )
+
+    log_group.add_argument(
+        '--disable-color',
+        action='store_false',
+        help='Disable colored output'
     )
 
     help_group = parser.add_argument_group("Get help")

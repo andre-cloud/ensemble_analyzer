@@ -7,11 +7,11 @@ from dataclasses import dataclass
 
 from src.conformer import Conformer
 from src.protocol import Protocol
-from src.logger.logger import Logger
 from src.ioFile import save_snapshot
 from src.graph import plot_comparative_graphs
 from src.clustering import perform_PCA
 
+from src.logger.logger import Logger
 
 from src.managers.checkpoint_manager import CheckpointManager
 from src.managers.protocol_manager import ProtocolManager
