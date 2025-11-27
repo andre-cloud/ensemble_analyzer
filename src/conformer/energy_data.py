@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Union
+from typing import Optional, Dict, Tuple
 import numpy as np
 
 
@@ -66,3 +66,7 @@ class EnergyStore:
         if ~np.isnan(data.G) or data.G is not None: 
             return data.G
         return data.E
+    
+    def log_info(self, protocol_number : int) -> Tuple[float]:
+        data = self.data.__getitem__(int(protocol_number))
+        return data.E, data.G_E, data.G, data.B, data.Erel, data.Pop, data.time

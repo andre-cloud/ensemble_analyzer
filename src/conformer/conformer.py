@@ -58,6 +58,53 @@ class Conformer:
         if ~np.isnan(energies.G) or (energies.G is not None):
             return energies.G
         return energies.E
+    
+    def create_log(self, protocol_number: int, monitor_internals: list):
+        
+        e, g_e, g, b, erel, pop, time = self.energies.log_info()
+
+        monitor : List[float] = []
+        if len(monitor_internals) > 0:
+            atoms = Atoms(
+                symbols="".join(list(self.atoms)),
+                positions=self.last_geometry,
+            )
+            for internal in monitor_internals:
+                if len(internal) == 2:
+                    monitor.append(float(atoms.get_distance(*internal)))
+                if len(internal) == 3:
+                    monitor.append(float(atoms.get_angle(*internal)))
+                if len(internal) == 4:
+                    monitor.append(float(atoms.get_dihedral(*internal)))
+                    
+        if len(monitor)==0:
+            return self.number, e, g_e, g, b, erel, pop, time, self.cluster
+        
+        return  self.number, e, g_e, g, b, erel, pop, time, self.cluster, *monitor
+
+
+    
+    def write_xyz(self, ):
+        """Write the XYZ string to be stored in a file
+
+        :return: the string in the XYZ formatting
+        :rtype: str
+        """
+        if not self.active:
+            return ""
+
+        # Header
+        header = f'{len(self.atoms)}\nCONFORMER {self.number} {self._last_energy:10f}'
+
+        # Atoms and positions
+        atom_lines = [
+            f"{a}  {x:14.6f}  {y:14.6f}  {z:14.6f}"
+            for a, (x, y, z) in zip(self.atoms, self.last_geometry)
+        ]
+
+        txt = "\n".join([header] + atom_lines)
+
+        return txt
 
     # ===
     # Properties
