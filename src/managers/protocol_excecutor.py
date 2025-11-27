@@ -283,6 +283,6 @@ class ProtocolExecutor:
         "Elap. time [sec]",
         "# Cluster",] + [i for i in list(protocol.verbal_internals())]
 
-        rows = [i.create_log(protocol.monitor_internals) for i in conformers if i.active]
+        rows = [i.create_log(protocol_number=protocol.number, monitor_internals=protocol.monitor_internals) for i in conformers if i.active]
         
         self.logger.table(title=title, data=rows, headers=headers, witdh=50, char = '*')
