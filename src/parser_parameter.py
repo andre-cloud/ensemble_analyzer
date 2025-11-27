@@ -95,7 +95,7 @@ def get_conf_parameters(
         H = H
         g_e = g - e
     else:
-        prev_energies = conf.energies.__getitem__(str(int(number) - 1), {})
+        prev_energies = conf.energies.__getitem__(int(number) - 1)
         g_e = prev_energies.G_E
 
         if not np.isnan(g_e):
