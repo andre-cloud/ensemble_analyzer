@@ -197,20 +197,20 @@ class ProtocolExecutor:
 
         CONFS = [i for i in conformers if i.active]
 
-        dE = np.array([i.energies[str(protocol_number)]["E"] for i in CONFS])
+        dE = np.array([i.energies.__getitem__(protocol_number).E for i in CONFS])
         dE_ZPVE = np.array(
             [
-                i.energies[str(protocol_number)]["E"] + i.energies[str(protocol_number)]["zpve"]
+                i.energies.__getitem__(protocol_number).E + i.energies.__getitem__(protocol_number).zpve
                 for i in CONFS
             ]
         )
         dH = np.array(
             [
-                i.energies[str(protocol_number)]["E"] + i.energies[str(protocol_number)]["H"]
+                i.energies.__getitem__(protocol_number).E + i.energies.__getitem__(protocol_number).H
                 for i in CONFS
             ]
         )
-        dG = np.array([i.energies[str(protocol_number)]["G"] for i in CONFS])
+        dG = np.array([i.energies.__getitem__(protocol_number).G for i in CONFS])
 
         # Boltzmann populations
         _, dE_boltz = self.pruning_manager._boltzmann_distribution(dE, T)
