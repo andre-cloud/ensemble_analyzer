@@ -59,14 +59,7 @@ def main():
     config = CalculationConfig.from_args(args, start_from)
     
     # 6. Log application start
-    log.application_input_received({
-        "temperature": config.temperature,
-        "cpu": config.cpu,
-        "conformers": len(conformers),
-        "len_protocols": len(protocols),
-        "restart": args.restart, 
-        "protocols": protocols
-    })
+    log.application_input_received(config=config._args_to_dict())
     
     # 7. Create and run orchestrator
     orchestrator = CalculationOrchestrator(

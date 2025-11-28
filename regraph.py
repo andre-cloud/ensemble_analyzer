@@ -14,6 +14,7 @@ from src.title import title
 from typing import List
 
 import argparse
+from datetime import datetime
 
 parser = argparse.ArgumentParser()
 
@@ -35,6 +36,10 @@ config_mgr = CalculationConfig().load() # settings
 
 ensemble = checkpoint_mgr.load() # ensemble
 protocol = protocol_mgr.load() # protocol
+
+log.application_input_received(config=config_mgr._args_to_dict())
+
+start = datetime.now()
 
 def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:int) -> None: 
 
@@ -68,3 +73,5 @@ for i in args.idx:
 
 plot_comparative_graphs(log, args.idx, show=False, nm=args.no_nm, show_ref_weight=args.weight)
 
+
+log.application_correct_end(total_conformers=len([c for c in ensemble if c.active]), total_time=datetime.now()-start)
