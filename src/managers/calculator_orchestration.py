@@ -6,7 +6,7 @@ import datetime
 from dataclasses import dataclass
 
 from src.conformer.conformer import Conformer
-from src.protocol import Protocol
+from src.protocol.protocol import Protocol
 from src.ioFile import save_snapshot
 from src.graph import plot_comparative_graphs
 from src.clustering import perform_PCA
@@ -105,7 +105,7 @@ class CalculationOrchestrator:
         total_seconds = 0
         for conf in self.conformers:
             for protocol_num in conf.energies:
-                total_seconds += conf.energies[protocol_num]["time"]
+                total_seconds += conf.energies.__getitem__(protocol_num).time
         
         total_time = datetime.timedelta(seconds=total_seconds)
         final_count = len([c for c in self.conformers if c.active])

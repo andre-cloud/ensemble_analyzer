@@ -4,7 +4,7 @@ import os, re
 import shutil
 
 
-from src.protocol import Protocol
+from src.protocol.protocol import Protocol
 
 
 def _parse_xyz_str(fl: str, raw: bool =False):

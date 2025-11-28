@@ -2,7 +2,7 @@
 
 from src.launch import restart
 from src.logger.create_log import create_logger
-from src.protocol import Protocol
+from src.protocol.protocol import Protocol
 from src.graph import main_spectra, plot_comparative_graphs
 from src.pruning import calculate_rel_energies
 

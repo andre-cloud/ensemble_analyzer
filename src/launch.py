@@ -1,20 +1,18 @@
 from pathlib import Path
-import json
-import os
 from typing import Tuple, List
 
-from src.protocol import Protocol
+from src.protocol.protocol import Protocol
 from src.logger.create_log import create_logger
 from src.logger.logger import Logger
 
 from src.parser_arguments import parser_arguments
-from src.protocol import load_protocol
+from src.protocol.protocol import load_protocol
 from src.ioFile import read_ensemble
 from src.title import title
 
 from src.constants import DEBUG
 from src.conformer.conformer import Conformer
-from src.protocol import Protocol
+from src.protocol.protocol import Protocol
 
 from src.managers.checkpoint_manager import CheckpointManager
 from src.managers.protocol_manager import ProtocolManager
@@ -30,27 +28,6 @@ def main():
     
     # 1. Parse Arguments
     args = parser_arguments()
-    
-    # # Load or create settings
-    # if os.path.exists("settings.json"):
-    #     settings = json.load(open("settings.json"))
-    # else:
-    #     settings = {
-    #         "output": args.output,
-    #         "cpu": args.cpu,
-    #         "temperature": args.temperature,
-    #         "definition": args.definition,
-    #         "fwhm_vibro": args.fwhm_vibro,
-    #         "fwhm_electro": args.fwhm_electro,
-    #         "shift_vibro": args.shift_vibro,
-    #         "shift_electro": args.shift_electro,
-    #         "interested_vibro": args.interest_vibro ,
-    #         "interested_electro": args.interest_electro ,
-    #         "invert": args.invert,
-    #         "include_H": args.exclude_H,
-    #         "disable_color": args.disable_color
-    #     }
-    #     json.dump(settings, open("settings.json", "w"), indent=4)
     
     # 2. Setup output filename
     output = args.output

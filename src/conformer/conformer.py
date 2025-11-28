@@ -134,7 +134,7 @@ class Conformer:
     # ===
     # Geometry helpers
     # ===
-    def distance_matrix(self, include_H: bool, geom=None):
+    def distance_matrix(self, include_H: bool, geom=None) -> np.ndarray:
         geo = geom if geom is not None else self.last_geometry
 
         if include_H:
@@ -150,7 +150,7 @@ class Conformer:
     # === 
 
     @staticmethod
-    def load_raw(data):
+    def load_raw(data) -> 'Conformer':
         c = Conformer(
             number=data["number"],
             geom=data["last_geometry"],

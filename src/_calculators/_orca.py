@@ -75,6 +75,7 @@ class OrcaCalc(BaseCalc):
                 text += " {C " + str(i) + " C}"
             text += "end end\n"
             calc.parameters["orcasimpleinput"] += text
+            
         if self.protocol.freq:
             calc.parameters["orcasimpleinput"] += " freq"
             if self.VERSION > 5:

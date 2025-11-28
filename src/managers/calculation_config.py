@@ -24,7 +24,6 @@ class CalculationConfig:
     
     # Max retries (from constants, but configurable)
     max_retries: int = 5
-    min_retention_rate: float = 0.3
         
     def __post_init__(self):
         if self.fwhm is None:
@@ -86,7 +85,6 @@ class CalculationConfig:
             },
             invert=settings.get("invert", args.invert),
             max_retries=settings.get("max_retries", 5),
-            min_retention_rate=settings.get("min_retention_rate", 0.3)
         )
     
     @staticmethod
@@ -113,7 +111,6 @@ class CalculationConfig:
             "invert": args.invert,
             "include_H": not args.exclude_H,
             "max_retries": 5,
-            "min_retention_rate": 0.3
         }
     
     def to_dict(self) -> dict:
@@ -133,7 +130,6 @@ class CalculationConfig:
             "include_H": d["include_H"],
             "invert": d["invert"],
             "max_retries": d["max_retries"],
-            "min_retention_rate": d["min_retention_rate"],
         }
         
         # Flatten fwhm
@@ -203,7 +199,6 @@ class CalculationConfig:
             },
             invert=settings.get("invert", False),
             max_retries=settings.get("max_retries", 5),
-            min_retention_rate=settings.get("min_retention_rate", 0.3)
         )
     
     def validate(self) -> None:
@@ -221,11 +216,6 @@ class CalculationConfig:
         
         if self.definition < 1:
             raise ValueError(f"Definition must be ≥ 1, got {self.definition}")
-        
-        if not 0 <= self.min_retention_rate <= 1:
-            raise ValueError(
-                f"Retention rate must be in [0, 1], got {self.min_retention_rate}"
-            )
         
         if self.max_retries < 1:
             raise ValueError(f"Max retries must be ≥ 1, got {self.max_retries}")

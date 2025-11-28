@@ -64,7 +64,7 @@ def get_conf_parameters(
         if p.skip_opt_fail: 
             if not parser.opt_done():
                 conf.active = False
-                # TODO: avvisare l'utente.
+                log.warning(f'{log.WARNING} Optimization did not correctly converge (maybe increase number of iteration). Conf {conf.number} will be deactivated')
                 return True
             
         # TODO: LOGICA PER UN'OTTIMIZZAZIONE NON COMPLETATA

@@ -7,7 +7,7 @@ import os
 import numpy as np
 
 from src.conformer.conformer import Conformer
-from src.protocol import Protocol
+from src.protocol.protocol import Protocol
 from src.logger.logger import Logger
 from src.ioFile import save_snapshot
 from src.graph import main_spectra
@@ -96,13 +96,10 @@ class ProtocolExecutor:
             f"{datetime.timedelta(seconds=protocol_elapsed)}"
         )
         
-        
-        # Pruning
-        initial_active = len([c for c in conformers if c.active])
 
         self.generate_report("Summary Before Pruning", conformers=conformers, protocol=protocol)
         
-        self.logger.pruning_start(protocol.number, initial_active)
+        self.logger.pruning_start(protocol.number, active_count)
         
         self.pruning_manager.prune_ensemble(conformers=conformers, protocol=protocol)
         self.pruning_manager.calculate_relative_energies(conformers=conformers, temperature=self.config.temperature, protocol=protocol)
@@ -112,9 +109,9 @@ class ProtocolExecutor:
         
         self.logger.pruning_summary(
             protocol_number=protocol.number,
-            initial_count=initial_active,
+            initial_count=active_count,
             final_count=final_active,
-            deactivated_count=initial_active - final_active
+            deactivated_count=active_count - final_active
         )
         
         # Save snapshot
@@ -156,11 +153,11 @@ class ProtocolExecutor:
         self.logger.protocol_end(
             number=protocol.number,
             active_conformers=final_active,
-            deactivated=initial_active - final_active
+            deactivated=active_count - final_active
         )
 
         # If retention rate is lower than 30% and TODO: setting per disabilitarlo
-        retention_rate = final_active / initial_active if initial_active > 0 else 1.0
+        retention_rate = final_active / active_count if active_count > 0 else 1.0
 
         if retention_rate < MIN_RETENTION_RATE:
             self.logger.critical(

@@ -10,7 +10,7 @@ from datetime import datetime
 from src._spectral.graph_default import GraphDefault
 
 from src.conformer.conformer import Conformer
-from src.protocol import Protocol
+from src.protocol.protocol import Protocol
 
 from src.constants import *
 

@@ -18,7 +18,7 @@ try:
     from src._spectral.comp_electronic import ComputedElectronic
     from src._spectral.comp_vibronic import ComputedVibronic
     from src._spectral.compare import ComparedGraph
-    from src.protocol import Protocol
+    from src.protocol.protocol import Protocol
     from src.conformer.conformer import Conformer
 except ModuleNotFoundError: 
     from constants import *

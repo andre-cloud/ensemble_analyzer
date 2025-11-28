@@ -36,13 +36,7 @@ class Solvent:
             return "CPCM"
 
     def __repr__(self):  # pragma: no cover
-        if self.smd:
-            return f"SMD({self.solvent})"
-        elif self.solvent:
-            return f"CPCM({self.solvent})"
-        else:
-            return "CPCM"
-
+        return self.__str__()
 
 class Protocol:
     INTERNALS = {2:'B', 3:'A', 4:'D'}
@@ -85,6 +79,7 @@ class Protocol:
         self.thrB = thrB
         self.thrGMAX = thrGMAX
         # self.thrRMSD_enantio = thrRMSD_enantio
+        
         self.get_thrs(self.load_threshold())
         self.calculator = calculator
         self.constrains = constrains
