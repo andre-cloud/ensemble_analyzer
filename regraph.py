@@ -35,12 +35,14 @@ ensemble = checkpoint_mgr.load() # ensemble
 protocol = protocol_mgr.load() # protocol
 
 protocol_number = args.idx[-1]
-log.debug(f'{[conf.energies.__getitem__(protocol_number=protocol_number).E for conf in ensemble if conf.active]}')
+log.debug(f'E({protocol_number}): {[conf.energies.__getitem__(protocol_number=protocol_number).E for conf in ensemble if conf.active]}')
+log.debug(f'G({protocol_number}): {[conf.energies.__getitem__(protocol_number=protocol_number).G for conf in ensemble if conf.active]}')
 
 def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:int) -> None: 
 
     active: List[Conformer] = [conf for conf in confs if conf.active]
     energy = np.array([conf.get_energy(protocol_number=protocol_number) for conf in active])
+    log.debug(energy)
     rel_en = energy - np.min(energy)
 
     log.debug(rel_en)
