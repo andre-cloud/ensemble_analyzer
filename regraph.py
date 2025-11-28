@@ -26,7 +26,7 @@ args = parser.parse_args()
 def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:int) -> None: 
 
     active: List[Conformer] = [conf for conf in confs if conf.active]
-    e = [conf.get_energy(protocol_number=protocol_number) for conf in active]
+    e = np.array([conf.get_energy(protocol_number=protocol_number) for conf in active])
     rel_en = e - e.min()
 
     exponent = -rel_en * CAL_TO_J * 1000 * EH_TO_KCAL /(R*temperature)
