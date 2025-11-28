@@ -86,8 +86,8 @@ class PruningManager:
         rel_energies, populations = self._boltzmann_distribution(energies, temperature)
 
         for idx, conf in enumerate(active):
-            conf._last_energy["Erel"] = float(rel_energies[idx])
-            conf._last_energy["Pop"] = float(populations[idx] * 100)
+            conf.energies.last().Erel = float(rel_energies[idx])
+            conf.energies.last().Pop = float(populations[idx] * 100)
         
 
     # ===
