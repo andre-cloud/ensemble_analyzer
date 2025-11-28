@@ -48,7 +48,6 @@ class BaseGraph:
                 continue           
 
             p = conf.energies.__getitem__(protocol_number=population_from).Pop
-            self.log.debug(f'Population = {p}')
             x = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).X)
             y = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).Y) * p
 
