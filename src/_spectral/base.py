@@ -8,7 +8,6 @@ from numba import njit, prange
 from datetime import datetime
 
 from src._spectral.graph_default import GraphDefault
-from src.conformer.conformer import Conformer
 
 from src.conformer.conformer import Conformer
 from src.protocol import Protocol
