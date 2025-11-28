@@ -92,10 +92,11 @@ class CalculationExecutor:
         
         if success:
             # Log success
+            data = conf.energies.__getitem__(protocol.number)
             self.logger.calculation_success(conformer_id=conf.number,
                 protocol_number=protocol.number,
-                energy=conf.energies[str(protocol.number)]["E"],
-                frequencies = conf.energies[str(protocol.number)]["Freq"],
+                energy=data.E,
+                frequencies = data.Freq,
                 elapsed_time=elapsed)
         
         return success
