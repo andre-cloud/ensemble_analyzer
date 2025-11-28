@@ -162,7 +162,7 @@ class Logger(logging.Logger):
 
     def spectra_start(self, protocol_number:int):
         self._separator("Spectra convolution", width=40, char="-")
-        self.debug(f"Starting pruning for protocol {protocol_number}")
+        self.debug(f"Starting spectra convolution for protocol {protocol_number}")
         self._start_timer(f"spectra_{protocol_number}")
 
     def spectra_end(self, protocol_number:int):
@@ -179,7 +179,7 @@ class Logger(logging.Logger):
         return f"{i}"
 
     def spectra_result(self, graph_type: str, parameters: Dict, msg:str): 
-        res = [f"{k}: {self.converter_str(v)}" for k, v in parameters.item()]
+        res = [f"{k}: {self.converter_str(v)}" for k, v in parameters.items()]
         self._separator(f"{graph_type} Spectra convolution", char="-", width=45)
         self.info(msg)
         self.info("\t".join(res))
