@@ -23,20 +23,6 @@ parser.add_argument('-no-nm', '--no-nm', help='Do not save the nm graphs', actio
 parser.add_argument('-w', '--weight', help='Show Weighting function', action='store_true')
 args = parser.parse_args()
 
-def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:int) -> None: 
-
-    active: List[Conformer] = [conf for conf in confs if conf.active]
-    e = np.array([conf.get_energy(protocol_number=protocol_number) for conf in active])
-    rel_en = e - e.min()
-
-    exponent = np.exp(-rel_en * CAL_TO_J * 1000 * EH_TO_KCAL /(R*temperature))
-    populations = exponent/exponent.sum()
-    for idx, conf in enumerate(active):
-        conf.energies.__getitem__(protocol_number=protocol_number).Pop = populations[idx] * 100
-        conf.energies.__getitem__(protocol_number=protocol_number).Erel = rel_en[idx] * EH_TO_KCAL
-
-    return None
-
 
 fname_out = 'regraph.log'
 log = create_logger(fname_out, logger_name="enan_regraphy", debug=True, ) # logger
@@ -47,6 +33,23 @@ config_mgr = CalculationConfig().load() # settings
 
 ensemble = checkpoint_mgr.load() # ensemble
 protocol = protocol_mgr.load() # protocol
+
+
+def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:int) -> None: 
+
+    active: List[Conformer] = [conf for conf in confs if conf.active]
+    e = np.array([conf.get_energy(protocol_number=protocol_number) for conf in active])
+    rel_en = e - e.min()
+
+    log.debug(rel_en)
+
+    exponent = np.exp(-rel_en * CAL_TO_J * 1000 * EH_TO_KCAL /(R*temperature))
+    populations = exponent/exponent.sum()
+    for idx, conf in enumerate(active):
+        conf.energies.__getitem__(protocol_number=protocol_number).Pop = populations[idx] * 100
+        conf.energies.__getitem__(protocol_number=protocol_number).Erel = rel_en[idx] * EH_TO_KCAL
+
+    return None
 
 if args.read_boltz: 
     assert str(args.read_boltz) in [p.number for p in protocol], f"{args.read_boltz} is not a specified step in the protocol file"
