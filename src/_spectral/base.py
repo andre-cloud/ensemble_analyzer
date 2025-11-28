@@ -11,6 +11,7 @@ from src._spectral.graph_default import GraphDefault
 
 from src._conformer.conformer import Conformer
 from src._protocol.protocol import Protocol
+from src._logger.logger import Logger
 
 from src.constants import *
 
@@ -20,7 +21,7 @@ class BaseGraph:
     confs: List[Conformer]  
     protocol : Protocol
     graph_type: Literal['IR', 'VCD', 'UV', 'ECD']
-    log: logging  
+    log: Logger  
 
     invert : Optional[bool] = False
     fwhm_user: Optional[Union[List[float], float]] = None
@@ -121,14 +122,12 @@ class BaseGraph:
 
         # after retrieving data, ensure we actually have peaks
         if self.energies.size == 0 or self.energies[self.energies!=0].size == 0:
-            self.log.debug(f'{"-"*30}\nNo calculation of {self.graph_type} graphs. Skipping (no peaks found)\n{"-"*30}')
+            self.log.spectra_skip(self.graph_type)
             return
 
         if self.ref: 
             self.autoconvolution()
-        else: 
-            self.log.info(f'{"-"*30}\nAuto-convolution not possible, using default/user input for convolution.\n{"-"*30}')
-
+        else:
             self.SHIFT = self.defaults.shift
             self.FWHM = self.defaults.fwhm
 
@@ -136,8 +135,7 @@ class BaseGraph:
 
             self.Y = self.normalize(Y)
 
-            self.log.info(f'{"-"*30}\n{self.graph_type} Reference Spectra convolution NOT found -> Using default parameters:\nShift: {self.SHIFT:.2f}\tFWHM: {self.FWHM:.2f}\n{"-"*30}')
-
+            self.log.spectra_result(graph_type=self.graph_type, parameters={"Shift": self.SHIFT, "FWHM": self.FWHM}, msg=f"Using default parameters, Reference {self.graph_type} Spectra not found")
 
         if self.Y[~np.isnan(self.Y)].size > 0:
             self.log.debug(f'Saving {self.graph_type} spectra convoluted')
@@ -146,7 +144,6 @@ class BaseGraph:
 
     def autoconvolution(self) -> None:
         
-        self.log.debug('Start to autoconvolute')
         ref_norm = self.ref.Y
 
         def callback_optimizer(params: tuple) -> float:
@@ -158,7 +155,7 @@ class BaseGraph:
             e2 = datetime.now()
             rmsd = self.diversity_function(Y_conv, ref_norm)
             e3 = datetime.now()
-            self.log.debug(f'{shift=:.2f}\t{fwhm=:.2f}\t{rmsd=:.2f}\t{e1-st}\t{e2-e1}\t{e2-st}\t{e3-st}')
+            # self.log.debug(f'{shift=:.2f}\t{fwhm=:.2f}\t{rmsd=:.2f}\t{e1-st}\t{e2-e1}\t{e2-st}\t{e3-st}')
             return rmsd
         
         initial_guess = [
@@ -190,8 +187,9 @@ class BaseGraph:
         diversity_unw = self.diversity_function(self.Y[self.ref.x_min_idx:self.ref.x_max_idx], ref_norm[self.ref.x_min_idx:self.ref.x_max_idx], w=np.ones_like(self.Y[self.ref.x_min_idx:self.ref.x_max_idx]))
         similarity_unw = ((1 if self.graph_type not in CHIRALS else 2)-diversity_unw)/(1 if self.graph_type not in CHIRALS else 2)*100
 
-
-        self.log.info(f'{"-"*30}\n{self.graph_type} {t}\nShift: {self.SHIFT:.2f}\tFWHM: {self.FWHM:.2f}\tSimilarity: {similarity:.2f}%\tSimilarity Unweighted:{similarity_unw:.2f}%\nTime: {end-st}\tCycles: {result.nfev}\n{"-"*30}')
+        self.log.spectra_result(graph_type=self.graph_type, parameters=
+                                {"Shift": self.SHIFT, "FWHM": self.FWHM, "Similarity": similarity, "Similarity Unweighted": similarity_unw, "Time": (end-st), "Cycle": f"{result.nfev}"},
+                                msg=t)
 
 
 

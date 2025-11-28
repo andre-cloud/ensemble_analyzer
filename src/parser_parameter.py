@@ -94,7 +94,6 @@ def get_conf_parameters(
         g_e = g - e
     else:
         prev_energies = conf.energies.__getitem__(int(number) - 1)
-        log.debug(prev_energies.as_dict())
         g_e = prev_energies.G_E
 
         if not np.isnan(g_e):

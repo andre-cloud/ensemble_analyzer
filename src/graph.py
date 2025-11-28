@@ -1,33 +1,14 @@
-import numpy as np
-import os, sys
-import pickle as pl
 
-import matplotlib.pyplot as plt
-from scipy.optimize import minimize
 from typing import Optional, List, Union
-import logging
 
-logging.getLogger("matplotlib").disabled = False
-logging.getLogger("numba").disabled = False
-
-logging.getLogger("numba").setLevel(logging.WARNING)
-
-try:
-    from src.constants import *
-    from src._spectral.experimental import ExperimentalGraph
-    from src._spectral.comp_electronic import ComputedElectronic
-    from src._spectral.comp_vibronic import ComputedVibronic
-    from src._spectral.compare import ComparedGraph
-    from src._protocol.protocol import Protocol
-    from src._conformer.conformer import Conformer
-except ModuleNotFoundError: 
-    from constants import *
-    from _spectral.experimental import ExperimentalGraph
-    from _spectral.comp_electronic import ComputedElectronic
-    from _spectral.comp_vibronic import ComputedVibronic
-    from _spectral.compare import ComparedGraph
-    from _protocol import Protocol
-    from _conformer import Conformer
+from src.constants import *
+from src._spectral.experimental import ExperimentalGraph
+from src._spectral.comp_electronic import ComputedElectronic
+from src._spectral.comp_vibronic import ComputedVibronic
+from src._spectral.compare import ComparedGraph
+from src._protocol.protocol import Protocol
+from src._conformer.conformer import Conformer
+from src._logger.logger import Logger
 
 
 def eV_to_nm(eV):
@@ -43,8 +24,9 @@ class_ = {
 
 
 
-def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: logging.Logger, invert: bool, interested_area: List[float], shift: Optional[Union[List[float],float,None]] = None, fwhm: Optional[Union[List[float],float,None]] = None, read_pop: Optional[str] = None, definition: Optional[int] = 4):
+def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, invert: bool, interested_area: List[float], shift: Optional[Union[List[float],float,None]] = None, fwhm: Optional[Union[List[float],float,None]] = None, read_pop: Optional[str] = None, definition: Optional[int] = 4):
     
+    log.spectra_start(protocol_number=protocol.number)
     for graph_type in list(class_.keys()):
         log.info("\n")
         ref = None
@@ -68,6 +50,8 @@ def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: logging.Log
         )
 
         graph.compute_spectrum()
+
+    log.spectra_end(protocol_number=protocol.number)
 
 def plot_comparative_graphs(log, idxs=None, show=False, nm=True, show_ref_weight=False):
     for graph_type in GRAPHS:

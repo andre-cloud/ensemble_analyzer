@@ -46,7 +46,7 @@ class ComparedGraph:
             
             if not self._is_protocol_included(proto):
                 if self.log:
-                    self.log.info(f'Protocol {proto} skipped')
+                    self.log.debug(f'Protocol {proto} skipped')
                 continue
             
             X, Y = np.loadtxt(filepath, unpack=True, dtype=np.float64)
@@ -88,7 +88,7 @@ class ComparedGraph:
             return X, Y, bounders, weighted
         except FileNotFoundError as e:
             if self.log:
-                self.log.error(f"File not found: {e}")
+                self.log.error(f"{self.log.FAIL} File not found: {e}")
             return None, None, None, None
 
     def plot(self, save: bool = True, show: bool = False, show_ref_weight: bool = False) -> None:

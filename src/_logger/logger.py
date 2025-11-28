@@ -96,8 +96,7 @@ class Logger(logging.Logger):
         self.info(text)
     
     def calculation_failure(self, conformer_id: int, error: str):
-        status = "FAILED"
-        self.error(f"    {self.FAIL} CONF {conformer_id:03d} [{status}] {self.SPLIT} Error: \n{error[:60]}")
+        self.error(f"    {self.FAIL} CONF {conformer_id:03d} [FAILED] {self.SPLIT} Error: \n{error[:60]}")
 
     def missing_previous_thermo(self, conformer_id:int):
         self.warning(f'{self.WARNING} No previous thermochemical data found for conformer {conformer_id}: setting G, H, S, ZPVE to NaN.')
@@ -156,6 +155,36 @@ class Logger(logging.Logger):
     def checkpoint_loaded(self, conformer_count: int, protocol_number: int):
         self.info(f"Checkpoint loaded: {conformer_count} conformers")
         self.info(f"Resuming from protocol {protocol_number}")
+
+    # ===
+    # Spectra Events
+    # ===
+
+    def spectra_start(self, protocol_number:int):
+        self._separator("Spectra convolution", width=40, char="-")
+        self.debug(f"Starting pruning for protocol {protocol_number}")
+        self._start_timer(f"spectra_{protocol_number}")
+
+    def spectra_end(self, protocol_number:int):
+        elapsed = self._stop_timer(f"spectra_{protocol_number}")
+        self.info(f"\n{self.TICK} Sprectra convolution completed in {elapsed:.4f}s")
+        self.info("")
+
+    def spectra_skip(self, graph_type: str): 
+        self.warning(f'{self.WARNING} No calculation of {graph_type} graphs. Skipping')
+
+    def converter_str(self, i): 
+        if isinstance(i, float): 
+            return f"{i:.2f}"
+        return f"{i}"
+
+    def spectra_result(self, graph_type: str, parameters: Dict, msg:str): 
+        res = [f"{k}: {self.converter_str(v)}" for k, v in parameters.item()]
+        self._separator(f"{graph_type} Spectra convolution", char="-", width=45)
+        self.info(msg)
+        self.info("\t".join(res))
+        self.info("")
+
 
     # ===
     # Error Handling
