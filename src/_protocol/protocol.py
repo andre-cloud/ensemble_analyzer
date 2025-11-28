@@ -106,7 +106,7 @@ class Protocol:
 
     @property
     def calculation_level(self):
-        return LEVEL_DEFINITION[self.number_level].upper() + (f" -> {self.comment}" if self.comment else "")
+        return LEVEL_DEFINITION[self.number_level].upper()
 
     @property
     def thr(self):
