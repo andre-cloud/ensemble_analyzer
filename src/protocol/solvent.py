@@ -1,15 +1,14 @@
 
+from dataclasses import dataclass
 
-
-
+@dataclass
 class Solvent:
     """
     Solvent class
     """
 
-    def __init__(self, solv: dict):
-        self.solvent = solv["solvent"]
-        self.smd = solv["smd"]
+    solvent : str
+    smd     : bool  = False 
 
     def __str__(self):  
         if self.smd:
