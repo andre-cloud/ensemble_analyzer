@@ -10,7 +10,7 @@ from src._managers.calculation_config import CalculationConfig
 from src._conformer.conformer import Conformer
 
 from src.constants import *
-
+from src.title import title
 from typing import List
 
 import argparse
@@ -26,6 +26,7 @@ args = parser.parse_args()
 
 fname_out = 'regraph.log'
 log = create_logger(fname_out, logger_name="enan_regraphy", debug=True, ) # logger
+log.info(title)
 
 checkpoint_mgr = CheckpointManager()
 protocol_mgr = ProtocolManager()
