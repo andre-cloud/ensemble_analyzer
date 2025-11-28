@@ -28,81 +28,60 @@ def main():
     Main entry point
     """
     
+    # 1. Parse Arguments
     args = parser_arguments()
     
-    # Load or create settings
-    if os.path.exists("settings.json"):
-        settings = json.load(open("settings.json"))
-    else:
-        settings = {
-            "output": args.output,
-            "cpu": args.cpu,
-            "temperature": args.temperature,
-            "definition": args.definition,
-            "fwhm_vibro": args.fwhm_vibro,
-            "fwhm_electro": args.fwhm_electro,
-            "shift_vibro": args.shift_vibro,
-            "shift_electro": args.shift_electro,
-            "interested_vibro": args.interest_vibro ,
-            "interested_electro": args.interest_electro ,
-            "invert": args.invert,
-            "include_H": args.exclude_H,
-            "disable_color": args.disable_color
-        }
-        json.dump(settings, open("settings.json", "w"), indent=4)
+    # # Load or create settings
+    # if os.path.exists("settings.json"):
+    #     settings = json.load(open("settings.json"))
+    # else:
+    #     settings = {
+    #         "output": args.output,
+    #         "cpu": args.cpu,
+    #         "temperature": args.temperature,
+    #         "definition": args.definition,
+    #         "fwhm_vibro": args.fwhm_vibro,
+    #         "fwhm_electro": args.fwhm_electro,
+    #         "shift_vibro": args.shift_vibro,
+    #         "shift_electro": args.shift_electro,
+    #         "interested_vibro": args.interest_vibro ,
+    #         "interested_electro": args.interest_electro ,
+    #         "invert": args.invert,
+    #         "include_H": args.exclude_H,
+    #         "disable_color": args.disable_color
+    #     }
+    #     json.dump(settings, open("settings.json", "w"), indent=4)
     
-    # Setup output file
-    output = (
-        settings.get("output", args.output)
-        if not args.restart
-        else ".".join(settings.get("output", args.output).split(".")[:-1])
-        + "_restart.out"
-    )
+    # 2. Setup output filename
+    output = args.output
+    if args.restart:
+        base_name = ".".join(output.split(".")[:-1])
+        output = f"{base_name}_restart.out"
     
-    # Initialize structured logging
-    log = create_logger(output_file=Path(output),debug=DEBUG, disable_color=settings.get('disable_color', False))
-    
+    # 3. Initialize logging
+    log = create_logger(output_file=Path(output),debug=DEBUG, disable_color=False if args.disable_color else None)
     log.info(title)
     
-    # Load or initialize data
+    # 4. Load or initialize data
     checkpoint_mgr = CheckpointManager()
     protocol_mgr = ProtocolManager()
     
     if args.restart:
-        conformers, protocols, start_from = restart()
+        conformers, protocols, start_from = restart(checkpoint_mgr=checkpoint_mgr, protocol_mgr=protocol_mgr, logger=log)
     else:
-        # Load protocols
+        # 4.1 Load protocols
         protocol_data = load_protocol(args.protocol)
         protocols = [Protocol(number=idx, **protocol_data[idx]) for idx in protocol_data]
         protocol_mgr.save(protocols)
         
-        # Load ensemble
+        # 4.2 Load ensemble
         conformers = read_ensemble(args.ensemble, log)
         start_from = 0
     
-    # Create configuration
-    config = CalculationConfig(
-        cpu=settings.get("cpu", args.cpu),
-        temperature=settings.get("temperature", args.temperature),
-        start_from_protocol=start_from,
-        include_H=settings.get("include_H", True),
-        definition=settings.get("definition", 4),
-        fwhm={
-            'vibro': settings.get("fwhm_vibro"),
-            'electro': settings.get("fwhm_electro")
-        },
-        shift={
-            'vibro': settings.get("shift_vibro"),
-            'electro': settings.get("shift_electro")
-        },
-        interested={
-            'vibro': settings.get("interested_vibro"),
-            'electro': settings.get("interested_electro")
-        },
-        invert=settings.get("invert", False)
-    )
+    # 5. Create configuration
+    config = CalculationConfig.from_args(args, start_from)
     
-    # Log application start
+    # 6. Log application start
     log.application_input_received({
         "temperature": config.temperature,
         "cpu": config.cpu,
@@ -112,7 +91,7 @@ def main():
         "protocols": protocols
     })
     
-    # Create and run orchestrator
+    # 7. Create and run orchestrator
     orchestrator = CalculationOrchestrator(
         conformers=conformers,
         protocols=protocols,
@@ -120,17 +99,23 @@ def main():
         logger=log
     )
     
+    # 8. Run EnAn
     orchestrator.run()
 
-def restart(checkpoint_mgr: CheckpointManager, protocol_mgr: ProtocolManager, log: Logger) -> Tuple[List[Conformer], List[Protocol], int]: 
-        conformers = checkpoint_mgr.load()
-        protocols = protocol_mgr.load()
-        start_from = protocol_mgr.load_last_completed()
-        
-        log.checkpoint_loaded(
-            conformer_count=len(conformers),
-            protocol_number=start_from
-        )
+def restart(
+    checkpoint_mgr: CheckpointManager,
+    protocol_mgr: ProtocolManager,
+    logger: Logger
+    ) -> Tuple[List[Conformer], List[Protocol], int]:
 
-        return conformers, protocols, start_from
+    conformers = checkpoint_mgr.load()
+    protocols = protocol_mgr.load()
+    start_from = protocol_mgr.load_last_completed()
+    
+    logger.checkpoint_loaded(
+        conformer_count=len(conformers),
+        protocol_number=start_from
+    )
+    
+    return conformers, protocols, start_from
 

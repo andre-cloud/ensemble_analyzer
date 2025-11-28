@@ -15,7 +15,7 @@ from src.logger.logger import Logger
 
 from src.managers.checkpoint_manager import CheckpointManager
 from src.managers.protocol_manager import ProtocolManager
-from src.managers.protocol_excecutor import ProtocolExecutor
+from src.managers.protocol_executor import ProtocolExecutor
 from src.managers.calculation_config import CalculationConfig
 
 
