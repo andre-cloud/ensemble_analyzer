@@ -50,8 +50,6 @@ def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:i
 
     return None
 
-
-print(ensemble)
 if args.read_boltz: 
     assert str(args.read_boltz) in [p.number for p in protocol], f"{args.read_boltz} is not a specified step in the protocol file"
     for conf in ensemble:

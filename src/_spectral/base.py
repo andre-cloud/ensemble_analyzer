@@ -52,9 +52,6 @@ class BaseGraph:
             x = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).X)
             y = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).Y) * p
 
-            self.log.debug(x)
-            self.log.debug(y)
-
             if x.size < 1:
                 continue
             if self.invert: 
@@ -85,8 +82,6 @@ class BaseGraph:
         np.savetxt(fname, data, delimiter=' ')
 
     def check_conf(self, conf: Conformer, protocol: Protocol) -> bool:
-        self.log.debug(f"{conf.active = }\t{conf.graphs_data.__contains__(protocol.number) = }\t{conf.graphs_data.__has_graph_type__(protocol.number, self.graph_type) = }")
-        self.log.debug(f"{conf.graphs_data.data[int(protocol.number)][self.graph_type] = }")
         if not conf.active: 
             return False
         if not conf.graphs_data.__contains__(protocol.number):
