@@ -34,6 +34,7 @@ config_mgr = CalculationConfig().load() # settings
 ensemble = checkpoint_mgr.load() # ensemble
 protocol = protocol_mgr.load() # protocol
 
+protocol_number = args.idx[-1]
 log.debug(f'{[conf.energies.__getitem__(protocol_number=protocol_number).E for conf in ensemble if conf.active]}')
 
 def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:int) -> None: 
