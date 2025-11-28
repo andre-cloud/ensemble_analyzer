@@ -27,7 +27,7 @@ class SpectralStore:
         self.data[int(protocol_number)][str(graph_type)] = record
 
     def __getitem__(self, protocol_number:int, graph_type: Union[int, str]) -> SpectralRecord:
-        return self.data[int(protocol_number)][int(graph_type)]
+        return self.data[int(protocol_number)][str(graph_type)]
 
     def __contains__(self, protocol_number:int) -> bool:
         return int(protocol_number) in self.data
