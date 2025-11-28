@@ -65,7 +65,7 @@ class EnergyStore:
     
     def get_energy(self) -> float: 
         data = self.last()
-        if ~np.isnan(data.G) or data.G is not None: 
+        if ~np.isnan(data.G): 
             return data.G
         return data.E
     
