@@ -59,7 +59,7 @@ def main():
         output = f"{base_name}_restart.out"
     
     # 3. Initialize logging
-    log = create_logger(output_file=Path(output),debug=DEBUG, disable_color=False if args.disable_color else None)
+    log = create_logger(output_file=Path(output),debug=DEBUG, disable_color=False if not args.disable_color else True)
     log.info(title)
     
     # 4. Load or initialize data

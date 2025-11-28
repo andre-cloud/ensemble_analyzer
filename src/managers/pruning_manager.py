@@ -69,7 +69,7 @@ class PruningManager:
         # Log results
         self._log_deactivations()
 
-    def calculate_relative_energies(self, conformers: List[Conformer], temperature: float) -> None: 
+    def calculate_relative_energies(self, conformers: List[Conformer], temperature: float, protocol: Protocol) -> None: 
         """Calculate relative energies and Boltzmann populations.
 
         Args:
@@ -81,7 +81,7 @@ class PruningManager:
         if len(active) == 0: 
             return
         
-        energies = np.array([c.get_energy for c in active])
+        energies = np.array([c.get_energy(protocol_number=protocol.number) for c in active])
         
         rel_energies, populations = self._boltzmann_distribution(energies, temperature)
 
