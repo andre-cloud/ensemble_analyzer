@@ -28,7 +28,6 @@ def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, inv
     
     log.spectra_start(protocol_number=protocol.number)
     for graph_type in list(class_.keys()):
-        log.info("\n")
         ref = None
         fname = f"{graph_type.lower()}_ref.dat"
         if os.path.exists(os.path.join(os.getcwd(), fname)):

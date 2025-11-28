@@ -183,7 +183,6 @@ class Logger(logging.Logger):
         self._separator(f"{graph_type} Spectra convolution", char="-", width=45)
         self.info(msg)
         self.info("\t".join(res))
-        self.info("")
 
 
     # ===
