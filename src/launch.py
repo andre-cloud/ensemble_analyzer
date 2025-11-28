@@ -61,7 +61,7 @@ def main():
     config = CalculationConfig.from_args(args, start_from)
     
     # 6. Log application start
-    log.application_input_received(config=config.create_log(protocol=len(protocols), confromers=len(conformers)))
+    log.application_input_received(config=config.create_log(protocols=protocols, confromers=len(conformers)))
     
     # 7. Create and run orchestrator
     orchestrator = CalculationOrchestrator(
