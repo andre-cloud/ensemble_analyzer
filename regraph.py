@@ -39,7 +39,7 @@ if args.read_boltz:
 for i in args.idx:
     prot_obj = protocol[i]
     log.spectra_start(protocol_number=i)
-    main_spectra(ensemble, prot_obj, log=log, invert=config_mgr.invert, shift=config_mgr.SHIFT, fwhm=config_mgr.FWHM, interested_area=config_mgr.INTERESTED_AREA)
+    main_spectra(ensemble, prot_obj, log=log, invert=config_mgr.invert, shift=config_mgr.shift, fwhm=config_mgr.fwhm, interested_area=config_mgr.interested)
 
 
 plot_comparative_graphs(log, args.idx, show=False, nm=args.no_nm, show_ref_weight=args.weight)

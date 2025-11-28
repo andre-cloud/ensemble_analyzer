@@ -54,7 +54,7 @@ class ComparedGraph:
             data[proto] = (X, Y)
 
         if self.log:
-            self.log.info(f"Loaded {len(data)} computed {self.graph_type} spectra. Skipping")
+            self.log.debug(f"Loaded {len(data)} computed {self.graph_type} spectra.")
         
         return data
     
