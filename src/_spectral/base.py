@@ -51,6 +51,8 @@ class BaseGraph:
             x = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).X)
             y = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).Y) * p
 
+            print(x)
+
             if x.size < 1:
                 continue
             if self.invert: 
