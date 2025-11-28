@@ -1,23 +1,23 @@
 from pathlib import Path
 from typing import Tuple, List
 
-from src.protocol.protocol import Protocol
-from src.logger.create_log import create_logger
-from src.logger.logger import Logger
+from src._protocol.protocol import Protocol
+from src._logger.create_log import create_logger
+from src._logger.logger import Logger
 
 from src.parser_arguments import parser_arguments
-from src.protocol.protocol import load_protocol
+from src._protocol.protocol import load_protocol
 from src.ensemble_io import read_ensemble
 from src.title import title
 
 from src.constants import DEBUG
-from src.conformer.conformer import Conformer
-from src.protocol.protocol import Protocol
+from src._conformer.conformer import Conformer
+from src._protocol.protocol import Protocol
 
-from src.managers.checkpoint_manager import CheckpointManager
-from src.managers.protocol_manager import ProtocolManager
-from src.managers.calculation_config import CalculationConfig
-from src.managers.calculator_orchestration import CalculationOrchestrator
+from src._managers.checkpoint_manager import CheckpointManager
+from src._managers.protocol_manager import ProtocolManager
+from src._managers.calculation_config import CalculationConfig
+from src._managers.calculator_orchestration import CalculationOrchestrator
 
 
 

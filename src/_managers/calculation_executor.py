@@ -1,8 +1,8 @@
-from src.managers.calculation_config import CalculationConfig
-from src.logger.logger import Logger
+from src._managers.calculation_config import CalculationConfig
+from src._logger.logger import Logger
 
-from src.conformer.conformer import Conformer
-from src.protocol.protocol import Protocol
+from src._conformer.conformer import Conformer
+from src._protocol.protocol import Protocol
 from src.io_utils import move_files
 from src.regex_parsing import regex_parsing
 from src.parser_parameter import get_conf_parameters

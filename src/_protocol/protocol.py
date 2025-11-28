@@ -3,10 +3,10 @@ from dataclasses import dataclass, field
 from typing import Union, Optional, List, Dict, Literal
 import json
 
-from src.conformer.conformer import Conformer
+from src._conformer.conformer import Conformer
 from src._calculators import CALCULATOR_REGISTRY
 
-from src.protocol.solvent import Solvent
+from src._protocol.solvent import Solvent
 
 from pathlib import Path
 

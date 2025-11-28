@@ -5,18 +5,18 @@ import datetime
 
 from dataclasses import dataclass
 
-from src.conformer.conformer import Conformer
-from src.protocol.protocol import Protocol
+from src._conformer.conformer import Conformer
+from src._protocol.protocol import Protocol
 from src.ensemble_io import save_snapshot
 from src.graph import plot_comparative_graphs
 from src.clustering import perform_PCA
 
-from src.logger.logger import Logger
+from src._logger.logger import Logger
 
-from src.managers.checkpoint_manager import CheckpointManager
-from src.managers.protocol_manager import ProtocolManager
-from src.managers.protocol_executor import ProtocolExecutor
-from src.managers.calculation_config import CalculationConfig
+from src._managers.checkpoint_manager import CheckpointManager
+from src._managers.protocol_manager import ProtocolManager
+from src._managers.protocol_executor import ProtocolExecutor
+from src._managers.calculation_config import CalculationConfig
 
 
 

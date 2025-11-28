@@ -3,8 +3,8 @@ import os, re
 import numpy as np
 from typing import List, Tuple, Optional
 
-from src.conformer.conformer import Conformer
-from src.logger.logger import Logger
+from src._conformer.conformer import Conformer
+from src._logger.logger import Logger
 
 
 def _parse_xyz_str(fl: List[str], raw: bool =False) -> Tuple[np.ndarray, np.ndarray, Optional[float]]:

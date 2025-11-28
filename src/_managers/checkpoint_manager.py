@@ -3,8 +3,8 @@ from typing import List
 from pathlib import Path
 import json
 
-from src.conformer.conformer import Conformer
-from src.logger.logger import Logger
+from src._conformer.conformer import Conformer
+from src._logger.logger import Logger
 from src.io_utils import SerialiseEncoder
 
 class CheckpointManager:

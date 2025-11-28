@@ -6,19 +6,19 @@ import os
 
 import numpy as np
 
-from src.conformer.conformer import Conformer
-from src.protocol.protocol import Protocol
-from src.logger.logger import Logger
+from src._conformer.conformer import Conformer
+from src._protocol.protocol import Protocol
+from src._logger.logger import Logger
 from src.ensemble_io import save_snapshot
 from src.graph import main_spectra
 from src.clustering import perform_PCA, get_ensemble
 
-from src.managers.calculation_config import CalculationConfig
-from src.managers.checkpoint_manager import CheckpointManager
-from src.managers.calculation_executor import CalculationExecutor
+from src._managers.calculation_config import CalculationConfig
+from src._managers.checkpoint_manager import CheckpointManager
+from src._managers.calculation_executor import CalculationExecutor
 
 # from src.pruning import calculate_rel_energies, check_ensemble, boltzmann
-from src.managers.pruning_manager import PruningManager
+from src._managers.pruning_manager import PruningManager
 
 from src.constants import DEBUG, MIN_RETENTION_RATE
 
@@ -75,10 +75,10 @@ class ProtocolExecutor:
         protocol_start_time = time.perf_counter()
         
         # Pre-pruning PCA (if DEBUG)
-        if DEBUG and protocol.cluster:
+        if DEBUG or protocol.cluster:
             perform_PCA(
                 confs=[c for c in conformers if c.active],
-                ncluster=protocol.cluster if isinstance(protocol.cluster, int) else None,
+                ncluster=int(protocol.cluster) if (isinstance(protocol.cluster, (int, float)) and protocol.cluster > 1) else None,
                 fname=f"PCA_before_pruning_protocol_{protocol.number}.png",
                 title=f"PCA before pruning protocol {protocol.number}",
                 log=self.logger,
@@ -122,7 +122,7 @@ class ProtocolExecutor:
             self.logger.debug("Starting PCA" + f" {protocol.cluster=}")
             perform_PCA(
                 confs=[c for c in conformers if c.active],
-                ncluster=int(protocol.cluster) if isinstance(protocol.cluster, (int, float)) else None,
+                ncluster=int(protocol.cluster) if (isinstance(protocol.cluster, (int, float)) and protocol.cluster > 1) else None,
                 fname=f"PCA_after_pruning_protocol_{protocol.number}.png",
                 title=f"PCA after pruning protocol {protocol.number}",
                 log=self.logger,

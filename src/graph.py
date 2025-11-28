@@ -18,16 +18,16 @@ try:
     from src._spectral.comp_electronic import ComputedElectronic
     from src._spectral.comp_vibronic import ComputedVibronic
     from src._spectral.compare import ComparedGraph
-    from src.protocol.protocol import Protocol
-    from src.conformer.conformer import Conformer
+    from src._protocol.protocol import Protocol
+    from src._conformer.conformer import Conformer
 except ModuleNotFoundError: 
     from constants import *
     from _spectral.experimental import ExperimentalGraph
     from _spectral.comp_electronic import ComputedElectronic
     from _spectral.comp_vibronic import ComputedVibronic
     from _spectral.compare import ComparedGraph
-    from protocol import Protocol
-    from conformer import Conformer
+    from _protocol import Protocol
+    from _conformer import Conformer
 
 
 def eV_to_nm(eV):

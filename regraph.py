@@ -1,13 +1,13 @@
 #!/opt/miniconda3/bin/python
 
 from src.launch import restart
-from src.logger.create_log import create_logger
-from src.protocol.protocol import Protocol
+from src._logger.create_log import create_logger
+from src._protocol.protocol import Protocol
 from src.graph import main_spectra, plot_comparative_graphs
 from src.pruning import calculate_rel_energies
 
-from src.managers.checkpoint_manager import CheckpointManager
-from src.managers.protocol_manager import ProtocolManager
+from src._managers.checkpoint_manager import CheckpointManager
+from src._managers.protocol_manager import ProtocolManager
 
 import json, logging
 import argparse

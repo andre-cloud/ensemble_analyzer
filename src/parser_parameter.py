@@ -7,11 +7,11 @@ from src.rrho import free_gibbs_energy
 from src.constants import * 
 from src._parsers.base import PARSER_REGISTRY
 
-from src.conformer.conformer import Conformer
-from src.conformer.energy_data import EnergyRecord
-from src.conformer.spectral_data import SpectralRecord
+from src._conformer.conformer import Conformer
+from src._conformer.energy_data import EnergyRecord
+from src._conformer.spectral_data import SpectralRecord
 
-from src.logger.logger import Logger
+from src._logger.logger import Logger
 
 from datetime import datetime
 

@@ -2,7 +2,7 @@
 from typing import List
 from pathlib import Path
 import json
-from src.protocol.protocol import Protocol
+from src._protocol.protocol import Protocol
 from src.io_utils import SerialiseEncoder
 
 
