@@ -22,11 +22,12 @@ parser.add_argument('idx', nargs='+', help="Protocol's number to (re-)generate t
 parser.add_argument('-rb', '--read-boltz', help='Read Boltzmann population from a specific protocol', type=int)
 parser.add_argument('-no-nm', '--no-nm', help='Do not save the nm graphs', action='store_false')
 parser.add_argument('-w', '--weight', help='Show Weighting function', action='store_true')
+parser.add_argument('--disable-color', action='store_false', help='Disable colored output' )
 args = parser.parse_args()
 
 
 fname_out = 'regraph.log'
-log = create_logger(fname_out, logger_name="enan_regraphy", debug=True, ) # logger
+log = create_logger(fname_out, logger_name="enan_regraphy", debug=True, disable_color=False if not args.disable_color else True) # logger
 log.info(title)
 log._separator("Regraphing computed spectrum")
 
