@@ -37,8 +37,6 @@ config_mgr = CalculationConfig().load() # settings
 ensemble = checkpoint_mgr.load() # ensemble
 protocol = protocol_mgr.load() # protocol
 
-log.application_input_received(config=config_mgr.__dict__)
-
 start = datetime.now()
 
 def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:int) -> None: 
@@ -67,7 +65,6 @@ else:
 
 for i in args.idx:
     prot_obj = protocol[i]
-    log.spectra_start(protocol_number=i)
     main_spectra(ensemble, prot_obj, log=log, invert=config_mgr.invert, shift=config_mgr.shift, fwhm=config_mgr.fwhm, interested_area=config_mgr.interested)
 
 
