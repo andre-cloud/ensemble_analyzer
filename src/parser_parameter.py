@@ -13,41 +13,39 @@ from src.conformer.spectral_data import SpectralRecord
 
 from src.logger.logger import Logger
 
+from datetime import datetime
 
-def tranform_float(freq):
+
+def tranform_float(freq) -> str:
     """Transform into a float number a string. Thought for a map function
 
-    :param freq: frequency to be transformed
-    :type freq: float
-
-    :return: frequency transformed
-    :rtype: str
+    Args:
+        freq (float): Frequency
     """
     return f"{freq:.2f}"
 
 
 def get_conf_parameters(
-    conf: Conformer, number: int, output: str, p, time, temp: float, log: Logger
+    conf: Conformer, number: int, output: str, p: float, time:datetime, temp: float, log: Logger
 ) -> bool:
-    """
-    Obtain the parameters for a conformer: E, G, B, m
+    """Obtain the parameters for a conformer: E, G, B, m
 
-    :param conf: conformer
-    :type conf: Conformer
-    :param number: protocol number
-    :type number: int
-    :param p: protocol executed
-    :type p: Protocol
-    :param time: elapsed time requested for the calculation
-    :type time: datetime
-    :param temp: temperature [K]
-    :type temp: float
-    :param log: logger instance
-    :type log: logger
+    Args:
+        conf (Conformer): Conformer
+        number (int): Protocol number
+        output (str): Output File
+        p (float): Pressure [Pa]
+        time (datetime): Time of execution
+        temp (float): Temperature [K]
+        log (Logger): Logging system
 
-    :return: calculation ended correctly and not crashed due to server error
-    :rtype: bool
+    Raises:
+        IOError: When frequency are not found
+
+    Returns:
+        bool: Correct parsing
     """
+
 
     parser = PARSER_REGISTRY[p.calculator](output_name=os.path.join(conf.folder, output), log=log)
 
