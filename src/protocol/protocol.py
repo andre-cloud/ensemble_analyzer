@@ -176,3 +176,17 @@ class Protocol:
         # Load eventual more Thresholds
         self.get_thrs(self.load_threshold())
 
+
+
+def load_protocol(file: Optional[str]) -> Dict: 
+    """Load protocol from JSON files
+
+    Args:
+        file (Optional[str]): Protocol Filename
+
+    Returns:
+        Dict: Dictionary with all the settings defined by the user
+    """
+    
+    default = "ensemble_analyser/parameters_file/default_protocol.json"
+    return json.load(open(default if not file else file))

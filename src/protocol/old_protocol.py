@@ -5,6 +5,7 @@ from src._calculators.base import CALCULATOR_REGISTRY
 from typing import Union, List, Optional
 
 DEBUG = os.getenv("DEBUG")
+
 def load_protocol(file: str):  # pragma: no cover
     default = "ensemble_analyser/parameters_file/default_protocol.json"
     return json.load(open(default if not file else file))
