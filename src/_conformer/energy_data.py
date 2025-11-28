@@ -71,4 +71,4 @@ class EnergyStore:
     
     def log_info(self, protocol_number : int) -> Tuple[float]:
         data = self.__getitem__(int(protocol_number))
-        return data.E, data.G_E, data.G, data.B, data.Erel, data.Pop, data.time
+        return data.E, data.G_E, data.G, data.B, f'{data.Erel:.2f}', f'{data.Pop:.2f}', f'{data.time:.2f}'

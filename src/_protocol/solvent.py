@@ -10,13 +10,10 @@ class Solvent:
     solvent : str
     smd     : bool  = False 
 
-    def __str__(self):  
+    def __repr__(self):  
         if self.smd:
             return f"SMD({self.solvent})"
         elif self.solvent:
             return f"CPCM({self.solvent})"
         else:
             return "CPCM"
-
-    def __repr__(self): 
-        return self.__str__()

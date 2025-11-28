@@ -158,13 +158,10 @@ class Protocol:
     def load_raw(json):
         return Protocol(**json)
     
-    def __str__(self): 
+    def __repr__(self): 
         if self.solvent:
             return f"{self.functional}/{self.basis} [{self.solvent}]"
         return f"{self.functional}/{self.basis}"
-    
-    def __repr__(self):
-        return self.__str__()
 
 
     # === 
