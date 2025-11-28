@@ -105,7 +105,7 @@ class ProtocolExecutor:
         self.logger.pruning_start(protocol.number, initial_active)
         
         self.pruning_manager.prune_ensemble(conformers=conformers, protocol=protocol)
-        self.pruning_manager.calculate_relative_energies(conformers=conformers, temperature=self.config.temperature)
+        self.pruning_manager.calculate_relative_energies(conformers=conformers, temperature=self.config.temperature, protocol=protocol)
         conformers = sorted(conformers)
         
         self.logger.debug("\n".join([", ".join([str(i), f'{i.active}', f"{i.get_energy:.10f}"]) for i in conformers]))
