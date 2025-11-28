@@ -248,7 +248,7 @@ def perform_PCA(confs: List[Conformer], ncluster: int, fname: str, title: str, l
     """
     log.info("Starting PCA analysis")
 
-    PERFORM = len(confs) > ncluster if nc else True
+    PERFORM = len(confs) > ncluster if ncluster else True
 
     if not (len(confs)>10 and PERFORM) : 
         log.warning(f"{log.WARNING} PCA not performed, length of ensemble too small ({len(confs)}). To perform PCA, ensemble must be bigger than 10 conformers and Cluster must be smaller than ensemble length.")
