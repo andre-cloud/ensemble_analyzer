@@ -1,28 +1,32 @@
+import os, re
 
-from typing import List
+import numpy as np
+from typing import List, Tuple, Optional
 
-from src.IOsystem import _parse_xyz_str
 from src.conformer.conformer import Conformer
 from src.logger.logger import Logger
 
 
-import os
+def _parse_xyz_str(fl: List[str], raw: bool =False) -> Tuple[np.ndarray, np.ndarray, Optional[float]]:
+    """Parse an xyz geom descriptor
 
+    Args:
+        fl (List[str]): Lines of the xyzfile of only one geometry
+        raw (bool, optional): Convert the energy in the comment line. Defaults to False.
 
-def convert_file(file: str) -> str:
+    Returns:
+        Tuple[np.ndarray, np.ndarray, float]: Atoms, Geometry and eventually Energy
     """
-    Convert the input file into xyz multigeometry XYZ file.
-    OPENBABEL is required
-
-    :param file: input filename
-    :type file: str
-
-    :return: input converted filename
-    :rtype: str
-    """
-    output = "_".join(file.split(".")[:-1]) + ".xyz"
-    os.system(f"obabel {file} -O{output}")
-    return output
+    e = None
+    if raw:
+        e = float(re.findall(r'([- ]\d*\.\d*)$', fl[1].strip())[0])
+    fl = fl[2:]
+    atoms, geom = [], []
+    for line in fl:
+        a, *g = line.split()
+        atoms.append(a)
+        geom.append(g)
+    return np.array(atoms), np.array(geom, dtype=float), e
 
 
 def read_ensemble(file: str, log:Logger, raw: bool=False) -> list:
@@ -46,7 +50,7 @@ def read_ensemble(file: str, log:Logger, raw: bool=False) -> list:
     confs = []
 
     if not file.endswith(".xyz"):
-        file = convert_file(file)
+        raise "Ensemble file must be an XYZ (multi)geometry file"
 
     with open(file) as f:
         fl = f.readlines()

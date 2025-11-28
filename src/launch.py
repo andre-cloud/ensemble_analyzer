@@ -7,7 +7,7 @@ from src.logger.logger import Logger
 
 from src.parser_arguments import parser_arguments
 from src.protocol.protocol import load_protocol
-from src.ioFile import read_ensemble
+from src.ensemble_io import read_ensemble
 from src.title import title
 
 from src.constants import DEBUG

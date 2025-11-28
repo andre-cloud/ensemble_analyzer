@@ -4,7 +4,7 @@ from typing import Dict, List, Optional, Union
 from ase.atoms import Atoms
 
 
-from src.IOsystem import mkdir
+from src.io_utils import mkdir
 from src._calculators.base import BaseCalc
 
 from .energy_data import EnergyRecord, EnergyStore

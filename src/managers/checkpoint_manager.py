@@ -5,7 +5,7 @@ import json
 
 from src.conformer.conformer import Conformer
 from src.logger.logger import Logger
-from src.IOsystem import SerialiseEncoder
+from src.io_utils import SerialiseEncoder
 
 class CheckpointManager:
     """

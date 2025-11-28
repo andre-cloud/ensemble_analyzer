@@ -7,7 +7,7 @@ from dataclasses import dataclass
 
 from src.conformer.conformer import Conformer
 from src.protocol.protocol import Protocol
-from src.ioFile import save_snapshot
+from src.ensemble_io import save_snapshot
 from src.graph import plot_comparative_graphs
 from src.clustering import perform_PCA
 

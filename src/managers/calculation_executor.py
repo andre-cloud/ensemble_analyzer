@@ -3,7 +3,7 @@ from src.logger.logger import Logger
 
 from src.conformer.conformer import Conformer
 from src.protocol.protocol import Protocol
-from src.IOsystem import move_files
+from src.io_utils import move_files
 from src.regex_parsing import regex_parsing
 from src.parser_parameter import get_conf_parameters
 

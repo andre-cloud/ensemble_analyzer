@@ -3,7 +3,7 @@ from typing import List
 from pathlib import Path
 import json
 from src.protocol.protocol import Protocol
-from src.IOsystem import SerialiseEncoder
+from src.io_utils import SerialiseEncoder
 
 
 

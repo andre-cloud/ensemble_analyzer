@@ -9,7 +9,7 @@ import numpy as np
 from src.conformer.conformer import Conformer
 from src.protocol.protocol import Protocol
 from src.logger.logger import Logger
-from src.ioFile import save_snapshot
+from src.ensemble_io import save_snapshot
 from src.graph import main_spectra
 from src.clustering import perform_PCA, get_ensemble
 

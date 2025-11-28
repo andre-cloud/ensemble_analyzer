@@ -307,8 +307,8 @@ def get_ensemble(confs, sort=False):
 
 
 if __name__ == "__main__":  # pragma: no cover:
-    from ioFile import read_ensemble
-    from ioFile import save_snapshot
+    from src.ensemble_io import read_ensemble
+    from src.ensemble_io import save_snapshot
     import sys
     import mock
     import argparse
