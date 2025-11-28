@@ -51,8 +51,8 @@ class BaseGraph:
             x = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).X)
             y = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).Y) * p
 
-            self.log.debug(x)
-            self.log.debug(y)
+            self.log.info(x)
+            self.log.info(y)
 
             if x.size < 1:
                 continue
@@ -120,9 +120,9 @@ class BaseGraph:
 
     def compute_spectrum(self) -> None:
 
-        self.log.debug("Compute spectrum")
+        self.log.info("Compute spectrum")
         self.set_boundaries()
-        self.log.debug("Retrieving data")
+        self.log.info("Retrieving data")
         self.retrieve_data(self.protocol)
 
         # after retrieving data, ensure we actually have peaks
