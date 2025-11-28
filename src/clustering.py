@@ -1,22 +1,26 @@
 #!/opt/miniconda3/bin/python
 
-import numpy as np
+
 from sklearn.decomposition import PCA
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
+
 import matplotlib.pyplot as plt
-from matplotlib.lines import Line2D
 from matplotlib import rcParams
-from typing import Union
 import matplotlib.gridspec as gridspec
+
+from typing import Union, List, Tuple
+
+
 from scipy.interpolate import griddata
 from scipy.spatial import distance_matrix
 
+from src._conformer.conformer import Conformer
+from src._logger.logger import Logger
+
 import sys
 import pickle as pl
-
-
-plt.set_loglevel("error")
+import numpy as np
 
 MARKERS = [
     ".", ",", "o", "v", "^", "<",
@@ -28,7 +32,17 @@ MARKERS = [
 ]
 
 
-def calc_distance_matrix(coords, atoms, include_H=True):
+def calc_distance_matrix(coords:np.ndarray, atoms:List[str], include_H:bool=True) -> Tuple[np.ndarray, np.ndarray]:
+    """Calculate the eigenvalues and eigenvector of the distance matrix for each conformer
+
+    Args:
+        coords (np.ndarray): Array of geometries
+        atoms (List[str]): Atom list
+        include_H (bool, optional): Include H in the distance matrix. Defaults to True.
+
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: Array of the array of eigenvalues, Array of the array of the eigenvector
+    """
     natoms = coords[0].shape if include_H else coords[0][atoms != "H"].shape
     dist = np.zeros((coords.shape[0], natoms[0], natoms[0]))
     evalue_dist, evector_dist = [], []
@@ -43,15 +57,15 @@ def calc_distance_matrix(coords, atoms, include_H=True):
     return np.array(evalue_dist), np.array(evector_dist)
 
 
-def get_best_ncluster(coords):
+def get_best_ncluster(coords:List[List[int]]) -> int:
     """
     Obtain the best number of cluster based on the maximization of the silhouette
 
-    :param coords: array of the coordinates of each atom
-    :type coords: 2D-array
+    Args:
+        coords (List[List[int]]): List of list of the eigenvalues to perfomre the PCA
 
-    :return: best number of clusters
-    :rtype: int
+    Returns:
+        int: Best number of cluster, defined with KMeans
     """
 
     k_range = range(10, 30)
@@ -65,33 +79,30 @@ def get_best_ncluster(coords):
     return k_range[np.argmax(silhouette_scores)]
 
 
-def calc_pca(
-    confs: list,
-    cluster=False,
-    ncluster: Union[int, None] = None,
-    set_=True,
-    include_H=True,
-) -> tuple:
+def calc_pca(confs: List[Conformer], cluster: bool = False, ncluster: Union[int, None] = None, set_: bool = True, include_H: bool =True,) -> Tuple[np.ndarray, Union[np.ndarray, List[int]], List[str], List[int], np.ndarray]:
     """
     Function that execute the actual PCA analysis.
     It wants to understand how conformations differ from each other based on their overall Cartesian coordinates
 
-    :param confs: whole list of the confomers
-    :type confs: list
-    :param cluster: execute the cluster action. Default is False
-    :type cluster: bool, optional
-    :param ncluster: number of cluster to form using the KMean analysis. Defualt is None
-    :type ncluster: int
+    Args:
+        confs (List[Conformer]): Ensemble
+        cluster (bool, optional): Execute the cluster action. Defaults to False.
+        ncluster (Union[int, None], optional): Number of cluster to form using the KMean analysis. Defaults to None.
+        set_ (bool, optional): Set the cluster number to the Conformer class. Defaults to True.
+        include_H (bool, optional): Include H in the distance matrix. Defaults to True.
 
-    :return: PCA transformation (pca_energy), Clustered coordinates (clusters), colors and number of the conformer and energy
-    :rtype: tuple
+    Returns:
+        Tuple[np.ndarray, Union[np.ndarray, List[int]], List[str], List[int], np.ndarray]: PCA scores, Cluster numbers, Colors of the conformer, Number of the conformer, Relative energy of the conformers 
     """
+    
+
+    
 
     # fetch all geometries and reshaping them to create the correct 2D matrix
     data = np.array([conf.last_geometry for conf in confs if conf.active])
     colors = [conf.color for conf in confs if conf.active]
     numbers = [conf.number for conf in confs if conf.active]
-    energy = np.array([conf.get_energy for conf in confs if conf.active])
+    energy = np.array([conf.energies.get_energy() for conf in confs if conf.active])
     energy -= min(energy)
 
     evalue_dist, _ = calc_distance_matrix(
@@ -126,48 +137,33 @@ def calc_pca(
     else:
         clusters = [1 for _ in confs]
 
-    print(clusters)
-
     return pca_scores, clusters, colors, numbers, energy
 
 
 def obtain_markers_from_cluster(cluster: int):
-    """
-    Obtain a different marker from the marker library for different conformers
+    """Obtain a different marker from the marker library for different conformers
 
-    :param cluster: the cluster number
-    :return: marker
-    :rtype: matplotlib.lines
+    Args:
+        cluster (int): Cluster Number
     """
     return MARKERS[cluster % (len(MARKERS))]
 
 
-def save_PCA_snapshot(
-    fname: str,
-    title: str,
-    pca_scores: np.ndarray,
-    clusters: np.ndarray,
-    colors: list,
-    numbers: list,
-    z: list,
-    legend: bool = True,
-):
+def save_PCA_snapshot(fname: str, title: str, pca_scores: np.ndarray, clusters: np.ndarray, colors: List[str], numbers: List[int], z: np.ndarray, legend: bool = True,) -> None:  
     """
     Graph and save the image of the PCA analysis
 
-    :param fname: filename to save the graphs
-    :type fname: str
-    :param title: title of the graph
-    :type title: str
-    :param pca_scores: PCA transformation
-    :type pca_scores: np.array
-    :param clusters: Clustered coordinates
-    :type clusters: np.array
-    :param z: list of energy of the conformers
-    :type z: np.array
-
-    :rtype: None
+    Args:
+        fname (str): Filename to save the graphs
+        title (str): Title of the graph
+        pca_scores (np.ndarray): PCA transformation
+        clusters (np.ndarray): Clustered coordinates
+        colors (List[str]): List of colors for each conformer
+        numbers (List[int]): List of number for each conformer
+        z (np.ndarray): List of energy of the conformers
+        legend (bool, optional): Plot the legend of the graph. Defaults to True.
     """
+    
 
     fig = plt.figure(figsize=(10, 8))
     if legend:
@@ -236,31 +232,19 @@ def save_PCA_snapshot(
     return None
 
 
-def perform_PCA(
-    confs: list,
-    ncluster: int,
-    fname: str,
-    title: str,
-    log,
-    set_=True,
-    include_H=True,
-    legend=True,
-) -> None:
+def perform_PCA(confs: List[Conformer], ncluster: int, fname: str, title: str, log: Logger, set_ : bool =True, include_H: bool=True, legend: bool =True) -> None:
     """
     Perform a PCA analysis
 
-    :param confs:  list of all the active conformers
-    :type confs: list
-    :param ncluster:  number of cluster to group the ensemble
-    :type ncluster: int
-    :param fname:  filename for the graph
-    :type fname: str
-    :param title:  title of the graph
-    :type title: str
-    :param log:  logger instance
-    :type log: logging
-
-    :rtype: None
+    Args:
+        confs (List[Conformer]): List of all the active conformers
+        ncluster (int): Number of cluster to group the ensemble
+        fname (str): Filename for the graph
+        title (str): Title of the graph
+        log (Logger): Logger
+        set_ (bool, optional): Set the cluster number to the conformer. Defaults to True.
+        include_H (bool, optional): Include the H in the distance matrix. Defaults to True.
+        legend (bool, optional): Plot the legend of the graph. Defaults to True.
     """
     log.info("Starting PCA analysis")
 
@@ -288,7 +272,16 @@ def perform_PCA(
     return None
 
 
-def get_ensemble(confs, sort=False):
+def get_ensemble(confs: List[Conformer], sort:bool=False) -> List[Conformer]:
+    """Get the new ensemble with the clustered part
+
+    Args:
+        confs (List[Conformer]): Ensemble
+        sort (bool, optional): Sort the enesemble by energy. Defaults to False.
+
+    Returns:
+        List[Conformer]: Ensemble it self
+    """
     if sort:
         tmp = sorted(confs)
     else:
