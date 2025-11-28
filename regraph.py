@@ -7,6 +7,12 @@ from src._managers.checkpoint_manager import CheckpointManager
 from src._managers.protocol_manager import ProtocolManager
 from src._managers.calculation_config import CalculationConfig
 
+from src._conformer.conformer import Conformer
+
+from src.constants import *
+
+from typing import List
+
 import argparse
 
 parser = argparse.ArgumentParser()
@@ -16,6 +22,20 @@ parser.add_argument('-rb', '--read-boltz', help='Read Boltzmann population from 
 parser.add_argument('-no-nm', '--no-nm', help='Do not save the nm graphs', action='store_false')
 parser.add_argument('-w', '--weight', help='Show Weighting function', action='store_true')
 args = parser.parse_args()
+
+def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:int) -> None: 
+
+    active: List[Conformer] = [conf for conf in confs if conf.active]
+    e = [conf.get_energy(protocol_number=protocol_number) for conf in active]
+    rel_en = e - e.min()
+
+    exponent = -rel_en * CAL_TO_J * 1000 * EH_TO_KCAL /(R*temperature)
+    populations = exponent/exponent.sum()
+    for idx, conf in enumerate(active):
+        conf.energies.__getitem__(protocol_number=protocol_number).Pop = populations[idx] * 100
+        conf.energies.__getitem__(protocol_number=protocol_number).Erel = rel_en[idx] * EH_TO_KCAL
+        
+    return None
 
 
 fname_out = 'regraph.log'
@@ -34,7 +54,8 @@ if args.read_boltz:
         if not conf.active: continue
         for p in args.idx: 
             conf.energies.__getitem__(p).Pop = conf.energies.__getitem__(args.read_boltz).Pop
-
+else:
+    calc_boltzmann(ensemble)
 
 for i in args.idx:
     prot_obj = protocol[i]
