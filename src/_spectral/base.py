@@ -10,8 +10,9 @@ from datetime import datetime
 from src._spectral.graph_default import GraphDefault
 from src.conformer.conformer import Conformer
 
-
+from src.conformer.conformer import Conformer
 from src.protocol import Protocol
+
 from src.constants import *
 
 @dataclass
@@ -36,7 +37,7 @@ class BaseGraph:
         self.X = np.linspace(self.defaults.start, self.defaults.end, num=10**self.definition)
         self.X = self.X[np.argsort(self.X)]
 
-    def retrieve_data(self, protocol) -> None: 
+    def retrieve_data(self, protocol:Protocol) -> None: 
         self.impulse = []
         self.energies = []
         population_from = str(self.read_population) if self.read_population else str(protocol.number)
@@ -66,7 +67,7 @@ class BaseGraph:
             self.energies = np.array([])
             self.impulse = np.array([])
 
-    def normalize(self, Y, idx_min: Optional[int] = None, idx_max: Optional[int] = None):
+    def normalize(self, Y: np.ndarray, idx_min: Optional[int] = None, idx_max: Optional[int] = None) -> np.ndarray:
         if idx_min is not None and idx_max is not None:
             max_value = np.max(np.abs(Y[idx_min:idx_max]))
         else: 
@@ -75,28 +76,28 @@ class BaseGraph:
         return Y / max_value
 
     
-    def dump_XY_data(self, X, Y, fname):
+    def dump_XY_data(self, X: np.ndarray, Y: np.ndarray, fname: str) -> None:
         data = np.column_stack((X,Y))
         np.savetxt(fname, data, delimiter=' ')
 
-    def check_conf(self, conf, protocol):
+    def check_conf(self, conf: Conformer, protocol: Protocol) -> bool:
         if not conf.active: 
             return False
-        if not conf.energies[str(protocol.number)].get('graph', None):
+        if not conf.graphs_data.__contains__(protocol.number):
             return False
-        if not conf.energies[str(protocol.number)]['graph'].get(self.graph_type, None):
+        if not conf.graphs_data.__has_graph_type__(protocol.number, self.graph_type):
             return False
         return True 
     
 
-    def diversity_function(self, a, b, w=None):
+    def diversity_function(self, a: np.ndarray, b: np.ndarray, w: Optional[np.ndarray] = None) -> float:
         # RMSD
         MAX = 1 if self.graph_type not in CHIRALS else 2
         w = self.ref.weight if w is None else w
         return diversity_function_njit(a=a, b=b, weight=w, max_val=MAX)
 
 
-    def set_boundaries(self): 
+    def set_boundaries(self) -> None: 
 
         if isinstance(self.shift_user, list): 
             self.shift_bounds = self.shift_user
@@ -114,7 +115,7 @@ class BaseGraph:
 
         
 
-    def compute_spectrum(self):
+    def compute_spectrum(self) -> None:
 
         self.set_boundaries()
         self.retrieve_data(self.protocol)
@@ -144,12 +145,12 @@ class BaseGraph:
             self.dump_XY_data(self.X, self.Y, f'{self.graph_type}_p{self.protocol.number}_comp.xy')
 
 
-    def autoconvolution(self):
+    def autoconvolution(self) -> None:
         
         self.log.debug('Start to autoconvolute')
         ref_norm = self.ref.Y
 
-        def callback_optimizer(params):
+        def callback_optimizer(params: tuple) -> float:
             shift, fwhm = params
             st = datetime.now()
             Y_conv = self.convolute(self.energies, self.impulse, shift, fwhm)
@@ -195,10 +196,10 @@ class BaseGraph:
 
 
 
-    def gaussian(self, x0, I, fwhm):
+    def gaussian(self, x0: np.ndarray, I: np.ndarray, fwhm: float) -> np.ndarray:
         return gaussian_njit(self.X, x0, I, fwhm)
     
-    def lorentzian(self, x0, I, fwhm):
+    def lorentzian(self, x0: np.ndarray, I: np.ndarray, fwhm: float) -> np.ndarray:
         return lorentzian_njit(self.X, x0, I, fwhm)
 
 

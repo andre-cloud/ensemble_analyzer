@@ -228,7 +228,7 @@ class ProtocolExecutor:
 
         rows = [
             [
-                f"Conf {i}",
+                f"Conf {i.number}",
                 dE[idx],
                 f"{float(dE_boltz[idx]*100):.2f}",
                 dE_ZPVE[idx],
@@ -240,8 +240,6 @@ class ProtocolExecutor:
             ]
             for idx, i in enumerate(CONFS)
         ]
-
-        self.logger.debug(rows)
 
         headers=["Conformer", "∆E [Eh]", "Boltzamnn Pop. on ∆E", "∆(E+ZPVE) [Eh]", "Boltzamnn Pop. on ∆(E+ZPVE)", "∆H [Eh]", "Boltzamnn Pop. on ∆H", "∆G [Eh]", "Boltzamnn Pop. on ∆G"]
 

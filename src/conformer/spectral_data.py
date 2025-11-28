@@ -23,14 +23,17 @@ class SpectralStore:
     data: Dict = field(default_factory=lambda: defaultdict(lambda: defaultdict(SpectralRecord)))
 
 
-    def add(self, protocol_number:str, graph_type: Literal['IR', 'VCD', 'UV', 'ECD'], record: SpectralRecord):
-        self.data[protocol_number][str(graph_type)] = record
+    def add(self, protocol_number:int, graph_type: Literal['IR', 'VCD', 'UV', 'ECD'], record: SpectralRecord):
+        self.data[protocol_number][int(graph_type)] = record
 
-    def __getitem__(self, protocol_number:str, graph_type: Union[int, str]) -> SpectralRecord:
-        return self.data[protocol_number][str(graph_type)]
+    def __getitem__(self, protocol_number:int, graph_type: Union[int, str]) -> SpectralRecord:
+        return self.data[protocol_number][int(graph_type)]
 
-    def __contains__(self, protocol_number:str) -> bool:
-        return str(protocol_number) in self.data
+    def __contains__(self, protocol_number:int) -> bool:
+        return int(protocol_number) in self.data
+    
+    def __has_graph_type__(self, protocol_number:int, graph_type: Literal['IR', 'VCD', 'UV', 'ECD']):
+        return graph_type in self.data[int(protocol_number)]
 
     def as_dict(self):
         """Used for checkpoint serialization"""
