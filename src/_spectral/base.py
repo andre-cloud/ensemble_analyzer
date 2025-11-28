@@ -51,8 +51,8 @@ class BaseGraph:
             x = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).X)
             y = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).Y) * p
 
-            self.log.info(x)
-            self.log.info(y)
+            self.log.debug(x)
+            self.log.debug(y)
 
             if x.size < 1:
                 continue
@@ -84,6 +84,7 @@ class BaseGraph:
         np.savetxt(fname, data, delimiter=' ')
 
     def check_conf(self, conf: Conformer, protocol: Protocol) -> bool:
+        self.log.debug(f"{conf.active = }\t{conf.graphs_data.__contains__(protocol.number) = }\t{conf.graphs_data.__has_graph_type__(protocol.number, self.graph_type) = }")
         if not conf.active: 
             return False
         if not conf.graphs_data.__contains__(protocol.number):
@@ -120,9 +121,9 @@ class BaseGraph:
 
     def compute_spectrum(self) -> None:
 
-        self.log.info("Compute spectrum")
+        self.log.debug("Compute spectrum")
         self.set_boundaries()
-        self.log.info("Retrieving data")
+        self.log.debug("Retrieving data")
         self.retrieve_data(self.protocol)
 
         # after retrieving data, ensure we actually have peaks
