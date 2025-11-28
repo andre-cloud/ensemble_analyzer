@@ -49,8 +49,8 @@ class Logger(logging.Logger):
         self.info('')
         self.info('Protocol Steps:')
         for protocol in config.get('protocols', []):
-            self.info(f"{int(protocol.number):03d}. {self.ARROW} {str(protocol)} {self.SPLIT} {protocol.calculation_level}" \
-                      f"{self.SPLIT} {protocol.comment}" if protocol.comment else ""\
+            self.info(f"{int(protocol.number):03d}. {self.ARROW} {str(protocol)} {self.SPLIT} {protocol.calculation_level}" +
+                      f"{self.SPLIT} {protocol.comment}" if protocol.comment else "" +
                       f"\n {protocol.thr}")            
         self._separator()
 
