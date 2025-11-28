@@ -159,8 +159,8 @@ class Conformer:
         )
         print(data["energies"])
         c.energies = data["energies"]
-        print(data["graph_data"])
-        c.graphs_data = data["graph_data"]
+        print(data["graphs_data"])
+        c.graphs_data = data["graphs_data"]
         c.active = data["active"]
         return c
     
