@@ -35,7 +35,7 @@ class CalculationExecutor:
         protocol: Protocol,
     ) -> bool:
         """
-        Execute calculation with retry logic.
+        Execute calculation.
         
         Args:
             idx: Display index (1-based)
@@ -95,7 +95,7 @@ class CalculationExecutor:
             data = conf.energies.__getitem__(protocol.number)
             self.logger.calculation_success(conformer_id=conf.number,
                 protocol_number=protocol.number,
-                energy=data.E,
+                energy=data.E, gibbs=data.G,
                 frequencies = data.Freq,
                 elapsed_time=elapsed)
         

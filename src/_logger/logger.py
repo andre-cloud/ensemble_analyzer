@@ -88,11 +88,13 @@ class Logger(logging.Logger):
         self.info(f"{count:03d}. {self.ARROW} CONF {conformer_id:03d} {self.SPLIT} Protocol {protocol_number}")
         self._start_timer(f"calc_{conformer_id}_{protocol_number}")
     
-    def calculation_success(self, conformer_id: int, protocol_number: int, energy: float, elapsed_time: float, frequencies: List[float]):
+    def calculation_success(self, conformer_id: int, protocol_number: int, energy: float, gibbs:float, elapsed_time: float, frequencies: List[float]):
         self._stop_timer(f"calc_{conformer_id}_{protocol_number}")
         text = f"\t{self.TICK} E = {energy:.8f} Eh {self.SPLIT} Time: {elapsed_time:.1f}s"
         if frequencies.size > 0: 
-            text += f' {self.SPLIT} Imag. Freq {frequencies[frequencies<0]} ({", ".join([f"{i:.2f}" for i in frequencies[frequencies<0]])})'
+            n_im_freq = len(frequencies[frequencies<0])
+            im_freq = f'({", ".join([f"{i:.2f}" for i in frequencies[frequencies<0]])})' if n_im_freq > 0 else ""
+            text += f' {self.SPLIT} Imag. Freq {n_im_freq} {im_freq}'
         self.info(text)
     
     def calculation_failure(self, conformer_id: int, error: str):
@@ -180,7 +182,7 @@ class Logger(logging.Logger):
 
     def spectra_result(self, graph_type: str, parameters: Dict, msg:str): 
         res = [f"{k}: {self.converter_str(v)}" for k, v in parameters.items()]
-        self._separator(f"{graph_type} Spectra convolution", char="-", width=45)
+        self._separator(f"{graph_type} Spectra convolution", char="-", width=35)
         self.info(msg)
         self.info("\t".join(res))
 
