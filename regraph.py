@@ -27,6 +27,7 @@ args = parser.parse_args()
 fname_out = 'regraph.log'
 log = create_logger(fname_out, logger_name="enan_regraphy", debug=True, ) # logger
 log.info(title)
+log._separator("Regraphing computed spectrum")
 
 checkpoint_mgr = CheckpointManager()
 protocol_mgr = ProtocolManager()
