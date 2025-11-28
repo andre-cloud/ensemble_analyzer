@@ -21,9 +21,6 @@ class CalculationConfig:
     shift: Optional[Dict[str, Optional[float]]] = None
     interested: Optional[Dict[str, Optional[float]]] = None
     invert: bool = False
-    
-    # Max retries (from constants, but configurable)
-    max_retries: int = 5
         
     def __post_init__(self):
         if self.fwhm is None:
@@ -198,7 +195,6 @@ class CalculationConfig:
                 'electro': settings.get("interested_electro")
             },
             invert=settings.get("invert", False),
-            max_retries=settings.get("max_retries", 5),
         )
     
     def validate(self) -> None:
