@@ -20,7 +20,7 @@ class SpectralRecord:
 
 @dataclass
 class SpectralStore:
-    data: Dict = field(default_factory=lambda: defaultdict(lambda: defaultdict(SpectralRecord)))
+    data: Dict[int, Dict[str, SpectralRecord]] = defaultdict(defaultdict(SpectralRecord))
 
 
     def add(self, protocol_number:int, graph_type: Literal['IR', 'VCD', 'UV', 'ECD'], record: SpectralRecord):
