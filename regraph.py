@@ -40,8 +40,8 @@ log.debug(f'{[conf.energies.__getitem__(protocol_number=protocol_number).E for c
 def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:int) -> None: 
 
     active: List[Conformer] = [conf for conf in confs if conf.active]
-    e = np.array([conf.get_energy(protocol_number=protocol_number) for conf in active])
-    rel_en = e - e.min()
+    energy = np.array([conf.get_energy(protocol_number=protocol_number) for conf in active])
+    rel_en = energy - np.min(energy)
 
     log.debug(rel_en)
 
