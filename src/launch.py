@@ -44,7 +44,9 @@ def main():
     protocol_mgr = ProtocolManager()
     
     if args.restart:
-        conformers, protocols, start_from = restart(checkpoint_mgr=checkpoint_mgr, protocol_mgr=protocol_mgr, logger=log)
+        conformers = checkpoint_mgr.load()
+        protocols = protocol_mgr.load()
+        start_from = protocol_mgr.load_last_completed()
     else:
         # 4.1 Load protocols
         protocol_data = load_protocol(args.protocol)
@@ -59,7 +61,7 @@ def main():
     config = CalculationConfig.from_args(args, start_from)
     
     # 6. Log application start
-    log.application_input_received(config=config._args_to_dict())
+    log.application_input_received(config=config.__dict__)
     
     # 7. Create and run orchestrator
     orchestrator = CalculationOrchestrator(
