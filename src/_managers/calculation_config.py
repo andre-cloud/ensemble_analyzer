@@ -10,8 +10,8 @@ import json
 @dataclass
 class CalculationConfig:
     """Configuration for ensemble calculations."""
-    cpu: int
-    temperature: float
+    cpu: int = 1 
+    temperature: float = 298.15
     start_from_protocol: int = 0
     include_H: bool = True
     
