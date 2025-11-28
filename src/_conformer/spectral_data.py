@@ -39,3 +39,11 @@ class SpectralStore:
         """Used for checkpoint serialization"""
         return {k: {k1: v1} for k, v in self.data.items() for k1, v1 in v.items()}
     
+    def load(self, input_dict: Dict[int, Dict[str, SpectralRecord]]):
+        self.data = defaultdict(lambda: defaultdict(SpectralRecord))  # reset self.data
+        for proto_str, graphs in input_dict.get('data', {}).items():
+            proto = int(proto_str)
+            for graph_type, record_dict in graphs.items():
+                x_array = np.array(record_dict['X'])
+                y_array = np.array(record_dict['Y'])
+                self.data[proto][graph_type] = SpectralRecord(X=x_array, Y=y_array)

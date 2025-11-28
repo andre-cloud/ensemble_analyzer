@@ -75,3 +75,29 @@ class EnergyStore:
         pop = f'{data.Pop:.2f}' if data.Pop else np.nan
 
         return data.E, data.G_E, data.G, data.B, erel, pop, f'{data.time:.2f}'
+
+    def load(self, input_dict):
+        self.data = dict()
+        for proto_str, vals in input_dict.get('data', {}).items():
+            proto = int(proto_str)
+            
+            B_vec = np.array(vals['B_vec']) if vals.get('B_vec') else np.array([])
+            m_vec = np.array(vals['m_vec']) if vals.get('m_vec') else np.array([])
+            Freq = np.array(vals['Freq']) if vals.get('Freq') else np.array([])
+            
+            self.data[proto] = EnergyRecord(
+                E = vals.get('E', 0.0),
+                G = vals.get('G', np.nan),
+                H = vals.get('H', np.nan),
+                S = vals.get('S', np.nan),
+                G_E = vals.get('G_E', np.nan),
+                zpve = vals.get('zpve', np.nan),
+                B = vals.get('B', 1),
+                B_vec = B_vec,
+                m = vals.get('m', 1),
+                m_vec = m_vec,
+                Pop = vals.get('Pop', None),
+                time = vals.get('time', None),
+                Erel = vals.get('Erel', None),
+                Freq = Freq,
+            )

@@ -157,10 +157,10 @@ class Conformer:
             atoms=data["atoms"],
             raw=True,
         )
-        print(data["energies"])
-        c.energies = data["energies"]
-        print(data["graphs_data"])
-        c.graphs_data = data["graphs_data"]
+        
+        c.energies.load(data["energies"])
+        c.graphs_data.load(data["graphs_data"])
+        
         c.active = data["active"]
         return c
     
