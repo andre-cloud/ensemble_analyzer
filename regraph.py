@@ -37,7 +37,7 @@ config_mgr = CalculationConfig().load() # settings
 ensemble = checkpoint_mgr.load() # ensemble
 protocol = protocol_mgr.load() # protocol
 
-log.application_input_received(config=config_mgr.to_dict())
+log.application_input_received(config=config_mgr.__dict__)
 
 start = datetime.now()
 
