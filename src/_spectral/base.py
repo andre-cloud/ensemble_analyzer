@@ -85,7 +85,7 @@ class BaseGraph:
 
     def check_conf(self, conf: Conformer, protocol: Protocol) -> bool:
         self.log.debug(f"{conf.active = }\t{conf.graphs_data.__contains__(protocol.number) = }\t{conf.graphs_data.__has_graph_type__(protocol.number, self.graph_type) = }")
-        self.log.debug(f"{conf.graphs_data.data[int(protocol.number)[self.graph_type]] = }")
+        self.log.debug(f"{conf.graphs_data.data[int(protocol.number)][self.graph_type] = }")
         if not conf.active: 
             return False
         if not conf.graphs_data.__contains__(protocol.number):
