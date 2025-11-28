@@ -19,7 +19,7 @@ args = parser.parse_args()
 
 
 fname_out = 'regraph.log'
-log = create_logger(fname_out, logger_name="enan_regraphy") # logger
+log = create_logger(fname_out, logger_name="enan_regraphy", debug=True) # logger
 
 checkpoint_mgr = CheckpointManager()
 protocol_mgr = ProtocolManager()
