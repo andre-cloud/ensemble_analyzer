@@ -4,7 +4,7 @@ from src._logger.logger import Logger
 from src._conformer.conformer import Conformer
 from src._protocol.protocol import Protocol
 from src.io_utils import move_files
-from src.regex_parsing import regex_parsing
+from src.constants import regex_parsing
 from src.parser_parameter import get_conf_parameters
 
 import os

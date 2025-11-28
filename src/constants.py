@@ -25,6 +25,7 @@ def eV_to_nm(eV):
     eV = np.maximum(eV, 1e-2)
     return FACTOR_EV_NM / eV
 
+
 c = c * 100  # convert speed of light in cm/s
 J_TO_H = physical_constants["joule-hartree relationship"][0]
 AMU_TO_KG = physical_constants["atomic mass constant"][0]
@@ -42,19 +43,25 @@ CONVERT_B = {
 }
 
 VIBRO_OR_ELECTRO = {
-    'IR': 'vibro', 
-    'VCD': 'vibro', 
-    'UV': 'electro', 
-    'ECD': 'electro', 
+    'IR': 'vibro',
+    'VCD': 'vibro',
+    'UV': 'electro',
+    'ECD': 'electro',
 }
 
 
 MIN_RETENTION_RATE = 0.3
 
 
-
 # Logger constants
 LOG_FORMAT = "%(message)s"
 
+
 def ordinal(n):
-    return "%d-%s" % (n, "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10 :: 4])
+    return "%d-%s" % (n, "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10:: 4])
+
+
+regex_parsing = {
+    "orca": {"ext": "out", },
+    "gaussian": {"ext": "log", },
+}

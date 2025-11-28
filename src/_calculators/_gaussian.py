@@ -71,7 +71,12 @@ class GaussianCalc(BaseCalc):
             calc.parameters["extra"] += " opt"
         else:
             calc.parameters["extra"] += " opt=(modredudant)"
-        
+            redundant = "\n".join([f"X {i} F" for i in self.protocol.constrains])
+            if calc.parameters.get("addsec"):
+                calc.parameters["addsec"] += redundant
+            else: 
+                calc.parameters["addsec"] = redundant
+
         if self.protocol.freq: 
             calc.parameters["extra"] += " freq=(HPModes,vcd)"
 
