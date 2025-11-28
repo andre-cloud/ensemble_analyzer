@@ -81,7 +81,6 @@ class CalculationConfig:
                 'electro': settings.get("interested_electro", args.interest_electro)
             },
             invert=settings.get("invert", args.invert),
-            max_retries=settings.get("max_retries", 5),
         )
     
     @staticmethod
@@ -107,7 +106,6 @@ class CalculationConfig:
             "interested_electro": args.interest_electro,
             "invert": args.invert,
             "include_H": not args.exclude_H,
-            "max_retries": 5,
         }
     
     def to_dict(self) -> dict:
@@ -126,7 +124,6 @@ class CalculationConfig:
             "definition": d["definition"],
             "include_H": d["include_H"],
             "invert": d["invert"],
-            "max_retries": d["max_retries"],
         }
         
         # Flatten fwhm
@@ -212,6 +209,3 @@ class CalculationConfig:
         
         if self.definition < 1:
             raise ValueError(f"Definition must be ≥ 1, got {self.definition}")
-        
-        if self.max_retries < 1:
-            raise ValueError(f"Max retries must be ≥ 1, got {self.max_retries}")
