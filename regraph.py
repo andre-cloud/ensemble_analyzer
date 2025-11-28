@@ -1,10 +1,13 @@
 #!/opt/miniconda3/bin/python
 
 from src.launch import restart
-from src.logger import create_log
-from src.protocol import Protocol
+from src._logger.create_log import create_logger
+from src._protocol.protocol import Protocol
 from src.graph import main_spectra, plot_comparative_graphs
 from src.pruning import calculate_rel_energies
+
+from src._managers.checkpoint_manager import CheckpointManager
+from src._managers.protocol_manager import ProtocolManager
 
 import json, logging
 import argparse
@@ -24,25 +27,24 @@ def load_protocol(p: dict, log: logging):
     return protocol
 
 
-ensemble, protocol, _ = restart()
-
 settings = json.load(open("settings.json"))
-output = 'regraph.log'
 temperature = settings.get("temperature", 298.15)
-
 invert = settings.get("invert", False)
 
 FWHM={'vibro':settings.get("fwhm_vibro", None), "electro":settings.get("fwhm_electro", None)}
 SHIFT={'vibro':settings.get("shift_vibro", None), "electro":settings.get("shift_electro", None)}
-
 INTERESTED_AREA = {'vibro': settings.get('interested_vibro', None), "electro": settings.get('interested_electro', None)}
+
+
+fname_out = 'regraph.log'
+log = create_logger(fname_out, logger_name="enan_regraphy")
+
+checkpoint_mgr = CheckpointManager()
+protocol_mgr = ProtocolManager()
+ensemble, protocol, _ = restart(checkpoint_mgr, protocol_mgr, log)
 
 calculate_rel_energies(ensemble, 298.15)
 
-# initiate the log
-log = create_log(output)
-# deactivate the log of matplotlib
-logging.getLogger("matplotlib").disabled = False
 
 protocol = load_protocol(json.load(open('protocol_dump.json')), log)
 

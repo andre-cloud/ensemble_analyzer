@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 
-
-CALCULATOR_REGISTRY = {}
+from typing import Dict
 
 
 def register_calculator(name):
@@ -41,3 +40,5 @@ class BaseCalc(ABC):
     def frequency(self):
         """Add to the calculator the opt flag"""
         pass
+
+CALCULATOR_REGISTRY : Dict[str, BaseCalc]= {}

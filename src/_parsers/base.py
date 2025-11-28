@@ -1,8 +1,5 @@
 from abc import ABC, abstractmethod
-
-
-PARSER_REGISTRY = {}
-
+from typing import Dict
 
 def register_parser(name):
     """Decorator to register each parser"""
@@ -67,3 +64,7 @@ class BaseParser(ABC):
             data.append([line_splitted[i] for i in list_index])
         
         return data
+
+
+
+PARSER_REGISTRY : Dict[str, BaseParser]= {}

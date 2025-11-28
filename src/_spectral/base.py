@@ -6,21 +6,22 @@ from scipy.optimize import minimize
 from numba import njit, prange
 
 from datetime import datetime
-import matplotlib.pyplot as plt
-plt.set_loglevel("error")
 
 from src._spectral.graph_default import GraphDefault
 
-from src.protocol import Protocol
+from src._conformer.conformer import Conformer
+from src._protocol.protocol import Protocol
+from src._logger.logger import Logger
+
 from src.constants import *
 
 @dataclass
 class BaseGraph: 
 
-    confs: list  
+    confs: List[Conformer]  
     protocol : Protocol
     graph_type: Literal['IR', 'VCD', 'UV', 'ECD']
-    log: logging  
+    log: Logger  
 
     invert : Optional[bool] = False
     fwhm_user: Optional[Union[List[float], float]] = None
@@ -36,19 +37,19 @@ class BaseGraph:
         self.X = np.linspace(self.defaults.start, self.defaults.end, num=10**self.definition)
         self.X = self.X[np.argsort(self.X)]
 
-    def retrieve_data(self, protocol) -> None: 
+    def retrieve_data(self, protocol:Protocol) -> None: 
         self.impulse = []
         self.energies = []
-        population = str(self.read_population) if self.read_population else str(protocol.number)
+        population_from = str(self.read_population) if self.read_population else str(protocol.number)
 
         for conf in self.confs:
 
             if not self.check_conf(conf, protocol):
                 continue           
 
-            p = conf.energies[population]['Pop']
-            x = np.array(conf.energies[str(protocol.number)]['graph'][self.graph_type]['x'])
-            y = np.array(conf.energies[str(protocol.number)]['graph'][self.graph_type]['y'])*p
+            p = conf.energies.__getitem__(protocol_number=population_from).Pop
+            x = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).X)
+            y = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).Y) * p
 
             if x.size < 1:
                 continue
@@ -66,7 +67,7 @@ class BaseGraph:
             self.energies = np.array([])
             self.impulse = np.array([])
 
-    def normalize(self, Y, idx_min: Optional[int] = None, idx_max: Optional[int] = None):
+    def normalize(self, Y: np.ndarray, idx_min: Optional[int] = None, idx_max: Optional[int] = None) -> np.ndarray:
         if idx_min is not None and idx_max is not None:
             max_value = np.max(np.abs(Y[idx_min:idx_max]))
         else: 
@@ -75,28 +76,28 @@ class BaseGraph:
         return Y / max_value
 
     
-    def dump_XY_data(self, X, Y, fname):
+    def dump_XY_data(self, X: np.ndarray, Y: np.ndarray, fname: str) -> None:
         data = np.column_stack((X,Y))
         np.savetxt(fname, data, delimiter=' ')
 
-    def check_conf(self, conf, protocol):
+    def check_conf(self, conf: Conformer, protocol: Protocol) -> bool:
         if not conf.active: 
             return False
-        if not conf.energies[str(protocol.number)].get('graph', None):
+        if not conf.graphs_data.__contains__(protocol.number):
             return False
-        if not conf.energies[str(protocol.number)]['graph'].get(self.graph_type, None):
+        if not conf.graphs_data.__has_graph_type__(protocol.number, self.graph_type):
             return False
         return True 
     
 
-    def diversity_function(self, a, b, w=None):
+    def diversity_function(self, a: np.ndarray, b: np.ndarray, w: Optional[np.ndarray] = None) -> float:
         # RMSD
         MAX = 1 if self.graph_type not in CHIRALS else 2
         w = self.ref.weight if w is None else w
         return diversity_function_njit(a=a, b=b, weight=w, max_val=MAX)
 
 
-    def set_boundaries(self): 
+    def set_boundaries(self) -> None: 
 
         if isinstance(self.shift_user, list): 
             self.shift_bounds = self.shift_user
@@ -114,21 +115,19 @@ class BaseGraph:
 
         
 
-    def compute_spectrum(self):
+    def compute_spectrum(self) -> None:
 
         self.set_boundaries()
         self.retrieve_data(self.protocol)
 
         # after retrieving data, ensure we actually have peaks
         if self.energies.size == 0 or self.energies[self.energies!=0].size == 0:
-            self.log.debug(f'{"-"*30}\nNo calculation of {self.graph_type} graphs. Skipping (no peaks found)\n{"-"*30}')
+            self.log.spectra_skip(self.graph_type)
             return
 
         if self.ref: 
             self.autoconvolution()
-        else: 
-            self.log.info(f'{"-"*30}\nAuto-convolution not possible, using default/user input for convolution.\n{"-"*30}')
-
+        else:
             self.SHIFT = self.defaults.shift
             self.FWHM = self.defaults.fwhm
 
@@ -136,20 +135,18 @@ class BaseGraph:
 
             self.Y = self.normalize(Y)
 
-            self.log.info(f'{"-"*30}\n{self.graph_type} Reference Spectra convolution NOT found -> Using default parameters:\nShift: {self.SHIFT:.2f}\tFWHM: {self.FWHM:.2f}\n{"-"*30}')
-
+            self.log.spectra_result(graph_type=self.graph_type, parameters={"Shift": self.SHIFT, "FWHM": self.FWHM}, msg=f"Using default parameters, Reference {self.graph_type} Spectra not found")
 
         if self.Y[~np.isnan(self.Y)].size > 0:
             self.log.debug(f'Saving {self.graph_type} spectra convoluted')
             self.dump_XY_data(self.X, self.Y, f'{self.graph_type}_p{self.protocol.number}_comp.xy')
 
 
-    def autoconvolution(self):
+    def autoconvolution(self) -> None:
         
-        self.log.debug('Start to autoconvolute')
         ref_norm = self.ref.Y
 
-        def callback_optimizer(params):
+        def callback_optimizer(params: tuple) -> float:
             shift, fwhm = params
             st = datetime.now()
             Y_conv = self.convolute(self.energies, self.impulse, shift, fwhm)
@@ -158,7 +155,7 @@ class BaseGraph:
             e2 = datetime.now()
             rmsd = self.diversity_function(Y_conv, ref_norm)
             e3 = datetime.now()
-            self.log.debug(f'{shift=:.2f}\t{fwhm=:.2f}\t{rmsd=:.2f}\t{e1-st}\t{e2-e1}\t{e2-st}\t{e3-st}')
+            # self.log.debug(f'{shift=:.2f}\t{fwhm=:.2f}\t{rmsd=:.2f}\t{e1-st}\t{e2-e1}\t{e2-st}\t{e3-st}')
             return rmsd
         
         initial_guess = [
@@ -190,15 +187,16 @@ class BaseGraph:
         diversity_unw = self.diversity_function(self.Y[self.ref.x_min_idx:self.ref.x_max_idx], ref_norm[self.ref.x_min_idx:self.ref.x_max_idx], w=np.ones_like(self.Y[self.ref.x_min_idx:self.ref.x_max_idx]))
         similarity_unw = ((1 if self.graph_type not in CHIRALS else 2)-diversity_unw)/(1 if self.graph_type not in CHIRALS else 2)*100
 
+        self.log.spectra_result(graph_type=self.graph_type, parameters=
+                                {"Shift": self.SHIFT, "FWHM": self.FWHM, "Similarity": similarity, "Similarity Unweighted": similarity_unw, "Time": (end-st), "Cycle": f"{result.nfev}"},
+                                msg=t)
 
-        self.log.info(f'{"-"*30}\n{self.graph_type} {t}\nShift: {self.SHIFT:.2f}\tFWHM: {self.FWHM:.2f}\tSimilarity: {similarity:.2f}%\tSimilarity Unweighted:{similarity_unw:.2f}%\nTime: {end-st}\tCycles: {result.nfev}\n{"-"*30}')
 
 
-
-    def gaussian(self, x0, I, fwhm):
+    def gaussian(self, x0: np.ndarray, I: np.ndarray, fwhm: float) -> np.ndarray:
         return gaussian_njit(self.X, x0, I, fwhm)
     
-    def lorentzian(self, x0, I, fwhm):
+    def lorentzian(self, x0: np.ndarray, I: np.ndarray, fwhm: float) -> np.ndarray:
         return lorentzian_njit(self.X, x0, I, fwhm)
 
 

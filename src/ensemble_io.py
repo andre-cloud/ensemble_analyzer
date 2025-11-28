@@ -1,32 +1,35 @@
-try:
-    from src.IOsystem import _parse_xyz_str
-    from src.conformer import Conformer
-except ImportError as e:  # pragma: no cover
-    print(e)
-    from IOsystem import _parse_xyz_str
-    from conformer import Conformer
+import os, re
+
+import numpy as np
+from typing import List, Tuple, Optional
+
+from src._conformer.conformer import Conformer
+from src._logger.logger import Logger
 
 
-import os
+def _parse_xyz_str(fl: List[str], raw: bool =False) -> Tuple[np.ndarray, np.ndarray, Optional[float]]:
+    """Parse an xyz geom descriptor
 
+    Args:
+        fl (List[str]): Lines of the xyzfile of only one geometry
+        raw (bool, optional): Convert the energy in the comment line. Defaults to False.
 
-def convert_file(file) -> str:
+    Returns:
+        Tuple[np.ndarray, np.ndarray, float]: Atoms, Geometry and eventually Energy
     """
-    Convert the input file into xyz multigeometry XYZ file.
-    OPENBABEL is required
-
-    :param file: input filename
-    :type file: str
-
-    :return: input converted filename
-    :rtype: str
-    """
-    output = "_".join(file.split(".")[:-1]) + ".xyz"
-    os.system(f"obabel {file} -O{output}")
-    return output
+    e = None
+    if raw:
+        e = float(re.findall(r'([- ]\d*\.\d*)$', fl[1].strip())[0])
+    fl = fl[2:]
+    atoms, geom = [], []
+    for line in fl:
+        a, *g = line.split()
+        atoms.append(a)
+        geom.append(g)
+    return np.array(atoms), np.array(geom, dtype=float), e
 
 
-def read_ensemble(file, log, raw=False) -> list:
+def read_ensemble(file: str, log:Logger, raw: bool=False) -> list:
     """
     Read the initial ensemble and return the ensemble list
     Not only XYZ file is supported. OBABEL is required
@@ -47,7 +50,7 @@ def read_ensemble(file, log, raw=False) -> list:
     confs = []
 
     if not file.endswith(".xyz"):
-        file = convert_file(file)
+        raise "Ensemble file must be an XYZ (multi)geometry file"
 
     with open(file) as f:
         fl = f.readlines()
@@ -60,15 +63,13 @@ def read_ensemble(file, log, raw=False) -> list:
             continue
         atoms, geom, e = _parse_xyz_str(fl[old_idx:i], raw=raw)
         confs.append(Conformer(counter, geom=geom, atoms=atoms))
-        if raw:
-            confs[-1].energies = {"0": {"E": e * 627.51, "G": e * 627.51}}
         old_idx = i
         counter += 1
 
     return confs
 
 
-def save_snapshot(output, confs, log):
+def save_snapshot(output: str, confs: List[Conformer], log: Logger):
     """
     Save an XYZ file to store a bunch of geometries
 

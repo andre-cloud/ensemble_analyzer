@@ -2,54 +2,50 @@ import re
 import os
 import numpy as np
 
-try:
-    from src.regex_parsing import regex_parsing
-    from src.rrho import free_gibbs_energy
-    from src.constants import * 
-    from src._parsers.base import PARSER_REGISTRY
+from src.regex_parsing import regex_parsing
+from src.rrho import free_gibbs_energy
+from src.constants import * 
+from src._parsers.base import PARSER_REGISTRY
 
-except ImportError as e:  # pragma: no cover
-    print(e)
-    from regex_parsing import regex_parsing
-    from rrho import free_gibbs_energy
-    from constants import * 
-    from _parsers.base import PARSER_REGISTRY
+from src._conformer.conformer import Conformer
+from src._conformer.energy_data import EnergyRecord
+from src._conformer.spectral_data import SpectralRecord
+
+from src._logger.logger import Logger
+
+from datetime import datetime
 
 
-def tranform_float(freq):
+def tranform_float(freq) -> str:
     """Transform into a float number a string. Thought for a map function
 
-    :param freq: frequency to be transformed
-    :type freq: float
-
-    :return: frequency transformed
-    :rtype: str
+    Args:
+        freq (float): Frequency
     """
     return f"{freq:.2f}"
 
 
 def get_conf_parameters(
-    conf, number: int, output: str, p, time, temp: float, log
+    conf: Conformer, number: int, output: str, p: float, time:datetime, temp: float, log: Logger
 ) -> bool:
-    """
-    Obtain the parameters for a conformer: E, G, B, m
+    """Obtain the parameters for a conformer: E, G, B, m
 
-    :param conf: conformer
-    :type conf: Conformer
-    :param number: protocol number
-    :type number: int
-    :param p: protocol executed
-    :type p: Protocol
-    :param time: elapsed time requested for the calculation
-    :type time: datetime
-    :param temp: temperature [K]
-    :type temp: float
-    :param log: logger instance
-    :type log: logger
+    Args:
+        conf (Conformer): Conformer
+        number (int): Protocol number
+        output (str): Output File
+        p (float): Pressure [Pa]
+        time (datetime): Time of execution
+        temp (float): Temperature [K]
+        log (Logger): Logging system
 
-    :return: calculation ended correctly and not crashed due to server error
-    :rtype: bool
+    Raises:
+        IOError: When frequency are not found
+
+    Returns:
+        bool: Correct parsing
     """
+
 
     parser = PARSER_REGISTRY[p.calculator](output_name=os.path.join(conf.folder, output), log=log)
 
@@ -66,7 +62,7 @@ def get_conf_parameters(
         if p.skip_opt_fail: 
             if not parser.opt_done():
                 conf.active = False
-
+                log.warning(f'{log.WARNING} Optimization did not correctly converge (maybe increase number of iteration). Conf {conf.number} will be deactivated')
                 return True
             
         # TODO: LOGICA PER UN'OTTIMIZZAZIONE NON COMPLETATA
@@ -76,19 +72,13 @@ def get_conf_parameters(
     if p.freq or 'freq' in p.add_input.lower() or 'freq' in p.functional.lower():
         freq, ir, vcd = parser.parse_freq()
         if freq.size == 0: 
+            # TODO: creare un logger error per questa cosa
             log.critical(
                 f"{'='*20}\nCRITICAL ERROR\n{'='*20}\nNo frequency present in the calculation output.\n{'='*20}\nExiting\n{'='*20}\n"
             )
             raise IOError("No frequency in the output file")
          
         freq *= p.freq_fact
-        log.info(
-            f"\tConf {conf.number} has {freq[freq < 0].size} imaginary frequency(s): {', '.join(list(map(tranform_float, freq[freq < 0])))}"
-        )
-        if freq[freq < 0].size > 0:
-            log.info(
-                f"\tThese are excluded from qRRHO calculation."
-            )
 
     B_vec, M_vec = parser.parse_B_m()
     b = np.linalg.norm(B_vec)
@@ -103,35 +93,44 @@ def get_conf_parameters(
         H = H
         g_e = g - e
     else:
-        prev_energies = conf.energies.get(str(int(number) - 1), {})
-        g_e = prev_energies.get('G-E',np.nan)
+        prev_energies = conf.energies.__getitem__(int(number) - 1)
+        g_e = prev_energies.G_E
 
         if not np.isnan(g_e):
             g = e + g_e
-            zpve = prev_energies.get("zpve", np.nan)
-            H = prev_energies.get("H", np.nan)
-            S = prev_energies.get("S", np.nan)
+            zpve = prev_energies.zpve
+            H = prev_energies.H
+            S = prev_energies.S
         else:
-            log.warning(
-                f"No previous thermochemical data found for conformer {conf.number - 1}: setting G, H, S, ZPVE to NaN."
-            )
+            log.missing_previous_thermo(conformer_id = conf.number)
 
-    conf.energies[str(number)] = {
-        "E": e if e else e,  # Electronic Energy [Eh]
-        "G": g if not np.isnan(g) else np.nan,  # Free Gibbs Energy [Eh]
-        "B": b if b else 1,  # Rotatory Constant [cm-1]
-        "m": m if m else 1,  # dipole momenti [Debye]
-        "time": time,  # elapsed time [sec]
-        "G-E": g_e if not np.isnan(g) and e else np.nan,  # G-E [Eh]
-        "zpve": zpve if not np.isnan(g) else np.nan,  # Zero Point Energy [Eh]
-        "H": H if not np.isnan(g) else np.nan,  # Enthalpy correction [Eh]
-        "S": S if not np.isnan(g) else np.nan,  # Entropy [Eh]
-    }
+    
+    conf.energies.add(
+        number,
+        EnergyRecord(
+            E =  e if e else e,  # Electronic Energy [Eh]
+            G =  g if not np.isnan(g) else np.nan,  # Free Gibbs Energy [Eh]
+            B =  b if b else 1,  # Rotatory Constant [cm-1]
+            m =  m if m else 1,  # dipole momenti [Debye]
+            time =  time,  # elapsed time [sec]
+            G_E = g_e if not np.isnan(g) and e else np.nan,  # G-E [Eh]
+            zpve =  zpve if not np.isnan(g) else np.nan,  # Zero Point Energy [Eh]
+            H =  H if not np.isnan(g) else np.nan,  # Enthalpy correction [Eh]
+            S =  S if not np.isnan(g) else np.nan,  # Entropy [Eh], 
+            Freq =  freq, # Frequencies
+            B_vec = B_vec, # rotational vector constant [cm-1]
+            m_vec = M_vec, # Dipole moment vector [Debye]
+        )
+    )
+    log.debug(f'{log.TICK} Energy Data are stored correctly')
 
-    freq, ir, vcd = parser.parse_freq()
+    
+    
+
+    _, ir, vcd = parser.parse_freq()
     uv, ecd = parser.parse_tddft()
-    conf.energies[str(number)]["graph"] = {}
     for label, graph in zip(GRAPHS, [ir, vcd, uv, ecd]):
-        conf.energies[str(number)]["graph"][label] = {'x': graph[:,0], 'y':graph[:,1]}
+        conf.graphs_data.add(protocol_number=number, graph_type=label, record=SpectralRecord(X=graph[:,0], Y=graph[:,1]))
+    log.debug(f'{log.TICK} Graphs Data are stored correctly')
 
     return True
