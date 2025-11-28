@@ -44,7 +44,7 @@ class Logger(logging.Logger):
         self.info(f'Protocols: {config.get('len_protocols', 'N/A')}')
         self.info(f"Temperature: {config.get('temperature', 'N/A')} K")
         self.info(f"CPU cores: {config.get('cpu', 'N/A')}")
-        if config.get('restart'):
+        if config.get('restart', False):
             self.info("Mode: RESTART")
         self.info('')
         self.info('Protocol Steps:')

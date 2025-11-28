@@ -1,11 +1,11 @@
 
 
 from dataclasses import dataclass
-from typing import Optional, Dict
+from typing import Optional, Dict, List
 from pathlib import Path
 import json
 
-
+from src._protocol.protocol import Protocol
 
 @dataclass
 class CalculationConfig:
@@ -14,7 +14,8 @@ class CalculationConfig:
     temperature: float = 298.15
     start_from_protocol: int = 0
     include_H: bool = True
-    
+    restart: bool = False
+
     # Graph settings
     definition: int = 4
     fwhm: Optional[Dict[str, Optional[float]]] = None
@@ -81,6 +82,7 @@ class CalculationConfig:
                 'electro': settings.get("interested_electro", args.interest_electro)
             },
             invert=settings.get("invert", args.invert),
+            restart = settings.get("restart", args.restart)
         )
     
     @staticmethod
@@ -106,6 +108,7 @@ class CalculationConfig:
             "interested_electro": args.interest_electro,
             "invert": args.invert,
             "include_H": not args.exclude_H,
+            "restart": args.restart,
         }
     
     def to_dict(self) -> dict:
@@ -192,6 +195,7 @@ class CalculationConfig:
                 'electro': settings.get("interested_electro")
             },
             invert=settings.get("invert", False),
+            restart = settings.get("restart", False)
         )
     
     def validate(self) -> None:
@@ -209,3 +213,13 @@ class CalculationConfig:
         
         if self.definition < 1:
             raise ValueError(f"Definition must be ≥ 1, got {self.definition}")
+        
+    def create_log(self, protocols: List[Protocol], conformers: int): 
+        return {
+            'conformers' : conformers, 
+            'protocols' : protocols, 
+            'len_protocols' : len(protocols),
+            'temperature' : self.temperature, 
+            'cpu' : self.cpu, 
+            'restart' : self.restart,
+        }
