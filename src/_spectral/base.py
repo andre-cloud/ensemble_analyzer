@@ -120,7 +120,9 @@ class BaseGraph:
 
     def compute_spectrum(self) -> None:
 
+        self.log.debug("Compute spectrum")
         self.set_boundaries()
+        self.log.debug("Retrieving data")
         self.retrieve_data(self.protocol)
 
         # after retrieving data, ensure we actually have peaks
