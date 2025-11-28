@@ -55,7 +55,7 @@ class Conformer:
 
     def get_energy(self, protocol_number: Union[str, int]):
         energies = self.energies.__getitem__(protocol_number=protocol_number)
-        if ~np.isnan(energies.G) or (energies.G is not None):
+        if ~np.isnan(energies.G):
             return energies.G
         return energies.E
     

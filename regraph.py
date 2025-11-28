@@ -34,16 +34,10 @@ config_mgr = CalculationConfig().load() # settings
 ensemble = checkpoint_mgr.load() # ensemble
 protocol = protocol_mgr.load() # protocol
 
-protocol_number = args.idx[-1]
-log.debug(f'E({protocol_number}): {[conf.energies.__getitem__(protocol_number=protocol_number).E for conf in ensemble if conf.active]}')
-log.debug(f'G({protocol_number}): {[conf.energies.__getitem__(protocol_number=protocol_number).G for conf in ensemble if conf.active]}')
-
 def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:int) -> None: 
 
     active: List[Conformer] = [conf for conf in confs if conf.active]
-    log.debug([c.energies for c in active])
     energy = np.array([conf.get_energy(protocol_number=protocol_number) for conf in active])
-    log.debug(energy)
     rel_en = energy - np.min(energy)
 
     log.debug(rel_en)
@@ -56,6 +50,8 @@ def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:i
 
     return None
 
+
+print(ensemble)
 if args.read_boltz: 
     assert str(args.read_boltz) in [p.number for p in protocol], f"{args.read_boltz} is not a specified step in the protocol file"
     for conf in ensemble:
@@ -64,7 +60,7 @@ if args.read_boltz:
             conf.energies.__getitem__(p).Pop = conf.energies.__getitem__(args.read_boltz).Pop
 else:
     for protocol_number in args.idx:
-        calc_boltzmann(ensemble, protocol_number=protocol_number, temperature=config_mgr.temperature)
+        calc_boltzmann(confs=ensemble, protocol_number=protocol_number, temperature=config_mgr.temperature)
         log.debug(f'{[conf.energies.__getitem__(protocol_number=protocol_number).Erel for conf in ensemble if conf.active]}')
 
 for i in args.idx:
