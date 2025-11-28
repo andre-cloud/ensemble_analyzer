@@ -78,7 +78,7 @@ class Protocol:
     # === 
 
     def load_threshold(self) -> dict:
-        default = Path(__file__).parent / "parameters_file" / "default_threshold.json"
+        default = Path(__file__).parent / "src" / "parameters_file" / "default_threshold.json"
         with open(default, "r") as f:
             return json.load(f)
 
@@ -188,5 +188,5 @@ def load_protocol(file: Optional[str]) -> Dict:
         Dict: Dictionary with all the settings defined by the user
     """
     
-    default = "ensemble_analyser/parameters_file/default_protocol.json"
+    default = Path(__file__).parent / "src" / "parameters_file" / "default_protocol.json"
     return json.load(open(default if not file else file))
