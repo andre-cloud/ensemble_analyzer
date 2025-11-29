@@ -55,7 +55,7 @@ class EnergyStore:
         if self.__contains__(protocol_number=protocol_number):
             return self.data.get(int(protocol_number))
         
-        return None
+        return EnergyRecord()
 
     def __contains__(self, protocol_number: int) -> bool:
         return int(protocol_number) in self.data
