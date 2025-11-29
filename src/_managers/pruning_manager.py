@@ -125,7 +125,6 @@ class PruningManager:
         header = ["", "∆E [kcal/mol]"]
         rows = []
         for (conf, _), rel_e in zip(active, rel_energies):
-            conf.energies.__getitem__(protocol_number=protocol_number).Erel = rel_e
             if rel_e > threshold:
                 conf.active = False
                 rows.append((f'Conf {conf.number}', f"{rel_e:.2f}"))

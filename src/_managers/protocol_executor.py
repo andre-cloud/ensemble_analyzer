@@ -20,7 +20,7 @@ from src._managers.calculation_executor import CalculationExecutor
 # from src.pruning import calculate_rel_energies, check_ensemble, boltzmann
 from src._managers.pruning_manager import PruningManager
 
-from src.constants import DEBUG, MIN_RETENTION_RATE
+from src.constants import DEBUG, MIN_RETENTION_RATE, EH_TO_KCAL
 
 
 
@@ -88,6 +88,7 @@ class ProtocolExecutor:
         
         self.logger.pruning_start(protocol.number, active_count)
         
+        self._set_relative_energies(conformers=conformers, protocol=protocol)
         self.pruning_manager.prune_ensemble(conformers=conformers, protocol=protocol)
         self.pruning_manager.calculate_relative_energies(conformers=conformers, temperature=self.config.temperature, protocol=protocol)
         conformers = sorted(conformers)
@@ -175,6 +176,16 @@ class ProtocolExecutor:
 
         self.checkpoint_manager.save(conformers, self.logger, log=True)
 
+    def _set_relative_energies(conformers: List[Conformer], protocol: Protocol):
+
+        active = [conf for conf in conformers if conf.active]
+        energies = np.array([conf.get_energy(protocol_number=protocol.number) for conf in active])
+        rel_energies = (energies - min(energies)) * EH_TO_KCAL
+
+        for idx, conf in enumerate(active): 
+            conf.energies.__getitem__(protocol_number=protocol.number).Erel = rel_energies[idx]
+        
+        return
 
 
     def generate_energy_report(self, conformers: List[Conformer], protocol_number: Union[str,int], T:float):
