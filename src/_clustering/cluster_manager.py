@@ -332,7 +332,6 @@ class ClusteringManager:
             kmeans = KMeans(
                 n_clusters=k,
                 n_init='auto',
-                random_state=self.config.random_state
             )
             labels = kmeans.fit_predict(features)
             score = silhouette_score(features, labels)
