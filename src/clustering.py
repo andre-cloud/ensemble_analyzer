@@ -43,7 +43,7 @@ def perform_PCA(
     manager = ClusteringManager(logger=log, config=config)
     
 
-    if validate_possible_PCA():
+    if validate_possible_PCA(ensemble=confs, logger=log, n_clusters=ncluster):
         manager.perform_pca(
             conformers=confs,
             n_clusters=ncluster,
