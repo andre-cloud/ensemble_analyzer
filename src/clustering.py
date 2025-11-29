@@ -93,9 +93,9 @@ def get_ensemble(
     return manager.reduce_by_clusters(confs, sort_by_energy=sort)
 
 
-# ====================================
+# ===
 # CLI for Standalone Usage
-# ====================================
+# ===
 
 if __name__ == "__main__":
     """
