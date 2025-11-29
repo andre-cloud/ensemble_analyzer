@@ -119,6 +119,7 @@ class PruningManager:
         energies = np.array([e for _,e in active])
         rel_energies = (energies - energies.min()) * EH_TO_KCAL
 
+        self.logger.debug(rel_energies)
         self.logger.info(f'Filtering conformers above {threshold} kcal/mol energy window')
 
         header = ["", "∆E [kcal/mol]"]
