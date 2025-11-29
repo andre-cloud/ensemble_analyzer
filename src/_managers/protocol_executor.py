@@ -89,6 +89,7 @@ class ProtocolExecutor:
         self.logger.pruning_start(protocol.number, active_count)
         
         self._set_relative_energies(conformers=conformers, protocol=protocol)
+
         self.pruning_manager.prune_ensemble(conformers=conformers, protocol=protocol)
         self.pruning_manager.calculate_relative_energies(conformers=conformers, temperature=self.config.temperature, protocol=protocol)
         conformers = sorted(conformers)
@@ -176,7 +177,7 @@ class ProtocolExecutor:
 
         self.checkpoint_manager.save(conformers, self.logger, log=True)
 
-    def _set_relative_energies(conformers: List[Conformer], protocol: Protocol):
+    def _set_relative_energies(self, conformers: List[Conformer], protocol: Protocol):
 
         active = [conf for conf in conformers if conf.active]
         energies = np.array([conf.get_energy(protocol_number=protocol.number) for conf in active])
@@ -184,7 +185,6 @@ class ProtocolExecutor:
 
         for idx, conf in enumerate(active): 
             conf.energies.__getitem__(protocol_number=protocol.number).Erel = rel_energies[idx]
-        
         return
 
 
