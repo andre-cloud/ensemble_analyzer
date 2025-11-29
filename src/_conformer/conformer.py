@@ -55,7 +55,7 @@ class Conformer:
 
     def get_energy(self, protocol_number: int):
         energies = self.energies.__getitem__(protocol_number=protocol_number)
-        if ~np.isnan(energies.G):
+        if not np.isnan(energies.G):
             return energies.G
         return energies.E
     

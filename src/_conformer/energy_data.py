@@ -16,9 +16,9 @@ class EnergyRecord:
     B_vec   : Optional[np.ndarray]      = None
     m       : Optional[float]           = None
     m_vec   : Optional[np.ndarray]      = None
-    Pop     : Optional[float]           = None
+    Pop     : float                     = np.nan
     time    : Optional[float]           = None
-    Erel    : Optional[float]           = None
+    Erel    : float                     = np.nan
     Freq    : Optional[np.ndarray]      = None
 
     def as_dict(self):
@@ -84,8 +84,8 @@ class EnergyStore:
     
     def log_info(self, protocol_number : int) -> Tuple[float]:
         data = self.__getitem__(int(protocol_number))
-        erel = f'{data.Erel:.2f}' if data.Erel else np.nan
-        pop = f'{data.Pop:.2f}' if data.Pop else np.nan
+        erel = f'{data.Erel:.2f}' if not np.isnan(data.Erel) else np.nan
+        pop = f'{data.Pop:.2f}' if not np.isnan(data.Pop) else np.nan
 
         return data.E, data.G_E, data.G, data.B, erel, pop, f'{data.time:.2f}'
 

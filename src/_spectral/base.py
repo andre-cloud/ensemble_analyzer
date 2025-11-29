@@ -139,7 +139,7 @@ class BaseGraph:
 
             self.log.spectra_result(graph_type=self.graph_type, parameters={"Shift": self.SHIFT, "FWHM": self.FWHM}, msg=f"Using default parameters, Reference {self.graph_type} Spectra not found")
 
-        if self.Y[~np.isnan(self.Y)].size > 0:
+        if self.Y[not np.isnan(self.Y)].size > 0:
             self.log.debug(f'Saving {self.graph_type} spectra convoluted')
             self.dump_XY_data(self.X, self.Y, f'{self.graph_type}_p{self.protocol.number}_comp.xy')
 

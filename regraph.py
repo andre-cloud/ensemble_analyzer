@@ -49,8 +49,8 @@ def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:i
     exponent = np.exp(-rel_en * CAL_TO_J * 1000 * EH_TO_KCAL /(R*temperature))
     populations = exponent/exponent.sum()
     for idx, conf in enumerate(active):
-        conf.energies.__getitem__(protocol_number=protocol_number).Pop = populations[idx] * 100
-        conf.energies.__getitem__(protocol_number=protocol_number).Erel = rel_en[idx] * EH_TO_KCAL
+        conf.energies.set(protocol_number=protocol_number, property="Pop", value=populations[idx] * 100)
+        conf.energies.set(protocol_number=protocol_number, property='Erel', value=rel_en[idx] * EH_TO_KCAL)
 
     return None
 
@@ -59,7 +59,7 @@ if args.read_boltz:
     for conf in ensemble:
         if not conf.active: continue
         for p in args.idx: 
-            conf.energies.__getitem__(p).Pop = conf.energies.__getitem__(args.read_boltz).Pop
+            conf.energies.set(p,'Pop',conf.energies.__getitem__(args.read_boltz).Pop)
 else:
     for protocol_number in args.idx:
         calc_boltzmann(confs=ensemble, protocol_number=protocol_number, temperature=config_mgr.temperature)
