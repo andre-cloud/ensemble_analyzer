@@ -46,7 +46,6 @@ def perform_PCA(
         output_file=fname,
         title=title,
         include_legend=legend,
-        include_H=include_H
     )
 
 
