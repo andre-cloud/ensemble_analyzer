@@ -233,7 +233,7 @@ class ClusteringManager:
         # Step 3: PCA transformation
         self.logger.debug("Performing PCA transformation...")
         n_components = min(eigenvalues.shape[0], eigenvalues.shape[1])
-        pca = PCA(n_components=n_components, random_state=self.config.random_state)
+        pca = PCA(n_components=n_components)
         pca_scores = pca.fit_transform(eigenvalues)
         
         # Step 4: Determine cluster number
@@ -247,7 +247,6 @@ class ClusteringManager:
         kmeans = KMeans(
             n_clusters=n_clusters,
             n_init='auto',
-            random_state=self.config.random_state
         )
         cluster_labels = kmeans.fit_predict(pca_scores)
         
@@ -316,8 +315,8 @@ class ClusteringManager:
             Optimal number of clusters
         """
         
-        min_k = max(self.config.min_k, 2)
-        max_k = min(self.config.max_k, len(features) - 1)
+        min_k = max(int(len(features)*.1), 2) # Set as 10% of the ensemble length or 2
+        max_k = int(len(features)*.8) # Set as the 80% of the ensemble length
         
         if max_k < min_k:
             self.logger.warning(
