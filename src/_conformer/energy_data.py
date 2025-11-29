@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, asdict
 from typing import Optional, Dict, Tuple
 import numpy as np
 
@@ -22,22 +22,20 @@ class EnergyRecord:
     Freq    : Optional[np.ndarray]      = None
 
     def as_dict(self):
-        return {
-            "E"     : self.E,
-            "G"     : self.G,
-            "H"     : self.H,
-            "S"     : self.S,
-            "zpve"  : self.zpve,
-            "B"     : self.B,
-            "B_vec" : self.B_vec,
-            "m"     : self.m,
-            "m_vec" : self.m_vec,
-            "Pop"   : self.Pop,
-            "time"  : self.time,
-            "Erel"  : self.Erel,
-            "G-E"   : self.G_E if not np.isnan(self.G) else np.nan,
-            "Freq"  : self.Freq,
-        }
+        data = asdict(self)
+        for key in ['B_vec', 'm_vec', 'Freq']:
+            if data[key] is not None:
+                data[key] = data[key].tolist()
+        return data
+    
+    @classmethod
+    def from_dict(cls, data: dict) -> 'EnergyRecord':
+        for key in ['B_vec', 'm_vec', 'Freq']:
+            if data.get(key) is not None:
+                data[key] = np.array(data[key])
+        
+        return cls(**data)
+
     
 
 @dataclass
@@ -80,24 +78,5 @@ class EnergyStore:
         self.data = dict()
         for proto_str, vals in input_dict.get('data', {}).items():
             proto = int(proto_str)
-            
-            B_vec = np.array(vals['B_vec']) if vals.get('B_vec') else np.array([])
-            m_vec = np.array(vals['m_vec']) if vals.get('m_vec') else np.array([])
-            Freq = np.array(vals['Freq']) if vals.get('Freq') else np.array([])
-            
-            self.data[proto] = EnergyRecord(
-                E = vals.get('E', 0.0),
-                G = vals.get('G', np.nan),
-                H = vals.get('H', np.nan),
-                S = vals.get('S', np.nan),
-                G_E = vals.get('G_E', np.nan),
-                zpve = vals.get('zpve', np.nan),
-                B = vals.get('B', 1),
-                B_vec = B_vec,
-                m = vals.get('m', 1),
-                m_vec = m_vec,
-                Pop = vals.get('Pop', None),
-                time = vals.get('time', None),
-                Erel = vals.get('Erel', None),
-                Freq = Freq,
-            )
+                        
+            self.data[proto] = EnergyRecord.from_dict(data=vals)

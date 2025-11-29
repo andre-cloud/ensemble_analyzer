@@ -57,7 +57,7 @@ class Protocol:
     # Pruning & Clustering
     graph               : Optional[bool]                = False
     no_prune            : Optional[bool]                = False
-    cluster             : Optional[bool|int]            = False
+    cluster             : Optional[Union[bool,int]]     = False
 
     # Thresholds
     thrG                : Optional[float]               = None

@@ -164,7 +164,7 @@ class ProtocolExecutor:
                 f'✗ Ensemble reduce more than {(1-retention_rate)*100:.1f}%. Calculation will stop.\n'
                 f'\t{self.logger.WARNING} threshold: {MIN_RETENTION_RATE*100:.0f}%. Stopping.'
             )
-            raise RuntimeError()
+            raise "Calculation ended for too much pruning"
     
     def _run_calculations(
         self,

@@ -53,7 +53,7 @@ class Conformer:
     # Energy helper
     # ===
 
-    def get_energy(self, protocol_number: Union[str, int]):
+    def get_energy(self, protocol_number: int):
         energies = self.energies.__getitem__(protocol_number=protocol_number)
         if ~np.isnan(energies.G):
             return energies.G
@@ -181,7 +181,3 @@ class Conformer:
         if not self.active:
             return 0 == other._last_energy
         return self._last_energy == other._last_energy
-
-
-if __name__=='__main__':
-    Conformer() 

@@ -73,21 +73,3 @@ def main():
     
     # 8. Run EnAn
     orchestrator.run()
-
-def restart(
-    checkpoint_mgr: CheckpointManager,
-    protocol_mgr: ProtocolManager,
-    logger: Logger
-    ) -> Tuple[List[Conformer], List[Protocol], int]:
-
-    conformers = checkpoint_mgr.load()
-    protocols = protocol_mgr.load()
-    start_from = protocol_mgr.load_last_completed()
-    
-    logger.checkpoint_loaded(
-        conformer_count=len(conformers),
-        protocol_number=start_from
-    )
-    
-    return conformers, protocols, start_from
-

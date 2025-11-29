@@ -14,8 +14,40 @@ class SpectralRecord:
     X : np.ndarray # energy impulses
     Y : np.ndarray # impulse intensity
 
-    def as_dict(self):
-        return {"x": self.X, "y": self.Y}
+    def __post_init__(self):
+        if not isinstance(self.X, np.ndarray):
+            self.X = np.array(self.X)
+        if not isinstance(self.Y, np.ndarray):
+            self.Y = np.array(self.Y)
+
+        if self.X.shape != self.Y.shape:
+            raise ValueError(
+                f"X and Y must have same shape. Got X: {self.X.shape}, Y: {self.Y.shape}"
+            )
+        
+        if self.X.ndim != 1:
+            raise ValueError(f"X and Y must be 1D arrays. Got {self.X.ndim}D")
+
+    def as_dict(self) -> dict:
+        return {
+            "X": self.X.tolist(),
+            "Y": self.Y.tolist(),
+        }
+    
+    @classmethod
+    def from_dict(cls, data: dict) -> 'SpectralRecord':
+        return cls(
+            X=np.array(data["X"]),
+            Y=np.array(data["Y"])
+        )
+    
+    def __len__(self) -> int:
+        return len(self.X)
+    
+    @property
+    def is_empty(self) -> bool:
+        return len(self.X) == 0
+
     
 
 @dataclass
@@ -44,6 +76,4 @@ class SpectralStore:
         for proto_str, graphs in input_dict.get('data', {}).items():
             proto = int(proto_str)
             for graph_type, record_dict in graphs.items():
-                x_array = np.array(record_dict['X'])
-                y_array = np.array(record_dict['Y'])
-                self.data[proto][graph_type] = SpectralRecord(X=x_array, Y=y_array)
+                self.data[proto][graph_type] = SpectralRecord.from_dict(record_dict)
