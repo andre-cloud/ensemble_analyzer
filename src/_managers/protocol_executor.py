@@ -129,7 +129,7 @@ class ProtocolExecutor:
                 include_H=self.config.include_H,
                 set_=True
             )
-            conformers = get_ensemble(conformers)
+            conformers = get_ensemble(conformers, self.logger)
         
         self.generate_report("Summary After Pruning", conformers=conformers, protocol=protocol)
 
