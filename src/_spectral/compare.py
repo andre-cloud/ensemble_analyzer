@@ -121,7 +121,7 @@ class ComparedGraph:
     def _plot_computed_data(self, ax: plt.Axes, in_nm: bool) -> None:
 
         for proto, (X, Y) in self.data.items():
-            if Y[not np.isnan(Y)].size > 0:
+            if Y[~np.isnan(Y)].size > 0:
                 x_values = FACTOR_EV_NM / X if in_nm else X
                 ax.plot(x_values, Y, lw=1, label=f"Protocol {proto}", alpha=.75)
     
