@@ -241,7 +241,7 @@ class PruningManager:
 
         population = boltz_weights / boltz_weights.sum()
 
-        return rel_energies, population
+        return rel_energies * EH_TO_KCAL, population
     
     # ===
     # Logging

@@ -220,7 +220,7 @@ class ClusteringManager:
         colors = [c.color for c in conformers]
         numbers = [c.number for c in conformers]
         energies = np.array([c.energies.get_energy() for c in conformers])
-        energies = energies - energies.min()  # Relative energies
+        energies = (energies - energies.min()) * EH_TO_KCAL  # Relative energies
         
         # Step 2: Calculate distance matrix eigenvalues
         self.logger.debug("Calculating distance matrices...")
