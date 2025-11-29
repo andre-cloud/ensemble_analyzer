@@ -40,7 +40,7 @@ class EnergyRecord:
 
 @dataclass
 class EnergyStore:
-    data: Dict[str, EnergyRecord] = field(default_factory=dict)
+    data: Dict[int, EnergyRecord] = field(default_factory=dict)
 
     def add(self, protocol_number: int, record: EnergyRecord):
         self.data[int(protocol_number)] = record
@@ -52,7 +52,10 @@ class EnergyStore:
         return self.data[last_key]
 
     def __getitem__(self, protocol_number: int) -> EnergyRecord:
-        return self.data.get(int(protocol_number), EnergyRecord())
+        if self.__contains__(protocol_number=protocol_number):
+            return self.data.get(int(protocol_number))
+        
+        return None
 
     def __contains__(self, protocol_number: int) -> bool:
         return int(protocol_number) in self.data
@@ -63,13 +66,21 @@ class EnergyStore:
     
     def get_energy(self) -> float: 
         data = self.last()
-        if ~np.isnan(data.G): 
+        if not np.isnan(data.G): 
             return data.G
         return data.E
     
     def set(self, protocol_number: int, property: str, value: Union[float, np.ndarray]):
-        if self.__contains__(protocol_number=protocol_number): 
-            self.data[protocol_number][property] = value
+        if not self.__contains__(protocol_number):
+            raise KeyError(f"Protocol {protocol_number} not found in EnergyStore")
+        
+        if not hasattr(self.data[protocol_number], property):
+            raise AttributeError(
+                f"EnergyRecord has no attribute '{property}'. "
+                f"Valid: E, G, H, S, G_E, zpve, B, B_vec, m, m_vec, Pop, time, Erel, Freq"
+            )
+        
+        setattr(self.data[protocol_number], property, value)
     
     def log_info(self, protocol_number : int) -> Tuple[float]:
         data = self.__getitem__(int(protocol_number))
