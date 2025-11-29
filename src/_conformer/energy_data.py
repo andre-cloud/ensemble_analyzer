@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field, asdict
-from typing import Optional, Dict, Tuple
+from typing import Optional, Dict, Tuple, Union
 import numpy as np
 
 
@@ -66,6 +66,10 @@ class EnergyStore:
         if ~np.isnan(data.G): 
             return data.G
         return data.E
+    
+    def set(self, protocol_number: int, property: str, value: Union[float, np.ndarray]):
+        if self.__contains__(protocol_number=protocol_number): 
+            self.data[protocol_number][property] = value
     
     def log_info(self, protocol_number : int) -> Tuple[float]:
         data = self.__getitem__(int(protocol_number))

@@ -102,14 +102,11 @@ class ProtocolExecutor:
             final_count=final_active,
             deactivated_count=active_count - final_active
         )
-        
-        # Save snapshot
-        save_snapshot(f"ensemble_after_{protocol.number}.xyz", conformers, self.logger)
-        
+
         # Post-pruning PCA
         if protocol.clustering:
             self.logger.debug("Starting PCA" + f" {protocol.cluster=}")
-            perform_PCA(
+            if perform_PCA(
                 confs=[c for c in conformers if c.active],
                 ncluster=int(protocol.cluster) if (isinstance(protocol.cluster, (int, float)) and protocol.cluster > 1) else None,
                 fname=f"PCA_after_pruning_protocol_{protocol.number}.png",
@@ -117,13 +114,15 @@ class ProtocolExecutor:
                 log=self.logger,
                 include_H=self.config.include_H,
                 set_=True
-            )
-            conformers = get_ensemble(conformers, self.logger)
+            ):
+                conformers = get_ensemble(conformers, self.logger)
         
         self.generate_report("Summary After Pruning", conformers=conformers, protocol=protocol)
 
         self.generate_energy_report(conformers=conformers, protocol_number=protocol.number, T=self.config.temperature)
 
+        # Save snapshot
+        save_snapshot(f"ensemble_after_{protocol.number}.xyz", conformers, self.logger)
 
         # Generate spectra
         main_spectra(
@@ -184,7 +183,7 @@ class ProtocolExecutor:
         rel_energies = (energies - min(energies)) * EH_TO_KCAL
 
         for idx, conf in enumerate(active): 
-            conf.energies.__getitem__(protocol_number=protocol.number).Erel = rel_energies[idx]
+            conf.energies.set(protocol_number=protocol.number, property='Erel', value=rel_energies[idx])
         return
 
 

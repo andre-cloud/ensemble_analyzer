@@ -51,6 +51,9 @@ def perform_PCA(
             title=title,
             include_legend=legend,
         )
+        return True
+    
+    return False
 
 def validate_possible_PCA(ensemble: List[Conformer], logger: Logger, n_clusters: Optional[Union[int, bool]]):
 
