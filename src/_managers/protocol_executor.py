@@ -74,18 +74,6 @@ class ProtocolExecutor:
         
         protocol_start_time = time.perf_counter()
         
-        # Pre-pruning PCA (if DEBUG)
-        if DEBUG or protocol.cluster:
-            perform_PCA(
-                confs=[c for c in conformers if c.active],
-                ncluster=int(protocol.cluster) if (isinstance(protocol.cluster, (int, float)) and protocol.cluster > 1) else None,
-                fname=f"PCA_before_pruning_protocol_{protocol.number}.png",
-                title=f"PCA before pruning protocol {protocol.number}",
-                log=self.logger,
-                set_=False,
-                include_H=self.config.include_H
-            )
-        
         # Run calculations
         self._run_calculations(conformers, protocol)
         
@@ -94,8 +82,7 @@ class ProtocolExecutor:
         self.logger.info(
             f"\nTotal elapsed time for protocol {protocol.number}: "
             f"{datetime.timedelta(seconds=protocol_elapsed)}"
-        )
-        
+        )      
 
         self.generate_report("Summary Before Pruning", conformers=conformers, protocol=protocol)
         
@@ -118,7 +105,7 @@ class ProtocolExecutor:
         save_snapshot(f"ensemble_after_{protocol.number}.xyz", conformers, self.logger)
         
         # Post-pruning PCA
-        if isinstance(protocol.cluster, int) and protocol.cluster > 0:
+        if protocol.clustering:
             self.logger.debug("Starting PCA" + f" {protocol.cluster=}")
             perform_PCA(
                 confs=[c for c in conformers if c.active],

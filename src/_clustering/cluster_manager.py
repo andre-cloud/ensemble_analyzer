@@ -86,21 +86,6 @@ class ClusteringManager:
         # Filter active conformers
         active_confs = [c for c in conformers if c.active]
         
-        # Validate ensemble size
-        if len(active_confs) < MIN_CONFORMERS_FOR_PCA:
-            self.logger.warning(
-                f"PCA skipped: only {len(active_confs)} active conformers "
-                f"(minimum {MIN_CONFORMERS_FOR_PCA} required)"
-            )
-            return None
-        
-        if n_clusters and len(active_confs) <= n_clusters:
-            self.logger.warning(
-                f"PCA skipped: n_clusters ({n_clusters}) >= "
-                f"n_conformers ({len(active_confs)})"
-            )
-            return None
-        
         self.logger.info(
             f"Starting PCA analysis on {len(active_confs)} conformers"
         )

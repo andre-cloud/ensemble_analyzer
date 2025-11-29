@@ -115,6 +115,16 @@ class Protocol:
             f"\tthrB    : {self.thrB} cm-1\n"
             f"\tthrGMAX : {self.thrGMAX} kcal/mol\n"
         )
+    
+    @property
+    def clustering(self):
+        if isinstance(self.cluster, bool):
+            return self.cluster
+        
+        if isinstance(self.cluster, int):
+            return self.cluster > 1
+        
+        return False
 
     # ===
     # Functions

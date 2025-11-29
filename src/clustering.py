@@ -5,7 +5,9 @@ from src._logger.logger import Logger
 from src._clustering.cluster_config import ClusteringConfig
 from src._clustering.cluster_manager import ClusteringManager
 
-from typing import List, Optional
+from src.constants import * 
+
+from typing import List, Optional, Union
 
 
 
@@ -40,13 +42,34 @@ def perform_PCA(
     
     manager = ClusteringManager(logger=log, config=config)
     
-    manager.perform_pca(
-        conformers=confs,
-        n_clusters=ncluster,
-        output_file=fname,
-        title=title,
-        include_legend=legend,
-    )
+
+    if validate_possible_PCA():
+        manager.perform_pca(
+            conformers=confs,
+            n_clusters=ncluster,
+            output_file=fname,
+            title=title,
+            include_legend=legend,
+        )
+
+def validate_possible_PCA(ensemble: List[Conformer], logger: Logger, n_clusters: Optional[Union[int, bool]]):
+
+    ensemble = [conf for conf in ensemble if conf.active]
+    if len(ensemble) < MIN_CONFORMERS_FOR_PCA:
+        logger.warning(
+            f"PCA skipped: only {len(ensemble)} active conformers "
+            f"(minimum {MIN_CONFORMERS_FOR_PCA} required)"
+        )
+        return False
+    
+    if n_clusters and len(ensemble) < n_clusters:
+        logger.warning(
+            f"PCA skipped: n_clusters ({n_clusters}) >= "
+            f"n_conformers ({len(ensemble)})"
+        )
+        return False
+
+    return True
 
 
 def get_ensemble(
