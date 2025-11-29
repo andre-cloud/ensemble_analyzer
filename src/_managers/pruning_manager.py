@@ -126,7 +126,7 @@ class PruningManager:
         for (conf, _), rel_e in zip(active, rel_energies):
             if rel_e > threshold:
                 conf.active = False
-                rows.append((f'Conf {active.number}', f"{rel_e:.2f}"))
+                rows.append((f'Conf {conf.number}', f"{rel_e:.2f}"))
         
         if len(rows) > 0:
             self.logger.table(title="Conformers over energy window", data=rows, headers=header, char='*', width=30)
