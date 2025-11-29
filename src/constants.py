@@ -65,3 +65,13 @@ regex_parsing = {
     "orca": {"ext": "out", },
     "gaussian": {"ext": "log", },
 }
+
+
+MARKERS = [
+    ".", ",", "o", "v", "^", "<", ">", "1", "2", "3",
+    "4", "8", "s", "p", "*", "h", "H", "+", "x", "D",
+    "d", "|", "_", "P", "X",
+]
+
+DEFAULT_RESOLUTION = 500  # Grid resolution for contour plots
+MIN_CONFORMERS_FOR_PCA = 50  # Minimum conformers needed for meaningful PCA
