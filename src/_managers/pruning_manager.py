@@ -150,11 +150,14 @@ class PruningManager:
             for ref_idx in range(idx):
                 ref = conformers[ref_idx]
                 
+                if ref.energies.__getitem__(protocol_number=protocol.number).B == 1:
+                    continue
+
                 if not ref.active: 
                     continue
 
                 result = self._compare_conformers(check, ref, protocol)
-                self.logger.debug(result.to_dict())
+                # self.logger.debug(result.to_dict())
                 if result.should_deactivate:
                     check.active = False
                     check.diactivated_by = ref.number
