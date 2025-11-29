@@ -183,7 +183,7 @@ class ProtocolExecutor:
         rel_energies = (energies - min(energies)) * EH_TO_KCAL
 
         for idx, conf in enumerate(active): 
-            conf.energies.set(protocol_number=protocol.number, property='Erel', value=rel_energies[idx])
+            conf.energies.set(protocol_number=int(protocol.number), property='Erel', value=rel_energies[idx])
         return
 
 
