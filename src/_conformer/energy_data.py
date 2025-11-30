@@ -87,7 +87,7 @@ class EnergyStore:
         erel = f'{data.Erel:.2f}' if not np.isnan(data.Erel) else np.nan
         pop = f'{data.Pop:.2f}' if not np.isnan(data.Pop) else np.nan
 
-        return data.E, data.G_E, data.G, data.B, erel, pop, f'{data.time:.2f}'
+        return data.E, data.G_E, data.G, f'{data.B:.5f}', erel, pop, f'{data.time:.2f}'
 
     def load(self, input_dict):
         self.data = dict()

@@ -370,7 +370,7 @@ class ClusteringManager:
         # Extract data
         x = result.scores[:, 0]
         y = result.scores[:, 1]
-        z = result.energies * 627.509  # Convert Eh to kcal/mol
+        z = result.energies
         
         # Create interpolated grid for contours
         resolution = DEFAULT_RESOLUTION
