@@ -11,7 +11,7 @@ from src._protocol.protocol import Protocol
 from src._logger.logger import Logger
 from src.ensemble_io import save_snapshot
 from src.graph import main_spectra
-from src.clustering import perform_PCA, get_ensemble
+from src.clustering import execute_PCA, get_ensemble
 
 from src._managers.calculation_config import CalculationConfig
 from src._managers.checkpoint_manager import CheckpointManager
@@ -106,7 +106,7 @@ class ProtocolExecutor:
         # Post-pruning PCA
         if protocol.clustering:
             self.logger.debug("Starting PCA" + f" {protocol.cluster=}")
-            if perform_PCA(
+            if execute_PCA(
                 confs=[c for c in conformers if c.active],
                 ncluster=int(protocol.cluster) if (isinstance(protocol.cluster, (int, float)) and protocol.cluster > 1) else None,
                 fname=f"PCA_after_pruning_protocol_{protocol.number}.png",

@@ -11,7 +11,7 @@ from typing import List, Optional, Union
 
 
 
-def perform_PCA(
+def execute_PCA(
     confs: List[Conformer],
     ncluster: Optional[int],
     fname: str,
@@ -52,7 +52,6 @@ def perform_PCA(
             include_legend=legend,
         )
         return True
-    
     return False
 
 def validate_possible_PCA(ensemble: List[Conformer], logger: Logger, n_clusters: Optional[Union[int, bool]]):

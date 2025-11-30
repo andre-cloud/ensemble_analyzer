@@ -9,7 +9,7 @@ from src._conformer.conformer import Conformer
 from src._protocol.protocol import Protocol
 from src.ensemble_io import save_snapshot
 from src.graph import plot_comparative_graphs
-from src.clustering import perform_PCA
+from src.clustering import execute_PCA
 
 from src._logger.logger import Logger
 
@@ -66,7 +66,7 @@ class CalculationOrchestrator:
                 include_hydrogen=self.config.include_H,
                 output_file="initial_pca.png"
             )
-            perform_PCA(
+            execute_PCA(
                 self.conformers,
                 None,
                 "initial_pca.png",
