@@ -87,9 +87,9 @@ class CalculationOrchestrator:
             self.protocol_executor.execute(self.conformers, protocol)
         
         # Final processing
-        self._finalize(protocols=self.protocols)
+        self._finalize(staring_time=start_time)
     
-    def _finalize(self, protocols: List[Protocol]) -> None:
+    def _finalize(self, staring_time) -> None:
         """Finalize calculations and generate reports."""
 
         # Sort final ensemble
@@ -102,13 +102,7 @@ class CalculationOrchestrator:
         # Comparative graphs
         plot_comparative_graphs(self.logger)
         
-        # Calculate total time
-        total_seconds = 0
-        for conf in self.conformers:
-            for protocol in protocols:
-                total_seconds += conf.energies.__getitem__(protocol.number).time
-        
-        total_time = datetime.timedelta(seconds=total_seconds)
+        total_time = datetime.timedelta(seconds=time.perf_counter()-staring_time)
         final_count = len([c for c in self.conformers if c.active])
         
         # Log completion

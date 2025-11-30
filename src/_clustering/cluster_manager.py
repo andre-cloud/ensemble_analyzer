@@ -455,7 +455,7 @@ class ClusteringManager:
             plt.tight_layout()
         
         # Save
-        plt.savefig(output_file, dpi=300, bbox_inches='tight')
+        plt.savefig(output_file, dpi=300)
         plt.close()
         
         self.logger.debug(f"✓ Visualization saved: {output_file}")
