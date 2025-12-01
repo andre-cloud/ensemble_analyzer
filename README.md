@@ -84,6 +84,7 @@ Create `protocol.json`
 | `freq` | bool | Calculate frequencies | `true`, `false` |
 | `mult` | int | Spin multiplicity | `1` (singlet), `2` (doublet) |
 | `charge` | int | Molecular charge | |
+| `calculator` | str | Set the calculator | `orca` (default), `gaussian` |
 | **Pruning Thresholds** ||||
 | `thrG` | float | Energy similarity threshold [kcal/mol] | `3.0`, `5.0` |
 | `thrB` | float | Rotatory constant threshold [cm⁻¹] | `30.0`, `50.0` |
