@@ -1,9 +1,0 @@
-[tool.autopep8]
-ignore = ["E203","W291"]
-max-line-length = 81
-
-[tool.black]
-line-length = 81
-
-[tool.pytest.ini_options]
-testpaths = ["ensemble_analyser",]

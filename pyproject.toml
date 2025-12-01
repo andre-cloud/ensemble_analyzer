@@ -1,0 +1,67 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ensemble-analyzer"
+version = "1.0.0"
+description = "Automatic Refinement of Conformational Ensemble"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+
+authors = [
+    { name = "Andrea Pellegrini", email = "andrea.pellegrini15@unibo.it" },
+    { name = "Paolo Righi", email = "paolo.righi@unibo.it" },
+]
+
+maintainers = [
+    { name = "Andrea Pellegrini", email = "andrea.pellegrini15@unibo.it" },
+    { name = "Paolo Righi", email = "paolo.righi@unibo.it" },
+]
+
+keywords = [
+    "computational-chemistry",
+    "conformational-analysis", 
+    "ensemble-refinement",
+    "automatization",
+    "ase",
+    "quantum-chemistry",
+]
+
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
+    "Topic :: Scientific/Engineering :: Chemistry",
+    "Topic :: Scientific/Engineering :: Physics",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3 :: Only",
+    "Operating System :: OS Independent",
+    "Typing :: Typed",
+]
+
+dependencies = [
+    "numpy==2.2.0",
+    "scipy==1.16.3",
+    "matplotlib==3.10.7",
+    "scikit-learn==1.7.2",
+    "ase==3.24.0",
+    "numba==0.61.2",
+    "tabulate==0.9.0",
+    "InquirerPy==0.3.4",
+]
+
+[project.scripts]
+ensemble_analyzer = "ensemble_analyzer.launch:main"
+ea_regraph = "ensemble_analyzer.cli.regraph:main"
+
+[project.urls]
+Homepage = "XXX"
+Repository = "XXX"
+Changelog = "XXX"
