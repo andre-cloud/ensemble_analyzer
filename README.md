@@ -1,6 +1,6 @@
 # Conformer Ensemble Pruning Software
 
-![logo](/docs/_static/logo.png)
+![logo](logo.png)
 
 This software is a tool designed for molecular modeling to simplify and optimize their pruning and optimizing workflow of an ensemble of conformers. 
 
