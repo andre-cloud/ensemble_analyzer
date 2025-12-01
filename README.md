@@ -1,77 +1,126 @@
-# Conformer Ensemble Pruning Software
+# Ensemble Analyzer
+[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+## Conformer Ensemble Pruning Software
+
 
 ![logo](logo.png)
 
-This software is a tool designed for molecular modeling to simplify and optimize their pruning and optimizing workflow of an ensemble of conformers. 
-
-With this software, users can quickly and easily identify the most important conformers and reduce the computational burden of simulations.
+**EnAn** (Ensemble Analysis) is a Python framework for automated conformational analysis and ensemble processing in computational chemistry workflows.
 
 ---
 
-## Installation
+## 🎯 Key Features
 
-To use the software, follow these steps:
+### Core Capabilities
+- ⚡ **Multi-Protocol Workflows**: Sequential optimization/frequency calculations with automatic pruning
+- 🔬 **Quantum Chemistry Integration**: Support for ORCA and Gaussian
+- 📊 **Advanced Clustering**: PCA-based conformer clustering with multiple feature extraction methods
+- 🎨 **Spectral Analysis**: Generate weighted IR, VCD, UV-vis, and ECD spectra
+- 🔄 **Checkpoint System**: Automatic restart capability with atomic file operations
 
-- Clone the repository onto your local machine using Git.
+### Analysis Tools
+- **Thermochemistry**: Grimme's qRRHO implementation for every integration
+- **Clustering Method**: Distance matrix eigenvalues (rotation/translation invariant).
+- **Pruning**: Intelligent energy-based filtering with Boltzmann weighting
+
+
+---
+
+## 📦 Installation
+
+### Requirements
+- **Python** ≥ 3.9
+- **Core**: NumPy, SciPy, Matplotlib, ASE
+- **Clustering**: scikit-learn
+- **Acceleration**: Numba
+
 ```bash
-git clone https://github.com/username/ensemble-calculation.git
-```
-
-- Install the required dependencies listed in the requirements.txt file. This can be done by running the following command in your terminal:
-```bash
-pip install -r requirements.txt
+pip install ensemble-analyzer
 ```
 
 - Install [ORCA](https://orcaforum.kofo.mpg.de/app.php/portal) from the ORCA Forum
+- *Optional*: Install Gaussian, if licensed
 
-- Export the ORCA command in order to start the ASE calculation
+- Export ORCA verion
 ```bash
-export ASE_ORCA_COMMAND="/complete/path/to/orca/folder/orca PREFIX.inp > PREFIX.out"
+export ORCAVERSION="x.y.z"
 ```
 
-## Usage
+## 🚀 Quick Start
 
-Usage
-
-- Prepare the ensemble:
-    - Create a file containing the conformer structures in XYZ format.
-    - Adjust the charge and multiplicity values as needed.
-
-- Define the protocol:
-    - Create a JSON file specifying the protocol steps, calculation levels, and thresholds.
-    - Specify the functional, frequency calculation, and additional inputs for graph generation if required.
-
-- Run the calculation:
+### 1. Basic Usage
 ```bash
-python ensemble_calculation.py --ensemble <path/to/ensemble.xyz> --protocol <path/to/protocol.json> --cpu <#cpus>
+ensemble_analyzer --ensemble conformers.xyz --protocol protocol.json --output calculation.out --cpu 8 --temperature 298.15
 ```
-   - Optional arguments:
-        - ```--output <output_file>```: Specify the output file name (default: output.out).
-        - ```--cpu <cpu_count>```: Set the number of CPUs to allocate (default: maximum available CPUs).
-        - ```--temperature <temperature>```: Set the temperature in Kelvin (default: 298.15 K).
-        - ```--final_lambda <final_lambda>```: Set the final lambda value for graph generation (default: 800.0).
-        - ```--definition <definition>```: Set the definition value for graph generation (default: 4).
-        - ```--fwhm <fwhm>```: Set the full width at half maximum (FWHM) for graph generation (default: None).
-        - ```--shift <shift>```: Set the shift value for graph generation (default: None).
-        - ```--invert```: Invert the energy axis for graph generation (default: False).
-        - ```--restart```: Restart the calculation from a previous checkpoint.
 
-- View the results:
-    - The calculation output and log file will be saved in the current directory.
-    - Summary tables and graphs will be generated for each protocol step.
-    -  Final results and a summary will be displayed in the log.
+### 2. Restart from Checkpoint
+```bash
+# Automatically resumes from last completed protocol
+ensemble_analyzer --restart
+```
 
+### 3. Define your protocol file
+Create `protocol.json`
+```json
+{
+    "0": {"funcional": "r2SCAN-3c", "opt": true, "freq": true,"cluster": 5, "comment": "Initial Optimization cluster into 5 families"},
+    "1": {"funcional": "wB97X-D4rev", "basis": "def2-QZVPPD", "comment": "Single Point energy evaluation"}
+}
 
+```
 ---
 
-## Contributing
+### Protocol Parameters
 
-Contributions to this software are always welcome! If you have any ideas or suggestions, please feel free to submit a pull request or open an issue.
+| Parameter | Type | Description | Example |
+|-----------|------|-------------|---------|
+| **Calculation Settings** ||||
+| `functional` | str | DFT functional or method | `"B3LYP"`, `"xtb"`, `"HF-3c"` |
+| `basis` | str | Basis set (auto for composite methods) | `"def2-SVP"`, `"def2-TZVP"` |
+| `calculator` | str | QM program | `"orca"` (default), `"gaussian"` |
+| `opt` | bool | Optimize geometry | `true`, `false` |
+| `freq` | bool | Calculate frequencies | `true`, `false` |
+| `mult` | int | Spin multiplicity | `1` (singlet), `2` (doublet) |
+| `charge` | int | Molecular charge | |
+| **Pruning Thresholds** ||||
+| `thrG` | float | Energy similarity threshold [kcal/mol] | `3.0`, `5.0` |
+| `thrB` | float | Rotatory constant threshold [cm⁻¹] | `30.0`, `50.0` |
+| `thrGMAX` | float | Energy window cutoff [kcal/mol] | `10.0` |
+| `cluster` | bool/int | Enable clustering | `true` (auto), `5` (fixed) |
+| `no_prune` | bool | Disable pruning | `false` (default) |
+| **Advanced** ||||
+| `solvent` | dict | Implicit solvation | `{"solvent": "water", "model": "SMD"}` |
+| `constrains` | list | Geometry constraints (only on cartesians)| `[1,2]` (fix cartesians) |
+| `monitor_internals` | list | Track bond/angle/dihedral | `[[0,1], [0,1,2]]` |
+| `skip_opt_fail` | bool | Skip failed optimizations | `false` (default) |
 
-## License
+---
+## 🤝 Contributing
+
+### Development Workflow
+```bash
+# Fork and clone
+git clone https://github.com/your-username/enan.git
+cd enan
+
+# Create feature branch
+git checkout -b feature/awesome-feature
+
+# Install dev dependencies
+pip install -e .
+
+# Commit and push
+git commit -m "Add awesome feature"
+git push origin feature/awesome-feature
+```
+---
+
+## 📄 License
 
 This software is licensed under the MIT-3.0 License. See the LICENSE file for details.
 
-## Contact
+## 📞 Support and contact
 
-For any questions or support, please contact [by email](mailto:andrea.pellegrini15@unibo.it).
+For any questions or support, please contact [by email](mailto:andrea.pellegrini15@unibo.it,paolo.righi@unibo.it).
