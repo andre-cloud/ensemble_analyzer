@@ -103,8 +103,8 @@ Create `protocol.json`
 ### Development Workflow
 ```bash
 # Fork and clone
-git clone https://github.com/your-username/enan.git
-cd enan
+git clone https://github.com/andre-cloud/ensemble_analyzer.git
+cd ensemble_analyzer
 
 # Create feature branch
 git checkout -b feature/awesome-feature
