@@ -50,18 +50,7 @@ export ORCAVERSION="x.y.z"
 
 ## 🚀 Quick Start
 
-### 1. Basic Usage
-```bash
-ensemble_analyzer --ensemble conformers.xyz --protocol protocol.json --output calculation.out --cpu 8 --temperature 298.15
-```
-
-### 2. Restart from Checkpoint
-```bash
-# Automatically resumes from last completed protocol
-ensemble_analyzer --restart
-```
-
-### 3. Define your protocol file
+### 1. Define your protocol file
 Create `protocol.json`
 ```json
 {
@@ -69,6 +58,17 @@ Create `protocol.json`
     "1": {"funcional": "wB97X-D4rev", "basis": "def2-QZVPPD", "comment": "Single Point energy evaluation"}
 }
 
+```
+
+### 2. Basic Usage
+```bash
+ensemble_analyzer --ensemble conformers.xyz --protocol protocol.json --output calculation.out --cpu 8 --temperature 298.15
+```
+
+### 3. Restart from Checkpoint
+```bash
+# Automatically resumes from last completed protocol
+ensemble_analyzer --restart
 ```
 ---
 
