@@ -71,7 +71,9 @@ class GaussianCalc(BaseCalc):
             calc.parameters["extra"] += " opt"
         else:
             calc.parameters["extra"] += " opt=(modredudant)"
-            redundant = "\n".join([f"X {i} F" for i in self.protocol.constrains])
+            redundant = "\n".join([f"X {i+1} F" for i in self.protocol.constrains])
+            # Counting in gaussian starts at 1
+            
             if calc.parameters.get("addsec"):
                 calc.parameters["addsec"] += redundant
             else: 

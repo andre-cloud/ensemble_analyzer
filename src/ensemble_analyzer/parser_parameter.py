@@ -26,7 +26,7 @@ def tranform_float(freq) -> str:
 
 
 def get_conf_parameters(
-    conf: Conformer, number: int, output: str, p: float, time: datetime, temp: float, log: Logger
+    conf: Conformer, number: int, output: str, p, time: datetime, temp: float, log: Logger
 ) -> bool:
     """Obtain the parameters for a conformer: E, G, B, m
 
@@ -34,7 +34,7 @@ def get_conf_parameters(
         conf (Conformer): Conformer
         number (int): Protocol number
         output (str): Output File
-        p (float): Pressure [Pa]
+        p (Protocol): Protocol
         time (datetime): Time of execution
         temp (float): Temperature [K]
         log (Logger): Logging system
@@ -65,6 +65,8 @@ def get_conf_parameters(
                 log.warning(
                     f'{log.WARNING} Optimization did not correctly converge (maybe increase number of iteration). Conf {conf.number} will be deactivated')
                 return True
+        else: 
+            raise "Calculation stopped, geometry not converged correctly"
 
         # TODO: LOGICA PER UN'OTTIMIZZAZIONE NON COMPLETATA
         # Si potrebbe rilanciare l'ottimizzazione...
