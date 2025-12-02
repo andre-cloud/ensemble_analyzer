@@ -1,4 +1,4 @@
-import os
+import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -184,7 +184,8 @@ class ComparedGraph:
         if save:
             suffix = "_nm" if in_nm else ""
             fname = f"{self.graph_type.upper()}_comparison{suffix}.png"
-            plt.savefig(fname, dpi=300, bbox_inches='tight')
+            pickle.dump(fig, open(f"{self.graph_type.upper()}_comparison{suffix}.pickle", 'wb'))
+            plt.savefig(fname, dpi=300)
             if self.log:
                 self.log.info(f"Saved {fname}")
         

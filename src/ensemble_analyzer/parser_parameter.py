@@ -59,14 +59,14 @@ def get_conf_parameters(
     if p.opt or 'opt' in p.add_input.lower() or 'opt' in p.functional.lower():
         conf.last_geometry = parser.parse_geom().copy()
 
-        if p.skip_opt_fail:
-            if not parser.opt_done():
+        if not parser.opt_done():
+            if p.skip_opt_fail:
                 conf.active = False
                 log.warning(
                     f'{log.WARNING} Optimization did not correctly converge (maybe increase number of iteration). Conf {conf.number} will be deactivated')
                 return True
-        else: 
-            raise "Calculation stopped, geometry not converged correctly"
+            else: 
+                raise f"Calculation for Conf {conf.number} did not finished: geometry not converged correctly"
 
         # TODO: LOGICA PER UN'OTTIMIZZAZIONE NON COMPLETATA
         # Si potrebbe rilanciare l'ottimizzazione...
