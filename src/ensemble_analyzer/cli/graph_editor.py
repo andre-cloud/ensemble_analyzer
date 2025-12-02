@@ -1,14 +1,29 @@
 #!/usr/bin/env python3
+"""
+TUI interattiva per modificare legende e colori in pickle di figure matplotlib.
+
+Mode predefinito: Interactive TUI
+Mode batch disponibile con flag --batch
+
+Sicurezza: Carica SOLO pickle da fonti fidate. Il modulo pickle può eseguire
+codice arbitrario durante la deserializzazione.
+
+Dipendenze:
+    pip install matplotlib InquirerPy rich
+
+Autore: Senior Python Developer
+Versione: 2.0.0
+"""
 
 import argparse
 import pickle
 import sys
 import logging
 from pathlib import Path
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional, List
 import warnings
 
-# Matplotlib potrebbe non essere presente
+# Matplotlib (required)
 try:
     import matplotlib
     import matplotlib.pyplot as plt
@@ -19,10 +34,31 @@ except ImportError:
           file=sys.stderr)
     sys.exit(1)
 
+# InquirerPy (required per TUI)
+try:
+    from InquirerPy import inquirer
+    from InquirerPy.base.control import Choice
+    from InquirerPy.separator import Separator
+    INQUIRER_AVAILABLE = True
+except ImportError:
+    INQUIRER_AVAILABLE = False
+
+# Rich (required per output colorato)
+try:
+    from rich.console import Console
+    from rich.table import Table
+    from rich.panel import Panel
+    from rich.prompt import Confirm
+    RICH_AVAILABLE = True
+    console = Console()
+except ImportError:
+    RICH_AVAILABLE = False
+    console = None
+
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
+    level=logging.WARNING,  # Meno verboso in TUI mode
     format='%(levelname)s: %(message)s'
 )
 logger = logging.getLogger(__name__)
@@ -36,33 +72,25 @@ class PickleSecurityError(Exception):
 class MatplotlibPickleEditor:
     """Editor per modificare legende e colori in figure matplotlib pickled."""
     
+    COMMON_COLORS = [
+        'red', 'blue', 'green', 'black', 'orange', 'purple', 'brown',
+        'pink', 'gray', 'cyan', 'magenta', 'yellow',
+        '#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E',
+        '#BC4B51', '#5B8E7D', '#8B5A3C', '#264653', '#E76F51'
+    ]
+    
     def __init__(self, pickle_path: Path, strict_validation: bool = True):
-        """
-        Args:
-            pickle_path: Path al file pickle
-            strict_validation: Se True, valida rigorosamente il tipo dell'oggetto
-        
-        Raises:
-            FileNotFoundError: Se il file non esiste
-            PickleSecurityError: Se la validazione fallisce
-        """
         self.pickle_path = pickle_path
         self.strict_validation = strict_validation
         self.figure: Optional[Figure] = None
         self.axes: Optional[Axes] = None
+        self._modifications_made = False
         
         if not self.pickle_path.exists():
             raise FileNotFoundError(f"File non trovato: {self.pickle_path}")
     
     def load(self) -> None:
-        """Carica e valida il pickle.
-        
-        Raises:
-            PickleSecurityError: Se l'oggetto non è una Figure matplotlib valida
-            pickle.UnpicklingError: Se il file è corrotto
-        """
-        logger.info(f"Caricamento pickle: {self.pickle_path}")
-        
+        """Carica e valida il pickle."""
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             
@@ -74,38 +102,28 @@ class MatplotlibPickleEditor:
                     f"File pickle corrotto o non valido: {e}"
                 ) from e
         
-        # Validazione tipo
         if not isinstance(obj, Figure):
             if self.strict_validation:
                 raise PickleSecurityError(
                     f"Oggetto non è matplotlib.figure.Figure, ma {type(obj)}"
                 )
             else:
-                logger.warning(
-                    f"ATTENZIONE: Tipo inatteso {type(obj)}, procedo comunque"
-                )
+                logger.warning(f"ATTENZIONE: Tipo inatteso {type(obj)}")
         
         self.figure = obj
         
-        # Ottieni primo axes (assunzione: single subplot)
         if self.figure.axes:
             self.axes = self.figure.axes[0]
-            logger.info(f"Trovati {len(self.figure.axes)} axes, uso il primo")
         else:
             raise PickleSecurityError("Nessun axes trovato nella figure")
     
     def get_legend_labels(self) -> Dict[int, str]:
-        """Ottiene le label correnti della legenda.
-        
-        Returns:
-            Dict mappando indice -> label testuale
-        """
+        """Ottiene le label correnti della legenda."""
         if not self.axes:
             raise RuntimeError("Devi chiamare load() prima")
         
         legend = self.axes.get_legend()
         if not legend:
-            logger.warning("Nessuna legenda presente")
             return {}
         
         labels = {}
@@ -114,21 +132,32 @@ class MatplotlibPickleEditor:
         
         return labels
     
-    def rename_legend_labels(self, mapping: Dict[str, str]) -> int:
-        """Rinomina le label della legenda.
-        
-        Args:
-            mapping: Dict {vecchio_nome: nuovo_nome}
-        
-        Returns:
-            Numero di label rinominate
-        """
+    def get_line_colors(self) -> Dict[str, str]:
+        """Ottiene i colori correnti delle linee."""
         if not self.axes:
             raise RuntimeError("Devi chiamare load() prima")
         
         legend = self.axes.get_legend()
         if not legend:
-            logger.warning("Nessuna legenda da rinominare")
+            return {}
+        
+        lines = self.axes.get_lines()
+        colors = {}
+        
+        for line, text in zip(lines, legend.get_texts()):
+            label = text.get_text()
+            color = matplotlib.colors.to_hex(line.get_color())
+            colors[label] = color
+        
+        return colors
+    
+    def rename_legend_labels(self, mapping: Dict[str, str]) -> int:
+        """Rinomina le label della legenda."""
+        if not self.axes:
+            raise RuntimeError("Devi chiamare load() prima")
+        
+        legend = self.axes.get_legend()
+        if not legend:
             return 0
         
         renamed = 0
@@ -136,21 +165,13 @@ class MatplotlibPickleEditor:
             current_label = text.get_text()
             if current_label in mapping:
                 text.set_text(mapping[current_label])
-                logger.info(f"'{current_label}' -> '{mapping[current_label]}'")
                 renamed += 1
+                self._modifications_made = True
         
         return renamed
     
     def change_line_colors(self, label_color_map: Dict[str, str]) -> int:
-        """Cambia colori delle linee basandosi sulla label.
-        
-        Args:
-            label_color_map: Dict {label: colore}
-                colore può essere: 'red', '#FF0000', (1,0,0), etc.
-        
-        Returns:
-            Numero di linee modificate
-        """
+        """Cambia colori delle linee."""
         if not self.axes:
             raise RuntimeError("Devi chiamare load() prima")
         
@@ -158,10 +179,8 @@ class MatplotlibPickleEditor:
         legend = self.axes.get_legend()
         
         if not legend:
-            logger.warning("Nessuna legenda per mappare label->linee")
             return 0
         
-        # Mappa label -> line objects
         label_to_lines = {}
         for line, text in zip(lines, legend.get_texts()):
             label = text.get_text()
@@ -172,26 +191,16 @@ class MatplotlibPickleEditor:
             if label in label_to_lines:
                 try:
                     label_to_lines[label].set_color(color)
-                    logger.info(f"Colore '{label}' -> {color}")
                     changed += 1
-                except ValueError as e:
-                    logger.error(f"Colore invalido '{color}': {e}")
-            else:
-                logger.warning(f"Label '{label}' non trovata")
+                    self._modifications_made = True
+                except ValueError:
+                    pass
         
         return changed
     
     def save(self, output_path: Optional[Path] = None, 
              format: str = 'pickle') -> Path:
-        """Salva la figure modificata.
-        
-        Args:
-            output_path: Path di output (None = overwrite input)
-            format: 'pickle' o formato immagine ('png', 'pdf', etc.)
-        
-        Returns:
-            Path del file salvato
-        """
+        """Salva la figure modificata."""
         if not self.figure:
             raise RuntimeError("Devi chiamare load() prima")
         
@@ -204,198 +213,330 @@ class MatplotlibPickleEditor:
         if format == 'pickle':
             with open(output_path, 'wb') as f:
                 pickle.dump(self.figure, f, protocol=pickle.HIGHEST_PROTOCOL)
-            logger.info(f"Pickle salvato: {output_path}")
         else:
             self.figure.savefig(output_path, format=format, dpi=300, 
                                bbox_inches='tight')
-            logger.info(f"Immagine salvata: {output_path}")
         
+        self._modifications_made = False
         return output_path
     
     def preview(self) -> None:
-        """Mostra la figure per preview (blocca l'esecuzione)."""
+        """Mostra la figure per preview."""
         if not self.figure:
             raise RuntimeError("Devi chiamare load() prima")
-        
         plt.show()
+    
+    def has_modifications(self) -> bool:
+        """Controlla se ci sono modifiche non salvate."""
+        return self._modifications_made
+
+
+class InteractiveTUI:
+    """Terminal User Interface interattiva usando InquirerPy."""
+    
+    def __init__(self, editor: MatplotlibPickleEditor):
+        if not INQUIRER_AVAILABLE:
+            raise RuntimeError(
+                "InquirerPy non installato. Esegui: pip install InquirerPy"
+            )
+        
+        self.editor = editor
+        self.console = console if RICH_AVAILABLE else None
+    
+    def print_panel(self, message: str, title: str = "Info", style: str = "cyan") -> None:
+        """Stampa un pannello formattato."""
+        if self.console:
+            self.console.print(Panel(message, title=title, border_style=style))
+        else:
+            print(f"\n{title}: {message}\n")
+    
+    def show_current_state(self) -> None:
+        """Mostra stato corrente della figura."""
+        labels = self.editor.get_legend_labels()
+        colors = self.editor.get_line_colors()
+        
+        if not labels:
+            self.print_panel("Nessuna legenda trovata", "Attenzione", "yellow")
+            return
+        
+        if self.console:
+            table = Table(title="Stato Corrente Legenda", show_header=True, 
+                         header_style="bold cyan")
+            table.add_column("Indice", style="dim", width=8)
+            table.add_column("Label", style="bold")
+            table.add_column("Colore", style="magenta")
+            
+            for idx, label in labels.items():
+                color = colors.get(label, "N/A")
+                table.add_row(str(idx), label, color)
+            
+            self.console.print(table)
+        else:
+            print("\n=== Stato Corrente ===")
+            for idx, label in labels.items():
+                color = colors.get(label, "N/A")
+                print(f"  [{idx}] {label} (colore: {color})")
+            print()
+    
+    def rename_labels_flow(self) -> None:
+        """Flow interattivo per rinominare label."""
+        labels = self.editor.get_legend_labels()
+        
+        if not labels:
+            self.print_panel("Nessuna label da rinominare", "Errore", "red")
+            return
+        
+        # Selezione label da rinominare
+        choices = [
+            Choice(value=label, name=f"{label} [{idx}]") 
+            for idx, label in labels.items()
+        ]
+        choices.append(Separator())
+        choices.append(Choice(value=None, name="← Torna indietro"))
+        
+        selected = inquirer.select(
+            message="Seleziona label da rinominare:",
+            choices=choices,
+            default=None
+        ).execute()
+        
+        if selected is None:
+            return
+        
+        # Input nuovo nome
+        new_name = inquirer.text(
+            message=f"Nuovo nome per '{selected}':",
+            default=selected
+        ).execute()
+        
+        if new_name and new_name != selected:
+            self.editor.rename_legend_labels({selected: new_name})
+            self.print_panel(f"'{selected}' → '{new_name}'", "Successo", "green")
+    
+    def change_colors_flow(self) -> None:
+        """Flow interattivo per cambiare colori."""
+        labels = self.editor.get_legend_labels()
+        colors = self.editor.get_line_colors()
+        
+        if not labels:
+            self.print_panel("Nessuna label trovata", "Errore", "red")
+            return
+        
+        # Selezione label
+        choices = [
+            Choice(value=label, 
+                   name=f"{label} (attuale: {colors.get(label, 'N/A')})") 
+            for label in labels.values()
+        ]
+        choices.append(Separator())
+        choices.append(Choice(value=None, name="← Torna indietro"))
+        
+        selected = inquirer.select(
+            message="Seleziona label per cambiare colore:",
+            choices=choices,
+            default=None
+        ).execute()
+        
+        if selected is None:
+            return
+        
+        # Scelta metodo input colore
+        color_method = inquirer.select(
+            message="Come vuoi specificare il colore?",
+            choices=[
+                Choice(value="preset", name="Scegli da palette predefinita"),
+                Choice(value="custom", name="Inserisci manualmente (nome o hex)"),
+                Choice(value=None, name="← Annulla")
+            ],
+            default="preset"
+        ).execute()
+        
+        if color_method is None:
+            return
+        
+        if color_method == "preset":
+            # Palette predefinita con preview
+            color_choices = [
+                Choice(value=c, name=f"{c}") 
+                for c in self.editor.COMMON_COLORS
+            ]
+            color_choices.append(Separator())
+            color_choices.append(Choice(value=None, name="← Annulla"))
+            
+            new_color = inquirer.select(
+                message="Seleziona colore:",
+                choices=color_choices,
+                default=None
+            ).execute()
+        else:
+            # Input manuale
+            new_color = inquirer.text(
+                message="Colore (nome o hex #RRGGBB):",
+                validate=lambda x: len(x) > 0
+            ).execute()
+        
+        if new_color:
+            self.editor.change_line_colors({selected: new_color})
+            self.print_panel(
+                f"Colore di '{selected}' cambiato in {new_color}", 
+                "Successo", "green"
+            )
+    
+    def save_flow(self) -> None:
+        """Flow interattivo per salvare."""
+        if not self.editor.has_modifications():
+            self.print_panel("Nessuna modifica da salvare", "Info", "yellow")
+            return
+        
+        # Formato output
+        format_choice = inquirer.select(
+            message="Formato di salvataggio:",
+            choices=[
+                Choice(value="pickle", name="Pickle (modificabile successivamente)"),
+                Choice(value="png", name="PNG (immagine)"),
+                Choice(value="pdf", name="PDF (vettoriale)"),
+                Choice(value="svg", name="SVG (vettoriale)"),
+                Choice(value=None, name="← Annulla")
+            ],
+            default="pickle"
+        ).execute()
+        
+        if format_choice is None:
+            return
+        
+        # Output path
+        default_name = self.editor.pickle_path.stem
+        if format_choice != "pickle":
+            default_name = f"{default_name}_modified"
+        
+        custom_path = inquirer.confirm(
+            message="Vuoi specificare un path custom?",
+            default=False
+        ).execute()
+        
+        output_path = None
+        if custom_path:
+            path_str = inquirer.text(
+                message="Path di output:",
+                default=f"{default_name}.{format_choice}"
+            ).execute()
+            output_path = Path(path_str)
+        
+        try:
+            saved_path = self.editor.save(output_path, format_choice)
+            self.print_panel(f"Salvato: {saved_path}", "Successo", "green")
+        except Exception as e:
+            self.print_panel(f"Errore salvataggio: {e}", "Errore", "red")
+    
+    def run(self) -> None:
+        """Main loop TUI."""
+        if self.console:
+            self.console.clear()
+            self.console.print(
+                Panel.fit(
+                    "[bold cyan]Editor Interattivo Matplotlib Pickle[/]\n"
+                    f"File: {self.editor.pickle_path}",
+                    border_style="cyan"
+                )
+            )
+        
+        while True:
+            # Mostra stato
+            self.show_current_state()
+            
+            # Menu principale
+            action = inquirer.select(
+                message="Cosa vuoi fare?",
+                choices=[
+                    Choice(value="rename", name="📝 Rinomina label legenda"),
+                    Choice(value="color", name="🎨 Cambia colori linee"),
+                    Separator(),
+                    Choice(value="preview", name="👁️  Preview figura"),
+                    Choice(value="save", name="💾 Salva modifiche"),
+                    Separator(),
+                    Choice(value="reload", name="🔄 Ricarica file originale"),
+                    Choice(value="exit", name="🚪 Esci"),
+                ],
+                default="rename"
+            ).execute()
+            
+            if action == "rename":
+                self.rename_labels_flow()
+            elif action == "color":
+                self.change_colors_flow()
+            elif action == "preview":
+                self.print_panel("Chiudi la finestra matplotlib per continuare", "Info")
+                self.editor.preview()
+            elif action == "save":
+                self.save_flow()
+            elif action == "reload":
+                if self.editor.has_modifications():
+                    confirm = inquirer.confirm(
+                        message="Hai modifiche non salvate. Ricaricare comunque?",
+                        default=False
+                    ).execute()
+                    if not confirm:
+                        continue
+                
+                self.editor.load()
+                self.print_panel("File ricaricato", "Successo", "green")
+            elif action == "exit":
+                if self.editor.has_modifications():
+                    confirm = inquirer.confirm(
+                        message="Hai modifiche non salvate. Uscire comunque?",
+                        default=False
+                    ).execute()
+                    if not confirm:
+                        continue
+                
+                if self.console:
+                    self.console.print("\n[cyan]Arrivederci! 👋[/]\n")
+                else:
+                    print("\nArrivederci!\n")
+                break
 
 
 def parse_mapping_file(filepath: Path) -> Dict[str, str]:
-    """Parsa file di mapping nel formato: vecchio_nome=nuovo_nome
-    
-    Args:
-        filepath: Path al file di configurazione
-    
-    Returns:
-        Dict di mappatura
-    
-    Example file content:
-        Protocol 1=Protocollo A
-        Experimental=Sperimentale
-        # commento ignorato
-    """
+    """Parsa file di mapping OLD=NEW."""
     mapping = {}
-    
     with open(filepath, 'r', encoding='utf-8') as f:
         for line_num, line in enumerate(f, 1):
             line = line.strip()
-            
-            # Salta commenti e linee vuote
             if not line or line.startswith('#'):
                 continue
-            
             if '=' not in line:
-                logger.warning(
-                    f"Linea {line_num} ignorata (formato invalido): {line}"
-                )
+                logger.warning(f"Linea {line_num} ignorata: {line}")
                 continue
-            
             old, new = line.split('=', 1)
             mapping[old.strip()] = new.strip()
-    
     return mapping
 
 
-def main():
-    """Entry point CLI."""
-    parser = argparse.ArgumentParser(
-        description='Modifica legende e colori in pickle matplotlib',
-        formatter_class=argparse.RawDescriptionHelpFormatter,
-        epilog="""
-Esempi d'uso:
-  
-  # Lista label correnti
-  %(prog)s plot.pkl --list
-  
-  # Rinomina singola label
-  %(prog)s plot.pkl --rename "Protocol 1" "Protocollo A"
-  
-  # Rinomina da file di configurazione
-  %(prog)s plot.pkl --rename-file mappings.txt
-  
-  # Cambia colore
-  %(prog)s plot.pkl --color "Experimental" red
-  
-  # Operazioni multiple + salva come nuova figura
-  %(prog)s plot.pkl --rename "Protocol 1" "Proto A" \\
-                    --color "Proto A" "#FF5733" \\
-                    --output modified.pkl
-  
-  # Preview prima di salvare
-  %(prog)s plot.pkl --rename "Protocol 1" "Proto A" --preview
-  
-  # Esporta come PNG invece di pickle
-  %(prog)s plot.pkl --rename "Protocol 1" "Proto A" \\
-                    --output result.png --format png
-
-Formato file mapping (--rename-file):
-  vecchio_nome=nuovo_nome
-  Protocol 1=Protocollo A
-  Experimental=Sperimentale
-  # commenti iniziano con #
-        """
-    )
-    
-    parser.add_argument(
-        'pickle_file',
-        type=Path,
-        help='File pickle contenente matplotlib Figure'
-    )
-    
-    # Azioni di query
-    query_group = parser.add_argument_group('query')
-    query_group.add_argument(
-        '--list', '-l',
-        action='store_true',
-        help='Lista le label correnti e termina'
-    )
-    
-    # Azioni di modifica
-    mod_group = parser.add_argument_group('modifiche')
-    mod_group.add_argument(
-        '--rename', '-r',
-        nargs=2,
-        metavar=('OLD', 'NEW'),
-        action='append',
-        help='Rinomina label (può essere specificato più volte)'
-    )
-    mod_group.add_argument(
-        '--rename-file', '-rf',
-        type=Path,
-        metavar='FILE',
-        help='File contenente mappature OLD=NEW (una per linea)'
-    )
-    mod_group.add_argument(
-        '--color', '-c',
-        nargs=2,
-        metavar=('LABEL', 'COLOR'),
-        action='append',
-        help='Cambia colore linea per label (può essere specificato più volte)'
-    )
-    
-    # Output
-    output_group = parser.add_argument_group('output')
-    output_group.add_argument(
-        '--output', '-o',
-        type=Path,
-        help='File di output (default: sovrascrive input se pickle)'
-    )
-    output_group.add_argument(
-        '--format', '-f',
-        default='pickle',
-        choices=['pickle', 'png', 'pdf', 'svg', 'jpg'],
-        help='Formato output (default: pickle)'
-    )
-    output_group.add_argument(
-        '--preview', '-p',
-        action='store_true',
-        help='Mostra preview prima di salvare'
-    )
-    
-    # Opzioni avanzate
-    adv_group = parser.add_argument_group('avanzate')
-    adv_group.add_argument(
-        '--no-strict',
-        action='store_true',
-        help='Disabilita validazione rigorosa del tipo'
-    )
-    adv_group.add_argument(
-        '--verbose', '-v',
-        action='store_true',
-        help='Output verboso'
-    )
-    
-    args = parser.parse_args()
-    
-    # Setup logging level
-    if args.verbose:
-        logger.setLevel(logging.DEBUG)
-    
+def batch_mode(args):
+    """Esegue in batch mode (non interattivo)."""
     try:
-        # Inizializza editor
-        editor = MatplotlibPickleEditor(
-            args.pickle_file,
-            strict_validation=not args.no_strict
-        )
+        editor = MatplotlibPickleEditor(args.pickle_file, 
+                                       strict_validation=not args.no_strict)
         editor.load()
         
         # Query mode: lista e termina
         if args.list:
             labels = editor.get_legend_labels()
             if not labels:
-                print("Nessuna label trovata nella legenda")
+                print("Nessuna label trovata")
                 return 0
             
-            print(f"\nLabel correnti in {args.pickle_file}:")
+            print(f"\nLabel in {args.pickle_file}:")
             print("-" * 50)
             for idx, label in labels.items():
-                print(f"  [{idx}] {label}")
+                colors = editor.get_line_colors()
+                color = colors.get(label, "N/A")
+                print(f"  [{idx}] {label} (colore: {color})")
             print()
             return 0
         
-        # Costruisci mappature di rinominazione
+        # Rinominazioni
         rename_map = {}
-        
         if args.rename:
             for old, new in args.rename:
                 rename_map[old] = new
@@ -403,46 +544,117 @@ Formato file mapping (--rename-file):
         if args.rename_file:
             file_map = parse_mapping_file(args.rename_file)
             rename_map.update(file_map)
-            logger.info(f"Caricate {len(file_map)} mappature da file")
         
-        # Applica rinominazioni
         if rename_map:
             count = editor.rename_legend_labels(rename_map)
-            logger.info(f"Rinominate {count}/{len(rename_map)} label")
+            logger.info(f"Rinominate {count} label")
         
-        # Costruisci mappature colori
+        # Colori
         color_map = {}
         if args.color:
             for label, color in args.color:
                 color_map[label] = color
         
-        # Applica colori
         if color_map:
             count = editor.change_line_colors(color_map)
-            logger.info(f"Cambiati {count}/{len(color_map)} colori")
+            logger.info(f"Cambiati {count} colori")
         
         # Preview
         if args.preview:
-            logger.info("Apertura preview (chiudi finestra per continuare)")
             editor.preview()
         
-        # Salva se ci sono state modifiche
+        # Salva
         if rename_map or color_map:
             output_path = editor.save(args.output, args.format)
-            logger.info(f"✓ Modifiche salvate: {output_path}")
+            print(f"✓ Salvato: {output_path}")
         else:
-            logger.warning("Nessuna modifica specificata. Usa --help per info.")
+            logger.warning("Nessuna modifica specificata")
         
         return 0
         
-    except (FileNotFoundError, PickleSecurityError, RuntimeError) as e:
+    except Exception as e:
         logger.error(f"✗ {e}")
         return 1
+
+
+def main():
+    """Entry point CLI."""
+    parser = argparse.ArgumentParser(
+        description='Editor interattivo/batch per pickle matplotlib',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+MODE PREDEFINITO: Interactive TUI
+  python %(prog)s plot.pkl
+
+MODE BATCH (esempi):
+  python %(prog)s plot.pkl --batch --list
+  python %(prog)s plot.pkl --batch --rename "Protocol 1" "Proto A"
+  python %(prog)s plot.pkl --batch --color "Experimental" red --output new.pkl
+        """
+    )
+    
+    parser.add_argument('pickle_file', type=Path, 
+                       help='File pickle matplotlib')
+    
+    parser.add_argument('--batch', '-b', action='store_true',
+                       help='Mode batch (non interattivo)')
+    
+    # Opzioni batch mode
+    batch_group = parser.add_argument_group('batch mode options')
+    batch_group.add_argument('--list', '-l', action='store_true',
+                            help='Lista label e termina')
+    batch_group.add_argument('--rename', '-r', nargs=2, 
+                            metavar=('OLD', 'NEW'), action='append',
+                            help='Rinomina label')
+    batch_group.add_argument('--rename-file', '-rf', type=Path,
+                            help='File mappature OLD=NEW')
+    batch_group.add_argument('--color', '-c', nargs=2,
+                            metavar=('LABEL', 'COLOR'), action='append',
+                            help='Cambia colore')
+    batch_group.add_argument('--output', '-o', type=Path,
+                            help='File output')
+    batch_group.add_argument('--format', '-f', default='pickle',
+                            choices=['pickle', 'png', 'pdf', 'svg'],
+                            help='Formato output')
+    batch_group.add_argument('--preview', '-p', action='store_true',
+                            help='Preview prima di salvare')
+    
+    parser.add_argument('--no-strict', action='store_true',
+                       help='Disabilita validazione rigorosa')
+    parser.add_argument('--verbose', '-v', action='store_true',
+                       help='Output verboso')
+    
+    args = parser.parse_args()
+    
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+    
+    # Batch mode
+    if args.batch:
+        return batch_mode(args)
+    
+    # Interactive TUI mode (default)
+    if not INQUIRER_AVAILABLE:
+        print("ERRORE: Mode interattivo richiede InquirerPy", file=sys.stderr)
+        print("Installa: pip install InquirerPy rich", file=sys.stderr)
+        print("\nUsa --batch per mode non interattivo", file=sys.stderr)
+        return 1
+    
+    try:
+        editor = MatplotlibPickleEditor(args.pickle_file,
+                                       strict_validation=not args.no_strict)
+        editor.load()
+        
+        tui = InteractiveTUI(editor)
+        tui.run()
+        
+        return 0
+        
     except KeyboardInterrupt:
-        logger.info("\nInterrotto dall'utente")
+        print("\n\nInterrotto dall'utente")
         return 130
     except Exception as e:
-        logger.error(f"✗ Errore inatteso: {e}", exc_info=args.verbose)
+        logger.error(f"✗ Errore: {e}", exc_info=args.verbose)
         return 1
 
 
