@@ -374,10 +374,6 @@ class InteractiveTUI:
 
     def save_flow(self) -> None:
         """Interactive flow to save."""
-        if not self.editor.has_modifications():
-            self.print_panel("No modifications to save", "Info", "yellow")
-            return
-
         # Output format
         format_choice = inquirer.select(
             message="Save format:",
