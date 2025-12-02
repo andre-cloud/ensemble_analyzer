@@ -183,6 +183,18 @@ class MatplotlibPickleEditor:
                     label_to_lines[label].set_color(color)
                     changed += 1
                     self._modifications_made = True
+                    # Also update legend handles so the legend shows the new colour
+                    
+                    legend = self.axes.get_legend()
+                    if legend:
+                        legend_lines = legend.get_lines()
+                        legend_texts = legend.get_texts()
+                        for leg_line, leg_text in zip(legend_lines, legend_texts):
+                            if leg_text.get_text() == label:
+                                try:
+                                    leg_line.set_color(color)
+                                except Exception:
+                                    pass
                 except ValueError:
                     pass
 
