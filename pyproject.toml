@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ensemble-analyzer"
-version = "1.0.0c2"
+version = "1.0.0c3"
 description = "Automatic Refinement of Conformational Ensemble"
 readme = "README.md"
 license = { text = "MIT" }
@@ -66,7 +66,7 @@ ea_regraph = "ensemble_analyzer.cli.regraph:main"
 include-package-data = true
 
 [tool.setuptools.package-data]
-ensemble_analyzer = ["parameters_file/*.json"]
+ensemble_analyzer = ["parameters_file/*"]
 
 [project.urls]
 Homepage = "https://github.com/andre-cloud/ensemble_analyzer"

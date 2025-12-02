@@ -64,7 +64,10 @@ class CalculationExecutor:
             conformer_id=conf.number,
             protocol_number=protocol.number
         ):
-            atoms.get_potential_energy()
+            try:
+                atoms.get_potential_energy()
+            except Exception as e: 
+                self.logger.debug(e)
         
         elapsed = time.perf_counter() - start_time
         

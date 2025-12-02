@@ -42,7 +42,6 @@ def main():
     protocol = protocol_mgr.load() # protocol
 
     start = datetime.now()
-    log, config_mgr, ensemble, protocol, start = main(args)
 
     if args.read_boltz: 
         assert str(args.read_boltz) in [p.number for p in protocol], f"{args.read_boltz} is not a specified step in the protocol file"
