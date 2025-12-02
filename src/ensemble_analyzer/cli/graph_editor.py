@@ -183,19 +183,112 @@ class MatplotlibPickleEditor:
                     label_to_lines[label].set_color(color)
                     changed += 1
                     self._modifications_made = True
-                    # Also update legend handles so the legend shows the new colour
-                    
-                    legend = self.axes.get_legend()
-                    if legend:
-                        legend_lines = legend.get_lines()
-                        legend_texts = legend.get_texts()
-                        for leg_line, leg_text in zip(legend_lines, legend_texts):
-                            if leg_text.get_text() == label:
-                                try:
-                                    leg_line.set_color(color)
-                                except Exception:
-                                    pass
                 except ValueError:
+                    pass
+
+        return changed
+
+    def change_line_linestyle(self, style_map: Dict[str, str]) -> int:
+        """Change line linestyle."""
+        if not self.axes:
+            raise RuntimeError("You must call load() first")
+
+        legend = self.axes.get_legend()
+        if not legend:
+            return 0
+
+        lines = self.axes.get_lines()
+        legend_texts = legend.get_texts()
+        label_to_line = {text.get_text(): line for line, text in zip(lines, legend_texts)}
+
+        changed = 0
+        for label, ls in style_map.items():
+            if label in label_to_line:
+                try:
+                    label_to_line[label].set_linestyle(ls)
+                    changed += 1
+                    self._modifications_made = True
+
+                    # Update legend line
+                    legend_lines = legend.get_lines()
+                    for leg_line, leg_text in zip(legend_lines, legend_texts):
+                        if leg_text.get_text() == label:
+                            try:
+                                leg_line.set_linestyle(ls)
+                            except Exception:
+                                pass
+
+                except Exception:
+                    pass
+
+        return changed
+
+    def change_line_linewidth(self, width_map: Dict[str, float]) -> int:
+        """Change line linewidth."""
+        if not self.axes:
+            raise RuntimeError("You must call load() first")
+
+        legend = self.axes.get_legend()
+        if not legend:
+            return 0
+
+        lines = self.axes.get_lines()
+        legend_texts = legend.get_texts()
+        label_to_line = {text.get_text(): line for line, text in zip(lines, legend_texts)}
+
+        changed = 0
+        for label, width in width_map.items():
+            if label in label_to_line:
+                try:
+                    label_to_line[label].set_linewidth(width)
+                    changed += 1
+                    self._modifications_made = True
+
+                    # Update legend line
+                    legend_lines = legend.get_lines()
+                    for leg_line, leg_text in zip(legend_lines, legend_texts):
+                        if leg_text.get_text() == label:
+                            try:
+                                leg_line.set_linewidth(width)
+                            except Exception:
+                                pass
+
+                except Exception:
+                    pass
+
+        return changed
+
+    def change_line_alpha(self, alpha_map: Dict[str, float]) -> int:
+        """Change line transparency (alpha channel)."""
+        if not self.axes:
+            raise RuntimeError("You must call load() first")
+
+        legend = self.axes.get_legend()
+        if not legend:
+            return 0
+
+        lines = self.axes.get_lines()
+        legend_texts = legend.get_texts()
+        label_to_line = {text.get_text(): line for line, text in zip(lines, legend_texts)}
+
+        changed = 0
+        for label, alpha in alpha_map.items():
+            if label in label_to_line:
+                try:
+                    label_to_line[label].set_alpha(alpha)
+                    changed += 1
+                    self._modifications_made = True
+
+                    # Update legend line
+                    legend_lines = legend.get_lines()
+                    for leg_line, leg_text in zip(legend_lines, legend_texts):
+                        if leg_text.get_text() == label:
+                            try:
+                                leg_line.set_alpha(alpha)
+                            except Exception:
+                                pass
+
+                except Exception:
                     pass
 
         return changed
@@ -384,6 +477,98 @@ class InteractiveTUI:
                 "Success", "green"
             )
 
+    def change_linestyle_flow(self) -> None:
+        """Interactive flow to change linestyle."""
+        labels = self.editor.get_legend_labels()
+        if not labels:
+            self.print_panel("No labels found", "Error", "red")
+            return
+
+        choices = [Choice(value=label, name=label) for label in labels.values()]
+        choices.append(Separator())
+        choices.append(Choice(value=None, name="← Back"))
+
+        selected = inquirer.select(
+            message="Select label to change linestyle:",
+            choices=choices,
+            default=None
+        ).execute()
+
+        if selected is None:
+            return
+
+        new_ls = inquirer.text(
+            message="New linestyle (e.g. '-', '--', ':', '-.')",
+            default='-'
+        ).execute()
+
+        self.editor.change_line_linestyle({selected: new_ls})
+        self.print_panel(f"Linestyle of '{selected}' changed to {new_ls}", "Success", "green")
+
+    def change_linewidth_flow(self) -> None:
+        """Interactive flow to change linewidth."""
+        labels = self.editor.get_legend_labels()
+        if not labels:
+            self.print_panel("No labels found", "Error", "red")
+            return
+
+        choices = [Choice(value=label, name=label) for label in labels.values()]
+        choices.append(Separator())
+        choices.append(Choice(value=None, name="← Back"))
+
+        selected = inquirer.select(
+            message="Select label to change linewidth:",
+            choices=choices,
+            default=None
+        ).execute()
+
+        if selected is None:
+            return
+
+        new_width = inquirer.text(
+            message="New linewidth (float):",
+            default="1.5"
+        ).execute()
+
+        try:
+            width_val = float(new_width)
+            self.editor.change_line_linewidth({selected: width_val})
+            self.print_panel(f"Linewidth of '{selected}' changed to {width_val}", "Success", "green")
+        except ValueError:
+            self.print_panel("Invalid width value", "Error", "red")
+
+    def change_alpha_flow(self) -> None:
+        """Interactive flow to change transparency (alpha)."""
+        labels = self.editor.get_legend_labels()
+        if not labels:
+            self.print_panel("No labels found", "Error", "red")
+            return
+
+        choices = [Choice(value=label, name=label) for label in labels.values()]
+        choices.append(Separator())
+        choices.append(Choice(value=None, name="← Back"))
+
+        selected = inquirer.select(
+            message="Select label to change transparency (alpha):",
+            choices=choices,
+            default=None
+        ).execute()
+
+        if selected is None:
+            return
+
+        new_alpha = inquirer.text(
+            message="New alpha (0–1):",
+            default="1.0"
+        ).execute()
+
+        try:
+            alpha_val = float(new_alpha)
+            self.editor.change_line_alpha({selected: alpha_val})
+            self.print_panel(f"Alpha of '{selected}' changed to {alpha_val}", "Success", "green")
+        except ValueError:
+            self.print_panel("Invalid alpha value", "Error", "red")
+
     def save_flow(self) -> None:
         """Interactive flow to save."""
         # Output format
@@ -448,6 +633,9 @@ class InteractiveTUI:
                 choices=[
                     Choice(value="rename", name="📝 Rename legend label"),
                     Choice(value="color", name="🎨 Change line colours"),
+                    Choice(value="linestyle", name="⎯⎯ Change line linestyle"),
+                    Choice(value="linewidth", name="➖ Change line linewidth"),
+                    Choice(value="alpha", name="☰ Change line transparency"),
                     Separator(),
                     Choice(value="preview", name="👁️  Preview figure"),
                     Choice(value="save", name="💾 Save modifications"),
@@ -462,6 +650,12 @@ class InteractiveTUI:
                 self.rename_labels_flow()
             elif action == "color":
                 self.change_colors_flow()
+            elif action == "linestyle":
+                self.change_linestyle_flow()
+            elif action == "linewidth":
+                self.change_linewidth_flow()
+            elif action == "alpha":
+                self.change_alpha_flow()
             elif action == "preview":
                 self.print_panel("Close the matplotlib window to continue", "Info")
                 self.editor.preview()
@@ -557,12 +751,48 @@ def batch_mode(args):
             count = editor.change_line_colors(color_map)
             logger.info(f"Changed {count} colours")
 
+        # Linestyle
+        linestyle_map = {}
+        if args.linestyle:
+            for label, style in args.linestyle:
+                linestyle_map[label] = style
+
+        if linestyle_map:
+            count = editor.change_line_linestyle(linestyle_map)
+            logger.info(f"Changed {count} linestyles")
+
+        # Linewidth
+        linewidth_map = {}
+        if args.linewidth:
+            for label, width in args.linewidth:
+                try:
+                    linewidth_map[label] = float(width)
+                except ValueError:
+                    logger.error(f"Invalid linewidth for '{label}': {width}")
+
+        if linewidth_map:
+            count = editor.change_line_linewidth(linewidth_map)
+            logger.info(f"Changed {count} linewidths")
+
+        # Alpha channel
+        alpha_map = {}
+        if args.alpha:
+            for label, alpha in args.alpha:
+                try:
+                    alpha_map[label] = float(alpha)
+                except ValueError:
+                    logger.error(f"Invalid alpha for '{label}': {alpha}")
+
+        if alpha_map:
+            count = editor.change_line_alpha(alpha_map)
+            logger.info(f"Changed {count} alpha values")
+
         # Preview
         if args.preview:
             editor.preview()
 
         # Save
-        if rename_map or color_map:
+        if rename_map or color_map or linestyle_map or linewidth_map or alpha_map:
             output_path = editor.save(args.output, args.format)
             print(f"✓ Saved: {output_path}")
         else:
@@ -609,6 +839,17 @@ BATCH MODE (examples):
     batch_group.add_argument('--color', '-c', nargs=2,
                             metavar=('LABEL', 'COLOR'), action='append',
                             help='Change colour')
+    
+    batch_group.add_argument('--linestyle', '-ls', nargs=2,
+                        metavar=('LABEL', 'STYLE'), action='append',
+                        help='Change line linestyle (e.g., -, --, :, -. )')
+    batch_group.add_argument('--linewidth', '-lw', nargs=2,
+                            metavar=('LABEL', 'WIDTH'), action='append',
+                            help='Change line linewidth (float)')
+    batch_group.add_argument('--alpha', '-a', nargs=2,
+                            metavar=('LABEL', 'ALPHA'), action='append',
+                            help='Change line transparency (0-1)')
+    
     batch_group.add_argument('--output', '-o', type=Path,
                             help='Output file')
     batch_group.add_argument('--format', '-f', default='pickle',
