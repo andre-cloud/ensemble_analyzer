@@ -96,6 +96,84 @@ ensemble_analyzer --restart
 | `constrains` | list | Geometry constraints (only on cartesians)| `[1,2]` (fix cartesians) |
 | `monitor_internals` | list | Track bond/angle/dihedral | `[[0,1], [0,1,2]]` |
 | `skip_opt_fail` | bool | Skip failed optimizations | `false` (default) |
+| `skip_retention_rate` | bool | Skip check for retention rate | `false` (default) |
+
+---
+
+## Standalone CLI applications
+
+### Protocol Wizard
+
+If you don't want to create from scratch the protocol file, the `enan_protocol_wizard` is an automatic and interactive way to create this essential file. 
+It is divided into three different level of configuration: i) basic, where all the essential parameters are asked, ii) intermediate, and iii) advance. 
+Feel free to browse all the possible protocol options and parameters.
+
+### Regrapher
+
+If you want to change the convolution of your graphs, you can edit the setting.json file. Here, all the global settings are present. When finished, the command `enan_regraph` come handy. It re-run the Graph workflow with these new setting and in few time, you'll have your new graphs.
+```bash
+usage: enan_regraph [-h] [-rb READ_BOLTZ] [-no-nm] [-w] [--disable-color] idx [idx ...]
+
+positional arguments:
+  idx                   Protocol's number to (re-)generate the graphs
+
+options:
+  -h, --help            show this help message and exit
+  -rb READ_BOLTZ, --read-boltz READ_BOLTZ
+                        Read Boltzmann population from a specific protocol
+  -no-nm, --no-nm       Do not save the nm graphs
+  -w, --weight          Show Weighting function
+  --disable-color       Disable colored output
+```
+
+### Graph Editor
+
+All graphs are saved also as a pickle. This file can be reloaded and from there you can modify every single element of the Matplotlib Figure store in it. This requires some programming skills and, especially, time. Here is where `enan_graph_editor` comes to play. It is once again an interactive terminal interface (based both on rich or InquierPy library) where you can change and personalize every pickle. If you have to modify more files at once, a *batch* mode is implemented as well, so to by-pass the limitation of the manual selection of the interactive TUI. 
+
+```bash
+usage: enan_graph_editor [-h] [--batch] [--list] [--rename OLD NEW] [--rename-file RENAME_FILE] [--color LABEL COLOR] [--linestyle LABEL STYLE] [--linewidth LABEL WIDTH] [--alpha LABEL ALPHA] [--output OUTPUT] [--format {pickle,png,pdf,svg}] [--preview] [--no-strict]
+                         [--verbose]
+                         pickle_file
+
+Interactive/batch editor for matplotlib pickles
+
+positional arguments:
+  pickle_file           Matplotlib pickle file
+
+options:
+  -h, --help            show this help message and exit
+  --batch, -b           Batch mode (non-interactive)
+  --no-strict           Disable strict validation
+  --verbose, -v         Verbose output
+
+batch mode options:
+  --list, -l            List labels and exit
+  --rename OLD NEW, -r OLD NEW
+                        Rename label
+  --rename-file RENAME_FILE, -rf RENAME_FILE
+                        Mapping file OLD=NEW
+  --color LABEL COLOR, -c LABEL COLOR
+                        Change colour
+  --linestyle LABEL STYLE, -ls LABEL STYLE
+                        Change line linestyle (e.g., -, --, :, -. )
+  --linewidth LABEL WIDTH, -lw LABEL WIDTH
+                        Change line linewidth (float)
+  --alpha LABEL ALPHA, -a LABEL ALPHA
+                        Change line transparency (0-1)
+  --output OUTPUT, -o OUTPUT
+                        Output file
+  --format {pickle,png,pdf,svg}, -f {pickle,png,pdf,svg}
+                        Output format
+  --preview, -p         Preview before saving
+
+DEFAULT MODE: Interactive TUI
+  python enan_graph_editor plot.pkl
+
+BATCH MODE (examples):
+  python enan_graph_editor plot.pkl --batch --list
+  python enan_graph_editor plot.pkl --batch --rename "Protocol 1" "Proto A"
+  python enan_graph_editor plot.pkl --batch --color "Experimental" red --output new.pkl
+```
 
 ---
 ## 🤝 Contributing
