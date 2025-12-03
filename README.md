@@ -164,8 +164,7 @@ batch mode options:
                         Output file
   --format {pickle,png,pdf,svg}, -f {pickle,png,pdf,svg}
                         Output format
-  --preview, -p         Preview before saving
-
+                        
 DEFAULT MODE: Interactive TUI
   python enan_graph_editor plot.pkl
 

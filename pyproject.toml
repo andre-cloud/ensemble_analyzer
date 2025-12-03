@@ -60,7 +60,7 @@ dependencies = [
 [project.scripts]
 ensemble_analyzer = "ensemble_analyzer.launch:main"
 enan_regraph = "ensemble_analyzer.cli.regraph:main"
-enan_graph_editor = "ensemble_analyzer.cli.graph_editor:main"
+enan_graph_editor = "ensemble_analyzer.cli.pickle_editor.cli:main"
 enan_protocol_wizard = "ensemble_analyzer.cli.protocol_wizard:main"
 
 

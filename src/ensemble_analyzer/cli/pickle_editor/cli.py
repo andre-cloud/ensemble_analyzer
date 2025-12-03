@@ -138,9 +138,9 @@ def batch_mode(args):
             count = editor.change_line_alpha(alpha_map)
             logger.info(f"Changed {count} alpha values")
 
-        # Preview
-        if args.preview:
-            editor.preview()
+        # # Preview
+        # if args.preview:
+        #     editor.preview()
 
         # Save
         if rename_map or color_map or linestyle_map or linewidth_map or alpha_map:
@@ -214,8 +214,8 @@ BATCH MODE (examples):
     batch_group.add_argument('--format', '-f', default='pickle',
                             choices=['pickle', 'png', 'pdf', 'svg'],
                             help='Output format')
-    batch_group.add_argument('--preview', '-p', action='store_true',
-                            help='Preview before saving')
+    # batch_group.add_argument('--preview', '-p', action='store_true',
+    #                         help='Preview before saving')
 
     parser.add_argument('--no-strict', action='store_true',
                        help='Disable strict validation')

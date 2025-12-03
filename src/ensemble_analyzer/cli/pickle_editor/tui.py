@@ -432,10 +432,10 @@ class InteractiveTUI:
                 self.change_alpha_flow()
             elif action == "preview":
                 self.print_panel(
-                    "Close the matplotlib window to continue", 
-                    "Info"
+                    "Not implemented yet, without having a freeze of the TUI", 
+                    "Error", "red"
                 )
-                self.editor.preview()
+                # self.editor.preview()
             elif action == "save":
                 self.save_flow()
             elif action == "reload":

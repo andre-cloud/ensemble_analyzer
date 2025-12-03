@@ -9,9 +9,10 @@ import logging
 import warnings
 from pathlib import Path
 from typing import Dict, Optional
+import copy
 
 try:
-    import matplotlib
+    import matplotlib as mpl
     import matplotlib.pyplot as plt
     from matplotlib.figure import Figure
     from matplotlib.axes import Axes
@@ -141,7 +142,7 @@ class MatplotlibPickleEditor:
 
         for line, text in zip(lines, legend.get_texts()):
             label = text.get_text()
-            color = matplotlib.colors.to_hex(line.get_color())
+            color = mpl.colors.to_hex(line.get_color())
             colors[label] = color
 
         return colors
@@ -375,14 +376,16 @@ class MatplotlibPickleEditor:
     
     def preview(self) -> None:
         """
-        Display the figure for preview.
+        Display a copy of the current figure for preview.
         
         Raises:
             RuntimeError: If load() has not been called
         """
         if not self.figure:
             raise RuntimeError("You must call load() first")
+
         plt.show()
+
     
     def has_modifications(self) -> bool:
         """
