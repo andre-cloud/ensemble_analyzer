@@ -73,7 +73,8 @@ class Protocol:
     # Options
     read_population     : Optional[str|None]            = None
     skip_opt_fail       : Optional[bool]                = False
-
+    skip_retention_rate : Optional[bool]                = False
+    
 
     # ===
     # Thresholds
