@@ -144,10 +144,9 @@ class ProtocolExecutor:
             deactivated=active_count - final_active
         )
 
-        # If retention rate is lower than 30% and TODO: setting per disabilitarlo
         retention_rate = final_active / active_count if active_count > 0 else 1.0
 
-        if retention_rate < MIN_RETENTION_RATE and not (isinstance(protocol.cluster, int) and protocol.cluster > 1):
+        if retention_rate < MIN_RETENTION_RATE and (not (isinstance(protocol.cluster, int) and protocol.cluster > 1)) and not protocol.skip_retention_rate:
             self.logger.critical(
                 f'✗ Ensemble reduce by {(1-retention_rate)*100:.1f}%. Calculation will stop.\n'
                 f'\t{self.logger.WARNING} threshold: {MIN_RETENTION_RATE*100:.0f}%. Stopping.'
