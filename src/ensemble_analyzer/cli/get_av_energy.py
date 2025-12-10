@@ -63,9 +63,9 @@ def get_thermo_data(conf: Conformer, protocol_number: int, temp: float, mult: in
         G, zpve, h, S = free_gibbs_energy(
             SCF=E, T=temp, freq=freq, mw=mw, B=B_vec, m=mult, cut_off=cut_off, alpha=alpha, P=pressure
         )
-        return E, E + zpve, h, G
+        return E, E + zpve, E + h, G
     except Exception:
-        # In case of math errors
+        # In case of math errors 
         return E, np.nan, np.nan, np.nan
 
 def calculate_population_vector(energies: np.ndarray, temp: float):
