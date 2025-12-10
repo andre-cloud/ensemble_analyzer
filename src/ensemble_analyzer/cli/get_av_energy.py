@@ -206,7 +206,7 @@ def main():
             logger.warning(f"Protocol {p_num}: No active conformers found.")
             continue
 
-        # 2. Calculate Populations (Vectorized)
+        # 2. Calculate Populations
         vec_E = np.array([d["E"] for d in data_rows])
         vec_EZPVE = np.array([d["E_ZPVE"] for d in data_rows])
         vec_H = np.array([d["H"] for d in data_rows])
@@ -235,7 +235,7 @@ def main():
                 fmt(vec_G[i]),      fmt_pop(pop_G[i]),
             ]
             table_rows.append(row)
-
+        
         headers = [
             "Conf", 
             "E [Eh]", "Pop(E)%", 
@@ -259,7 +259,7 @@ def main():
         
         # Store for Operations
         protocol_averages[p_num] = {
-            "E": av_E, "EZPVE": av_EZPVE, "H": av_H, "G": av_G
+            "E": av_E, "EZPVE": av_EZPVE, "H": av_H, "G": av_G,
         }
 
         # 5. Prepare Final Summary Row
@@ -273,12 +273,13 @@ def main():
             fmt_av(av_EZPVE),
             fmt_av(av_H),
             fmt_av(av_G),
+            len(vec_E)
         ])
 
     # --- FINAL SUMMARY TABLE ---
     summary_headers = [
         "Prot.", "Level", "Comment", 
-        "E_av [Eh]", "(E+ZPVE)_av", "H_av [Eh]", "G_av [Eh]"
+        "E_av [Eh]", "(E+ZPVE)_av", "H_av [Eh]", "G_av [Eh]", "N Conf."
     ]
     
     logger.table(
