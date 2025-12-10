@@ -1,0 +1,16 @@
+{
+    "0": {
+        "functional": "b97-3c",
+        "basis": "def2-mTZVP"
+    },
+    "1": {
+        "functional": "r2scan-3c",
+        "basis": "def2-mTZVPP",
+        "opt": true,
+        "freq": true
+    },
+    "2": {
+        "functional": "wb97x-d4rev",
+        "basis": "def2-qzvpp"
+    }
+}

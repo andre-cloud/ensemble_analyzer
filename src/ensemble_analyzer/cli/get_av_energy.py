@@ -147,7 +147,7 @@ def main():
     try:
         ckpt_mgr = CheckpointManager()
         conformers = ckpt_mgr.load()
-        protocol_mgr = ProtocolManager()
+        protocol_mgr = ProtocolManager( )
         protocols = protocol_mgr.load()
     finally:
         os.chdir(cwd)

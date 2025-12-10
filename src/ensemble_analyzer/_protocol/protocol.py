@@ -81,7 +81,6 @@ class Protocol:
     # === 
 
     def load_threshold(self) -> dict:
-        # default = Path(__file__).parent / ".." / "parameters_file" / "default_threshold.json"
         default = files("ensemble_analyzer").joinpath("parameters_file/default_threshold.json")
 
         with open(default, "r") as f:

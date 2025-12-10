@@ -1,0 +1,26 @@
+{
+    "opt" : {
+        "thrG" : 0.5, 
+        "thrB" : 5e-5,
+        "thrGMAX" : 4,
+        "thrRMSD_enantio": 0.5
+    },
+    "opt+freq" : {
+        "thrG" : 0.5, 
+        "thrB" : 5e-5,
+        "thrGMAX" : 3.5,
+        "thrRMSD_enantio": 0.5
+    },
+    "freq" : {
+        "thrG" : 0.5, 
+        "thrB" : 5e-5,
+        "thrGMAX" : 3.75,
+        "thrRMSD_enantio": 0.5
+    },
+    "sp" : {
+        "thrG" : 0.25, 
+        "thrB" : 1e-5,
+        "thrGMAX" : 6,
+        "thrRMSD_enantio": 0.5
+    }
+}

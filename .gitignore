@@ -136,7 +136,7 @@ files/
 ORCA*
 output*.out
 conf_*/
-*json
+!("default_protocol."|"default_threshold.")*json
 last_protocol
 *dat
 try.py
