@@ -60,6 +60,8 @@ class BaseParser(ABC):
         for line in table: 
             if not line: 
                 continue
+            if '---' in line: 
+                continue
             line_splitted = line.split()
             data.append([line_splitted[i] for i in list_index])
         

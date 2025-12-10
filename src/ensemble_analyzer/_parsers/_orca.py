@@ -167,17 +167,15 @@ State  Energy     Wavelength     R         MX        MY        MZ
 
         if not self.regex['start_spec'] in self.fl: 
             return np.zeros(shape=(1,2)), np.zeros(shape=(1,2))
-        
-        spectras = self.get_filtered_text(start = self.regex['start_spec'], end = self.regex['end_spec'])
 
         # UV
-        uv_text = spectras.split(self.regex['s_UV'])[-1].split(self.regex['break'])[0].splitlines()
+        uv_text = self.get_filtered_text(start=self.regex['s_UV'], end=self.regex['break']).splitlines()
         uv = np.array(self.parse_table(uv_text, [self.regex['idx_en_tddft'], self.regex['idx_imp_tddft']]), dtype=np.float64)
         if self.version=='5':
             uv[:, 0] = FACTOR_EV_CM_1/uv[:, 0]
 
         # ECD
-        ecd_text = spectras.split(self.regex['s_ECD'])[-1].split(self.regex['break'])[0].splitlines()
+        ecd_text = self.get_filtered_text(start=self.regex['s_ECD'], end=self.regex['break']).splitlines()
         ecd = np.array(self.parse_table(ecd_text, [self.regex['idx_en_tddft'], self.regex['idx_imp_tddft']]), dtype=np.float64)
         if self.version=='5':
             ecd[:, 0] = FACTOR_EV_CM_1/ecd[:, 0]
@@ -194,9 +192,9 @@ if __name__ == '__main__':
 
     import mock
     print('ORCA 6')
-    parser = OrcaParser("files/opt_6.out", mock.MagicMock())
-    B,M = parser.parse_B_m()
-    print(B,M)
+    # parser = OrcaParser("files/opt_6.out", mock.MagicMock())
+    # B,M = parser.parse_B_m()
+    # print(B,M)
     # geom = parser.parse_geom()
     # print(parser.opt_done())
     # print(geom)
@@ -204,9 +202,9 @@ if __name__ == '__main__':
     # print(E)
     # freq, ir, vcd = parser.parse_freq()
     # print(freq, ir, vcd)
-    # parser = OrcaParser("files/tddft_6.out", mock.MagicMock())
-    # uv, ecd = parser.parse_tddft()
-    # print(uv, ecd)
+    parser = OrcaParser("files/tddft_6.out", mock.MagicMock())
+    uv, ecd = parser.parse_tddft()
+    print(uv, ecd)
     # print('='*10)
     # print('ORCA 5')
     # parser = OrcaParser("files/opt_5.out", mock.MagicMock())
