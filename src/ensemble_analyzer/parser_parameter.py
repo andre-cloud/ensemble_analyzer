@@ -56,7 +56,7 @@ def get_conf_parameters(
 
     e = parser.parse_energy()
 
-    if p.opt or 'opt' in p.add_input.lower() or 'opt' in p.functional.lower():
+    if p.opt or 'opt' in p.add_input.lower():
         conf.last_geometry = parser.parse_geom().copy()
 
         if not parser.opt_done():
