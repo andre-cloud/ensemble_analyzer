@@ -6,22 +6,28 @@ import numpy as np
 
 @dataclass
 class EnergyRecord:
-    E       : float                     = 0.0
-    G       : float                     = np.nan
-    H       : float                     = np.nan
-    S       : float                     = np.nan
-    G_E     : float                     = np.nan
-    zpve    : float                     = np.nan
-    B       : Optional[float]           = None
-    B_vec   : Optional[np.ndarray]      = None
-    m       : Optional[float]           = None
-    m_vec   : Optional[np.ndarray]      = None
-    Pop     : float                     = np.nan
-    time    : Optional[float]           = None
-    Erel    : float                     = np.nan
-    Freq    : Optional[np.ndarray]      = None
+    """
+    Data container for energetic and thermodynamic properties of a conformer.
+    """
 
-    def as_dict(self):
+    E       : float                     = 0.0           # Electronic Energy [Eh]
+    G       : float                     = np.nan        # Gibbs Free Energy [Eh]
+    H       : float                     = np.nan        # Enthalpy [Eh]
+    S       : float                     = np.nan        # Total Entropy [Eh]
+    G_E     : float                     = np.nan        # Thermal Correction to Gibbs (G-E)
+    zpve    : float                     = np.nan        # Zero Point Vibrational Energy
+    B       : Optional[float]           = None          # Rotational Constant Norm [cm-1]
+    B_vec   : Optional[np.ndarray]      = None          # Rotational Constants Vector [cm-1]
+    m       : Optional[float]           = None          # Dipole Moment Norm [Debye]
+    m_vec   : Optional[np.ndarray]      = None          # Dipole Moment Vector
+    Pop     : float                     = np.nan        # Boltzmann Population [%]
+    time    : Optional[float]           = None          # Calculation elapsed time [s]
+    Erel    : float                     = np.nan        # Relative Energy [kcal/mol]
+    Freq    : Optional[np.ndarray]      = None          # Vibrational Frequencies [cm-1]
+
+    def as_dict(self) -> dict:
+        """Convert record to dictionary, handling numpy arrays."""
+
         data = asdict(self)
         for key in ['B_vec', 'm_vec', 'Freq']:
             if data[key] is not None:
@@ -30,22 +36,31 @@ class EnergyRecord:
     
     @classmethod
     def from_dict(cls, data: dict) -> 'EnergyRecord':
+        """Create record from dictionary, restoring numpy arrays."""
+
         for key in ['B_vec', 'm_vec', 'Freq']:
             if data.get(key) is not None:
                 data[key] = np.array(data[key])
         
         return cls(**data)
 
-    
 
 @dataclass
 class EnergyStore:
+    """
+    Dictionary-like store for EnergyRecords indexed by protocol number.
+    """
+    
     data: Dict[int, EnergyRecord] = field(default_factory=dict)
 
-    def add(self, protocol_number: int, record: EnergyRecord):
+    def add(self, protocol_number: int, record: EnergyRecord) -> None:
+        """Add a record for a specific protocol step."""
+
         self.data[int(protocol_number)] = record
 
     def last(self) -> EnergyRecord:
+        """Retrieve the record from the most recent protocol step."""
+        
         if not self.data:
             return EnergyRecord()
         last_key = list(self.data.keys())[-1]
@@ -95,3 +110,14 @@ class EnergyStore:
             proto = int(proto_str)
                         
             self.data[proto] = EnergyRecord.from_dict(data=vals)
+
+    def get_last_freq(self, protocol_number: int) -> np.ndarray: 
+        
+        if self.data.__getitem__(int(protocol_number)).get("Freq", None): 
+            return self.data.__getitem__(int(protocol_number)).get("Freq")
+    
+        for i in range(protocol_number-1, -1):   
+            if self.data.__getitem__(int(i)).get("Freq", None):
+                return self.data.__getitem__(int(i)).get("Freq")
+
+        return np.array([])

@@ -28,12 +28,8 @@ class ClusteringManager:
     """
     Manager for PCA analysis and K-Means clustering of conformer ensembles.
     
-    This class handles the complete clustering workflow:
-    1. Distance matrix calculation (rotation/translation invariant)
-    2. PCA dimensionality reduction
-    3. Optimal cluster number detection
-    4. K-Means clustering
-    5. Visualization generation
+    Handles the calculation of invariant features (EDM eigenvalues), 
+    dimensionality reduction, and unsupervised clustering.
     """
     
     def __init__(
@@ -42,12 +38,13 @@ class ClusteringManager:
         config: Optional[ClusteringConfig] = None
     ):
         """
-        Initialize clustering manager.
-        
+        Initialize the manager.
+
         Args:
-            logger: Logger instance
-            config: Clustering configuration (uses defaults if None)
+            logger (Logger): Logger instance.
+            config (Optional[ClusteringConfig]): Clustering settings.
         """
+
         self.logger = logger
         self.config = config or ClusteringConfig()
         
@@ -69,17 +66,17 @@ class ClusteringManager:
         include_legend: bool = True,
     ) -> Optional[PCAResult]:
         """
-        Perform PCA analysis on conformer ensemble.
-        
+        Execute PCA pipeline and generate visualization.
+
         Args:
-            conformers (List[Conformer]): List of conformers to analyze
-            n_clusters (Optional[int], optional): Number of clusters (None = auto-detect). Defaults to None.
-            output_file (str, optional): Path for output visualization. Defaults to "pca_analysis.png".
-            title (str, optional): Plot title. Defaults to "PCA Analysis".
-            include_legend (bool, optional): Include conformer legend in plot. Defaults to True.
+            conformers (List[Conformer]): List of conformers to analyze.
+            n_clusters (Optional[int]): Target number of clusters (None for auto-detection).
+            output_file (str): Output path for the plot.
+            title (str): Title of the plot.
+            include_legend (bool): Whether to draw the legend.
 
         Returns:
-            Optional[PCAResult]: if successful, None if skipped/failed
+            Optional[PCAResult]: Result object if successful, None on failure.
         """
         
         
@@ -129,16 +126,16 @@ class ClusteringManager:
         sort_by_energy: bool = False
     ) -> List[Conformer]:
         """
-        Reduce ensemble by keeping only one conformer per cluster.
-        
-        Keeps the lowest-energy conformer from each cluster.
-        
+        Reduce the ensemble by keeping only one representative per cluster.
+
+        Retains the lowest energy conformer for each identified cluster.
+
         Args:
-            conformers: Ensemble to reduce
-            sort_by_energy: Sort output by energy
-            
+            conformers (List[Conformer]): The clustered ensemble.
+            sort_by_energy (bool): Whether to sort the result by energy.
+
         Returns:
-            Reduced ensemble (modified in-place)
+            List[Conformer]: The reduced ensemble (modified in-place).
         """
         
         # Sort if requested
@@ -218,7 +215,7 @@ class ClusteringManager:
         # Step 3: PCA transformation
         self.logger.debug("Performing PCA transformation...")
         n_components = min(eigenvalues.shape[0], eigenvalues.shape[1])
-        pca = PCA(n_components=n_components)
+        pca = PCA(n_components=n_components, random_state=self.config.random_state)
         pca_scores = pca.fit_transform(eigenvalues)
         
         # Step 4: Determine cluster number
@@ -357,8 +354,8 @@ class ClusteringManager:
         # Setup figure
         fig = plt.figure(figsize=(12, 9))
         
-        if include_legend:
-            plt.subplots_adjust(bottom=0.3, right=0.65, left=0.10)
+        # if include_legend:
+        #     plt.subplots_adjust(bottom=0.3, right=0.65, left=0.10)
         
         rcParams.update({"figure.autolayout": True})
         
@@ -409,7 +406,6 @@ class ClusteringManager:
                 c=result.colors[idx],
                 marker=marker,
                 s=100,
-                edgecolors='black',
                 linewidths=0.5,
                 label=f"Conf {result.numbers[idx]} (C{result.clusters[idx]})",
                 zorder=10
@@ -441,21 +437,26 @@ class ClusteringManager:
         
         # Legend
         if include_legend:
-            n_cols = min(max(1, len(result.numbers) // 10), 6)
+            n_items = len(result.numbers)
+            items_per_col = 30
+            n_cols = max(1, (n_items // items_per_col) + (1 if n_items % items_per_col else 0))
+            font_size = 9 if n_cols < 4 else 7
+
             ax_main.legend(
                 loc='upper left',
-                bbox_to_anchor=(1.05, 1.0),
+                bbox_to_anchor=(1.02, 1.0),
                 fancybox=True,
                 shadow=True,
                 ncol=n_cols,
-                fontsize=7,
-                markerscale=0.8
+                fontsize=font_size,
+                markerscale=0.8,
+                borderaxespad=0.
             )
         else:
             plt.tight_layout()
         
         # Save
-        plt.savefig(output_file, dpi=300)
+        plt.savefig(output_file, dpi=300, bbox_inches='tight')
         plt.close()
         
         self.logger.debug(f"✓ Visualization saved: {output_file}")
