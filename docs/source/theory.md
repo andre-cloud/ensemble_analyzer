@@ -69,6 +69,7 @@ The damping function $w(\omega)$ is defined as:
 $$
 w(\omega) = \frac{1}{1 + (\omega_0 / \omega)^\alpha}
 $$
+
 where $\omega_0$ is the cut-off frequency (default: $100 \text{ cm}^{-1}$) and $\alpha$ is the damping power (default: 4). This correction ensures that low-frequency modes contribute physically meaningful entropy values to the final Gibbs Free Energy ($G$).
 
 ---
@@ -89,11 +90,17 @@ EnAn distinguishes between vibronic and electronic spectra for the convolution f
 
 1.  **Vibronic Spectra (IR, VCD)**:
     Use a **Lorentzian** line-shape function to model lifetime broadening:
-    $$f_\text{Lorentz}(x; x_0, \gamma) = \frac{\text{FWHM}^2}{\text{FWHM}^2 + 4(x - x_0)^2}$$
+
+    $$
+    f_\text{Lorentz}(x; x_0, \gamma) = \frac{\text{FWHM}^2}{\text{FWHM}^2 + 4(x - x_0)^2}
+    $$
 
 2.  **Electronic Spectra (UV-Vis, ECD)**:
     Use a **Gaussian** line-shape function to model inhomogeneous broadening:
-    $$f_\text{Gauss}(x; x_0, \sigma) = \frac{1}{\sigma\sqrt{2\pi}} e^{ -\frac{1}{2}\left(\frac{x-x_0}{\sigma}\right)^2 }$$
+    
+    $$
+    f_\text{Gauss}(x; x_0, \sigma) = \frac{1}{\sigma\sqrt{2\pi}} e^{ -\frac{1}{2}\left(\frac{x-x_0}{\sigma}\right)^2 }
+    $$
 
 The final intensity $I_{total}(\nu)$ is the weighted sum:
 
