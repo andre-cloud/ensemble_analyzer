@@ -17,6 +17,13 @@ from ensemble_analyzer.constants import *
 
 @dataclass
 class BaseGraph: 
+    """
+    Base class for spectral graph generation and convolution.
+    
+    Handles the retrieval of discrete transitions from conformers, 
+    convolution with line-shape functions, and auto-optimization of 
+    spectral parameters (shift, fwhm) against a reference.
+    """
 
     confs: List[Conformer]  
     protocol : Protocol
@@ -38,6 +45,16 @@ class BaseGraph:
         self.X = self.X[np.argsort(self.X)]
 
     def retrieve_data(self, protocol:Protocol) -> None: 
+        """
+        Collect and aggregate spectral transitions from all active conformers.
+        
+        Extracts excitation energies (X) and intensities (Y) weighted by 
+        Boltzmann population.
+
+        Args:
+            protocol (Protocol): The protocol step to retrieve data from.
+        """
+
         self.impulse = []
         self.energies = []
         population_from = str(self.read_population) if self.read_population else str(protocol.number)
@@ -68,6 +85,18 @@ class BaseGraph:
             self.impulse = np.array([])
 
     def normalize(self, Y: np.ndarray, idx_min: Optional[int] = None, idx_max: Optional[int] = None) -> np.ndarray:
+        """
+        Normalize the spectrum intensity.
+
+        Args:
+            Y (np.ndarray): The intensity array to normalize.
+            idx_min (Optional[int]): Start index for local normalization range.
+            idx_max (Optional[int]): End index for local normalization range.
+
+        Returns:
+            np.ndarray: Normalized intensity array (max value = 1 or -1).
+        """
+
         if idx_min is not None and idx_max is not None:
             max_value = np.max(np.abs(Y[idx_min:idx_max]))
         else: 
@@ -77,10 +106,30 @@ class BaseGraph:
 
     
     def dump_XY_data(self, X: np.ndarray, Y: np.ndarray, fname: str) -> None:
+        """
+        Save X,Y data to a text file.
+
+        Args:
+            X (np.ndarray): X axis values.
+            Y (np.ndarray): Y axis values.
+            fname (str): Output filename.
+        """
+
         data = np.column_stack((X,Y))
         np.savetxt(fname, data, delimiter=' ')
 
     def check_conf(self, conf: Conformer, protocol: Protocol) -> bool:
+        """
+        Verify if a conformer has valid data for the current protocol.
+
+        Args:
+            conf (Conformer): Conformer to check.
+            protocol (Protocol): Current protocol.
+
+        Returns:
+            bool: True if data exists and conformer is active.
+        """
+
         if not conf.active: 
             return False
         if not conf.graphs_data.__contains__(protocol.number):
@@ -91,6 +140,18 @@ class BaseGraph:
     
 
     def diversity_function(self, a: np.ndarray, b: np.ndarray, w: Optional[np.ndarray] = None) -> float:
+        """
+        Calculate the dissimilarity between two spectra (RMSD-like metric).
+
+        Args:
+            a (np.ndarray): First spectrum array.
+            b (np.ndarray): Second spectrum array (reference).
+            w (Optional[np.ndarray]): Weighting array. If None, uses reference weights.
+
+        Returns:
+            float: Dissimilarity score.
+        """
+
         # RMSD
         MAX = 1 if self.graph_type not in CHIRALS else 2
         w = self.ref.weight if w is None else w
@@ -98,6 +159,7 @@ class BaseGraph:
 
 
     def set_boundaries(self) -> None: 
+        """Initialize optimization bounds for Shift and FWHM."""
 
         if isinstance(self.shift_user, list): 
             self.shift_bounds = self.shift_user
@@ -116,6 +178,14 @@ class BaseGraph:
         
 
     def compute_spectrum(self) -> None:
+        """
+        Main driver to compute the final convoluted spectrum.
+        
+        Performs:
+        1. Data retrieval.
+        2. Auto-convolution (optimization against reference) OR default convolution.
+        3. Saving of results.
+        """
 
         self.log.debug("Compute spectrum")
         self.set_boundaries()
@@ -145,19 +215,17 @@ class BaseGraph:
 
 
     def autoconvolution(self) -> None:
+        """
+        Optimize Shift and FWHM to maximize similarity with experimental reference.
+        """
         
         ref_norm = self.ref.Y
 
         def callback_optimizer(params: tuple) -> float:
             shift, fwhm = params
-            st = datetime.now()
             Y_conv = self.convolute(self.energies, self.impulse, shift, fwhm)
-            e1 = datetime.now()
             Y_conv = self.normalize(Y_conv, idx_min=self.ref.x_min_idx, idx_max=self.ref.x_max_idx)
-            e2 = datetime.now()
             rmsd = self.diversity_function(Y_conv, ref_norm)
-            e3 = datetime.now()
-            # self.log.debug(f'{shift=:.2f}\t{fwhm=:.2f}\t{rmsd=:.2f}\t{e1-st}\t{e2-e1}\t{e2-st}\t{e3-st}')
             return rmsd
         
         initial_guess = [
@@ -196,9 +264,13 @@ class BaseGraph:
 
 
     def gaussian(self, x0: np.ndarray, I: np.ndarray, fwhm: float) -> np.ndarray:
+        """Compute Gaussian convolution."""
+        
         return gaussian_njit(self.X, x0, I, fwhm)
     
     def lorentzian(self, x0: np.ndarray, I: np.ndarray, fwhm: float) -> np.ndarray:
+        """Compute Lorentzian convolution."""
+
         return lorentzian_njit(self.X, x0, I, fwhm)
 
 

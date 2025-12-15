@@ -6,22 +6,26 @@ import numpy as np
 
 @dataclass
 class PCAResult:
-    """Results from PCA analysis"""
-    scores              : np.ndarray                # PCA-transformed coordinates (n_conformers, n_components)
-    clusters            : np.ndarray                # Cluster assignments (n_conformers,)
-    colors              : List[str]                 # Conformer colors
-    numbers             : List[int]                 # Conformer IDs
-    energies            : np.ndarray                # Relative energies [Eh]
-    explained_variance  : np.ndarray                # Variance explained by each component
-    n_clusters          : Optional[int]     = None  # Number of clusters used
+    """
+    Container for PCA and Clustering analysis results.
+    """
+    scores: np.ndarray              # PCA coordinates (n_samples, n_components)
+    clusters: np.ndarray            # Cluster labels (n_samples,)
+    colors: List[str]               # Hex colors for each point
+    numbers: List[int]              # Conformer IDs
+    energies: np.ndarray            # Relative energies array
+    explained_variance: np.ndarray  # Variance ratio per component
+    n_clusters: Optional[int] = None # Number of clusters found/used
 
 
 @dataclass
 class ClusteringConfig:
-    """Configuration for clustering operations"""
-    n_clusters              : Optional[int]     = None  # If None, auto-detect optimal
-    include_H               : bool              = True  # Include hydrogen in distance matrix
-    set_cluster_attribute   : bool              = True  # Set cluster ID on Conformer objects
-    min_k                   : int               = 2     # Minimum clusters for silhouette search
-    max_k                   : int               = 30    # Maximum clusters for silhouette search
-    random_state            : int               = 42    # Fix value for reproducibility of the random initiation of cluster points
+    """
+    Configuration parameters for clustering operations.
+    """
+    n_clusters: Optional[int] = None    # Target clusters (None = auto)
+    include_H: bool = True              # Include Hydrogens in distance matrix
+    set_cluster_attribute: bool = True  # Write cluster ID to conformer objects
+    min_k: int = 2                      # Min clusters for silhouette search
+    max_k: int = 30                     # Max clusters for silhouette search
+    random_state: int = 42              # Seed for reproducibility

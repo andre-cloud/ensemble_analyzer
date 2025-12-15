@@ -11,6 +11,12 @@ from ensemble_analyzer.constants import *
 
 @dataclass
 class ExperimentalGraph(BaseGraph): 
+    """
+    Handler for experimental reference spectra.
+    
+    Responsible for loading, normalizing, interpolating experimental data
+    and calculating the weighting function for comparison.
+    """
 
     graph_type: Literal['IR', 'VCD', 'UV', 'ECD']
 
@@ -22,7 +28,11 @@ class ExperimentalGraph(BaseGraph):
 
         self.fname: Optional[str] = self.defaults.experimental_fname
 
-    def read(self):
+    def read(self) -> None:
+        """
+        Load and process the experimental file.
+        Generates 'weighted.xy' and 'ref_norm.xy' files.
+        """
 
         self.load_file_experimental()
         self.process()
@@ -35,7 +45,8 @@ class ExperimentalGraph(BaseGraph):
         self.dump_XY_data(self.X, self.Y, f'{self.graph_type}_ref_norm.xy')
         np.savetxt(f'{self.graph_type.upper()}_index_lim.xy', np.array([self.x_min_idx, self.x_max_idx]))
 
-    def load_file_experimental(self):
+    def load_file_experimental(self) -> None:
+        """Load experimental X,Y data from file defined in defaults."""
 
         fname = os.path.join(os.getcwd(), self.fname)
         self.log.debug("Reading the reference data from " + fname)
@@ -47,12 +58,17 @@ class ExperimentalGraph(BaseGraph):
         self.x = X.ravel()
         self.y = self.normalize(Y.ravel())
 
-    def interpolate(self):
+    def interpolate(self) -> np.ndarray:
+        """Interpolate experimental data onto the calculated grid X."""
+
         Y =  np.interp(self.X, self.x, self.y, left=0, right=0)
         return Y
 
 
-    def process(self): 
+    def process(self) -> None: 
+        """
+        Process axis units (e.g. nm to eV) and determine index boundaries.
+        """
 
         convert = False
         if self.graph_type in ['UV', 'ECD'] and np.min(self.x) > 20: 
@@ -70,7 +86,11 @@ class ExperimentalGraph(BaseGraph):
         # if convert: 
         #     self.x_min_idx, self.x_max_idx = self.x_max_idx, self.x_min_idx
 
-    def calc_weighting_function(self): 
+    def calc_weighting_function(self) -> None: 
+        """
+        Calculate the weighting function for similarity scoring.
+        Allows focusing optimization on specific spectral regions.
+        """
 
         LIM_EXP1, LIM_EXP2 = self.X[self.x_min_idx], self.X[self.x_max_idx]
         self.weight = np.zeros_like(self.X)
@@ -109,14 +129,9 @@ class ExperimentalGraph(BaseGraph):
         self.weight[self.X > LIM_EXP2] = 0
 
         return
-
-
-    def _calc_sigma(self, x1: float, x0: float, v:Optional[float]=0.2, A:Optional[float]=1.):
-        # x1 Reference Limit
-        # x0 Interest boundary Limit
-        return abs(x1 - x0) / np.sqrt(2 * np.log(A/v))
     
-    def gau(self, x0, sigma):
+    def gau(self, x0, sigma) -> np.ndarray:
+        """Gaussian function for weighting mask generation."""
         return 1/(sigma*np.sqrt(2*np.pi)) * np.exp(-0.5*((self.X - x0)**2)/sigma**2)
 
 

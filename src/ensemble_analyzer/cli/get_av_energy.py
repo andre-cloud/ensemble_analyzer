@@ -4,6 +4,7 @@ import os
 import sys
 import numpy as np
 from pathlib import Path
+from typing import List, Tuple
 
 from ensemble_analyzer._logger.create_log import create_logger
 from ensemble_analyzer._managers.checkpoint_manager import CheckpointManager
@@ -13,11 +14,26 @@ from ensemble_analyzer.rrho import free_gibbs_energy
 from ensemble_analyzer.constants import EH_TO_KCAL, R, CAL_TO_J
 from ensemble_analyzer.title import title
 
-def get_thermo_data(conf: Conformer, protocol_number: int, temp: float, mult: int, cut_off:float, alpha: int, pressure: float, linear:bool):
+def get_thermo_data(conf: Conformer, protocol_number: int, temp: float, mult: int, cut_off:float, alpha: int, pressure: float, linear:bool)-> Tuple[float, float, float, float]:
     """
-    Retrieves Electronic Energy (E) and attempts to calculate ZPVE, H, G.
-    Returns a tuple (E, E_ZPVE, H, G).
-    If frequencies are missing, E_ZPVE, H, and G will be np.nan.
+    Retrieve or calculate thermodynamic properties for a conformer.
+
+    Attempts to compute Gibbs Free Energy (G) and Enthalpy (H) using qRRHO.
+    Handles missing frequency data by looking back at previous protocol steps.
+
+    Args:
+        conf (Conformer): The conformer object.
+        protocol_number (int): ID of the protocol step to analyze.
+        temp (float): Temperature [K].
+        mult (int): Spin multiplicity.
+        cut_off (float): qRRHO cut-off frequency [cm^-1].
+        alpha (int): qRRHO damping exponent.
+        pressure (float): Pressure [kPa].
+        linear (bool): Whether the molecule is linear.
+
+    Returns:
+        Tuple[float, float, float, float]: Tuple containing (E, E_ZPVE, H, G) in Hartree.
+        Returns np.nan for values that cannot be computed.
     """
     
     # 1. Retrieve Electronic Energy (E)
@@ -68,11 +84,19 @@ def get_thermo_data(conf: Conformer, protocol_number: int, temp: float, mult: in
         # In case of math errors 
         return E, np.nan, np.nan, np.nan
 
-def calculate_population_vector(energies: np.ndarray, temp: float):
+def calculate_population_vector(energies: np.ndarray, temp: float) -> np.ndarray:
     """
-    Calculates Boltzmann population (%) vector given an energy vector (Eh).
-    Handles NaNs by returning NaNs in corresponding positions.
+    Calculate Boltzmann population percentages from an energy vector.
+
+    Args:
+        energies (np.ndarray): Array of energies in Hartree (Eh). Can contain NaNs.
+        temp (float): Temperature [K].
+
+    Returns:
+        np.ndarray: Array of populations [%]. Sum of valid entries equals 100.
+        Returns NaN at indices where input energy was NaN.
     """
+
     mask = ~np.isnan(energies)
     if not np.any(mask):
         return np.full(energies.shape, np.nan)
@@ -93,8 +117,18 @@ def calculate_population_vector(energies: np.ndarray, temp: float):
     pops[mask] = valid_pops
     return pops
 
-def calculate_weighted_average(energies: np.ndarray, pops: np.ndarray):
-    """Calculates weighted average ignoring NaNs."""
+def calculate_weighted_average(energies: np.ndarray, pops: np.ndarray) -> float:
+    """
+    Calculate the weighted average energy of the ensemble.
+
+    Args:
+        energies (np.ndarray): Array of energies [Eh].
+        pops (np.ndarray): Array of populations [%].
+
+    Returns:
+        float: Weighted average energy [Eh].
+    """
+    
     mask = ~np.isnan(energies) & ~np.isnan(pops)
     if not np.any(mask):
         return np.nan

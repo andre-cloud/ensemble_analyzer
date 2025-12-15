@@ -9,8 +9,9 @@ from collections import defaultdict
 @dataclass
 class SpectralRecord:
     """
-    Storing the impulses
+    Data container for spectral transitions (impulses).
     """
+
     X : np.ndarray # energy impulses
     Y : np.ndarray # impulse intensity
 
@@ -29,6 +30,8 @@ class SpectralRecord:
             raise ValueError(f"X and Y must be 1D arrays. Got {self.X.ndim}D")
 
     def as_dict(self) -> dict:
+        """Convert to serializable dictionary."""
+
         return {
             "X": self.X.tolist(),
             "Y": self.Y.tolist(),
@@ -36,6 +39,8 @@ class SpectralRecord:
     
     @classmethod
     def from_dict(cls, data: dict) -> 'SpectralRecord':
+        """Reconstruct from dictionary."""
+
         return cls(
             X=np.array(data["X"]),
             Y=np.array(data["Y"])
@@ -52,16 +57,27 @@ class SpectralRecord:
 
 @dataclass
 class SpectralStore:
+    """
+    Hierarchical storage for spectral data: Protocol -> GraphType -> SpectralRecord.
+    Example: store[1]['IR'] -> SpectralRecord(...)
+    """
+
     data: Dict = field(default_factory=lambda: defaultdict(lambda: defaultdict(SpectralRecord)))
 
 
     def add(self, protocol_number:int, graph_type: Literal['IR', 'VCD', 'UV', 'ECD'], record: SpectralRecord):
+        """Add a spectral record."""
+
         self.data[int(protocol_number)][str(graph_type)] = record
 
     def __getitem__(self, protocol_number:int, graph_type: Union[int, str]) -> SpectralRecord:
+        """Retrieve a spectral record."""
+
         return self.data[int(protocol_number)][str(graph_type)]
 
     def __contains__(self, protocol_number:int) -> bool:
+        """Check if specific graph data exists."""
+        
         return int(protocol_number) in self.data
     
     def __has_graph_type__(self, protocol_number:int, graph_type: Literal['IR', 'VCD', 'UV', 'ECD']):

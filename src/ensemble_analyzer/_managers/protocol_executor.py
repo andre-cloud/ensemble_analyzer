@@ -24,17 +24,12 @@ from ensemble_analyzer.constants import DEBUG, MIN_RETENTION_RATE, EH_TO_KCAL
 
 
 
-
-
 class ProtocolExecutor:
     """
-    Executes a single protocol on the entire ensemble.
+    Executes an entire protocol step on the full ensemble.
     
-    Responsibilities:
-    - Run calculations for all active conformers
-    - Perform pruning
-    - Generate graphs and PCA
-    - Save snapshots
+    Coordinates the loop over conformers, triggers the pruning stage,
+    and manages post-protocol analysis (spectra, snapshots).
     """
     
     def __init__(
@@ -43,6 +38,14 @@ class ProtocolExecutor:
         logger: Logger,
         checkpoint_manager: CheckpointManager
     ):
+        """
+        Initialize the protocol executor.
+
+        Args:
+            config (CalculationConfig): Global configuration.
+            logger (Logger): Application logger.
+            checkpoint_manager (CheckpointManager): For saving intermediate states.
+        """
         self.config = config
         self.logger = logger
         self.checkpoint_manager = checkpoint_manager
@@ -55,12 +58,19 @@ class ProtocolExecutor:
         protocol: Protocol
     ) -> None:
         """
-        Execute protocol on ensemble.
-        
+        Run the provided protocol on the given ensemble.
+
+        Steps:
+        1. Run QM calculations for all active conformers.
+        2. Perform pruning (energy + geometry).
+        3. Generate reports and snapshots.
+        4. Compute spectra.
+
         Args:
-            conformers: Ensemble to process
-            protocol: Protocol to execute
+            conformers (List[Conformer]): The ensemble to process.
+            protocol (Protocol): The protocol step definition.
         """
+
         active_count = len([c for c in conformers if c.active])
         
         # Start protocol
@@ -158,7 +168,14 @@ class ProtocolExecutor:
         conformers: List[Conformer],
         protocol: Protocol
     ) -> None:
-        """Run calculations for all active conformers."""
+        """
+        Internal loop to run QM jobs for pending conformers.
+
+        Args:
+            conformers (List[Conformer]): List of conformers.
+            protocol (Protocol): Current protocol.
+        """
+        
         count = 1
         for conf in conformers:
             if not conf.active:
@@ -186,7 +203,15 @@ class ProtocolExecutor:
         return
 
 
-    def generate_energy_report(self, conformers: List[Conformer], protocol_number: Union[str,int], T:float):
+    def generate_energy_report(self, conformers: List[Conformer], protocol_number: Union[str,int], T:float) -> None:
+        """
+        Log a tabular summary of the ensemble status.
+
+        Args:
+            title (str): Title for the table.
+            conformers (List[Conformer]): List of conformers to report.
+            protocol (Protocol): Current protocol context.
+        """
 
         CONFS = [i for i in conformers if i.active]
 
@@ -256,7 +281,16 @@ class ProtocolExecutor:
         return
 
 
-    def generate_report(self, title:str, conformers: List[Conformer], protocol: Protocol):
+    def generate_report(self, title:str, conformers: List[Conformer], protocol: Protocol) -> None:
+        """
+        Log a tabular summary of the ensemble status.
+
+        Args:
+            title (str): Title for the table.
+            conformers (List[Conformer]): List of conformers to report.
+            protocol (Protocol): Current protocol context.
+        """
+
         headers = ["Conformers",
         "E [Eh]",
         "G-E [Eh]",

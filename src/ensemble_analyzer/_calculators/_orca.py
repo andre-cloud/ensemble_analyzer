@@ -3,6 +3,8 @@ from ensemble_analyzer._calculators.base import BaseCalc, register_calculator
 import shutil
 import os
 
+from typing import Tuple
+
 VERSION = None
 
 try:
@@ -15,10 +17,21 @@ except Exception:
 
 @register_calculator("orca")
 class OrcaCalc(BaseCalc):
+    """
+    Calculator wrapper for ORCA.
+    Handles input generation for SP, OPT, and FREQ jobs.
+    """
+
     label = "orca"
     VERSION = VERSION if VERSION else 0
 
-    def common_str(self):
+    def common_str(self) -> Tuple[str, str]:
+        """
+        Generate ORCA simple input and block input strings.
+
+        Returns:
+            Tuple[str, str]: (simple_input, blocks_input)
+        """
 
         if self.protocol.solvent:
             if "xtb" in self.protocol.functional.lower():
@@ -40,7 +53,13 @@ class OrcaCalc(BaseCalc):
 
         return si, ob
 
-    def _std_calc(self):
+    def _std_calc(self) -> Tuple[ORCA, str]:
+        """
+        Create standard ORCA calculator with common settings.
+
+        Returns:
+            Tuple[ORCA, str]: Initialized ASE ORCA calculator and label.
+        """
         si, ob = self.common_str()
 
         calculator = ORCA(
@@ -63,10 +82,16 @@ class OrcaCalc(BaseCalc):
 
         return calculator, "orca"
 
-    def single_point(self):
+    def single_point(self) -> Tuple[ORCA, str]:
+        """Configure Single Point calculation."""
         return self._std_calc()
 
-    def optimisation(self):
+    def optimisation(self) -> Tuple[ORCA, str]:
+        """
+        Configure Geometry Optimization.
+        Adds constraints if specified in protocol.
+        """
+
         calc, label = self._std_calc()
         calc.parameters["orcasimpleinput"] += " opt"
         if self.constrains:
@@ -83,7 +108,9 @@ class OrcaCalc(BaseCalc):
 
         return calc, label
 
-    def frequency(self):
+    def frequency(self) -> Tuple[ORCA, str]:
+        """Configure Frequency calculation."""
+        
         calc, label = self._std_calc()
         calc.parameters["orcasimpleinput"] += " freq"
         if self.VERSION > 5:

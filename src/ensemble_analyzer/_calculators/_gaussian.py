@@ -2,22 +2,23 @@ import os
 from ase.calculators.gaussian import Gaussian
 from ensemble_analyzer._calculators.base import BaseCalc, register_calculator
 
+from typing import Tuple
 
 @register_calculator("gaussian")
 class GaussianCalc(BaseCalc):
     """
     ASE-compatible Gaussian calculator wrapper.
-    This class follows the same structure as OrcaCalc,
-    encapsulating the logic for SP, OPT, and FREQ calculations.
+    Encapsulates logic for SP, OPT, and FREQ input generation.
     """
 
-    def common_str(self):
+    def common_str(self)-> str:
         """
-        Build the common Gaussian input string (route section)
-        based on the Protocol parameters.
+        Build the common Gaussian route section.
+
+        Returns:
+            str: Route string (e.g. '# B3LYP/6-31G* SCRF=...').
         """
 
-        # Construct solvent model (if any)
         solv = ""
         if self.protocol.solvent:
             if self.protocol.solvent.smd:
@@ -35,18 +36,23 @@ class GaussianCalc(BaseCalc):
         if self.protocol.read_orbitals:
             route += " guess=read"
 
-        # Default options: no population output
-        # route += " pop=none"
-
         return route
 
-    def _std_calc(self):
+    def _std_calc(self) -> Tuple[Gaussian, str]:
+        """
+        Create standard Gaussian calculator.
+
+        Returns:
+            Tuple[Gaussian, str]: Initialized calculator and label.
+        """
+
         route = self.common_str()
 
         calc = Gaussian(
             label="gaussian",
             output_type='N',
             mem=f"{self.cpu*2}GB",
+            chk='gaussian.chk',
             extra=route,
             charge=self.protocol.charge,
             mult=self.protocol.mult,
@@ -54,17 +60,22 @@ class GaussianCalc(BaseCalc):
         )
         if self.protocol.read_orbitals:
             calc.oldchk = (
-                f"{self.conf.folder}/protocol_{self.protocol.read_orbitals}.chk"
+                f"{self.conf.folder}/protocol_{self.protocol.read_orbitals}/{self.conf.number}_{self.protocol.read_orbitals}_gaussian.chk"
             )
 
         return calc, "gaussian"
 
-    def single_point(self):
+    def single_point(self) -> Tuple[Gaussian, str]:
+        """Configure Single Point calculation."""
 
         calc, label = self._std_calc()
         return calc, label
 
-    def optimisation(self):
+    def optimisation(self) -> Tuple[Gaussian, str]:
+        """
+        Configure Geometry Optimization.
+        Handles modredundant constraints.
+        """
 
         calc, label = self._std_calc()
         if not self.protocol.constrains:
@@ -84,7 +95,8 @@ class GaussianCalc(BaseCalc):
 
         return calc, label
 
-    def frequency(self):
+    def frequency(self) -> Tuple[Gaussian, str]:
+        """Configure Frequency calculation."""
 
         calc, label = self._std_calc()
         calc.parameters["extra"] += " freq=(HPModes,vcd)"

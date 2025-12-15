@@ -21,9 +21,19 @@ from ensemble_analyzer._managers.calculator_orchestration import CalculationOrch
 
 
 
-def main():
+def main() -> None:
     """
-    Main entry point
+    Main entry point for the Ensemble Analyzer application.
+
+    Orchestrates the full workflow:
+    1. Parses command line arguments.
+    2. Initializes logging.
+    3. Loads or creates the Protocol and Ensemble.
+    4. Configures the calculation environment.
+    5. Launches the CalculationOrchestrator.
+
+    Returns:
+        None
     """
     
     # 1. Parse Arguments

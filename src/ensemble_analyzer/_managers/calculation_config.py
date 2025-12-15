@@ -9,7 +9,13 @@ from ensemble_analyzer._protocol.protocol import Protocol
 
 @dataclass
 class CalculationConfig:
-    """Configuration for ensemble calculations."""
+    """
+    Configuration container for global calculation settings.
+    
+    Stores runtime parameters that are constant across all protocols
+    (e.g., resources, physical constants, global flags).
+    """
+
     cpu: int = 1 
     temperature: float = 298.15
     start_from_protocol: int = 0
@@ -40,19 +46,19 @@ class CalculationConfig:
     @classmethod
     def from_args(cls, args, start_from_protocol: int = 0) -> 'CalculationConfig':
         """
-        Create configuration from parsed arguments.
+        Factory method to create a config from command-line arguments.
         
-        Also handles settings.json persistence:
-        - If settings.json exists: load and merge with args
-        - If not: create from args and save
-        
+        Also handles persistence: checks for existing `settings.json` or creates
+        one from the provided arguments.
+
         Args:
-            args: Parsed command-line arguments
-            start_from_protocol: Protocol to start from (for restart)
-            
+            args (argparse.Namespace): Parsed command-line arguments.
+            start_from_protocol (int): Protocol ID to resume from.
+
         Returns:
-            CalculationConfig instance
+            CalculationConfig: Initialized configuration object.
         """
+        
         settings_file = Path("settings.json")
         
         # Try to load existing settings
@@ -116,12 +122,12 @@ class CalculationConfig:
             "restart": args.restart,
         }
     
-    def to_dict(self) -> dict:
+    def to_dict(self)  -> dict:
         """
-        Convert to dictionary for serialization.
-        
+        Convert configuration to a dictionary for serialization.
+
         Returns:
-            Dictionary representation
+            dict: Dictionary suitable for JSON dumping.
         """
         d = self._args_to_dict(self)
         
@@ -153,10 +159,10 @@ class CalculationConfig:
     
     def save(self, filepath: Path = Path("settings.json")) -> None:
         """
-        Save configuration to file.
-        
+        Save the current configuration to a JSON file.
+
         Args:
-            filepath: Path to settings file
+            filepath (Path): Output file path. Defaults to "settings.json".
         """
         with open(filepath, 'w') as f:
             json.dump(self.to_dict(), f, indent=4)
@@ -164,17 +170,18 @@ class CalculationConfig:
     @classmethod
     def load(cls, filepath: Path = Path("settings.json")) -> 'CalculationConfig':
         """
-        Load configuration from file.
-        
+        Load configuration from a JSON file.
+
         Args:
-            filepath: Path to settings file
-            
+            filepath (Path): Input file path. Defaults to "settings.json".
+
         Returns:
-            CalculationConfig instance
-            
+            CalculationConfig: Reconstructed configuration object.
+
         Raises:
-            FileNotFoundError: If settings file doesn't exist
+            FileNotFoundError: If the settings file is missing.
         """
+
         if not filepath.exists():
             raise FileNotFoundError(f"Settings file not found: {filepath}")
         
@@ -205,11 +212,12 @@ class CalculationConfig:
     
     def validate(self) -> None:
         """
-        Validate configuration parameters.
-        
+        Perform sanity checks on configuration values.
+
         Raises:
-            ValueError: If any parameter is invalid
+            ValueError: If critical parameters (cpu, temperature) are invalid.
         """
+        
         if self.cpu < 1:
             raise ValueError(f"CPU count must be ≥ 1, got {self.cpu}")
         

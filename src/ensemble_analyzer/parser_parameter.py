@@ -17,33 +17,48 @@ from datetime import datetime
 
 
 def tranform_float(freq) -> str:
-    """Transform into a float number a string. Thought for a map function
+    """
+    Format a frequency value as a string with 2 decimal places.
 
     Args:
-        freq (float): Frequency
+        freq (float): The frequency value to format.
+
+    Returns:
+        str: Formatted string (e.g., "123.45").
     """
+
     return f"{freq:.2f}"
 
 
 def get_conf_parameters(
     conf: Conformer, number: int, output: str, p, time: datetime, temp: float, log: Logger, linear: bool = False, cut_off: float = 100, alpha: float = 4, P: float = 101.325
 ) -> bool:
-    """Obtain the parameters for a conformer: E, G, B, m
+    """
+    Extract and calculate parameters for a single conformer from the QM output.
+
+    Parses energy, geometry, and frequencies. Calculates thermodynamic properties
+    (G, H, S) using qRRHO if frequencies are available. Updates the conformer's
+    EnergyStore and SpectralStore.
 
     Args:
-        conf (Conformer): Conformer
-        number (int): Protocol number
-        output (str): Output File
-        p (Protocol): Protocol
-        time (datetime): Time of execution
-        temp (float): Temperature [K]
-        log (Logger): Logging system
-
-    Raises:
-        IOError: When frequency are not found
+        conf (Conformer): The conformer object to update.
+        number (int): Protocol step number.
+        output (str): Path to the output file.
+        p (Protocol): Protocol configuration object.
+        time (datetime): Timestamp/Duration of the calculation.
+        temp (float): Temperature [K].
+        log (Logger): Logger instance.
+        linear (bool, optional): Treat molecule as linear. Defaults to False.
+        cut_off (float, optional): qRRHO cut-off frequency [cm^-1]. Defaults to 100.
+        alpha (float, optional): qRRHO damping factor. Defaults to 4.
+        P (float, optional): Pressure [kPa]. Defaults to 101.325.
 
     Returns:
-        bool: Correct parsing
+        bool: True if parsing was successful (even if calculation failed/diverged),
+              False if a critical error occurred.
+
+    Raises:
+        IOError: If frequencies are expected but not found in the output.
     """
 
     parser = PARSER_REGISTRY[p.calculator](

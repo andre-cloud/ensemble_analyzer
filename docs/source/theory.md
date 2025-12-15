@@ -66,6 +66,7 @@ S_{vib}(\omega) = w(\omega) S_{HO}(\omega) + [1 - w(\omega)] S_{rot}(\omega)
 $$
 
 The damping function $w(\omega)$ is defined as:
+
 $$
 w(\omega) = \frac{1}{1 + (\omega_0 / \omega)^\alpha}
 $$
@@ -97,7 +98,7 @@ EnAn distinguishes between vibronic and electronic spectra for the convolution f
 
 2.  **Electronic Spectra (UV-Vis, ECD)**:
     Use a **Gaussian** line-shape function to model inhomogeneous broadening:
-    
+
     $$
     f_\text{Gauss}(x; x_0, \sigma) = \frac{1}{\sigma\sqrt{2\pi}} e^{ -\frac{1}{2}\left(\frac{x-x_0}{\sigma}\right)^2 }
     $$

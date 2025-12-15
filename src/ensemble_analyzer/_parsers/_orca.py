@@ -11,6 +11,10 @@ from typing import List, Tuple
 
 @register_parser('orca')
 class OrcaParser(BaseParser):
+    """
+    Parser implementation for ORCA output files.
+    Supports ORCA 5 and ORCA 6 syntax variations.
+    """
 
     REGEX = {
         '6':{
@@ -93,6 +97,13 @@ State  Energy     Wavelength     R         MX        MY        MZ
     }
     
     def __init__(self, output_name, log):
+        """
+        Initialize ORCA parser and detect version.
+
+        Args:
+            output_name (str): Path to ORCA output file.
+            log: Logger instance.
+        """
         super().__init__(output_name, log)
         self.version = self.get_version()
         self.regex = self.REGEX[self.version]
@@ -103,11 +114,23 @@ State  Energy     Wavelength     R         MX        MY        MZ
             self.log.warning(self.skip_message)
 
 
-    def get_version(self):
+    def get_version(self) -> str:
+        """
+        Detect ORCA major version from output header.
+
+        Returns:
+            str: Version string (e.g., '5' or '6').
+        """
         find = re.findall(r'Program Version (\d)', self.fl)
         return find[0]
 
-    def parse_geom(self):
+    def parse_geom(self) -> np.ndarray:
+        """
+        Parse final geometry coordinates.
+
+        Returns:
+            np.ndarray: Cartesian coordinates array.
+        """
         fl = self.get_filtered_text(start = self.regex['geom_start'], end = self.regex['break'])
 
         pattern = r'\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)'
@@ -115,11 +138,23 @@ State  Energy     Wavelength     R         MX        MY        MZ
         coords = np.array(re.findall(pattern, fl, flags=re.MULTILINE), dtype=float)
         return coords
     
-    def parse_energy(self):
+    def parse_energy(self) -> float:
+        """
+        Parse final Single Point Energy.
+
+        Returns:
+            float: Energy in Hartree.
+        """
         E = re.findall(self.regex['E'], self.fl)[-1]
         return float(E)
 
-    def parse_B_m(self) -> Tuple:
+    def parse_B_m(self) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Parse Rotational Constants and Dipole Moment.
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]: (B vector, Dipole vector).
+        """
         match_B = re.findall(self.regex['B'], self.fl)
         if match_B:
             B = np.array(match_B[-1], dtype=float)
@@ -138,7 +173,13 @@ State  Energy     Wavelength     R         MX        MY        MZ
 
         return B, M
 
-    def parse_freq(self) -> List:
+    def parse_freq(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Parse vibrational frequencies, IR and VCD intensities.
+
+        Returns:
+            Tuple: (Frequencies array, IR spectrum array, VCD spectrum array).
+        """
         
         if not self.regex['s_freq'] in self.fl: 
             return np.array([]), np.zeros(shape=(1,2)), np.zeros(shape=(1,2))
@@ -163,7 +204,13 @@ State  Energy     Wavelength     R         MX        MY        MZ
 
         return freq, ir, vcd
 
-    def parse_tddft(self):
+    def parse_tddft(self) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Parse TD-DFT excited states for UV and ECD spectra.
+
+        Returns:
+            Tuple: (UV data array, ECD data array).
+        """
 
         if not self.regex['start_spec'] in self.fl: 
             return np.zeros(shape=(1,2)), np.zeros(shape=(1,2))
@@ -183,15 +230,17 @@ State  Energy     Wavelength     R         MX        MY        MZ
         return uv, ecd
 
     def opt_done(self) -> bool:
+        """Check if optimization has converged."""
         return len(re.findall(self.regex['opt_done'], self.fl)) == 1
     
     def normal_termination(self) -> bool:
+        """Check if normal calculation ended."""
         return len(re.findall(self.regex['finish'], self.fl)) == 1
 
 if __name__ == '__main__':
 
     import mock
-    print('ORCA 6')
+    # print('ORCA 6')
     # parser = OrcaParser("files/opt_6.out", mock.MagicMock())
     # B,M = parser.parse_B_m()
     # print(B,M)
@@ -202,9 +251,9 @@ if __name__ == '__main__':
     # print(E)
     # freq, ir, vcd = parser.parse_freq()
     # print(freq, ir, vcd)
-    parser = OrcaParser("files/tddft_6.out", mock.MagicMock())
-    uv, ecd = parser.parse_tddft()
-    print(uv, ecd)
+    # parser = OrcaParser("files/tddft_6.out", mock.MagicMock())
+    # uv, ecd = parser.parse_tddft()
+    # print(uv, ecd)
     # print('='*10)
     # print('ORCA 5')
     # parser = OrcaParser("files/opt_5.out", mock.MagicMock())

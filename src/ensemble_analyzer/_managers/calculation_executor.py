@@ -15,16 +15,21 @@ import time
 
 class CalculationExecutor:
     """
-    Executes single conformer calculations with retry logic.
+    Executes single conformer calculations.
     
-    Responsibilities:
-    - Run quantum calculation
-    - Retry on failure with exponential backoff
-    - Parse results
-    - Log metrics
+    Orchestrates the lifecycle of a single QM job: input generation,
+    execution, file management, and result parsing.
     """
     
     def __init__(self, config: CalculationConfig, logger: Logger):
+        """
+        Initialize the executor.
+
+        Args:
+            config (CalculationConfig): Global configuration.
+            logger (Logger): Application logger.
+        """
+
         self.config = config
         self.logger = logger
     
@@ -35,15 +40,15 @@ class CalculationExecutor:
         protocol: Protocol,
     ) -> bool:
         """
-        Execute calculation.
-        
+        Run a calculation for a specific conformer and protocol.
+
         Args:
-            idx: Display index (1-based)
-            conf: Conformer to calculate
-            protocol: Protocol to use
-        
+            idx (int): Display index (1-based count for logging).
+            conf (Conformer): The conformer to calculate.
+            protocol (Protocol): The computational protocol to apply.
+
         Returns:
-            True if successful, False otherwise
+            bool: True if the calculation and parsing were successful, False otherwise.
         """
 
         self.logger.calculation_start(

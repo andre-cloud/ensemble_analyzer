@@ -6,7 +6,14 @@ import json
 from importlib.resources import files
 
 
-def print_help_protocol():
+def print_help_protocol() -> None:
+    """
+    Print a detailed JSON template for the protocol file and exit.
+    
+    Displays the structure required for defining computational steps,
+    including available keys like functional, basis, solvent, etc.
+    """
+
     example = json.dumps(
         {
             "0": {
@@ -38,7 +45,14 @@ def print_help_protocol():
     sys.exit()
 
 
-def print_help_threshold():
+def print_help_threshold() -> None:
+    """
+    Print the default threshold values from the configuration file and exit.
+    
+    Explains the pruning parameters (thrG, thrB, thrGMAX) used to filter 
+    conformers.
+    """
+
     with open(
         str(
                 files("ensemble_analyzer").joinpath("parameters_file/default_threshold.json")
@@ -54,9 +68,15 @@ def print_help_threshold():
     sys.exit()
 
 
-def parser_arguments():
+def parser_arguments()-> argparse.Namespace:
     """
-    Argparse argument parse
+    Parse command-line arguments for the main Ensemble Analyzer application.
+
+    Defines arguments for input files, molecular parameters, system resources,
+    graph plotting settings, and logging options.
+
+    Returns:
+        argparse.Namespace: Object containing the parsed arguments.
     """
 
     parser = argparse.ArgumentParser(
@@ -255,7 +275,24 @@ def parser_arguments():
     return parser.parse_args()
 
 
-def mix_type(values): 
+def mix_type(values):
+    """
+    Custom argparse type converter for arguments that can be boolean, float, or list of floats.
+    
+    Used for parameters like --fwhm-vibro which can be:
+    - True/False (toggle default)
+    - Single float (value)
+    - List of floats [min, max] (range)
+
+    Args:
+        values (List[str]): List of strings from command line.
+
+    Returns:
+        Union[bool, float, List[float], None]: The parsed value.
+
+    Raises:
+        ValueError: If conversion fails or too many arguments are provided.
+    """ 
 
     if values is None: 
         return None 

@@ -25,13 +25,13 @@ logger = logging.getLogger(__name__)
 
 def parse_mapping_file(filepath: Path) -> Dict[str, str]:
     """
-    Parse mapping file OLD=NEW.
-    
+    Parse a text file containing 'OLD=NEW' mappings.
+
     Args:
-        filepath: Path to the mapping file
-    
+        filepath (Path): Path to the mapping file.
+
     Returns:
-        Dictionary {old: new}
+        Dict[str, str]: Dictionary of mappings.
     """
     mapping = {}
     with open(filepath, 'r', encoding='utf-8') as f:
@@ -49,13 +49,13 @@ def parse_mapping_file(filepath: Path) -> Dict[str, str]:
 
 def batch_mode(args):
     """
-    Run in batch (non-interactive) mode.
-    
+    Execute edits in non-interactive (batch) mode.
+
     Args:
-        args: Arguments parsed by argparse
-    
+        args (argparse.Namespace): Parsed command-line arguments.
+
     Returns:
-        Exit code (0 = success, 1 = error)
+        int: Exit code (0 for success, 1 for error).
     """
     try:
         editor = MatplotlibPickleEditor(args.pickle_file,
@@ -165,7 +165,10 @@ def batch_mode(args):
 
 
 def main():
-    """CLI entry point."""
+    """
+    Main entry point for the Graph Editor CLI.
+    Dispatches control to either the TUI or Batch mode.
+    """
     parser = argparse.ArgumentParser(
         description='Interactive/batch editor for matplotlib pickle files',
         formatter_class=argparse.RawDescriptionHelpFormatter,

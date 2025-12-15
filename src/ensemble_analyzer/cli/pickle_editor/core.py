@@ -32,10 +32,10 @@ class PickleSecurityError(Exception):
 
 class MatplotlibPickleEditor:
     """
-    Editor to modify colors and labels in serialized matplotlib figures.
+    Core editor to modify colors, labels, and styles in serialized matplotlib figures.
     
     Attributes:
-        COMMON_COLORS: List of common predefined colors
+        COMMON_COLORS (List[str]): List of common predefined colors for quick selection.
     """
     
     COMMON_COLORS = [
@@ -48,13 +48,10 @@ class MatplotlibPickleEditor:
     def __init__(self, pickle_path: Path, strict_validation: bool = True):
         """
         Initialize the editor.
-        
+
         Args:
-            pickle_path: Path to the pickle file
-            strict_validation: If True, strictly validate the object type
-        
-        Raises:
-            FileNotFoundError: If the file does not exist
+            pickle_path (Path): Path to the pickle file.
+            strict_validation (bool): If True, ensures the loaded object is a Figure.
         """
         self.pickle_path = pickle_path
         self.strict_validation = strict_validation
@@ -67,10 +64,10 @@ class MatplotlibPickleEditor:
     
     def load(self) -> None:
         """
-        Load and validate the pickle.
-        
+        Load and deserialize the pickle file.
+
         Raises:
-            PickleSecurityError: If the file is corrupted or invalid
+            PickleSecurityError: If the file is corrupted or not a valid Figure.
         """
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -99,13 +96,10 @@ class MatplotlibPickleEditor:
     
     def get_legend_labels(self) -> Dict[int, str]:
         """
-        Get current legend labels.
-        
+        Retrieve current legend labels mapped by index.
+
         Returns:
-            Dictionary {index: label}
-        
-        Raises:
-            RuntimeError: If load() has not been called
+            Dict[int, str]: Dictionary {index: label_text}.
         """
         if not self.axes:
             raise RuntimeError("You must call load() first")
@@ -149,17 +143,15 @@ class MatplotlibPickleEditor:
     
     def rename_legend_labels(self, mapping: Dict[str, str]) -> int:
         """
-        Rename legend labels.
-        
+        Rename specific legend labels.
+
         Args:
-            mapping: Dictionary {old_name: new_name}
-        
+            mapping (Dict[str, str]): Map of {old_name: new_name}.
+
         Returns:
-            Number of labels renamed
-        
-        Raises:
-            RuntimeError: If load() has not been called
+            int: Number of labels successfully renamed.
         """
+
         if not self.axes:
             raise RuntimeError("You must call load() first")
 
@@ -179,16 +171,13 @@ class MatplotlibPickleEditor:
     
     def change_line_colors(self, label_color_map: Dict[str, str]) -> int:
         """
-        Change line colors and legend colors.
-        
+        Update the color of lines associated with specific legend labels.
+
         Args:
-            label_color_map: Dictionary {label: color}
-        
+            label_color_map (Dict[str, str]): Map of {label: hex_color/name}.
+
         Returns:
-            Number of colors changed
-        
-        Raises:
-            RuntimeError: If load() has not been called
+            int: Number of lines updated.
         """
         if not self.axes:
             raise RuntimeError("You must call load() first")
@@ -219,16 +208,13 @@ class MatplotlibPickleEditor:
 
     def change_line_linestyle(self, style_map: Dict[str, str]) -> int:
         """
-        Change line styles and legend styles.
-        
+        Update the line style (e.g., solid, dashed) for specific labels.
+
         Args:
-            style_map: Dictionary {label: style}
-        
+            style_map (Dict[str, str]): Map of {label: style_string} (e.g. '--').
+
         Returns:
-            Number of styles changed
-        
-        Raises:
-            RuntimeError: If load() has not been called
+            int: Number of lines updated.
         """
         if not self.axes:
             raise RuntimeError("You must call load() first")
@@ -343,17 +329,14 @@ class MatplotlibPickleEditor:
     def save(self, output_path: Optional[Path] = None,
              format: str = 'pickle') -> Path:
         """
-        Save the modified figure.
-        
+        Serialize the modified figure to disk.
+
         Args:
-            output_path: Output path (None = overwrite original)
-            format: Output format ('pickle', 'png', 'pdf', 'svg')
-        
+            output_path (Optional[Path]): Destination file. If None, overwrites original.
+            format (str): Output format ('pickle', 'png', 'pdf', 'svg').
+
         Returns:
-            Path of the saved file
-        
-        Raises:
-            RuntimeError: If load() has not been called
+            Path: The actual path of the saved file.
         """
         if not self.figure:
             raise RuntimeError("You must call load() first")

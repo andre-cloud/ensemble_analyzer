@@ -8,14 +8,15 @@ from ensemble_analyzer._logger.logger import Logger
 
 
 def _parse_xyz_str(fl: List[str], raw: bool =False) -> Tuple[np.ndarray, np.ndarray, Optional[float]]:
-    """Parse an xyz geom descriptor
+    """
+    Parse an xyz geom descriptor.
 
     Args:
-        fl (List[str]): Lines of the xyzfile of only one geometry
+        fl (List[str]): Lines of the xyzfile of only one geometry.
         raw (bool, optional): Convert the energy in the comment line. Defaults to False.
 
     Returns:
-        Tuple[np.ndarray, np.ndarray, float]: Atoms, Geometry and eventually Energy
+        Tuple[np.ndarray, np.ndarray, Optional[float]]: Atoms, Geometry and eventually Energy.
     """
     e = None
     if raw:
@@ -31,20 +32,19 @@ def _parse_xyz_str(fl: List[str], raw: bool =False) -> Tuple[np.ndarray, np.ndar
 
 def read_ensemble(file: str, log:Logger, raw: bool=False) -> list:
     """
-    Read the initial ensemble and return the ensemble list
-    Not only XYZ file is supported. OBABEL is required
+    Read the initial ensemble and return the ensemble list.
+    Not only XYZ file is supported. OBABEL is required.
 
-    :param file: initial ensemble file
-    :type file: str
-    :param charge: charge of the molecule
-    :type charge: int
-    :param multiplicity: multiplicity of the molecule
-    :type multiplicity: int
-    :param log: logger instance
-    :type log: logger
+    Args:
+        file (str): Initial ensemble file.
+        log (Logger): Logger instance.
+        raw (bool, optional): Whether to parse raw energy from comments. Defaults to False.
 
-    :return: whole ensemble list as Conformer instances
-    :rtype: list
+    Returns:
+        list: Whole ensemble list as Conformer instances.
+
+    Raises:
+        str: If the file does not end with .xyz.
     """
 
     confs = []
@@ -71,15 +71,15 @@ def read_ensemble(file: str, log:Logger, raw: bool=False) -> list:
 
 def save_snapshot(output: str, confs: List[Conformer], log: Logger):
     """
-    Save an XYZ file to store a bunch of geometries
+    Save an XYZ file to store a bunch of geometries.
 
-    :param output: output filename
-    :type output: str
-    :param confs: list of all active conformers
-    :type confs: list(Conformer)
-    :param log: logger instance
-    :type log: logger
-    :return: None
+    Args:
+        output (str): Output filename.
+        confs (List[Conformer]): List of all active conformers.
+        log (Logger): Logger instance.
+
+    Returns:
+        None
     """
     log.debug("Saving snapshot of the ensemble")
     xyzs = []

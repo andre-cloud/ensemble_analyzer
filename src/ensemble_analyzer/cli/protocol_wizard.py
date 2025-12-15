@@ -13,7 +13,18 @@ from importlib.resources import files
 
 
 def load_grouped(path: str) -> list[str]:
-    """Load grouped choices from file with category comments."""
+    """
+    Load grouped choices (functionals/basis sets) from a parameter file.
+
+    Parses files with '#!' category markers to group options for the UI.
+
+    Args:
+        path (str): Path to the parameters file.
+
+    Returns:
+        list[str]: List of formatted choices for the fuzzy search prompt.
+    """
+
     if not os.path.exists(path):
         return []
     
@@ -52,24 +63,46 @@ def load_grouped(path: str) -> list[str]:
 
 
 def load_functionals() -> list[str]:
-    """Load available functionals from parameters file."""
+    """
+    Load available DFT functionals from the package database.
+
+    Returns:
+        list[str]: List of functional names.
+    """
+
     path = files("ensemble_analyzer").joinpath("parameters_file/functionals")
     return load_grouped(path)
 
 
-def load_basis_sets() -> list[str]:
-    """Load available basis sets from parameters file."""
+def load_basis_sets() -> dict[str, Any]:
+    """
+    Interactively configure a single protocol step.
+
+    Prompts the user for parameters (calculator, method, settings) based on
+    the selected complexity level.
+
+    Args:
+        step_num (int): The index of the step being configured.
+        level (str, optional): Configuration depth ('Basic', 'Intermediate', 'Advanced'). 
+                               Defaults to "Basic".
+
+    Returns:
+        dict[str, Any]: Dictionary of parameters for this protocol step.
+    """
+
     path = files("ensemble_analyzer").joinpath("parameters_file/basis_sets")
     return load_grouped(path)
 
 
 def parse_choice(choice: str) -> str:
     """Extract clean value from formatted choice string."""
+
     return choice.split(" # ")[0].strip()
 
 
 def get_int_input(message: str, default: str = "1") -> int:
     """Safe integer input with validation and retry."""
+
     while True:
         try:
             value = inquirer.text(message=message, default=default).execute()
@@ -80,6 +113,7 @@ def get_int_input(message: str, default: str = "1") -> int:
 
 def get_float_input(message: str, default: str = "", allow_empty: bool = True) -> Optional[float]:
     """Safe float input with optional empty value."""
+
     value = inquirer.text(message=message, default=default).execute().strip()
     
     if allow_empty and not value:
@@ -96,6 +130,7 @@ def get_float_input(message: str, default: str = "", allow_empty: bool = True) -
 
 def get_internal_coordinates() -> list[list[int]]:
     """Prompt for internal coordinates to monitor (bond/angle/dihedral)."""
+
     coordinates = []
     
     while inquirer.confirm(
@@ -125,6 +160,7 @@ def get_internal_coordinates() -> list[list[int]]:
 
 def get_constrains() -> list[list[int]]:
     """Prompt for geometric constraints."""
+
     constraints = []
     
     while inquirer.confirm(
@@ -153,6 +189,7 @@ def get_constrains() -> list[list[int]]:
 
 def clean_protocol_dict(step: dict[str, Any]) -> dict[str, Any]:
     """Remove None, empty values, and defaults from protocol dictionary."""
+
     cleaned = {}
     
     # Default values to skip
@@ -193,6 +230,7 @@ def clean_protocol_dict(step: dict[str, Any]) -> dict[str, Any]:
 
 def print_step_summary(idx: int, step: dict[str, Any]) -> None:
     """Print formatted summary of protocol step."""
+
     print(f"\n{'='*60}")
     print(f"  STEP {idx} SUMMARY")
     print(f"{'='*60}")
@@ -223,6 +261,7 @@ def protocol_step(step_num: int, level: str = "Basic") -> dict[str, Any]:
     Returns:
         Dictionary containing all protocol parameters
     """
+
     step = {}
     
     print(f"\n{'#'*60}")
@@ -460,8 +499,17 @@ def protocol_step(step_num: int, level: str = "Basic") -> dict[str, Any]:
     return cleaned_step
 
 
-def main():
-    """Main entry point for protocol wizard."""
+def main() -> int:
+    """
+    Main entry point for the Protocol Wizard CLI.
+
+    Orchestrates the creation of the protocol.json file through an 
+    interactive terminal session.
+
+    Returns:
+        int: Exit code (0 for success, 1 for error).
+    """
+
     print("="*60)
     print("  Ensemble Analyser Protocol Wizard")
     print("="*60)

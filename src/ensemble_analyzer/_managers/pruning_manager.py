@@ -38,21 +38,37 @@ class ComparisonResult:
     
 
 class PruningManager:
+    """
+    Manages the ensemble refinement process (filtering and de-duplication).
+    """
 
     def __init__(self, logger : Logger, include_H : bool = True): 
+        """
+        Initialize the PruningManager.
+
+        Args:
+            logger (Logger): Logger instance.
+            include_H (bool, optional): Whether to include Hydrogens in RMSD checks. Defaults to True.
+        """
+
         self.logger = logger
         self.include_H = include_H
         self._deactivation_records : List[ComparisonResult] = []
 
     def prune_ensemble(self, conformers: List[Conformer], protocol: Protocol) -> List[Conformer]: 
-        """Main pruning workflow
+        """
+        Execute the pruning workflow on the ensemble.
+
+        Applies:
+        1. Energy window filtering (thrGMAX).
+        2. Geometric de-duplication based on Energy (thrG) and Rotational Constants (thrB).
 
         Args:
-            conformers (List[Conformer]): Ensemble to prune
-            protocol (Protocol): Protocol
+            conformers (List[Conformer]): The full ensemble to process.
+            protocol (Protocol): Protocol containing threshold parameters.
 
         Returns:
-            List[Conformer]: Pruned ensemble (same list, but modified in-place)
+            List[Conformer]: The processed list (modified in-place, inactive conformers marked).
         """
 
         if self._should_skip_pruning(protocol):
@@ -70,11 +86,16 @@ class PruningManager:
         self._log_deactivations()
 
     def calculate_relative_energies(self, conformers: List[Conformer], temperature: float, protocol: Protocol) -> None: 
-        """Calculate relative energies and Boltzmann populations.
+        """
+        Compute relative energies and Boltzmann populations for active conformers.
 
         Args:
-            conformers (List[Conformer]): Ensemble
-            temperature (float): Temperature [K]
+            conformers (List[Conformer]): The ensemble.
+            temperature (float): Temperature [K].
+            protocol (Protocol): Protocol context for energy retrieval.
+
+        Returns:
+            None
         """
         
         active = [c for c in conformers if c.active]
@@ -102,13 +123,17 @@ class PruningManager:
         
         return False
     
-    def _filter_by_energy_window(self, conformers: List[Conformer], protocol_number: int, threshold: float):
-        """Deactivate conformers above energy window
+    def _filter_by_energy_window(self, conformers: List[Conformer], protocol_number: int, threshold: float) -> None:
+        """
+        Deactivate conformers exceeding the maximum energy window.
 
         Args:
-            conformers (List[Conformer]): Ensemble
-            protocol_number (int): Current Protocol
-            threshold (float): Max energy window [kcal/mol]
+            conformers (List[Conformer]): The ensemble.
+            protocol_number (int): Protocol ID to retrieve energies from.
+            threshold (float): Energy window in kcal/mol.
+
+        Returns:
+            None
         """
         
         active = [(conf, self._get_effective_energy(conf)) for conf in conformers if conf.active]
@@ -137,11 +162,17 @@ class PruningManager:
 
 
     def _remove_duplicates(self, conformers: List[Conformer], protocol: Protocol) -> None: 
-        """Remove duplicate conformers based on energy and magnitude of inertia momentum
+        """
+        Identify and deactivate duplicate conformers.
+
+        Uses Rotational Constants and Energy as descriptors for fast comparison ($O(N^2)$).
 
         Args:
-            conformers (List[Conformer]): Ensemble
-            protocol (Protocol): Protocol with thresholds
+            conformers (List[Conformer]): The ensemble.
+            protocol (Protocol): Protocol containing thrG and thrB thresholds.
+
+        Returns:
+            None
         """
 
         for idx, check in enumerate(conformers): 

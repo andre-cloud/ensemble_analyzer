@@ -19,6 +19,9 @@ level_default = logging.DEBUG if DEBUG else logging.INFO
 
 
 class Logger(logging.Logger): 
+    """
+    Custom Logger class with enhanced formatting and specialized event methods for EnAn.
+    """
 
     ARROW = "→"
     TICK = "✓"
@@ -38,7 +41,17 @@ class Logger(logging.Logger):
     def title_screen(self):
         self.info(title)
 
-    def application_input_received(self, config: Dict[str,Any]): 
+    def application_input_received(self, config: Dict[str,Any]) -> None: 
+        """
+        Log the initial configuration summary.
+
+        Args:
+            config (Dict[str, Any]): Dictionary of run parameters (ensemble size, protocols, etc.).
+
+        Returns:
+            None
+        """
+
         self._separator("Calculation Input")
         self.info(f"Ensemble: {config.get('conformers', 'N/A')} confromer(s)")
         self.info(f'Protocols: {config.get('len_protocols', 'N/A')}')
@@ -65,7 +78,21 @@ class Logger(logging.Logger):
     # Protocols Event
     # ===
     
-    def protocol_start(self, number: int, level: str, functional:str, basis: str, active_conformers:int):
+    def protocol_start(self, number: int, level: str, functional:str, basis: str, active_conformers:int) -> None:
+        """
+        Log the start of a protocol step.
+
+        Args:
+            number (int): Protocol ID.
+            level (str): Calculation level (e.g. "OPT+FREQ").
+            functional (str): DFT functional.
+            basis (str): Basis set.
+            active_conformers (int): Number of conformers entering this step.
+
+        Returns:
+            None
+        """
+        
         self._separator(f"PROTOCOL {number} - {level}")
         self.info(f"Level: {functional}/{basis}")
         self.info(f"Active conformers: {active_conformers}")
@@ -88,7 +115,22 @@ class Logger(logging.Logger):
         self.info(f"{count:03d}. {self.ARROW} CONF {conformer_id:03d} {self.SPLIT} Protocol {protocol_number}")
         self._start_timer(f"calc_{conformer_id}_{protocol_number}")
     
-    def calculation_success(self, conformer_id: int, protocol_number: int, energy: float, gibbs:float, elapsed_time: float, frequencies: List[float]):
+    def calculation_success(self, conformer_id: int, protocol_number: int, energy: float, gibbs:float, elapsed_time: float, frequencies: List[float]) -> None:
+        """
+        Log a successful calculation result.
+
+        Args:
+            conformer_id (int): Conformer ID.
+            protocol_number (int): Protocol ID.
+            energy (float): Electronic energy.
+            gibbs (float): Gibbs free energy.
+            elapsed_time (float): Duration in seconds.
+            frequencies (List[float]): List of frequencies (for imaginary check).
+
+        Returns:
+            None
+        """
+
         self._stop_timer(f"calc_{conformer_id}_{protocol_number}")
         text = f"\t{self.TICK} E = {energy:.8f} Eh {self.SPLIT} Time: {elapsed_time:.1f}s"
         if frequencies.size > 0: 
@@ -118,7 +160,20 @@ class Logger(logging.Logger):
         self.debug(f"Conformers before pruning: {conformer_count}\n")
         self._start_timer(f"pruning_{protocol_number}")
 
-    def pruning_summary(self, protocol_number: int, initial_count: int, final_count: int, deactivated_count: int):
+    def pruning_summary(self, protocol_number: int, initial_count: int, final_count: int, deactivated_count: int) -> None:
+        """
+        Log statistics after the pruning stage.
+
+        Args:
+            protocol_number (int): Protocol ID.
+            initial_count (int): Conformers before pruning.
+            final_count (int): Conformers after pruning.
+            deactivated_count (int): Number of removed conformers.
+
+        Returns:
+            None
+        """
+
         elapsed = self._stop_timer(f"pruning_{protocol_number}")
         retention = (final_count / initial_count * 100) if initial_count > 0 else 0
         
@@ -223,13 +278,18 @@ class Logger(logging.Logger):
         else:
             self.info(f"{char * width}")
     
-    def table(self, title: str, data: List[Any], headers: Union[List[str], str], **kwargs):
+    def table(self, title: str, data: List[Any], headers: Union[List[str], str], **kwargs)-> None:
         """
-        Log tabulated data (backward compatible with tabulate).
-        
+        Print a formatted ASCII table.
+
         Args:
-            data: List of rows
-            headers: List of column headers
+            title (str): Title of the table.
+            data (List[Any]): List of rows (lists or tuples).
+            headers (Union[List[str], str]): List of column headers.
+            **kwargs: Additional formatting arguments for the separator.
+
+        Returns:
+            None
         """
         self._separator(title, **kwargs)
         self.info("\n" + tabulate(data, headers=headers, floatfmt=".10f", disable_numparse=True))

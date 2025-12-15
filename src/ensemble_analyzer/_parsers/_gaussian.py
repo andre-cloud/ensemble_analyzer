@@ -11,6 +11,9 @@ from typing import List, Tuple
 
 @register_parser('gaussian')
 class GaussianParser(BaseParser):
+    """
+    Parser implementation for Gaussian output files.
+    """
 
     REGEX = {
         "B": r"Rotational constants \(GHZ\):\s*(-?\d+.\d*)\s*(-?\d+.\d*)\s*(-?\d+.\d*)",
@@ -39,6 +42,13 @@ class GaussianParser(BaseParser):
 
 
     def __init__(self, output_name, log):
+        """
+        Initialize Gaussian parser and detect version.
+
+        Args:
+            output_name (str): Path to Gaussian output file.
+            log: Logger instance.
+        """
         super().__init__(output_name, log)
         
         self.regex = self.REGEX
@@ -47,7 +57,13 @@ class GaussianParser(BaseParser):
         if not self.correct_exiting: 
             self.log.warning(self.skip_message)
 
-    def parse_geom(self):
+    def parse_geom(self) -> np.ndarray:
+        """
+        Parse final geometry coordinates.
+
+        Returns:
+            np.ndarray: Cartesian coordinates array.
+        """
         fl = self.get_filtered_text(start=self.regex['geom_start'], end='--')
 
         pattern = r'(?:\d+)\s+(?:\d+)\s+(?:\d+)\s+(-?\d+.\d+)\s+(-?\d+.\d+)\s+(-?\d+.\d+)'
@@ -55,7 +71,13 @@ class GaussianParser(BaseParser):
         coords = np.array(re.findall(pattern, fl, flags=re.MULTILINE), dtype=float)
         return coords
 
-    def parse_B_m(self):
+    def parse_B_m(self) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Parse Rotational Constants and Dipole Moment.
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]: (B vector, Dipole vector).
+        """
         match_B = re.findall(self.regex['B'], self.fl)
         if match_B:
             B = np.array(match_B[-1], dtype=float)
@@ -75,11 +97,23 @@ class GaussianParser(BaseParser):
 
         return B, M
 
-    def parse_energy(self):
+    def parse_energy(self) -> float:
+        """
+        Parse final Single Point Energy.
+
+        Returns:
+            float: Energy in Hartree.
+        """
         E = re.findall(self.regex['E'], self.fl)[-1]
         return float(E)
     
-    def parse_freq(self):
+    def parse_freq(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """
+        Parse vibrational frequencies, IR and VCD intensities.
+
+        Returns:
+            Tuple: (Frequencies array, IR spectrum array, VCD spectrum array).
+        """
 
         if not self.regex['s_freq'] in self.fl: 
             return np.array([]), np.zeros(shape=(1,2)), np.zeros(shape=(1,2))
@@ -96,7 +130,14 @@ class GaussianParser(BaseParser):
 
         return frequencies, np.column_stack((frequencies,ir_inten)), np.column_stack((frequencies,rot_str))
 
-    def parse_tddft(self):
+    def parse_tddft(self) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Parse TD-DFT excited states for UV and ECD spectra.
+
+        Returns:
+            Tuple: (UV data array, ECD data array).
+        """
+
 
         if not self.regex['start_spec'] in self.fl: 
             return np.zeros(shape=(1,2)), np.zeros(shape=(1,2))
@@ -113,9 +154,11 @@ class GaussianParser(BaseParser):
         return np.column_stack((energies,f)), np.column_stack((energies,R))
 
     def opt_done(self) -> bool:
+        """Check if optimization has converged."""
         return len(re.findall(self.regex['opt_done'], self.fl)) >= 1
 
     def normal_termination(self) -> bool:
+        """Check if normal calculation ended."""
         return len(re.findall(self.regex['finish'], self.fl)) >= 1
 
 

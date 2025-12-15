@@ -24,7 +24,28 @@ class_ = {
 
 
 
-def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, invert: bool, interested_area: List[float], shift: Optional[Union[List[float],float,None]] = None, fwhm: Optional[Union[List[float],float,None]] = None, read_pop: Optional[str] = None, definition: Optional[int] = 4):
+def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, invert: bool, interested_area: List[float], shift: Optional[Union[List[float],float,None]] = None, fwhm: Optional[Union[List[float],float,None]] = None, read_pop: Optional[str] = None, definition: Optional[int] = 4) -> None:
+    """
+    Main driver for generating computed spectra for a specific protocol step.
+
+    Iterates through available graph types (IR, VCD, UV, ECD), instantiates
+    the appropriate generator class, and triggers the computation/convolution
+    of the spectra.
+
+    Args:
+        ensemble (List[Conformer]): List of conformers containing spectral data.
+        protocol (Protocol): The protocol step configuration.
+        log (Logger): Logger instance.
+        invert (bool): Whether to invert the y-axis (useful for VCD/ECD).
+        interested_area (List[float]): Spectral range of interest for weighting.
+        shift (Optional[Union[List[float], float]]): Spectral shift parameter(s).
+        fwhm (Optional[Union[List[float], float]]): Full Width at Half Maximum parameter(s).
+        read_pop (Optional[str]): Protocol ID to read Boltzmann populations from.
+        definition (Optional[int]): Resolution of the spectral grid (10^definition points).
+
+    Returns:
+        None
+    """
     
     log.spectra_start(protocol_number=protocol.number)
     for graph_type in list(class_.keys()):
@@ -52,7 +73,21 @@ def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, inv
 
     log.spectra_end(protocol_number=protocol.number)
 
-def plot_comparative_graphs(log, idxs=None, show=False, nm=True, show_ref_weight=False):
+def plot_comparative_graphs(log, idxs=None, show=False, nm=True, show_ref_weight=False) -> None:
+    """
+    Generate comparison plots overlaying spectra from different protocol steps.
+
+    Args:
+        log (Logger): Logger instance.
+        idxs (Optional[List[int]]): List of protocol IDs to include in the plot.
+        show (bool): Whether to display the plot interactively.
+        nm (bool): Whether to plot x-axis in nanometers (for UV/ECD).
+        show_ref_weight (bool): Whether to overlay the weighting function used for matching.
+
+    Returns:
+        None
+    """
+    
     for graph_type in GRAPHS:
         experimental_file = f"{graph_type.upper()}_ref_norm.xy" if os.path.exists(f"{graph_type.upper()}_ref_norm.xy") else None
         

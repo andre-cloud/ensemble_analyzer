@@ -2,6 +2,8 @@
 from typing import List
 from pathlib import Path
 import json
+import tempfile
+import shutil
 
 from ensemble_analyzer._conformer.conformer import Conformer
 from ensemble_analyzer._logger.logger import Logger
@@ -11,25 +13,32 @@ class CheckpointManager:
     """
     Manages atomic checkpoint saves and loads.
     
-    Responsibilities:
-    - Atomic file writes to prevent corruption
-    - JSON serialization with proper encoding
-    - Conformer state persistence
+    Ensures data integrity by using atomic file operations (write to temp -> move)
+    to prevent corruption if the program is interrupted during a save.
     """
     
     def __init__(self, checkpoint_file: str = "checkpoint.json"):
+        """
+        Initialize the manager.
+
+        Args:
+            checkpoint_file (str): Path to the checkpoint JSON file.
+        """
+
         self.checkpoint_file = Path(checkpoint_file)
     
     def save(self, ensemble: List[Conformer], logger: Logger, log: bool = False) -> None:
         """
-        Save checkpoint atomically.
-        
+        Save the ensemble state atomically.
+
         Args:
-            ensemble: List of conformers to save
-            logger: Logger for recording operation
+            ensemble (List[Conformer]): The list of conformers to persist.
+            logger (Logger): Logger instance for tracking.
+            log (bool): Whether to write a log message confirming the save.
+
+        Returns:
+            None
         """
-        import tempfile
-        import shutil
         
         data = {conf.number: conf.__dict__ for conf in ensemble}
         
@@ -51,14 +60,15 @@ class CheckpointManager:
     
     def load(self) -> List[Conformer]:
         """
-        Load checkpoint from file.
-        
+        Load the ensemble from the checkpoint file.
+
         Returns:
-            List of conformers
+            List[Conformer]: The restored ensemble.
             
         Raises:
-            FileNotFoundError: If checkpoint doesn't exist
+            FileNotFoundError: If the checkpoint file does not exist.
         """
+        
         if not self.checkpoint_file.exists():
             raise FileNotFoundError(f"Checkpoint not found: {self.checkpoint_file}")
         

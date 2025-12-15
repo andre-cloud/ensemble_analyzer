@@ -6,73 +6,70 @@ except ModuleNotFoundError:
 
 def calc_damp(frequency: np.ndarray, cut_off: float, alpha: int) -> np.ndarray:
     r"""
-    Damping factor proportionate to frequency
+    Damping factor proportionate to frequency.
 
     .. math::
         \frac {1}{1+(\frac {\text{cut_off}}{ν})^α}
 
-    Damping factory NO measure unit
+    Damping factor has NO measure unit.
 
-    :param frequency: Frequency list
-    :type frequency: np.ndarray
-    :param cut_off: cut off value, default is 100 cm-1
-    :type cut_off: float
-    :param alpha: dumping factor, default is 4
-    :type alpha: int
-    :return: dumping factor
-    :rtype: np.ndarray
+    Args:
+        frequency (np.ndarray): Frequency list.
+        cut_off (float): Cut off value, default is 100 cm-1.
+        alpha (int): Damping factor, default is 4.
+
+    Returns:
+        np.ndarray: Damping factor.
     """
     return 1 / (1 + (cut_off / frequency) ** alpha)
 
 
 def calc_zpe(frequency: np.ndarray = np.array([0])) -> float:
-    r"""Calculate the Zero Point Energy
+    r"""
+    Calculate the Zero Point Energy.
 
     .. math::
         ZPE = \sum_{\nu}^\text{freq} \frac 12 h\nu c
 
-    Return in Eh
+    Args:
+        frequency (np.ndarray, optional): Frequency list. Defaults to np.array([0]).
 
-    :param frequency: frequency list, defaults to np.array([0])
-    :type frequency: np.ndarray, optional
-    :return: zero point energy
-    :rtype: float
+    Returns:
+        float: Zero point energy in Eh.
     """
     return np.sum((h * frequency * c) / (2)) * J_TO_H
 
 
 def calc_translational_energy(T: float) -> float:
-    r"""Translational energy
+    r"""
+    Translational energy.
 
     .. math::
         U_{trans} = \frac 32 K_bT
 
-    Return in Eh
+    Args:
+        T (float): Temperature [K].
 
-    :param T: temperature [K]
-    :type T: float
-    :return: translational energy
-    :rtype: float
+    Returns:
+        float: Translational energy in Eh.
     """
-
     return 1.5 * Boltzmann * T * J_TO_H
 
 
 def calc_rotational_energy(T: float, linear=False) -> float:
-    r"""Rotational energy
+    r"""
+    Rotational energy.
 
     .. math::
         U_{rot} = \frac 32 K_bT\\
         U_{rot} = K_bT 
 
-    Return in Eh
+    Args:
+        T (float): Temperature [K].
+        linear (bool, optional): If the molecule is linear. Defaults to False.
 
-    :param T: temperature [K]
-    :type T: float
-    :param linear: if the molecule is linear, defaults to False
-    :type linear: bool, optional
-    :return: rotational energy
-    :rtype: float
+    Returns:
+        float: Rotational energy in Eh.
     """
     if linear:
         return Boltzmann * T * J_TO_H
@@ -80,18 +77,18 @@ def calc_rotational_energy(T: float, linear=False) -> float:
 
 
 def calc_qRRHO_energy(freq: np.ndarray, T: float) -> np.ndarray:
-    r"""quasi-Rigid Rotor Harmonic Oscillator energy
+    r"""
+    quasi-Rigid Rotor Harmonic Oscillator energy.
 
     .. math::
         U = h\nu c \frac { e^{-\frac {h\nu c}{k_bT}} }{1-e^{-\frac {h\nu c}{k_bT}}}
 
+    Args:
+        freq (np.ndarray): Frequency list.
+        T (float): Temperature [K].
 
-    :param freq: frequency list
-    :type freq: np.ndarray
-    :param T: temperature [K]
-    :type T: float
-    :return: vibrational energy for each vibrational mode in Joule
-    :rtype: np.ndarray
+    Returns:
+        np.ndarray: Vibrational energy for each vibrational mode in Joule.
     """
     f = h * freq * c / (Boltzmann * T)
     return h * freq * c * np.exp(-f) / (1 - np.exp(-f))
@@ -106,17 +103,14 @@ def calc_vibrational_energy(
     .. math::
         \sum_{\nu}^{freq} \left( d H_{qRRHO}(freq, T) + (1 - d)k_bT\frac 12 \right)
 
-    :param freq: frequency
-    :type freq: array
-    :param T: temperature
-    :type T: float
-    :param alpha: damping factor, default and unchangeable value is 4.
-    :type alpha: int, optional
-    :param cut_off: damping frequency, default 100 cm-1
-    :type cut_off: float, optional
+    Args:
+        freq (np.ndarray): Frequency array.
+        T (float): Temperature.
+        cut_off (float): Damping frequency, default 100 cm-1.
+        alpha (int): Damping factor, default and unchangeable value is 4.
 
-    :return: vibrational energy in Eh
-    :rtype: float
+    Returns:
+        float: Vibrational energy in Eh.
     """
     h_damp = calc_damp(freq, cut_off=cut_off, alpha=alpha)
     return (
@@ -127,24 +121,18 @@ def calc_vibrational_energy(
 
 def calc_translational_entropy(MW: float, T: float, P: float) -> float:
     r"""
-    Translational entropy
+    Translational entropy.
 
     .. math::
         S_{trans} = k_b \left(\frac 52 + \ln\left(\sqrt{\frac{2πMWk_bT}{N_A*h^2}}^3 \frac {k_bT}{p}\right)\right)
 
+    Args:
+        MW (float): Molecular weight.
+        T (float): Temperature.
+        P (float): Pressure [Pa].
 
-    :param MW: molecular weight
-    :type MW: float
-    :param T: temperature
-    :type T: float
-    :param P: pressure [Pa]
-    :type P: float
-    :param solv: solvent string
-    :type solv: str
-
-
-    :return: translational entropy in Eh
-    :rtype: float
+    Returns:
+        float: Translational entropy in Eh.
     """
 
     lambda_ = np.sqrt((2 * np.pi * MW * Boltzmann * T) / (1000 * N_A * h**2))
@@ -155,22 +143,21 @@ def calc_translational_entropy(MW: float, T: float, P: float) -> float:
 
 def calc_rotational_entropy(B, T, symno: int = 1, linear: bool = False) -> float:
     r"""
-    Rotational entropy
+    Rotational entropy.
 
     .. math::
         θ_R &=& \frac {hcB}{k_b}\\
         q_{rot} &=& \sqrt{\frac {πT^3}{θ_{Rx}θ_{Ry}θ_{Rz}}}\\
         S_R &=& k_b \left(\frac {\ln(q_{rot}}{σ} + 1.5\right)
 
-    :param B: rotational constant [cm-1]
-    :type B: np.array
-    :param symno: number of symmetry, in relation of the Point Group of the molecule (σ), default is 1
-    :type symno: int
-    :param linear: if molecule is linear, default is False
-    :type linear: bool
+    Args:
+        B (np.array): Rotational constant [cm-1].
+        T (float): Temperature.
+        symno (int, optional): Number of symmetry, in relation of the Point Group of the molecule (σ). Defaults to 1.
+        linear (bool, optional): If molecule is linear. Defaults to False.
 
-    :return: rotational entropy in Eh
-    :rtype: float
+    Returns:
+        float: Rotational entropy in Eh.
     """
     rot_temperature = h * c * B / Boltzmann
 
@@ -184,18 +171,17 @@ def calc_rotational_entropy(B, T, symno: int = 1, linear: bool = False) -> float
 
 def calc_S_V_grimme(freq: np.array, T) -> np.array:
     r"""
-    V factor used for the damping of the frequency
+    V factor used for the damping of the frequency.
 
     .. math::
         V = \frac {\frac {hc\nu}{k_bT} k_b}{e^{\frac {hc\nu}{k_bT}} - 1} - k_b \ln\left(1 - e^{-\frac {hc\nu}{k_bT}}\right)
 
-    :param freq: frequencies [cm-1]
-    :type freq: np.array
-    :param T: temperature [K]
-    :type T: float
+    Args:
+        freq (np.array): Frequencies [cm-1].
+        T (float): Temperature [K].
 
-    :return: V factor in J
-    :rtype: float
+    Returns:
+        np.array: V factor in J.
     """
     f = h * freq * c / (Boltzmann * T)
     return (f * Boltzmann) / (np.exp(f) - 1) - Boltzmann * np.log(1 - np.exp(-f))
@@ -203,21 +189,18 @@ def calc_S_V_grimme(freq: np.array, T) -> np.array:
 
 def calc_S_R_grimme(freq: np.array, T: float, B: np.array) -> np.array:
     r"""
-    R factor used for the damping of the frequency
+    R factor used for the damping of the frequency.
 
     .. math::
         R = \frac 12 \left( 1+ \ln\left( \frac {8π^3 \frac {h}{8π^2\nu c} B k_bT} {\left(\frac {h}{8π^2\nu c}+B\right)h^2} \right)\right) k_b
 
+    Args:
+        freq (np.array): Frequencies [cm-1].
+        T (float): Temperature [K].
+        B (np.array): Rotatory constant [cm-1].
 
-    :param freq: frequencies [cm-1]
-    :type freq: np.array
-    :param T: temperature [K]
-    :type T: float
-    :param B: rotatory constant [cm-1]
-    :type B: np.array
-
-    :return: R factor in J
-    :rtype: float
+    Returns:
+        np.array: R factor in J.
     """
 
     B = (np.sum(B * c) / len(B)) ** -1 * h
@@ -229,26 +212,22 @@ def calc_S_R_grimme(freq: np.array, T: float, B: np.array) -> np.array:
 
 def calc_vibrational_entropy(freq, T, B, cut_off=100, alpha=4) -> float:
     r"""
-    Vibrational entropy
+    Vibrational entropy.
 
     .. math::
         \sum_{\nu}^{freq} \left(dV(\nu) + (1-d)R(\nu, T, B)\right)
 
-    in formula :math:`d` is the dumping function
+    In formula :math:`d` is the dumping function.
 
-    :param freq: frequencies [cm-1]
-    :type freq: list
-    :param T: temperature [K]
-    :type T: float
-    :param B: rotational constant [cm-1]
-    :type B: np.array
-    :param cut_off: cut off for the damping of the frequency
-    :type cut_off: float
-    :param alpha: damping factor
-    :type alpha: float
+    Args:
+        freq (list): Frequencies [cm-1].
+        T (float): Temperature [K].
+        B (np.array): Rotational constant [cm-1].
+        cut_off (float, optional): Cut off for the damping of the frequency. Defaults to 100.
+        alpha (float, optional): Damping factor. Defaults to 4.
 
-    :return: vibrational entropy [Eh]
-    :rtype: float
+    Returns:
+        float: Vibrational entropy [Eh].
     """
 
     s_damp = calc_damp(freq, cut_off, alpha)
@@ -263,16 +242,16 @@ def calc_vibrational_entropy(freq, T, B, cut_off=100, alpha=4) -> float:
 
 def calc_electronic_entropy(m) -> float:
     r"""
-    Electronic entropy
+    Electronic entropy.
 
     .. math::
         S_{el} = k_b \ln(m)
 
-    :param m: electronic multiplicity
-    :type m: int
+    Args:
+        m (int): Electronic multiplicity.
 
-    :return: electronic entropy in Eh
-    :rtype: float
+    Returns:
+        float: Electronic entropy in Eh.
     """
     return Boltzmann * np.log(m) * J_TO_H
 
@@ -291,35 +270,27 @@ def free_gibbs_energy(
     P: float = 101.325,
 ) -> float:
     r"""
-    Calculate Gibbs energy
+    Calculate Gibbs energy.
 
     .. math::
         H &=& SCF + ZPVE + U_{trans} + U_{rot} + U_{vib} + k_bT\\
         S &=& S_{trans} + S_{rot} + S_{vib} + S_{el}\\
         G &=& H - TS
 
-    :param SCF: self consistent field energy [Eh] + dispersions
-    :type SCF: float
-    :param T: temperature [K]
-    :type T: float
-    :param P: pressure [kPa], default is 101.325
-    :type P: float
-    :param B: rotational constant [cm-1]
-    :type B: np.array
-    :param m: spin multiplicity
-    :type m: int
+    Args:
+        SCF (float): Self consistent field energy [Eh] + dispersions.
+        T (float): Temperature [K].
+        freq (np.ndarray): Frequencies array.
+        mw (float): Molecular weight.
+        B (np.array): Rotational constant [cm-1].
+        m (int): Spin multiplicity.
+        linear (bool, optional): If molecule is linear. Defaults to False.
+        cut_off (float, optional): Frequency cut_off. Defaults to 100.
+        alpha (int, optional): Frequency damping factor. Defaults to 4.
+        P (float, optional): Pressure [kPa]. Defaults to 101.325.
 
-    :param linear: if molecule is linear
-    :type linear: bool
-    :param cut_off: frequency cut_off
-    :type cut_off: float
-    :param alpha: frequency damping factor
-    :type alpha: int
-    :param P: pressure [kPa]
-    :type P: float
-
-    :return: Gibbs energy
-    :rtype: float
+    Returns:
+        float: Gibbs energy.
     """
     freq = freq[freq > 0]
 

@@ -33,20 +33,15 @@ except ImportError:
 
 class InteractiveTUI:
     """
-    Interactive terminal user interface using InquirerPy.
-    
-    Provides an interactive menu for modifying matplotlib figures in a guided way.
+    Terminal User Interface for the graph editor using InquirerPy.
     """
 
     def __init__(self, editor: 'MatplotlibPickleEditor'):
         """
-        Initialize the TUI.
-        
+        Initialize the TUI with a loaded editor instance.
+
         Args:
-            editor: Instance of MatplotlibPickleEditor
-        
-        Raises:
-            RuntimeError: If InquirerPy is not installed
+            editor (MatplotlibPickleEditor): The backend editor instance.
         """
         if not INQUIRER_AVAILABLE:
             raise RuntimeError(
@@ -72,7 +67,10 @@ class InteractiveTUI:
             print(f"\n{title}: {message}\n")
 
     def show_current_state(self) -> None:
-        """Show the current state of the figure."""
+        """
+        Display a formatted table of the current figure state (Labels, Colors).
+        """
+        
         labels = self.editor.get_legend_labels()
         colors = self.editor.get_line_colors()
 
@@ -386,7 +384,10 @@ class InteractiveTUI:
             self.print_panel(f"Error saving: {e}", "Error", "red")
 
     def run(self) -> None:
-        """Main TUI loop."""
+        """
+        Start the main interactive event loop.
+        Displays menus and handles user input until exit.
+        """
         if self.console:
             self.console.clear()
             self.console.print(

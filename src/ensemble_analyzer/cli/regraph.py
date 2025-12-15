@@ -16,7 +16,14 @@ from typing import List
 import argparse
 from datetime import datetime
 
-def parse_argument():
+def parse_argument() -> argparse.Namespace:
+    """
+    Parse command line arguments for the regrapher tool.
+
+    Returns:
+        argparse.Namespace: Parsed arguments including protocol indices and flags.
+    """
+
     parser = argparse.ArgumentParser()
 
     parser.add_argument('idx', nargs='+', help="Protocol's number to (re-)generate the graphs", type=int)
@@ -27,7 +34,14 @@ def parse_argument():
     args = parser.parse_args()
     return args
 
-def main():
+def main() -> None:
+    """
+    Main execution flow for enan_regraph.
+    
+    Loads checkpoint and protocol data, recalculates Boltzmann populations 
+    (unless overridden), and triggers spectrum generation and plotting.
+    """
+
     args = parse_argument()
     fname_out = 'regraph.log'
     log = create_logger(fname_out, logger_name="enan_regraphy", debug=True, disable_color=False if not args.disable_color else True) # logger
@@ -64,6 +78,14 @@ def main():
     log.application_correct_end(total_conformers=len([c for c in ensemble if c.active]), total_time=datetime.now()-start)
 
 def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:int) -> None: 
+    """
+    Recalculate Boltzmann populations for a specific protocol step.
+
+    Args:
+        confs (List[Conformer]): List of conformers.
+        temperature (float): Temperature in Kelvin.
+        protocol_number (int): Protocol ID to calculate for.
+    """
 
     active: List[Conformer] = [conf for conf in confs if conf.active]
     energy = np.array([conf.get_energy(protocol_number=protocol_number) for conf in active])

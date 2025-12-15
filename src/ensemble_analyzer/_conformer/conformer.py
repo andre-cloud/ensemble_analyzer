@@ -85,11 +85,13 @@ class Conformer:
 
     
     def write_xyz(self, ):
-        """Write the XYZ string to be stored in a file
-
-        :return: the string in the XYZ formatting
-        :rtype: str
         """
+        Write the XYZ string to be stored in a file.
+
+        Returns:
+            str: The string in the XYZ formatting.
+        """
+        
         if not self.active:
             return ""
 

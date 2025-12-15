@@ -23,15 +23,12 @@ from ensemble_analyzer._managers.calculation_config import CalculationConfig
 @dataclass
 class CalculationOrchestrator:
     """
-    Main orchestrator for ensemble calculations.
+    High-level controller for the entire analysis workflow.
     
-    This class coordinates the entire calculation workflow:
-    - Protocol execution
-    - Checkpoint management
-    - Final analysis and reporting
-    
-    This is the single entry point that replaces initiate_calculation_loop().
+    Manages the sequence of protocols, handles global restart logic,
+    and triggers finalization steps.
     """
+
     conformers: List[Conformer]
     protocols: List[Protocol]
     config: CalculationConfig
@@ -48,14 +45,12 @@ class CalculationOrchestrator:
     
     def run(self) -> None:
         """
-        Run the complete calculation workflow.
+        Execute the full calculation workflow.
         
-        This is the main entry point that executes:
-        1. Protocol loop
-        2. Checkpoint management
-        3. Final analysis
-        4. Report generation
+        Iterates through the protocol list starting from the configured step,
+        delegating execution to ProtocolExecutor.
         """
+
         start_time = time.perf_counter()
         
         # Initial PCA if needed
@@ -90,7 +85,16 @@ class CalculationOrchestrator:
         self._finalize(staring_time=start_time)
     
     def _finalize(self, staring_time) -> None:
-        """Finalize calculations and generate reports."""
+        """
+        Perform final wrap-up tasks after all protocols are done.
+
+        - Saves final ensemble and checkpoint.
+        - Generates comparative plots.
+        - Logs total execution time and statistics.
+
+        Args:
+            staring_time (float): The workflow start time (from time.perf_counter).
+        """
 
         # Sort final ensemble
         self.conformers = sorted(self.conformers)

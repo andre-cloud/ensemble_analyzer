@@ -1,6 +1,6 @@
 
 from dataclasses import dataclass, field
-from typing import Union, Optional, List, Dict, Literal
+from typing import Union, Optional, List, Dict, Literal, Any
 import json
 
 from importlib.resources import files
@@ -35,7 +35,10 @@ INTERNALS = {2: 'B', 3: 'A', 4: 'D'}
 @dataclass
 class Protocol:
     """
-    Protocol generation
+    Configuration for a single computational step.
+
+    Stores all parameters required to setup a QM calculation (method, basis,
+    thresholds) and post-processing options (pruning, clustering).
     """
 
     number              : int
@@ -81,12 +84,32 @@ class Protocol:
     # === 
 
     def load_threshold(self) -> dict:
+        """
+        Load default pruning thresholds from the configuration file.
+
+        Returns:
+            dict: Dictionary of thresholds keyed by calculation level (opt, freq, sp).
+        """
+
         default = files("ensemble_analyzer").joinpath("parameters_file/default_threshold.json")
 
         with open(default, "r") as f:
             return json.load(f)
 
-    def get_thrs(self, thr_json: dict):
+    def get_thrs(self, thr_json: dict) -> None:
+        """
+        Update instance thresholds based on the calculation level defaults.
+
+        If specific thresholds (thrG, thrB) are not set by the user, applies
+        defaults from the provided dictionary.
+
+        Args:
+            thr_json (dict): Dictionary of default thresholds.
+
+        Returns:
+            None
+        """
+
         c = LEVEL_DEFINITION[self.number_level]
         if self.thrG is None:
             self.thrG = thr_json[c]["thrG"]
@@ -100,7 +123,14 @@ class Protocol:
     # ===
 
     @property
-    def number_level(self):
+    def number_level(self) -> int:
+        """
+        Calculate the complexity level of the protocol.
+
+        Returns:
+            int: Level identifier (0=SP, 1=OPT, 2=FREQ, 3=OPT+FREQ).
+        """
+
         c = 0
         if self.opt:
             c += 1
@@ -109,7 +139,14 @@ class Protocol:
         return c
 
     @property
-    def calculation_level(self):
+    def calculation_level(self) -> str:
+        """
+        Get the string representation of the calculation type.
+
+        Returns:
+            str: e.g., "OPT", "FREQ", "SP".
+        """
+
         return LEVEL_DEFINITION[self.number_level].upper()
 
     @property
@@ -121,7 +158,14 @@ class Protocol:
         )
     
     @property
-    def clustering(self):
+    def clustering(self) -> bool:
+        """
+        Check if clustering is enabled for this step.
+
+        Returns:
+            bool: True if clustering is requested.
+        """
+
         if isinstance(self.cluster, bool):
             return self.cluster
         
@@ -134,13 +178,33 @@ class Protocol:
     # Functions
     # === 
 
-    def verbal_internals(self):
+    def verbal_internals(self) -> List[str]:
+        """
+        Generate human-readable strings for monitored internal coordinates.
+
+        Returns:
+            List[str]: Descriptions of monitored internals (e.g. "B 0-1", "A 0-1-2").
+        """
+
         internals = []
         for internal in self.monitor_internals:
             internals.append(f"{INTERNALS[len(internal)]} {'-'.join(str(i) for i in internal)}")
         return internals
 
-    def get_calculator(self, cpu: int, conf:Conformer):
+    def get_calculator(self, cpu: int, conf:Conformer) -> Any:
+        """
+        Instantiate the appropriate ASE calculator wrapper.
+
+        Args:
+            cpu (int): Number of CPUs to assign to the calculator.
+            conf (Conformer): The conformer to be calculated.
+
+        Returns:
+            Any: Configured calculator instance (e.g. OrcaCalc).
+
+        Raises:
+            ValueError: If the calculator type is not registered.
+        """
 
         calc_name = self.calculator.lower()
         if calc_name not in CALCULATOR_REGISTRY:
@@ -169,7 +233,16 @@ class Protocol:
     # ===
 
     @staticmethod
-    def load_raw(json):
+    def load_raw(json) -> 'Protocol':
+        """
+        Factory method to create a Protocol instance from a dictionary.
+
+        Args:
+            json_data (dict): Dictionary containing protocol parameters.
+
+        Returns:
+            Protocol: Initialized protocol object.
+        """
         return Protocol(**json)
     
     def __repr__(self): 
@@ -207,13 +280,14 @@ class Protocol:
 
 
 def load_protocol(file: Optional[str]) -> Dict: 
-    """Load protocol from JSON files
+    """
+    Load the full protocol sequence from a JSON file.
 
     Args:
-        file (Optional[str]): Protocol Filename
+        file (Optional[str]): Path to the protocol JSON file. If None, loads default.
 
     Returns:
-        Dict: Dictionary with all the settings defined by the user
+        Dict: Dictionary mapping step numbers to protocol configurations.
     """
     
     default = files("ensemble_analyzer").joinpath("parameters_file/default_protocol.json")

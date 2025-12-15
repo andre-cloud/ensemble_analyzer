@@ -10,6 +10,11 @@ from ensemble_analyzer._spectral.graph_default import GraphDefault
 
 @dataclass
 class ComparedGraph:
+    """
+    Comparison plotter for computed and experimental spectra.
+    
+    Generates overlay plots of spectra from different protocol steps.
+    """
 
     graph_type: str
     experimental_file: Optional[str] = None
@@ -25,12 +30,20 @@ class ComparedGraph:
         
         
     def _validate_graph_type(self) -> None:
+        """Ensure graph type is valid."""
 
         valid_types = ["UV", "IR", "ECD", "VCD"]
         if self.graph_type.upper() not in valid_types:
             raise ValueError(f"Graph_Type ({self.graph_type.upper()}) not included: {valid_types}")
     
     def _load_computed(self) -> Dict[str, Tuple[np.ndarray, np.ndarray]]:
+        """
+        Load all computed spectra (*_comp.xy) from the directory.
+        
+        Returns:
+            Dict: Mapping of protocol number -> (X, Y) arrays.
+        """
+
         data = {}
         pattern = f"{self.graph_type.upper()}_p"
         files = sorted(
@@ -92,12 +105,22 @@ class ComparedGraph:
             return None, None, None, None
 
     def plot(self, save: bool = True, show: bool = False, show_ref_weight: bool = False) -> None:
+        """
+        Generate and save the comparison plots.
+
+        Args:
+            save (bool): Whether to save figure to disk.
+            show (bool): Whether to display the plot interactively.
+            show_ref_weight (bool): Whether to plot the weighting mask.
+        """
+
         self._plot_spectrum(save, show, in_nm=False, show_ref_weight=show_ref_weight)
         
         if self.graph_type.upper() in ["UV", "ECD"] and self.nm:
             self._plot_spectrum(save, show, in_nm=True, show_ref_weight=show_ref_weight)
     
     def _plot_spectrum(self, save: bool, show: bool, in_nm: bool = False, show_ref_weight:bool = False) -> None:
+        """Internal plotting routine."""
 
         plt.style.use("seaborn-v0_8-paper")
         fig, ax = plt.subplots()
@@ -119,6 +142,7 @@ class ComparedGraph:
         self._save_or_show(fig, save, show, in_nm)
     
     def _plot_computed_data(self, ax: plt.Axes, in_nm: bool) -> None:
+        """Internal plotting routine."""
 
         for proto, (X, Y) in self.data.items():
             if Y[~np.isnan(Y)].size > 0:
@@ -126,6 +150,7 @@ class ComparedGraph:
                 ax.plot(x_values, Y, lw=1, label=f"Protocol {proto}", alpha=.75)
     
     def _plot_experimental_data(self, ax: plt.Axes, in_nm: bool, show_ref_weight:bool = False) -> None:
+        """Internal plotting routine."""
 
         if self.Xr is None or self.bounders is None:
             return

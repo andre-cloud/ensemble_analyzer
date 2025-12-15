@@ -11,16 +11,26 @@ RED = '\033[91m'
 YELLOW = '\033[93m'
 RESET = '\033[0m'
 
-def log_pass(msg):
+def log_pass(msg) -> None:
+    """Print a success message in green."""
     print(f"[{GREEN}PASS{RESET}] {msg}")
 
-def log_fail(msg):
+def log_fail(msg) -> None:
+    """Print a failure message in red."""
     print(f"[{RED}FAIL{RESET}] {msg}")
 
-def log_warn(msg):
+def log_warn(msg) -> None:
+    """Print a warning message in yellow."""
     print(f"[{YELLOW}WARN{RESET}] {msg}")
 
-def check_python_dependencies():
+def check_python_dependencies() -> bool:
+    """
+    Verify that all required Python libraries are installed and importable.
+
+    Returns:
+        bool: True if all critical dependencies are found.
+    """
+
     print(f"\n{'-'*20} 1. Checking Python Dependencies {'-'*20}")
     required = ['numpy', 'scipy', 'matplotlib', 'ase', 'numba', 'sklearn']
     all_pass = True
@@ -41,7 +51,18 @@ def check_python_dependencies():
         
     return all_pass
 
-def check_orca():
+def check_orca() -> bool:
+    """
+    Verify ORCA installation and environment configuration.
+    
+    Checks:
+    1. 'orca' executable in PATH.
+    2. 'ORCAVERSION' environment variable.
+
+    Returns:
+        bool: True if ORCA is correctly configured.
+    """
+
     print(f"\n{'-'*20} 2. Checking ORCA Configuration {'-'*20}")
     
     # Check 1: Executable in PATH
@@ -63,7 +84,12 @@ def check_orca():
         
     return True
 
-def check_gaussian():
+def check_gaussian() -> None:
+    """
+    Check for Gaussian availability (Optional).
+    Looks for 'g16' or 'g09' in PATH.
+    """
+
     print(f"\n{'-'*20} 3. Checking Gaussian Configuration {'-'*20}")
     
     g16_path = shutil.which("g16")
@@ -76,7 +102,9 @@ def check_gaussian():
     else:
         log_warn("Gaussian executable (g16/g09) NOT found. (Optional if using ORCA)")
 
-def main():
+def main() -> None:
+    """Run the complete installation check suite."""
+    
     print(f"Running Ensemble Analyzer Installation Check...\n")
     
     deps_ok = check_python_dependencies()
