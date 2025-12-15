@@ -11,7 +11,7 @@ Ensemble Analyzer Documentation
    :maxdepth: 2
    :caption: User Guide
 
-   .. installation.md
+   installation.md
    .. user_guide/workflow.md
    .. user_guide/cli_tools.md
 

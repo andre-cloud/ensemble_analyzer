@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ensemble-analyzer"
-version = '1.0.1a5'
+version = '0.0.10a7'
 description = "Automatic Refinement of Conformational Ensemble"
 readme = "README.md"
 license = { text = "MIT" }
@@ -58,6 +58,7 @@ dependencies = [
 ]
 
 [project.scripts]
+enan_check = "ensemble_analyzer.cli.check_setup:main"
 ensemble_analyzer = "ensemble_analyzer.launch:main"
 enan_regraph = "ensemble_analyzer.cli.regraph:main"
 enan_graph_editor = "ensemble_analyzer.cli.pickle_editor.cli:main"

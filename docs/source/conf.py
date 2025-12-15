@@ -39,3 +39,32 @@ myst_enable_extensions = [
     "amsmath",
     "colon_fence",
 ]
+
+import mock
+import os, sys
+sys.path.insert(0, os.path.abspath('../src'))
+
+class Mock(mock.MagicMock):
+    @classmethod
+    def __getattr__(cls,name): 
+        return mock.MagicMock()
+    
+MOCK_MODULES = [
+    'numpy', 
+    'scipy', 
+    'scipy.spatial',
+    'scipy.spatial.distance',
+    'scipy.optimize',
+    'scipy.constants',
+    'scipy.interpolate',
+    'matplotlib', 
+    'matplotlib.pyplot', 
+    'ase', 
+    'ase.io',
+    'ase.units',
+    'numba', 
+    'sklearn',
+    'sklearn.cluster'
+]
+
+sys.modules.update((mod_name, Mock()) for mod_name in MOCK_MODULES)
