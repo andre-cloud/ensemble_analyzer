@@ -74,3 +74,4 @@ ensemble_analyzer = ["parameters_file/*"]
 
 [project.urls]
 Homepage = "https://github.com/andre-cloud/ensemble_analyzer"
+Documentation = "https://enan.readthedocs.io/en/latest/"

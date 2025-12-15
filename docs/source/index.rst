@@ -9,17 +9,18 @@ Ensemble Analyzer Documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: User Guide
-
-   installation.md
-   .. user_guide/workflow.md
-   .. user_guide/cli_tools.md
-
-.. toctree::
-   :maxdepth: 2
    :caption: Scientific Background
 
    theory.md
+
+.. toctree::
+   :maxdepth: 2
+   :caption: User Guide
+
+   installation.md
+   user_guide/workflow.md
+   user_guide/cli_tools.md
+
 
 .. toctree::
    :maxdepth: 2
