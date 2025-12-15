@@ -1,3 +1,4 @@
 sphinx>=7.0.0
 sphinx-rtd-theme
 myst-parser
+mock
