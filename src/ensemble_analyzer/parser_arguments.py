@@ -3,6 +3,8 @@ import os
 import sys
 import json
 
+from importlib.resources import files
+
 
 def print_help_protocol():
     example = json.dumps(
@@ -39,9 +41,7 @@ def print_help_protocol():
 def print_help_threshold():
     with open(
         str(
-            os.path.join(
-                os.path.dirname(__file__), "parameters_file", "default_threshold.json"
-            )
+                files("ensemble_analyzer").joinpath("parameters_file/default_threshold.json")
         ),
         "r",
     ) as j:
@@ -98,6 +98,33 @@ def parser_arguments():
         "--temperature",
         help="Define the temperature in Kelvin. Default %(default)s",
         default=298.15,
+        type=float,
+    )
+    molecule_group.add_argument(
+        "-P",
+        "--pressure",
+        help="Define the pressure in kPa. Default %(default)s",
+        default=101.325,
+        type=float,
+    )
+    molecule_group.add_argument(
+        
+        "--linear",
+        help="Define if molecule is linear.",
+        action="store_true",
+    )
+    molecule_group.add_argument(
+        "-alpha",
+        "--alpha",
+        help="Define alpha value for qRRHO dumping. Default %(default)s",
+        default=4,
+        type=float,
+    )
+    molecule_group.add_argument(
+        "-cut-off",
+        "--cut-off",
+        help="Define cut-off frequency value for qRRHO dumping. Default %(default)s",
+        default=100,
         type=float,
     )
 

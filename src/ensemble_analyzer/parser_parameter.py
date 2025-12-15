@@ -26,7 +26,7 @@ def tranform_float(freq) -> str:
 
 
 def get_conf_parameters(
-    conf: Conformer, number: int, output: str, p, time: datetime, temp: float, log: Logger
+    conf: Conformer, number: int, output: str, p, time: datetime, temp: float, log: Logger, linear: bool = False, cut_off: float = 100, alpha: float = 4, P: float = 101.325
 ) -> bool:
     """Obtain the parameters for a conformer: E, G, B, m
 
@@ -91,7 +91,8 @@ def get_conf_parameters(
     g_e, zpve, H, S = np.nan, np.nan, np.nan, np.nan
     if freq.size > 0:
         g, zpve, H, S = free_gibbs_energy(
-            SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B_vec, m=p.mult
+            SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B_vec, m=p.mult,
+            linear = linear, cut_off = cut_off, alpha = alpha, P = P
         )
         H = H
         g_e = g - e

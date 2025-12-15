@@ -13,7 +13,7 @@ from ensemble_analyzer.rrho import free_gibbs_energy
 from ensemble_analyzer.constants import EH_TO_KCAL, R, CAL_TO_J
 from ensemble_analyzer.title import title
 
-def get_thermo_data(conf: Conformer, protocol_number: int, temp: float, mult: int, cut_off:float, alpha: int, pressure: float):
+def get_thermo_data(conf: Conformer, protocol_number: int, temp: float, mult: int, cut_off:float, alpha: int, pressure: float, linear:bool):
     """
     Retrieves Electronic Energy (E) and attempts to calculate ZPVE, H, G.
     Returns a tuple (E, E_ZPVE, H, G).
@@ -61,7 +61,7 @@ def get_thermo_data(conf: Conformer, protocol_number: int, temp: float, mult: in
     try:
         # G = Gibbs, h = Enthalpy (SCF + ZPVE + Therm_Corr)
         G, zpve, h, S = free_gibbs_energy(
-            SCF=E, T=temp, freq=freq, mw=mw, B=B_vec, m=mult, cut_off=cut_off, alpha=alpha, P=pressure
+            SCF=E, T=temp, freq=freq, mw=mw, B=B_vec, m=mult, cut_off=cut_off, alpha=alpha, P=pressure, linear=linear
         )
         return E, E + zpve, E + h, G
     except Exception:
@@ -118,6 +118,8 @@ def main():
                         help="qRRHO damping factor alpha. Default: 4")
     parser.add_argument("--pressure", type=float, default=101.325, 
                         help="Pressure [kPa]. Default: 101.325")
+    parser.add_argument('--linear', help='Define if molecules are linear', 
+                        action='store_true')
     
     # Arguments for mathematical operations
     parser.add_argument("--sub", nargs=2, action='append', metavar=('P1', 'P2'), 
@@ -184,7 +186,7 @@ def main():
                 continue
                 
             # Retrieve Energies (Recalculated on the fly)
-            e_val, ezpve_val, h_val, g_val = get_thermo_data(c, p_num, target_temp, int(proto.mult), cut_off=args.cut_off, alpha=args.alpha, pressure=args.pressure)
+            e_val, ezpve_val, h_val, g_val = get_thermo_data(c, p_num, target_temp, int(proto.mult), cut_off=args.cut_off, alpha=args.alpha, pressure=args.pressure, linear=args.linear)
             
             # If even E is missing, skip
             if np.isnan(e_val):

@@ -24,3 +24,4 @@ class ClusteringConfig:
     set_cluster_attribute   : bool              = True  # Set cluster ID on Conformer objects
     min_k                   : int               = 2     # Minimum clusters for silhouette search
     max_k                   : int               = 30    # Maximum clusters for silhouette search
+    random_state            : int               = 42    # Fix value for reproducibility of the random initiation of cluster points

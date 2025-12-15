@@ -22,6 +22,11 @@ class CalculationConfig:
     shift: Optional[Dict[str, Optional[float]]] = None
     interested: Optional[Dict[str, Optional[float]]] = None
     invert: bool = False
+
+    linear: bool = False
+    cut_off: float = 100
+    alpha: float = 4
+    P: float = 101.325
         
     def __post_init__(self):
         if self.fwhm is None:

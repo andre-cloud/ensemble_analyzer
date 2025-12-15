@@ -90,7 +90,11 @@ class CalculationExecutor:
             p=protocol,
             time=elapsed,
             temp=self.config.temperature,
-            log=self.logger
+            log=self.logger, 
+            linear = self.config.linear,
+            cut_off = self.config.cut_off,
+            alpha = self.config.alpha,
+            P = self.config.P,
         )
         
         if success:
