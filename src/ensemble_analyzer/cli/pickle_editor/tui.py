@@ -339,6 +339,47 @@ class InteractiveTUI:
         except ValueError:
             self.print_panel("Invalid alpha value", "Error", "red")
 
+    def change_visibility_flow(self) -> None:
+        """Interactive flow to change visibility."""
+        labels = self.editor.get_legend_labels()
+        if not labels:
+            self.print_panel("No label found", "Error", "red")
+            return
+
+        choices = [Choice(value=label, name=label) for label in labels.values()]
+        choices.append(Separator())
+        choices.append(Choice(value=None, name="← Back"))
+
+        selected = inquirer.select(
+            message="Select label to toggle visibility:",
+            choices=choices,
+            default=None
+        ).execute()
+
+        if selected is None:
+            return
+
+        visible = inquirer.select(
+            message=f"Set visibility for '{selected}':",
+            choices=[
+                Choice(value=True, name="Visible (Show)"),
+                Choice(value=False, name="Hidden (Hide)"),
+                Choice(value=None, name="← Cancel")
+            ],
+            default=True
+        ).execute()
+
+        if visible is not None:
+            changed = self.editor.change_line_visibility({selected: visible})
+            status = "Visible" if visible else "Hidden"
+            if changed > 0:
+                self.print_panel(
+                    f"'{selected}' is now {status}", 
+                    "Success", "green"
+                )
+            else:
+                self.print_panel("Unable to change visibility", "Error", "red")
+
     def save_flow(self) -> None:
         """Interactive flow to save."""
         from pathlib import Path
@@ -411,8 +452,9 @@ class InteractiveTUI:
                     Choice(value="linestyle", name="⎯⎯ Change line style"),
                     Choice(value="linewidth", name="➖ Change line width"),
                     Choice(value="alpha", name="☰ Change transparency"),
+                    Choice(value="visibility", name="👁️  Change line visibility"),
                     Separator(),
-                    Choice(value="preview", name="👁️  Preview figure"),
+                    # Choice(value="preview", name="👁️  Preview figure"),
                     Choice(value="save", name="💾 Save changes"),
                     Separator(),
                     Choice(value="reload", name="🔄 Reload original file"),
@@ -437,6 +479,8 @@ class InteractiveTUI:
                     "Error", "red"
                 )
                 # self.editor.preview()
+            elif action == 'visibility': 
+                self.change_visibility_flow()
             elif action == "save":
                 self.save_flow()
             elif action == "reload":

@@ -326,6 +326,52 @@ class MatplotlibPickleEditor:
 
         return changed
     
+    def change_line_visibility(self, visibility_map: Dict[str, bool]) -> int:
+        """
+        Change line visibility (show/hide).
+        
+        Args:
+            visibility_map: Dictionary {label: bool} (True=visible, False=hidden)
+        
+        Returns:
+            Number of lines changed
+        
+        Raises:
+            RuntimeError: If load() has not been called
+        """
+        if not self.axes:
+            raise RuntimeError("You must call load() first")
+
+        legend = self.axes.get_legend()
+        if not legend:
+            return 0
+
+        lines = self.axes.get_lines()
+        legend_texts = legend.get_texts()
+        legend_lines = legend.get_lines()
+
+        changed = 0
+        for line, leg_line, text in zip(lines, legend_lines, legend_texts):
+            label = text.get_text()
+            if label in visibility_map:
+                visible = visibility_map[label]
+                try:
+                    # Update plot line visibility
+                    line.set_visible(visible)
+                    
+                    # Update legend handle visibility
+                    leg_line.set_visible(visible)
+                    
+                    # Dim the legend text if hidden, restore if visible
+                    text.set_alpha(1.0 if visible else 0.5)
+                    
+                    changed += 1
+                    self._modifications_made = True
+                except Exception as e:
+                    logger.warning(f"Invalid visibility '{visible}' for '{label}': {e}")
+
+        return changed
+    
     def save(self, output_path: Optional[Path] = None,
              format: str = 'pickle') -> Path:
         """

@@ -138,12 +138,31 @@ def batch_mode(args):
             count = editor.change_line_alpha(alpha_map)
             logger.info(f"Changed {count} alpha values")
 
+
+        visibility_map = {}
+        if args.visibility:
+            for label, val in args.visibility:
+                # Convert string argument to boolean
+                v_lower = val.lower()
+                if v_lower in ('true', '1', 't', 'yes', 'on'):
+                    v_bool = True
+                elif v_lower in ('false', '0', 'f', 'no', 'off'):
+                    v_bool = False
+                else:
+                    logger.error(f"Invalid boolean value for '{label}': {val}")
+                    continue
+                visibility_map[label] = v_bool
+
+        if visibility_map:
+            count = editor.change_line_visibility(visibility_map)
+            logger.info(f"Changed visibility for {count} lines")
+
         # # Preview
         # if args.preview:
         #     editor.preview()
 
         # Save
-        if rename_map or color_map or linestyle_map or linewidth_map or alpha_map:
+        if rename_map or color_map or linestyle_map or linewidth_map or alpha_map or visibility_map:
             output_path = editor.save(args.output, args.format)
             print(f"✓ Saved: {output_path}")
         else:
