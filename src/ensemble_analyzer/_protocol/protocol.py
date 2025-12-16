@@ -44,39 +44,39 @@ class Protocol:
     number              : int
     
     # Method definition
-    functional          : str
-    basis               : Optional[str]                 = ""
-    solvent             : Optional[Dict]                = None
-    calculator          : str                           = "orca"
+    functional                  : str
+    basis                       : Optional[str]                 = ""
+    solvent                     : Optional[Dict]                = None
+    calculator                  : str                           = "orca"
     
     # Calculation settings
-    mult                : int                           = 1
-    charge              : int                           = 0
-    opt                 : Optional[bool]                = False
-    freq                : Optional[bool]                = False
-    freq_fact           : Optional[float]               = 1
-    constrains          : Optional[list]                = field(default_factory=list)
-    read_orbitals       : Optional[str]                 = ""
-    add_input           : Optional[str]                 = ""
+    mult                        : int                           = 1
+    charge                      : int                           = 0
+    opt                         : Optional[bool]                = False
+    freq                        : Optional[bool]                = False
+    freq_fact                   : Optional[float]               = 1
+    constrains                  : Optional[list]                = field(default_factory=list)
+    read_orbitals               : Optional[str]                 = ""
+    add_input                   : Optional[str]                 = ""
     
     # Pruning & Clustering
-    graph               : Optional[bool]                = False
-    no_prune            : Optional[bool]                = False
-    cluster             : Optional[Union[bool,int]]     = False
+    graph                       : Optional[bool]                = False
+    no_prune                    : Optional[bool]                = False
+    cluster                     : Optional[Union[bool,int]]     = False
 
     # Thresholds
-    thrG                : Optional[float]               = None
-    thrB                : Optional[float]               = None
-    thrGMAX             : Optional[float]               = None
+    thrG                        : Optional[float]               = None
+    thrB                        : Optional[float]               = None
+    thrGMAX                     : Optional[float]               = None
 
     # Logging
-    monitor_internals   : Optional[List[List[int]]]     = field(default_factory=list)
-    comment             : Optional[str]                 = ""
+    monitor_internals           : Optional[List[List[int]]]     = field(default_factory=list)
+    comment                     : Optional[str]                 = ""
 
     # Options
-    read_population     : Optional[str|None]            = None
-    skip_opt_fail       : Optional[bool]                = False
-    skip_retention_rate : Optional[bool]                = False
+    read_population             : Optional[str|None]            = None
+    skip_opt_fail               : Optional[bool]                = False
+    block_on_retention_rate     : Optional[bool]                = False
     
 
     # ===

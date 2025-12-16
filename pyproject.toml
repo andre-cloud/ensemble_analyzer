@@ -4,15 +4,17 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ensemble-analyzer"
-version = '0.0.10a7'
+version = '0.0.10a9'
 description = "Automatic Refinement of Conformational Ensemble"
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 
 authors = [
     { name = "Andrea Pellegrini", email = "andrea.pellegrini15@unibo.it" },
     { name = "Paolo Righi", email = "paolo.righi@unibo.it" },
+    { name = "Andrea Mazzanti", email = "andrea.mazzanti@unibo.it" },
+    { name = "Michele Mancinelli", email = "michele.mancinelli@unibo.it" },
 ]
 
 maintainers = [
@@ -37,7 +39,6 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",

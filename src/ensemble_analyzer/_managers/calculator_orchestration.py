@@ -18,6 +18,7 @@ from ensemble_analyzer._managers.protocol_manager import ProtocolManager
 from ensemble_analyzer._managers.protocol_executor import ProtocolExecutor
 from ensemble_analyzer._managers.calculation_config import CalculationConfig
 
+from ensemble_analyzer.constants import MIN_RETENTION_RATE, MIN_CONFORMERS_FOR_PCA
 
 
 @dataclass
@@ -52,11 +53,11 @@ class CalculationOrchestrator:
         """
 
         start_time = time.perf_counter()
-        
+        initial_conf = len(self.conformers)
         # Initial PCA if needed
-        if len(self.conformers) > 30:
+        if  initial_conf > MIN_CONFORMERS_FOR_PCA:
             self.logger.pca_analysis(
-                conformer_count=len(self.conformers),
+                conformer_count=initial_conf,
                 n_clusters=None,
                 include_hydrogen=self.config.include_H,
                 output_file="initial_pca.png"
@@ -82,9 +83,9 @@ class CalculationOrchestrator:
             self.protocol_executor.execute(self.conformers, protocol)
         
         # Final processing
-        self._finalize(staring_time=start_time)
+        self._finalize(initial_number = initial_conf, staring_time=start_time)
     
-    def _finalize(self, staring_time) -> None:
+    def _finalize(self, initial_number: int, staring_time) -> None:
         """
         Perform final wrap-up tasks after all protocols are done.
 
@@ -93,6 +94,7 @@ class CalculationOrchestrator:
         - Logs total execution time and statistics.
 
         Args:
+            initial_number (int): The initial number of conformers.
             staring_time (float): The workflow start time (from time.perf_counter).
         """
 
@@ -115,4 +117,13 @@ class CalculationOrchestrator:
             total_conformers=final_count
         )
         
+        retention_rate = final_count / initial_number
+        # Log critical if whole complex retention rate is < MIN_RETENTION_RATE
+        if retention_rate < MIN_RETENTION_RATE:
+            self.logger.critical(
+                f'✗ Ensemble has reduced by {(1-retention_rate)*100:.1f}%.\n'
+                f'\t{self.logger.WARNING} threshold: {MIN_RETENTION_RATE*100:.0f}%.'
+            )
+
+
         self.logger._separator(f"CALCULATIONS COMPLETED SUCCESSFULLY", char="*")
