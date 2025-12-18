@@ -93,7 +93,7 @@ ensemble_analyzer --restart
 | `constrains` | list | Geometry constraints (only on cartesians)| `[1,2]` (fix cartesians) |
 | `monitor_internals` | list | Track bond/angle/dihedral | `[[0,1], [0,1,2]]` |
 | `skip_opt_fail` | bool | Skip failed optimizations | `false` (default) |
-| `block_on_retention_rate` | bool | Block the calculation has a retention rate lower than the `MIN_RETENTION_RATE` (30%) | `false` (default) |
+| `block_on_retention_rate` | bool | Block the calculation has a retention rate lower than the `MIN_RETENTION_RATE` (20%) | `false` (default) |
 
 ---
 

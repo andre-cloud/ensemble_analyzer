@@ -50,9 +50,6 @@ VIBRO_OR_ELECTRO = {
 }
 
 
-MIN_RETENTION_RATE = 0.3
-
-
 # Logger constants
 LOG_FORMAT = "%(message)s"
 
@@ -66,13 +63,13 @@ regex_parsing = {
     "gaussian": {"ext": "log", },
 }
 
-
 MARKERS = [
     ".", ",", "o", "v", "^", "<", ">", "1", "2", "3",
     "4", "8", "s", "p", "*", "h", "H", "+", "x", "D",
     "d", "|", "_", "P", "X",
 ]
 
+MIN_RETENTION_RATE = 0.2        # Minimum retention rate
 DEFAULT_RESOLUTION = 500        # Grid resolution for contour plots
 MIN_CONFORMERS_FOR_PCA = 50     # Minimum conformers needed for meaningful PCA
 MIN_WEIGHTED_VALUE = 0.15       # Minimum value for the weight of the autoconvolution
