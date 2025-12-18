@@ -142,7 +142,7 @@ class Conformer:
         if include_H:
             geo = np.array(geo)
         else:
-            mask = self.atoms != "H"
+            mask = np.array(self.atoms) != "H"
             geo = np.array(geo)[mask]
 
         return np.linalg.norm(geo[:, None, :] - geo[None, :, :], axis=-1)

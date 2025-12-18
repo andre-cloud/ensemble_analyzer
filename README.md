@@ -28,7 +28,7 @@
 ## 📦 Installation
 
 ### Requirements
-- **Python** ≥ 3.9
+- **Python** ≥ 3.11
 - **Core**: NumPy, SciPy, Matplotlib, ASE
 - **Clustering**: scikit-learn
 - **Acceleration**: Numba
