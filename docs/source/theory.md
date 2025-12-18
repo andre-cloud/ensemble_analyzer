@@ -56,22 +56,92 @@ This eigenvalue vector serves as the input feature vector for **Principal Compon
 
 Standard Rigid-Rotor Harmonic Oscillator (RRHO) approximations often fail for flexible molecules with low-frequency vibrational modes ($< 100 \text{ cm}^{-1}$), leading to infinite entropy errors.
 
-EnAn implements the **Quasi-Rigid Rotor Harmonic Oscillator (qRRHO)** approximation described by [Grimme (2012)](https://doi.org/10.1002/chem.201200497).
-
-### 3.1 Entropy Interpolation
-The vibrational entropy $S_{vib}$ is calculated by interpolating between the harmonic oscillator entropy ($S_{HO}$) and the free-rotor entropy ($S_{rot}$) using a damping function dependent on the frequency $\omega$:
+EnAn implements the **Quasi-Rigid Rotor Harmonic Oscillator (qRRHO)** approximation described by [Grimme (2012)](https://doi.org/10.1002/chem.201200497). This method interpolates between rigid-rotor and harmonic oscillator limits using a damping function $w(\nu)$:
 
 $$
-S_{vib}(\omega) = w(\omega) S_{HO}(\omega) + [1 - w(\omega)] S_{rot}(\omega)
+w(\nu) = \frac{1}{1 + (\omega_0 / \nu)^\alpha}
 $$
 
-The damping function $w(\omega)$ is defined as:
+where $\omega_0$ is the cut-off frequency (default: $100 \text{ cm}^{-1}$) and $\alpha$ is the damping power (default: 4).
+
+Thermodynamic properties are calculated assuming a non-interacting particle ensemble (Ideal Gas approximation). The total Internal Energy ($U$) and Entropy ($S$) are obtained by summing the contributions from translational, rotational, electronic, and vibrational degrees of freedom.
+
+### 3.1 Internal Energy ($U$)
+
+The thermal contribution to the internal energy is calculated as:
 
 $$
-w(\omega) = \frac{1}{1 + (\omega_0 / \omega)^\alpha}
+U_\text{tot} = U_\text{trans} + U_\text{rot} + U_\text{vib}
 $$
 
-where $\omega_0$ is the cut-off frequency (default: $100 \text{ cm}^{-1}$) and $\alpha$ is the damping power (default: 4). This correction ensures that low-frequency modes contribute physically meaningful entropy values to the final Gibbs Free Energy ($G$).
+* **Translational Energy ($U_{trans}$)**:
+    Derived from the equipartition theorem for 3 degrees of freedom:
+    $$U_\text{trans} = \frac{3}{2} k_B T$$
+
+* **Rotational Energy ($U_{rot}$)**:
+    Depends on the molecular geometry (linearity):
+    * **Non-linear**: $\frac{3}{2} k_B T$ (3 rotational degrees of freedom).
+    * **Linear**: $k_B T$ (2 rotational degrees of freedom).
+
+* **Vibrational Energy ($U_{vib}$)**:
+    EnAn employs the **qRRHO** (Quasi-Rigid Rotor Harmonic Oscillator) scheme to correct the unphysical behavior of low-frequency modes. The energy is interpolated between a Rigid-Rotor-like term (for low frequencies) and the Harmonic Oscillator term (for high frequencies):
+
+    $$
+    U_\text{vib} = \sum_{i}^{N_\text{modes}} \left( w(\nu_i) U_\text{HO}(\nu_i) + [1 - w(\nu_i)] \frac{1}{2} k_B T \right)
+    $$
+
+    Where:
+    - $U_\text{HO}(\nu) = \frac{h \nu c}{e^{\frac{h \nu c}{k_B T}} - 1}$ is the standard harmonic oscillator thermal energy.
+    - $w(\nu)$ is the damping function.
+
+### 3.2 Entropy ($S$)
+
+Total entropy is defined as $S_\text{tot} = S_\text{trans} + S_\text{rot} + S_\text{el} + S_\text{vib}$.
+
+- **Translational Entropy ($S_\text{trans}$)**:
+    Calculated using the **Sackur-Tetrode equation**:
+    $$S_\text{trans} = k_B \left( \ln \left( \left( \frac{2 \pi MW k_B T}{N_A h^2} \right)^{3/2} \frac{k_B T}{P} \right) + \frac{5}{2} \right)$$
+
+- **Rotational Entropy ($S_{rot}$)**:
+    Calculated within the **Rigid Rotor (RR)** approximation:
+    * **Non-linear**:
+        $$S_\text{rot} = k_B \left( \ln \left( \frac{\sqrt{\pi} T^{3/2}}{\sigma \sqrt{\theta_A \theta_B \theta_C}} \right) + \frac{3}{2} \right)$$
+    * **Linear**:
+        $$S_\text{rot} = k_B \left( \ln \left( \frac{T}{\sigma \theta} \right) + 1 \right)$$
+
+    Where $\theta_x = \frac{h c B_x}{k_B}$ are the characteristic rotational temperatures derived from the rotational constants $B$, and $\sigma$ is the symmetry number, considered for all molecules as 1 (thus with a $C_1$ point group).
+
+* **Electronic Entropy ($S_\text{el}$)**:
+    Determined solely by the spin multiplicity ($m$):
+    $$S_\text{el} = k_B \ln(m)$$
+
+* **Vibrational Entropy ($S_\text{vib}$)**:
+    Following the method by Grimme. entropy is interpolated between the Harmonic Oscillator limit ($S_\text{HO}$) and a free-rotor entropy term ($S_\text{rot}^\text{Grimme}$) using the damping function $w(\nu)$:
+
+    $$
+    S_\text{vib} = \sum_{i}^{N_\text{modes}} \left( w(\nu_i) S_\text{HO}(\nu_i) + [1 - w(\nu_i)] S_\text{rot}^\text{Grimme}(\nu_i) \right)
+    $$
+
+    The rotor contribution $S_{rot}^{Grimme}$ considers the effective moment of inertia of the vibrational mode ($\mu$) and the average molecular rotational constant ($B_\text{av}$):
+
+    $$S_\text{rot}^\text{Grimme} = \frac{1}{2} k_B \left( 1 + \ln \left( \frac{8 \pi^3 \mu B_\text{av}}{\mu + B_\text{av}} \frac{k_B T}{h^2} \right) \right)$$
+
+### 3.3 Enthalpy ($H$) and Gibbs Free Energy ($G$)
+
+The final thermodynamic potentials are assembled as follows:
+
+$$
+H = E_\text{SCF} + \text{ZPVE} + U_\text{tot} + k_B T
+$$
+
+$$
+G = H - T S_\text{tot}
+$$
+
+Where:
+* $E_{SCF}$ is the electronic energy from the QM calculation.
+* $\text{ZPVE}$ (Zero Point Vibrational Energy) is the sum of $\frac{1}{2} h \nu c$ for all real frequencies.
+* $k_B T$ is the $PV$ work term for an ideal gas ($H = U + PV$).
 
 ---
 

@@ -1,13 +1,10 @@
-# Ensemble Analyzer
+# Ensemble Analyzer <img src="logo.png" align="right" width="150">
 [![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## Conformer Ensemble Pruning Software
 
-
-![logo](logo.png)
-
-**EnAn** (Ensemble Analysis) is a Python framework for automated conformational analysis and ensemble processing in computational chemistry workflows.
+**Ensemble Analysis** (**EnAn**) is a Python framework for automated conformational analysis and ensemble processing in computational chemistry workflows.
 
 ---
 

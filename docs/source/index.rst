@@ -5,8 +5,6 @@ Ensemble Analyzer Documentation
    :width: 200px
    :align: right
 
-.. **EnAn** è un framework Python per l'analisi conformazionale automatizzata e l'elaborazione di ensemble in flussi di lavoro di chimica computazionale.
-
 .. toctree::
    :maxdepth: 2
    :caption: Scientific Background
@@ -20,6 +18,16 @@ Ensemble Analyzer Documentation
    installation.md
    user_guide/workflow.md
    user_guide/cli_tools.md
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Tutorial and Examples 
+
+   tutorials/quickstart.md
+   tutorials/example_1.md
+   tutorials/example_2.md
+   tutorials/example_3.md
+   tutorials/example_4.md
 
 
 .. toctree::
