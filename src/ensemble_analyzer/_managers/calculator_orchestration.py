@@ -74,6 +74,7 @@ class CalculationOrchestrator:
         
         # Protocol loop
         protocols_to_run = self.protocols[self.config.start_from_protocol:]
+        self.logger.debug(protocols_to_run)
         
         for protocol in protocols_to_run:
             # Save last protocol marker

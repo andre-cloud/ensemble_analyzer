@@ -67,7 +67,8 @@ def main() -> None:
         conformers = read_ensemble(args.ensemble, log)
         start_from = 0
     
-    # 5. Create configuration
+    # 5. Create configuration and sort the protocols loaded by the number
+    protocols.sort(key=lambda x: int(x.number))
     config = CalculationConfig.from_args(args, start_from)
     
     # 6. Log application start
