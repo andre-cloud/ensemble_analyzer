@@ -1,6 +1,6 @@
 # Analysis Workflow
 
-This guide details the internal workflow of **Ensemble Analyzer**, illustrating how data flows from the initial input through the refinement pipeline to the final property generation.
+This guide details the **internal workflow** of **Ensemble Analyzer**, illustrating how data flow from the initial input through the refinement pipeline to the final property generation.
 
 ## 1. Input & Initialization
 
@@ -21,7 +21,8 @@ Before starting the refinement loop, if the ensemble contains sufficient structu
 
 The core logic is handled by the `CalculationOrchestrator`, which iterates through each step defined in the `protocol.json`. For each protocol step, the `ProtocolExecutor` performs the following operations:
 
-![Workflow Diagram](../_static/workflow.png "Workflow")
+<!-- ![Workflow Diagram](../_static/workflow.png "Workflow") -->
+<a href="../_static/workflow.png" target="_blanck"><img src="../_static/workflow.png"></a>
 
 ### 2.1 Quantum Mechanical Calculations
 

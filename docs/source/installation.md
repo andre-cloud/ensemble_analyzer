@@ -50,7 +50,7 @@ which orca
 # Should return a path, e.g., /opt/orca/orca
 ```
 3. **Environment Variable (Crucial)**: EnAn requires the specific ORCA version to handle output parsing correctly. You *must* export the `ORCAVERSION` variable. 
-Add the following lines to your sheel configuration file (e.g. `~/.bashrc` or `~/.zshrc`): 
+Add the following lines to your shell configuration file (e.g. `~/.bashrc` or `~/.zshrc`): 
 ```bash
 # EnAn specific variable
 export ORCAVERSION="6.1.0"

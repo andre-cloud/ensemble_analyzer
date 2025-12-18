@@ -18,7 +18,9 @@ Ensemble Analyzer Documentation
    installation.md
    user_guide/workflow.md
    user_guide/cli_tools.md
-
+   user_guide/protocol.md
+   user_guide/cli_command.md
+   
 .. toctree::
    :maxdepth: 2
    :caption: Tutorial and Examples 

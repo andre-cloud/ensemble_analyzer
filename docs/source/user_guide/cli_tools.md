@@ -21,7 +21,7 @@ Checks performed:
 ---
 
 ## 2. Protocol Wizard (`enan_protocol_wizard`)
-An interactive Terminal User Interface (TUI) to generate the `protocol.json` file. It guides the user through the creation of computational steps without needing to manually edit JSON files.
+An interactive Text User Interface (TUI) to generate the `protocol.json` file. It guides the user through the creation of computational steps without needing to manually edit JSON files.
 
 **Usage**
 ```bash
@@ -32,8 +32,10 @@ Features:
 - Three Configuration Levels:
   - Basic: Essential parameters only.
   - Intermediate: Adds constraints and internal coordinate monitoring.
-  - Advanced: Full control over energetic thresholds (`thrG`, `thrB`) and pruning settings.
+  - Advanced: Full control over energetic thresholds (`thrG`, `thrB`, *etc*.) and pruning settings.
 - Fuzzy Search: Quickly find functionals and basis sets from the internal database (for ORCA).
+
+The basic and Intermediate levels allow to less-expert users to create from scratch a protocol file, using the default values of some configuration. 
 
 ---
 
