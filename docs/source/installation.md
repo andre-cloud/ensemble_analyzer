@@ -6,7 +6,7 @@
 
 Before installing the package, ensure your system meets the following requirements:
 
-* **Operating System**: Linux (recommended), macOS, or Windwos.
+* **Operating System**: Linux (recommended), macOS, or Windows.
 * **Python**: Version 3.11 or higher.
 * **QM Engine**: A valid installation of ORCA (recommended) and/or Gaussian.
 

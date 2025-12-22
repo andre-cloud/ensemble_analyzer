@@ -230,6 +230,9 @@ BATCH MODE (examples):
     batch_group.add_argument('--alpha', '-a', nargs=2,
                             metavar=('LABEL', 'ALPHA'), action='append',
                             help='Change line transparency (0-1)')
+    batch_group.add_argument('--visibility', '-vis', nargs=2,
+                            metavar=('LABEL', 'bool'), action='append',
+                            help='Change line transparency (0-1)')
     
     batch_group.add_argument('--output', '-o', type=Path,
                             help='Output file')

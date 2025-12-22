@@ -22,6 +22,8 @@ extensions = [
     'sphinx.ext.mathjax',
     'myst_parser',
     'sphinx_rtd_theme',
+    'sphinx_design',
+    'sphinx_copybutton',
 ]
 
 templates_path = ['_templates']
@@ -38,10 +40,10 @@ myst_enable_extensions = [
     "dollarmath",
     "amsmath",
     "colon_fence",
+    "substitution"
 ]
 
-
-# -- ROBUST MOCKING CONFIGURATION --------------------------------------------
+# -- MOCKING CONFIGURATION --------------------------------------------
 
 # 1. Pre-inject modules to fix "constants.py" math errors
 # We assign real numbers to constants so (h * c) works during import
