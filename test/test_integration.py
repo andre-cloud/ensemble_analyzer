@@ -58,7 +58,7 @@ def test_full_workflow_simulation(mock_mkdir, mock_logger):
     protocol.block_on_retention_rate = False
     protocol.functional = "B3LYP"
     protocol.basis = "6-31G*"
-    protocol.calculation_level = "DFT"
+    protocol.calculation_level = "OPT"
     protocol.verbal_internals.return_value = []
     protocol.calculator = "orca"
     protocol.get_calculator.return_value = (MagicMock(), "opt")

@@ -65,6 +65,7 @@ enan_regraph = "ensemble_analyzer.cli.regraph:main"
 enan_graph_editor = "ensemble_analyzer.cli.pickle_editor.cli:main"
 enan_protocol_wizard = "ensemble_analyzer.cli.protocol_wizard:main"
 enan_get_energies = "ensemble_analyzer.cli.get_av_energy:main"
+enan_clustering = "ensemble_analyzer.cli.clustering:main"
 
 
 [tool.setuptools]
