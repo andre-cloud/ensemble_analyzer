@@ -70,7 +70,7 @@ class SpectralStore:
 
         self.data[int(protocol_number)][str(graph_type)] = record
 
-    def __getitem__(self, protocol_number:int, graph_type: Union[int, str]) -> SpectralRecord:
+    def __getitem__(self, protocol_number:int, graph_type: str) -> SpectralRecord:
         """Retrieve a spectral record."""
 
         return self.data[int(protocol_number)][str(graph_type)]

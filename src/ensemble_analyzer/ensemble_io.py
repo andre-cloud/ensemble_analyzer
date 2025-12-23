@@ -50,7 +50,7 @@ def read_ensemble(file: str, log:Logger, raw: bool=False) -> list:
     confs = []
 
     if not file.endswith(".xyz"):
-        raise "Ensemble file must be an XYZ (multi)geometry file"
+        raise ValueError("Ensemble file must be an XYZ (multi)geometry file")
 
     with open(file) as f:
         fl = f.readlines()

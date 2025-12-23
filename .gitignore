@@ -132,9 +132,8 @@ dmypy.json
 # User Define files
 .vscode/
 files/
-*xyz
-ORCA*
-output*.out
+!(docs/source)*xyz
+!(docs/source/_static/)output*.out
 conf_*/
 !("default_protocol."|"default_threshold.")*json
 last_protocol
@@ -144,4 +143,3 @@ try.py
 !(logo.)*png
 *xy 
 *pickle
-*out

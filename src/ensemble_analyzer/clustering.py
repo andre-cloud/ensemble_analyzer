@@ -20,7 +20,7 @@ def execute_PCA(
     set_: bool = True,
     include_H: bool = True,
     legend: bool = True
-) -> None:
+) -> bool:
     """    
     
     Args:
