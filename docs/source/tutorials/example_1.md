@@ -50,8 +50,6 @@ ensemble_analyzer -e ensemble.xyz -p protocol_refinement.json -cpu 8
 :::
 ::::
 
-## Analysis of Results
-
 The protocol effectively reduces the number of structures by identifying duplicates and high-energy conformers.
 
 The table below summarizes the retention rates achieved using this protocol on various flexible molecules, demonstrating the efficiency of the pruning strategy (results from **Table 1** of the manuscript).
@@ -66,5 +64,5 @@ The table below summarizes the retention rates achieved using this protocol on v
 | **Permethrin** | 304 | 304 | 101 | 101 | 33 % |
 | **Rivaroxaban** | 110 | 110 | 30 | 30 | 27 % |
 | **Sitagliptin** | 428 | 343 | 142	| 142 | 33 % |
-| **Tamiflu** | 836 | 527 | -- | -- | -- |
+| **Tamiflu** | 836 | 527 | 100 | 99 | 12 % |
 | **Vitamin C** | 134 | 68 | 45 | 45 | 33 % |

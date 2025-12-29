@@ -1,6 +1,6 @@
 # Example 4: Transition State Ensemble Refinement
 
-Ensemble Analyzer can also handle **Transition State (TS)** refinement. This example reproduces the refinement of a TS ensemble for a model Diels-Alder reaction (673 conformers generated via CREST).
+Ensemble Analyzer can also handle **Transition State (TS)** refinement. This example reproduces the refinement of a TS ensemble for a model Diels-Alder reaction (673 conformers generated via GOAT).
 
 The key features used here are: i) **clustering** to reduce the ensemble size, ii) **constrained optimization** to preserve the reaction center before the final TS optimization, and iii) the actual saddle point optimization via triggering the OptTS keyword. 
 
