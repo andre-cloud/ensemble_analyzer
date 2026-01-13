@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ensemble-analyzer"
-version = '1.0.0'
+version = '1'
 description = "Automatic Refinement of Conformational Ensemble"
 readme = "README.md"
 license = { text = "MIT" }
@@ -32,7 +32,7 @@ keywords = [
 ]
 
 classifiers = [
-    "Development Status :: 4 - Beta",
+    "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Science/Research",
     "Intended Audience :: Developers",
     "Topic :: Scientific/Engineering :: Chemistry",
