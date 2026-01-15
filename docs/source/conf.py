@@ -10,8 +10,8 @@ sys.path.insert(0, os.path.abspath('../../src'))
 
 # -- Project information -----------------------------------------------------
 project = 'Ensemble Analyzer'
-copyright = '2025, Andrea Pellegrini, Paolo Righi'
-author = 'Andrea Pellegrini, Paolo Righi'
+copyright = '2026, Andrea Pellegrini, Paolo Righi, Andrea Mazzanti, Michele Mancinelli'
+author = r'Andrea Pellegrini,* Paolo Righi, Andrea Mazzanti, Michele Mancinelli'
 
 
 # -- General configuration ---------------------------------------------------
@@ -29,6 +29,13 @@ extensions = [
 templates_path = ['_templates']
 exclude_patterns = []
 
+source_suffix = {
+    '.rst': 'restructuredtext',
+    '.txt': 'markdown',
+    '.md': 'markdown',
+}
+
+latex_engine = 'lualatex'
 
 # -- Options for HTML output -------------------------------------------------
 html_theme = "sphinx_rtd_theme"

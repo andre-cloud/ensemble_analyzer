@@ -65,4 +65,4 @@ The table below summarizes the retention rates achieved using this protocol on v
 | **Rivaroxaban** | 110 | 110 | 30 | 30 | 27 % |
 | **Sitagliptin** | 428 | 343 | 142	| 142 | 33 % |
 | **Tamiflu** | 836 | 527 | 100 | 99 | 12 % |
-| **Vitamin C** | 134 | 68 | 45 | 45 | 33 % |
+| **Ascorbic acid** | 134 | 68 | 45 | 45 | 33 % |
