@@ -4,6 +4,7 @@ import numpy as np
 from typing import List, Tuple, Optional
 
 from ensemble_analyzer._conformer.conformer import Conformer
+from ensemble_analyzer._conformer.energy_data import EnergyRecord
 from ensemble_analyzer._logger.logger import Logger
 
 
@@ -20,7 +21,7 @@ def _parse_xyz_str(fl: List[str], raw: bool =False) -> Tuple[np.ndarray, np.ndar
     """
     e = None
     if raw:
-        e = float(re.findall(r'([- ]\d*\.\d*)$', fl[1].strip())[0])
+        e = float(re.findall(r'([- ]\d*\.\d*)', fl[1].strip())[0])
     fl = fl[2:]
     atoms, geom = [], []
     for line in fl:
@@ -47,7 +48,7 @@ def read_ensemble(file: str, log:Logger, raw: bool=False) -> list:
         str: If the file does not end with .xyz.
     """
 
-    confs = []
+    confs : List[Conformer] = []
 
     if not file.endswith(".xyz"):
         raise ValueError("Ensemble file must be an XYZ (multi)geometry file")
@@ -63,6 +64,8 @@ def read_ensemble(file: str, log:Logger, raw: bool=False) -> list:
             continue
         atoms, geom, e = _parse_xyz_str(fl[old_idx:i], raw=raw)
         confs.append(Conformer(counter, geom=geom, atoms=atoms))
+        if raw: 
+            confs[-1].energies.add(protocol_number=0, record=EnergyRecord(E=e))
         old_idx = i
         counter += 1
 
