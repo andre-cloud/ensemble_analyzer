@@ -142,6 +142,7 @@ class ClusteringManager:
         ensemble = sorted(conformers) if sort_by_energy else conformers[:]
         
         # Track which clusters we've seen
+        seen_clusters = []
         deactivated_count = 0
         
         for conf in ensemble:
@@ -153,6 +154,7 @@ class ClusteringManager:
                 conf.active = False
                 deactivated_count += 1
             else:
+                seen_clusters.append(conf.cluster)
         
         active_count = len([c for c in ensemble if c.active])
         
