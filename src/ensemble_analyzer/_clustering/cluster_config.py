@@ -16,6 +16,8 @@ class PCAResult:
     energies: np.ndarray            # Relative energies array
     explained_variance: np.ndarray  # Variance ratio per component
     n_clusters: Optional[int] = None # Number of clusters found/used
+    original_features: Optional[np.ndarray] = None  # Added for before/after plot
+    components: Optional[np.ndarray] = None         # Added for loading plot
 
 
 @dataclass

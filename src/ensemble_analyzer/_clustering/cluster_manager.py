@@ -142,7 +142,6 @@ class ClusteringManager:
         ensemble = sorted(conformers) if sort_by_energy else conformers[:]
         
         # Track which clusters we've seen
-        seen_clusters = set()
         deactivated_count = 0
         
         for conf in ensemble:
@@ -154,7 +153,6 @@ class ClusteringManager:
                 conf.active = False
                 deactivated_count += 1
             else:
-                seen_clusters.add(conf.cluster)
         
         active_count = len([c for c in ensemble if c.active])
         
@@ -229,6 +227,7 @@ class ClusteringManager:
         kmeans = KMeans(
             n_clusters=n_clusters,
             n_init='auto',
+            random_state=self.config.random_state
         )
         cluster_labels = kmeans.fit_predict(pca_scores)
         
@@ -244,7 +243,9 @@ class ClusteringManager:
             numbers=numbers,
             energies=energies,
             explained_variance=pca.explained_variance_ratio_,
-            n_clusters=n_clusters
+            n_clusters=n_clusters,
+            original_features=eigenvalues, 
+            components=pca.components_     
         )
     
     def _calculate_distance_matrix_eigenvalues(
@@ -314,6 +315,7 @@ class ClusteringManager:
             kmeans = KMeans(
                 n_clusters=k,
                 n_init='auto',
+                random_state=self.config.random_state
             )
             labels = kmeans.fit_predict(features)
             score = silhouette_score(features, labels)
