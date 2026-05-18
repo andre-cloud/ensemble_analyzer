@@ -3,7 +3,7 @@ from typing import Tuple, Any
 from pathlib import Path
 from .base import BaseMlCalc, register_calculator
 from ensemble_analyzer.constants import get_models_dir
-
+from pathlib import Path
 
 class UMAWrappedCalc:
     """Wraps FAIRChemCalculator to inject charge/spin into atoms.info before each calculation."""
