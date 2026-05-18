@@ -106,7 +106,9 @@ class EnergyStore:
         erel = f'{data.Erel:.2f}' if not np.isnan(data.Erel) else np.nan
         pop = f'{data.Pop:.2f}' if not np.isnan(data.Pop) else np.nan
 
-        return data.E, data.G_E, data.G, f'{data.B:.5f}', erel, pop, f'{data.time:.2f}'
+        b_str = f'{data.B:.5f}' if data.B is not None else 'N/A'
+        time_str = f'{data.time:.2f}' if data.time is not None else 'N/A'
+        return data.E, data.G_E, data.G, b_str, erel, pop, time_str
 
     def load(self, input_dict: dict) -> None:
         """Restore the store from a serialized dictionary."""
