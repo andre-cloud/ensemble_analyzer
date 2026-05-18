@@ -44,6 +44,8 @@ CONVERT_B = {
     'GHz': 29.979000,
 }
 
+ROT_CONST_FACTOR = h / (8 * np.pi**2 * c * AMU_TO_KG * 1e-20)
+
 VIBRO_OR_ELECTRO = {
     'IR': 'vibro',
     'VCD': 'vibro',

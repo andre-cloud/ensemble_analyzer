@@ -7,7 +7,7 @@ from ensemble_analyzer._protocol.protocol import Protocol
 from ensemble_analyzer.constants import regex_parsing
 from ensemble_analyzer.parser_parameter import get_conf_parameters
 from ensemble_analyzer._calculators.base import ML_CALCULATORS
-from ensemble_analyzer._conformer.energy_data import EnergyRecord
+from ensemble_analyzer._conformer.energy_data import EnergyRecord, compute_rotational_constants
 
 import os
 
@@ -97,6 +97,7 @@ class CalculationExecutor:
                 protocol.number,
                 EnergyRecord(E=energy, time=elapsed),
             )
+            compute_rotational_constants(conf, protocol.number)
             self.logger.calculation_success(
                 conformer_id=conf.number,
                 protocol_number=protocol.number,

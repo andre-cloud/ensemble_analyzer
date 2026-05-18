@@ -77,7 +77,6 @@ class Protocol:
     read_population             : Optional[str|None]            = None
     skip_opt_fail               : Optional[bool]                = False
     block_on_retention_rate     : Optional[bool]                = False
-    serial_sp                   : bool                          = False
     
 
     # ===

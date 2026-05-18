@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Tuple
 from ase import Atoms
 from ensemble_analyzer._conformer.conformer import Conformer
+from ensemble_analyzer.constants import ROT_CONST_FACTOR
 
 import numpy as np
 
@@ -152,12 +153,25 @@ class BaseParser(ABC):
         
         return data
 
-    def calculate_B(self): 
-        atoms = Atoms(symbols="".join(tuple(self.conf.atoms)), positions=self.conf.last_geometry)
-        moments = atoms.get_moments_of_inertia()
-        B_vec = np.where(moments > 1e-6, 505.379 / moments, 0.0)
-        # conf.energies.set(protocol_number, "B", float(np.linalg.norm(B_vec)))
-        # conf.energies.set(protocol_number, "B_vec", B_vec)
+    def calculate_B(self) -> np.ndarray:
+        """Compute principal rotational constants from conformer geometry.
+
+        Uses the conformer's atomic positions and masses to calculate
+        the three principal rotational constants.
+
+        Returns:
+            np.ndarray: Array of shape (3,) containing B_a, B_b, B_c in cm⁻¹.
+        """
+        atoms = Atoms(
+            symbols="".join(tuple(self.conf.atoms)),
+            positions=self.conf.last_geometry,
+        )
+        moments = atoms.get_moments_of_inertia()  # [amu·Å²]
+        B_vec = np.divide(
+            ROT_CONST_FACTOR, moments,
+            out=np.zeros_like(moments),
+            where=moments > 1e-6,
+        )  # [cm⁻¹]
         return B_vec
 
 

@@ -1,6 +1,10 @@
 from dataclasses import dataclass, field, asdict
-from typing import Optional, Dict, Tuple, Union
+from typing import Optional, Dict, Tuple, Union, TYPE_CHECKING
 import numpy as np
+from ensemble_analyzer.constants import ROT_CONST_FACTOR
+
+if TYPE_CHECKING:
+    from ensemble_analyzer._conformer.conformer import Conformer
 
 
 
@@ -132,3 +136,48 @@ class EnergyStore:
                     return freq
 
         return np.array([])
+
+
+def compute_rotational_constants(conf: 'Conformer', protocol_number: int) -> None:
+    """Compute and store principal rotational constants from conformer geometry.
+
+    Calculates the three principal rotational constants (B_a, B_b, B_c) from
+    the inertia tensor derived from the conformer's atomic positions and masses.
+
+    Skips if the EnergyRecord for this protocol already has B set, so it is
+    safe to call unconditionally after any calculation path (ML, QM parser, or
+    checkpoint restore).
+
+    Args:
+        conf: Conformer with atoms and last_geometry populated.
+        protocol_number: Protocol step number for the EnergyRecord target.
+
+    Returns:
+        None
+
+    Raises:
+        KeyError: If no EnergyRecord exists for the given protocol number.
+    """
+    if protocol_number not in conf.energies:
+        raise KeyError(
+            f"No EnergyRecord for protocol {protocol_number} in conformer "
+            f"{conf.number}. Cannot compute rotational constants."
+        )
+    record = conf.energies[protocol_number]
+    if record.B is not None:
+        return
+
+    from ase import Atoms
+    atoms = Atoms(
+        symbols="".join(tuple(conf.atoms)),
+        positions=conf.last_geometry,
+    )
+    moments = atoms.get_moments_of_inertia()  # [amu·Å²]
+    B_vec = np.divide(
+        ROT_CONST_FACTOR, moments,
+        out=np.zeros_like(moments),
+        where=moments > 1e-6,
+    )  # [cm⁻¹]
+
+    conf.energies.set(protocol_number, "B", float(np.linalg.norm(B_vec)))
+    conf.energies.set(protocol_number, "B_vec", B_vec)
