@@ -185,50 +185,13 @@ class ProtocolExecutor:
         if not pending:
             return
 
-        is_sp = not protocol.opt and not protocol.freq
-        is_ml = protocol.calculator.lower() in ML_CALCULATORS
-        total_cpu = self.config.cpu
+        for i, c in enumerate(pending, 1):
+            success = self.calculator.execute(i, c, protocol, self.config.cpu)
+            if not success:
+                c.active = False
+            self.checkpoint_manager.save(conformers, self.logger)
 
-        if is_sp and not protocol.serial_sp:
-            # Parallel single-point
-            if is_ml:
-                per_job = 1
-                workers = total_cpu
-            else:
-                cap = min(8, total_cpu)
-                per_job = next(d for d in range(cap, 0, -1) if total_cpu % d == 0)
-                workers = total_cpu // per_job
-
-            self.logger.info(
-                f"Running {len(pending)} SP jobs "
-                f"({workers} parallel, {per_job} CPU each)"
-            )
-
-            with ThreadPoolExecutor(max_workers=workers) as pool:
-                fut_map = {
-                    pool.submit(self.calculator.execute, i, c, protocol, per_job): c
-                    for i, c in enumerate(pending, 1)
-                }
-                for f in as_completed(fut_map):
-                    c = fut_map[f]
-                    try:
-                        ok = f.result()
-                    except Exception as e:
-                        self.logger.debug(f"Conf {c.number} failed: {e}")
-                        ok = False
-                    if not ok:
-                        c.active = False
-
-            self.checkpoint_manager.save(conformers, self.logger, log=True)
-        else:
-            # Opt/freq: sequential, all CPUs to each job
-            for i, c in enumerate(pending, 1):
-                success = self.calculator.execute(i, c, protocol, total_cpu)
-                if not success:
-                    c.active = False
-                self.checkpoint_manager.save(conformers, self.logger)
-
-            self.checkpoint_manager.save(conformers, self.logger, log=True)
+        self.checkpoint_manager.save(conformers, self.logger, log=True)
 
     def _set_relative_energies(self, conformers: List[Conformer], protocol: Protocol) -> None:
         """
