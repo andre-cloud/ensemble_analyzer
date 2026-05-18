@@ -195,8 +195,9 @@ class ProtocolExecutor:
                 per_job = 1
                 workers = total_cpu
             else:
-                per_job = min(8, total_cpu)
-                workers = max(1, total_cpu // per_job)
+                cap = min(8, total_cpu)
+                per_job = next(d for d in range(cap, 0, -1) if total_cpu % d == 0)
+                workers = total_cpu // per_job
 
             self.logger.info(
                 f"Running {len(pending)} SP jobs "
