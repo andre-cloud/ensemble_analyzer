@@ -104,7 +104,7 @@ def check_gaussian() -> None:
 
 def check_ml_potentials() -> None:
     """
-    Check optional ML potential dependencies (TBLite, AIMNet, UMA).
+    Check optional ML potential dependencies (TBLite, AIMNet).
     """
 
     print(f"\n{'-'*20} 4. Checking ML Potentials {'-'*20}")
@@ -116,24 +116,11 @@ def check_ml_potentials() -> None:
         log_warn("TBLite NOT installed. Install: pip install \"ensemble-analyzer[tblite]\"")
 
     # AIMNet
-    aimnet_ok = importlib.util.find_spec("aimnet") is not None
-    torch_ok = importlib.util.find_spec("torch") is not None
-    if aimnet_ok and torch_ok:
-        log_pass("AIMNet + torch found.")
-    elif torch_ok:
-        log_warn("AIMNet NOT installed. Install: pip install \"ensemble-analyzer[aimnet]\"")
-    elif aimnet_ok:
-        log_warn("torch NOT installed. Install: pip install torch")
-    else:
-        log_warn("AIMNet + torch NOT installed. Install: pip install \"ensemble-analyzer[aimnet]\"")
-
-    # UMA (fairchem-core)
-    if importlib.util.find_spec("fairchem") is not None:
-        log_pass("fairchem-core (UMA) found.")
-    elif torch_ok:
-        log_warn("fairchem-core NOT installed. Install: pip install \"ensemble-analyzer[uma]\"")
-    else:
-        log_warn("fairchem-core + torch NOT installed. Install: pip install \"ensemble-analyzer[uma]\"")
+    try:
+        import aimnet
+        log_pass("aimnet found.")
+    except ImportError:
+        log_warn("aimnet NOT installed. Install: pip install \"ensemble-analyzer[aimnet]\"")
 
 def check_models_dir() -> None:
     """Check ENAN_MODELS_DIR environment variable."""

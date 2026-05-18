@@ -14,7 +14,7 @@ def register_calculator(name):
     return decorator
 
 
-ML_CALCULATORS = {"tblite", "aimnet", "uma"}
+ML_CALCULATORS = {"tblite", "aimnet"}
 
 
 class BaseCalc(ABC):
@@ -81,7 +81,7 @@ class BaseCalc(ABC):
 
 class BaseMlCalc(BaseCalc):
     """
-    Base class for ML calculator wrappers (TBLite, AIMNet, UMA).
+    Base class for ML calculator wrappers (TBLite, AIMNet).
     Overrides common_str, optimisation, and frequency for ML behaviour.
 
     ML calculators use OMP_NUM_THREADS to control internal threading

@@ -67,7 +67,6 @@ regex_parsing = {
     "nwchem": {"ext": "log"},
     "tblite": {"ext": None},
     "aimnet": {"ext": None},
-    "uma": {"ext": None},
 }
 
 MARKERS = [
@@ -91,7 +90,7 @@ def get_models_dir(calculator_name: str, create: bool = True) -> Path:
     2. ``~/.ensemble_analyzer/models/`` (local default).
 
     Args:
-        calculator_name (str): Subdirectory name (e.g. ``"aimnet"``, ``"uma"``).
+        calculator_name (str): Subdirectory name (e.g. ``"aimnet"``).
         create (bool): Create the directory if it does not exist.  Defaults to True.
 
     Returns:

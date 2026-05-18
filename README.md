@@ -12,7 +12,7 @@
 
 ### Core Capabilities
 - ⚡ **Multi-Protocol Workflows**: Sequential optimization/frequency calculations with automatic pruning
-- 🔬 **Quantum Chemistry Integration**: Support for ORCA, Gaussian, semi-empirical (TBLite), and ML potentials (AIMNet, UMA)
+- 🔬 **Quantum Chemistry Integration**: Support for ORCA, Gaussian, semi-empirical (TBLite), and ML potentials (AIMNet)
 - 📊 **Advanced Clustering**: PCA-based conformer clustering with multiple feature extraction methods
 - 🎨 **Spectral Analysis**: Generate weighted IR, VCD, UV-vis, and ECD spectra
 - 🔄 **Checkpoint System**: Automatic restart capability with atomic file operations
@@ -37,16 +37,10 @@
 # Base install (ORCA/Gaussian only)
 pip install ensemble-analyzer
 
-# With ML potentials (TBLite, AIMNet, UMA)
-pip install "ensemble-analyzer[ml]"
+# With ML potentials (TBLite, AIMNet)
 
-# Single ML backend
-pip install "ensemble-analyzer[tblite]"
+```bash
 pip install "ensemble-analyzer[aimnet]"
-pip install "ensemble-analyzer[uma]"
-
-# Development
-pip install "ensemble-analyzer[dev]"
 ```
 
 ### External QM Programs (optional)
@@ -62,7 +56,7 @@ pip install "ensemble-analyzer[dev]"
 |------------|------|-------|---------------|
 | **TBLite** | Semi-empirical (GFN-xTB) | `[tblite]` | Built-in |
 | **AIMNet** | ML potential | `[aimnet]` | `ENAN_MODELS_DIR/aimnet/` |
-| **UMA** | ML potential | `[uma]` | `ENAN_MODELS_DIR/uma/` |
+
 
 Point to your model weights directory:
 ```bash
@@ -92,7 +86,6 @@ ensemble_analyzer --ensemble conformers.xyz --protocol protocol.json --output ca
 {
     "0": {"calculator": "tblite", "functional": "GFN2-xTB", "opt": true, "freq": true},
     "1": {"calculator": "aimnet", "functional": "aimnet2", "cluster": 10},
-    "2": {"calculator": "uma", "functional": "uma-s-1.pt"}
 }
 ```
 
@@ -128,7 +121,7 @@ ensemble_analyzer --restart
 | **Calculation Settings** ||||
 | `functional` | str | DFT functional or method | `"B3LYP"`, `"xtb"`, `"HF-3c"` |
 | `basis` | str | Basis set (auto for composite methods) | `"def2-SVP"`, `"def2-TZVP"` |
-| `calculator` | str | QM program / ML potential | `"orca"` (default), `"gaussian"`, `"tblite"`, `"aimnet"`, `"uma"` |
+| `calculator` | str | QM program / ML potential | `"orca"` (default), `"gaussian"`, `"tblite"`, `"aimnet"` |
 | `opt` | bool | Optimize geometry | `true`, `false` |
 | `freq` | bool | Calculate frequencies | `true`, `false` |
 | `mult` | int | Spin multiplicity | `1` (singlet), `2` (doublet) |
