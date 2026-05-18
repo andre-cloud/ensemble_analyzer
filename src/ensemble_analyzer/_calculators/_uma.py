@@ -1,9 +1,10 @@
 import os
 from typing import Tuple, Any
 from pathlib import Path
+from ase.calculators.calculator import all_changes
 from .base import BaseMlCalc, register_calculator
 from ensemble_analyzer.constants import get_models_dir
-from pathlib import Path
+
 
 class UMAWrappedCalc:
     """Wraps FAIRChemCalculator to inject charge/spin into atoms.info before each calculation."""
@@ -26,7 +27,7 @@ class UMAWrappedCalc:
         self,
         atoms: Any = None,
         properties: list[str] = ["energy"],
-        system_changes: str = "all",
+        system_changes: list[str] = all_changes,
     ) -> None:
         """
         Perform calculation, injecting charge and spin into atoms info.
@@ -36,7 +37,7 @@ class UMAWrappedCalc:
             properties (list[str], optional): Properties to compute.
                 Defaults to ["energy"].
             system_changes (str, optional): System changes flag.
-                Defaults to "all".
+                Defaults to all_changes.
         """
         calc_atoms = atoms if atoms is not None else getattr(self, 'atoms', None)
         if calc_atoms is not None:
