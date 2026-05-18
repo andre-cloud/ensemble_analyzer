@@ -124,7 +124,6 @@ class EnergyStore:
 
     def get_last_freq(self, protocol_number: int) -> np.ndarray:
         """Retrieve frequencies from the given protocol, falling back to earlier ones."""
-        protocol_number = int(protocol_number)
         if protocol_number in self.data:
             freq = self.data[protocol_number].Freq
             if freq is not None and len(freq) > 0:
@@ -159,6 +158,7 @@ def compute_rotational_constants(conf: 'Conformer', protocol_number: int) -> Non
     Raises:
         KeyError: If no EnergyRecord exists for the given protocol number.
     """
+    protocol_number = int(protocol_number)
     if protocol_number not in conf.energies:
         raise KeyError(
             f"No EnergyRecord for protocol {protocol_number} in conformer "
