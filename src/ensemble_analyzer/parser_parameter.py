@@ -63,7 +63,7 @@ def get_conf_parameters(
 
     try:
         parser = PARSER_REGISTRY[p.calculator](
-            output_name=os.path.join(conf.folder, output), log=log)
+            output_name=os.path.join(conf.folder, output), log=log, conf=conf)
 
         # if calculation crashed (detected by parser checks), skip conformer safely
         if not parser.correct_exiting:

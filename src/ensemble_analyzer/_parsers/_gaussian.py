@@ -84,7 +84,7 @@ class GaussianParser(BaseParser):
                 B /= CONVERT_B[self.regex['units_B']]
         else:
             self.log.warning("\tB not found, storing a versor")
-            B = np.array([1,0,0])
+            B = self.calculate_B()
 
         fl = self.get_filtered_text(start='Dipole moment', end='Quadrupole')
         match_M = re.findall(self.regex['m'], fl)

@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Tuple
+from ase import Atoms
+from ensemble_analyzer._conformer.conformer import Conformer
 
 import numpy as np
 
@@ -27,7 +29,7 @@ class BaseParser(ABC):
     to be compatible with Ensemble Analyzer.
     """
 
-    def __init__(self, output_name: str, log: 'Logger') -> None:
+    def __init__(self, output_name: str, log: 'Logger', conf: Conformer) -> None:
         """Initialize the parser.
 
         Args:
@@ -39,7 +41,7 @@ class BaseParser(ABC):
             self.fl = f.read()
 
         self.log = log
-
+        self.conf = conf
         self.skip_message = "ATTENTION: Calculation CRASHED, impossible parsing. Conformer will be deactivated and no longer considered"
     
     @abstractmethod
@@ -150,6 +152,13 @@ class BaseParser(ABC):
         
         return data
 
+    def calculate_B(self): 
+        atoms = Atoms(symbols="".join(tuple(self.conf.atoms)), positions=self.conf.last_geometry)
+        moments = atoms.get_moments_of_inertia()
+        B_vec = np.where(moments > 1e-6, 505.379 / moments, 0.0)
+        # conf.energies.set(protocol_number, "B", float(np.linalg.norm(B_vec)))
+        # conf.energies.set(protocol_number, "B_vec", B_vec)
+        return B_vec
 
 
 PARSER_REGISTRY : Dict[str, BaseParser]= {}

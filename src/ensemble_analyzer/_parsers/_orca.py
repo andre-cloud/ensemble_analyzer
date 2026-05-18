@@ -163,7 +163,7 @@ State  Energy     Wavelength     R         MX        MY        MZ
                 B /= CONVERT_B[self.regex['units_B']]
         else:
             self.log.warning("\tB not found, storing a versor")
-            B = np.array([1,0,0])
+            B = self.calculate_B()
 
         match_M = re.findall(self.regex['m'], self.fl)
         if match_M:
