@@ -1,4 +1,5 @@
 import numpy as np
+from typing import Optional
 try:
     from ensemble_analyzer.constants import *
 except ModuleNotFoundError: 
@@ -24,7 +25,7 @@ def calc_damp(frequency: np.ndarray, cut_off: float, alpha: int) -> np.ndarray:
     return 1 / (1 + (cut_off / frequency) ** alpha)
 
 
-def calc_zpe(frequency: np.ndarray = np.array([0])) -> float:
+def calc_zpe(frequency: Optional[np.ndarray] = None) -> float:
     r"""
     Calculate the Zero Point Energy.
 
@@ -37,6 +38,8 @@ def calc_zpe(frequency: np.ndarray = np.array([0])) -> float:
     Returns:
         float: Zero point energy in Eh.
     """
+    if frequency is None or len(frequency) == 0:
+        return 0.0
     return np.sum((h * frequency * c) / (2)) * J_TO_H
 
 
@@ -169,7 +172,7 @@ def calc_rotational_entropy(B, T, symno: int = 1, linear: bool = False) -> float
     return Boltzmann * (np.log(qrot / symno) + 1 + (0 if linear else 0.5)) * J_TO_H
 
 
-def calc_S_V_grimme(freq: np.array, T) -> np.array:
+def calc_S_V_grimme(freq: np.ndarray, T: float) -> np.ndarray:
     r"""
     V factor used for the damping of the frequency.
 
@@ -210,7 +213,7 @@ def calc_S_R_grimme(freq: np.array, T: float, B: np.array) -> np.array:
     return (0.5 + np.log(f**0.5)) * Boltzmann
 
 
-def calc_vibrational_entropy(freq, T, B, cut_off=100, alpha=4) -> float:
+def calc_vibrational_entropy(freq: np.ndarray, T: float, B: np.ndarray, cut_off=100, alpha=4) -> float:
     r"""
     Vibrational entropy.
 
@@ -240,7 +243,7 @@ def calc_vibrational_entropy(freq, T, B, cut_off=100, alpha=4) -> float:
     )
 
 
-def calc_electronic_entropy(m) -> float:
+def calc_electronic_entropy(m: int) -> float:
     r"""
     Electronic entropy.
 

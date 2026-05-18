@@ -16,7 +16,7 @@ from ensemble_analyzer._logger.logger import Logger
 from datetime import datetime
 
 
-def tranform_float(freq) -> str:
+def tranform_float(freq: float) -> str:
     """
     Format a frequency value as a string with 2 decimal places.
 
@@ -117,7 +117,7 @@ def get_conf_parameters(
             except Exception as thermo_err:
                  log.error(f"Error computing RRHO thermodynamics for Conf {conf.number}: {thermo_err}")
         else:
-            prev_energies = conf.energies.__getitem__(int(number) - 1)
+            prev_energies = conf.energies[int(number) - 1]
             g_e = prev_energies.G_E
 
             if not np.isnan(g_e):

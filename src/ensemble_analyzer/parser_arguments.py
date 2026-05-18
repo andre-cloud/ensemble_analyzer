@@ -160,8 +160,8 @@ def parser_arguments()-> argparse.Namespace:
     system_group.add_argument(
         "-cpu",
         type=int,
-        help="Define the number of CPU used by the calculations",
-        default=1,
+        help="Total CPU budget (auto-split across parallel single-point jobs). Default: %(default)s",
+        default=8,
     )
     system_group.add_argument(
         "-calc",

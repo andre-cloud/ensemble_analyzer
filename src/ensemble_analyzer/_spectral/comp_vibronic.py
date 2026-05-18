@@ -11,6 +11,7 @@ from ensemble_analyzer._spectral.experimental import ExperimentalGraph
 
 @dataclass
 class ComputedVibronic(BaseGraph):
+    """Convolution handler for vibronic spectra (IR, VCD) with Lorentzian broadening."""
 
     ref: Optional[ExperimentalGraph] = None
 

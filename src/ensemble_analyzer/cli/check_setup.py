@@ -102,6 +102,52 @@ def check_gaussian() -> None:
     else:
         log_warn("Gaussian executable (g16/g09) NOT found. (Optional if using ORCA)")
 
+def check_ml_potentials() -> None:
+    """
+    Check optional ML potential dependencies (TBLite, AIMNet, UMA).
+    """
+
+    print(f"\n{'-'*20} 4. Checking ML Potentials {'-'*20}")
+
+    # TBLite
+    if importlib.util.find_spec("tblite") is not None:
+        log_pass("TBLite library found.")
+    else:
+        log_warn("TBLite NOT installed. Install: pip install \"ensemble-analyzer[tblite]\"")
+
+    # AIMNet
+    aimnet_ok = importlib.util.find_spec("aimnet") is not None
+    torch_ok = importlib.util.find_spec("torch") is not None
+    if aimnet_ok and torch_ok:
+        log_pass("AIMNet + torch found.")
+    elif torch_ok:
+        log_warn("AIMNet NOT installed. Install: pip install \"ensemble-analyzer[aimnet]\"")
+    elif aimnet_ok:
+        log_warn("torch NOT installed. Install: pip install torch")
+    else:
+        log_warn("AIMNet + torch NOT installed. Install: pip install \"ensemble-analyzer[aimnet]\"")
+
+    # UMA (fairchem-core)
+    if importlib.util.find_spec("fairchem") is not None:
+        log_pass("fairchem-core (UMA) found.")
+    elif torch_ok:
+        log_warn("fairchem-core NOT installed. Install: pip install \"ensemble-analyzer[uma]\"")
+    else:
+        log_warn("fairchem-core + torch NOT installed. Install: pip install \"ensemble-analyzer[uma]\"")
+
+def check_models_dir() -> None:
+    """Check ENAN_MODELS_DIR environment variable."""
+
+    models_dir = os.environ.get("ENAN_MODELS_DIR")
+    if models_dir:
+        p = Path(models_dir)
+        if p.is_dir():
+            log_pass(f"ENAN_MODELS_DIR = {models_dir}")
+        else:
+            log_warn(f"ENAN_MODELS_DIR = {models_dir} (directory does not exist yet)")
+    else:
+        log_warn("ENAN_MODELS_DIR not set. ML models default to ~/.ensemble_analyzer/models/")
+
 def main() -> None:
     """Run the complete installation check suite."""
     
@@ -110,6 +156,8 @@ def main() -> None:
     deps_ok = check_python_dependencies()
     orca_ok = check_orca()
     check_gaussian()
+    check_ml_potentials()
+    check_models_dir()
     
     print(f"\n{'-'*50}")
     if deps_ok and orca_ok:

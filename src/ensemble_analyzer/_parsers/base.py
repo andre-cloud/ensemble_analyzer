@@ -1,8 +1,17 @@
 from abc import ABC, abstractmethod
-from typing import Dict, List
+from typing import Callable, Dict, List, Tuple
 
-def register_parser(name):
-    """Decorator to register each parser in the global registry."""
+import numpy as np
+
+def register_parser(name: str) -> Callable:
+    """Decorator to register each parser in the global registry.
+
+    Args:
+        name: Parser identifier (e.g. 'gaussian', 'orca').
+
+    Returns:
+        Callable: Decorator that registers the class in PARSER_REGISTRY.
+    """
 
     def decorator(cls):
         PARSER_REGISTRY[name.lower()] = cls
@@ -18,13 +27,12 @@ class BaseParser(ABC):
     to be compatible with Ensemble Analyzer.
     """
 
-    def __init__(self, output_name, log): 
-        """
-        Initialize the parser.
+    def __init__(self, output_name: str, log: 'Logger') -> None:
+        """Initialize the parser.
 
         Args:
-            output_name (str): Path to the output file to parse.
-            log (Logger): Logger instance for warnings and debug info.
+            output_name: Path to the output file to parse.
+            log: Logger instance for warnings and debug info.
         """
 
         with open(output_name) as f:
@@ -35,9 +43,8 @@ class BaseParser(ABC):
         self.skip_message = "ATTENTION: Calculation CRASHED, impossible parsing. Conformer will be deactivated and no longer considered"
     
     @abstractmethod
-    def parse_geom(self):
-        """
-        Extract the final geometry from the output.
+    def parse_geom(self) -> np.ndarray:
+        """Extract the final geometry from the output.
 
         Returns:
             np.ndarray: Array of shape (N_atoms, 3) containing Cartesian coordinates.
@@ -45,9 +52,8 @@ class BaseParser(ABC):
         pass
 
     @abstractmethod
-    def parse_B_m(self):
-        """
-        Extract Rotational Constants and Dipole Moment.
+    def parse_B_m(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Extract Rotational Constants and Dipole Moment.
 
         Returns:
             Tuple[np.ndarray, np.ndarray]:
@@ -57,9 +63,8 @@ class BaseParser(ABC):
         pass
 
     @abstractmethod
-    def parse_energy(self):
-        """
-        Extract the final electronic energy.
+    def parse_energy(self) -> float:
+        """Extract the final electronic energy.
 
         Returns:
             float: Electronic energy in Hartree (Eh).
@@ -67,9 +72,8 @@ class BaseParser(ABC):
         pass
     
     @abstractmethod
-    def parse_freq(self):
-        """
-        Extract vibrational frequencies and spectral data (IR/VCD).
+    def parse_freq(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Extract vibrational frequencies and spectral data (IR/VCD).
 
         Returns:
             Tuple[np.ndarray, np.ndarray, np.ndarray]:
@@ -80,9 +84,8 @@ class BaseParser(ABC):
         pass
 
     @abstractmethod
-    def parse_tddft(self):
-        """
-        Extract TD-DFT excited states data (UV/ECD).
+    def parse_tddft(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Extract TD-DFT excited states data (UV/ECD).
 
         Returns:
             Tuple[np.ndarray, np.ndarray]:

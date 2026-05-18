@@ -34,7 +34,8 @@ class Conformer:
     graphs_data         : SpectralStore   = field(default_factory = SpectralStore)
 
 
-    def __post_init__(self): 
+    def __post_init__(self) -> None:
+        """Initialize derived fields from the input geometry."""
         self._initial_geometry = self.geom.copy()
         self.last_geometry = self.geom.copy()
         self.folder = f'conf_{self.number}'
@@ -46,21 +47,23 @@ class Conformer:
     # ASE
     # ===
 
-    def get_ase_atoms(self, calc: BaseCalc) -> Atoms: 
+    def get_ase_atoms(self, calc: BaseCalc) -> Atoms:
+        """Build an ASE Atoms object with the given calculator."""
         return Atoms(symbols="".join(tuple(self.atoms)), positions=self.last_geometry, calculator=calc)
     
     # ===
     # Energy helper
     # ===
 
-    def get_energy(self, protocol_number: int):
-        energies = self.energies.__getitem__(protocol_number=protocol_number)
+    def get_energy(self, protocol_number: int) -> float:
+        """Return Gibbs free energy if available, else electronic energy."""
+        energies = self.energies[protocol_number]
         if not np.isnan(energies.G):
             return energies.G
         return energies.E
     
-    def create_log(self, protocol_number: int, monitor_internals: list):
-        
+    def create_log(self, protocol_number: int, monitor_internals: List[List[int]]) -> tuple:
+        """Build a log tuple with conformer data and optional internal coordinates."""
         e, g_e, g, b, erel, pop, time = self.energies.log_info(protocol_number=protocol_number)
 
         monitor : List[float] = []
@@ -113,7 +116,8 @@ class Conformer:
     # ===
 
     @property
-    def weight_mass(self):
+    def weight_mass(self) -> float:
+        """Total mass of the conformer in atomic mass units."""
         return np.sum(
             Atoms(
                 symbols="".join(list(self.atoms)),
@@ -122,15 +126,18 @@ class Conformer:
         )
 
     @property
-    def rotatory(self):
+    def rotatory(self) -> float:
+        """Rotational constant norm from the most recent protocol step."""
         return self.energies.last().B
 
     @property
-    def moment(self):
+    def moment(self) -> float:
+        """Dipole moment norm from the most recent protocol step."""
         return self.energies.last().m
 
     @property
-    def _last_energy(self):
+    def _last_energy(self) -> float:
+        """Gibbs or electronic energy from the most recent protocol step."""
         return self.energies.get_energy()
     
     # ===

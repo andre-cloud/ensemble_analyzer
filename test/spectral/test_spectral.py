@@ -31,7 +31,7 @@ class TestSpectral:
                 return MagicMock(X=[10, 20], Y=[0.1, 0.2])
             def __contains__(self, item):
                 return True
-            def __has_graph_type__(self, *args):
+            def has_graph_type(self, *args):
                 return True
 
         c1 = mock_conformer

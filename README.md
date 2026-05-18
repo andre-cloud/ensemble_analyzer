@@ -12,7 +12,7 @@
 
 ### Core Capabilities
 - ⚡ **Multi-Protocol Workflows**: Sequential optimization/frequency calculations with automatic pruning
-- 🔬 **Quantum Chemistry Integration**: Support for ORCA and Gaussian
+- 🔬 **Quantum Chemistry Integration**: Support for ORCA, Gaussian, semi-empirical (TBLite), and ML potentials (AIMNet, UMA)
 - 📊 **Advanced Clustering**: PCA-based conformer clustering with multiple feature extraction methods
 - 🎨 **Spectral Analysis**: Generate weighted IR, VCD, UV-vis, and ECD spectra
 - 🔄 **Checkpoint System**: Automatic restart capability with atomic file operations
@@ -34,15 +34,40 @@
 - **Acceleration**: Numba
 
 ```bash
+# Base install (ORCA/Gaussian only)
 pip install ensemble-analyzer
+
+# With ML potentials (TBLite, AIMNet, UMA)
+pip install "ensemble-analyzer[ml]"
+
+# Single ML backend
+pip install "ensemble-analyzer[tblite]"
+pip install "ensemble-analyzer[aimnet]"
+pip install "ensemble-analyzer[uma]"
+
+# Development
+pip install "ensemble-analyzer[dev]"
 ```
 
-- Install [ORCA](https://orcaforum.kofo.mpg.de/app.php/portal) from the ORCA Forum
-- *Optional*: Install Gaussian, if licensed
+### External QM Programs (optional)
 
-- Export ORCA verion
+| Program | Requirement | Env Var |
+|---------|-------------|---------|
+| [ORCA](https://orcaforum.kofo.mpg.de/app.php/portal) | Installed binary | `ORCAVERSION="x.y.z"` |
+| [Gaussian](https://gaussian.com) | Licensed installation | — |
+
+### Semi-empirical & ML Potentials (optional)
+
+| Calculator | Type | Extra | Model Weights |
+|------------|------|-------|---------------|
+| **TBLite** | Semi-empirical (GFN-xTB) | `[tblite]` | Built-in |
+| **AIMNet** | ML potential | `[aimnet]` | `ENAN_MODELS_DIR/aimnet/` |
+| **UMA** | ML potential | `[uma]` | `ENAN_MODELS_DIR/uma/` |
+
+Point to your model weights directory:
 ```bash
-export ORCAVERSION="x.y.z"
+export ENAN_MODELS_DIR="/path/to/ml_weights"
+# Default: ~/.ensemble_analyzer/models/<calculator>/
 ```
 
 ## 🚀 Quick Start
@@ -62,11 +87,38 @@ Create `protocol.json`
 ensemble_analyzer --ensemble conformers.xyz --protocol protocol.json --output calculation.out --cpu 8 --temperature 298.15
 ```
 
-### 3. Restart from Checkpoint
+### 3. Using Semi-empirical & ML Potentials
+```json
+{
+    "0": {"calculator": "tblite", "functional": "GFN2-xTB", "opt": true, "freq": true},
+    "1": {"calculator": "aimnet", "functional": "aimnet2", "cluster": 10},
+    "2": {"calculator": "uma", "functional": "uma-s-1.pt"}
+}
+```
+
+ML calculators skip file I/O and parsing — energies are read directly from ASE atoms.
+
+### 4. Restart from Checkpoint
 ```bash
 # Automatically resumes from last completed protocol
 ensemble_analyzer --restart
 ```
+
+### CPU Budget
+
+`--cpu <N>` sets the **total CPU budget**. Single-point (SP) calculations are parallelised across conformers; the budget is auto-split:
+
+| `--cpu` | per-job CPUs (QM) | parallel workers |
+|---------|-------------------|------------------|
+| 32      | 8                 | 4                |
+| 16      | 8                 | 2                |
+| 8       | 8                 | 1 (serial)       |
+| 4       | 4                 | 1 (serial)       |
+
+- **Opt/Freq** always run **sequentially** with all CPUs allocated to one job.
+- **ML calculators** ignore per-job CPU; all workers run in parallel.
+- Output files are written directly into `conf_N/protocol_M/` (no file-moving step).
+
 ---
 
 ### Protocol Parameters
@@ -76,12 +128,11 @@ ensemble_analyzer --restart
 | **Calculation Settings** ||||
 | `functional` | str | DFT functional or method | `"B3LYP"`, `"xtb"`, `"HF-3c"` |
 | `basis` | str | Basis set (auto for composite methods) | `"def2-SVP"`, `"def2-TZVP"` |
-| `calculator` | str | QM program | `"orca"` (default), `"gaussian"` |
+| `calculator` | str | QM program / ML potential | `"orca"` (default), `"gaussian"`, `"tblite"`, `"aimnet"`, `"uma"` |
 | `opt` | bool | Optimize geometry | `true`, `false` |
 | `freq` | bool | Calculate frequencies | `true`, `false` |
 | `mult` | int | Spin multiplicity | `1` (singlet), `2` (doublet) |
 | `charge` | int | Molecular charge | |
-| `calculator` | str | Set the calculator | `orca` (default), `gaussian` |
 | **Pruning Thresholds** ||||
 | `thrG` | float | Energy similarity threshold [kcal/mol] | `3.0`, `5.0` |
 | `thrB` | float | Rotatory constant threshold [cm⁻¹] | `30.0`, `50.0` |

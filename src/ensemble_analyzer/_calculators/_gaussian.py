@@ -48,8 +48,10 @@ class GaussianCalc(BaseCalc):
 
         route = self.common_str()
 
+        ase_label = f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_gaussian"
+
         calc = Gaussian(
-            label="gaussian",
+            label=ase_label,
             output_type='N',
             mem=f"{self.cpu*2}GB",
             chk='gaussian.chk',
@@ -82,8 +84,12 @@ class GaussianCalc(BaseCalc):
             calc.parameters["extra"] += " opt"
         else:
             calc.parameters["extra"] += " opt=(modredudant)"
-            redundant = "\n".join([f"X {i+1} F" for i in self.protocol.constrains])
-            # Counting in gaussian starts at 1
+            tag_map = {1: "X", 2: "B", 3: "A", 4: "D"}
+            lines = []
+            for c in self.protocol.constrains:
+                tag = tag_map.get(len(c), "X")
+                lines.append(f"{tag} {' '.join(map(str, c))} F")
+            redundant = "\n".join(lines)
             
             if calc.parameters.get("addsec"):
                 calc.parameters["addsec"] += redundant

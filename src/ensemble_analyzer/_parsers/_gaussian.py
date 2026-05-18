@@ -41,12 +41,11 @@ class GaussianParser(BaseParser):
     }
 
 
-    def __init__(self, output_name, log):
-        """
-        Initialize Gaussian parser and detect version.
+    def __init__(self, output_name: str, log: 'Logger') -> None:
+        """Initialize Gaussian parser and detect version.
 
         Args:
-            output_name (str): Path to Gaussian output file.
+            output_name: Path to Gaussian output file.
             log: Logger instance.
         """
         super().__init__(output_name, log)
@@ -104,8 +103,10 @@ class GaussianParser(BaseParser):
         Returns:
             float: Energy in Hartree.
         """
-        E = re.findall(self.regex['E'], self.fl)[-1]
-        return float(E)
+        match = re.findall(self.regex['E'], self.fl)
+        if not match:
+            return 0.0
+        return float(match[-1])
     
     def parse_freq(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """

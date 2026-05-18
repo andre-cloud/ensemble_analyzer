@@ -36,7 +36,10 @@ class CalculationOrchestrator:
     logger: Logger
 
     
-    def __post_init__(self):        
+    def __post_init__(self) -> None:
+        """
+        Initialize managers and executor after dataclass initialization.
+        """
         # Managers
         self.checkpoint_manager = CheckpointManager()
         self.protocol_manager = ProtocolManager()
@@ -96,7 +99,7 @@ class CalculationOrchestrator:
 
         Args:
             initial_number (int): The initial number of conformers.
-            staring_time (float): The workflow start time (from time.perf_counter).
+            starting_time (float): The workflow start time (from time.perf_counter).
         """
 
         # Sort final ensemble

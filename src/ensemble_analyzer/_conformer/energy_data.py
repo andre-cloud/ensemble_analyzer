@@ -66,22 +66,25 @@ class EnergyStore:
         last_key = list(self.data.keys())[-1]
         return self.data[last_key]
 
-    def __getitem__(self, protocol_number: int) -> EnergyRecord:
+    def __getitem__(self, protocol_number: int) -> 'EnergyRecord':
+        """Retrieve the record for a given protocol number, or an empty record."""
         if self.__contains__(protocol_number=protocol_number):
             return self.data.get(int(protocol_number))
         
         return EnergyRecord()
 
     def __contains__(self, protocol_number: int) -> bool:
+        """Check if a record exists for the given protocol number."""
         return int(protocol_number) in self.data
 
-    def as_dict(self):
-        """Used for checkpoint serialization"""
+    def as_dict(self) -> dict:
+        """Serialize to a dictionary for checkpoint storage."""
         return {k: v.as_dict() for k, v in self.data.items()}
     
-    def get_energy(self) -> float: 
+    def get_energy(self) -> float:
+        """Return Gibbs free energy from the last protocol, else electronic energy."""
         data = self.last()
-        if not np.isnan(data.G): 
+        if not np.isnan(data.G):
             return data.G
         return data.E
     
@@ -97,27 +100,33 @@ class EnergyStore:
         
         setattr(self.data[protocol_number], property, value)
     
-    def log_info(self, protocol_number : int) -> Tuple[float]:
+    def log_info(self, protocol_number: int) -> Tuple[float]:
+        """Format energy data for log output."""
         data = self.__getitem__(int(protocol_number))
         erel = f'{data.Erel:.2f}' if not np.isnan(data.Erel) else np.nan
         pop = f'{data.Pop:.2f}' if not np.isnan(data.Pop) else np.nan
 
         return data.E, data.G_E, data.G, f'{data.B:.5f}', erel, pop, f'{data.time:.2f}'
 
-    def load(self, input_dict):
+    def load(self, input_dict: dict) -> None:
+        """Restore the store from a serialized dictionary."""
         self.data = dict()
         for proto_str, vals in input_dict.get('data', {}).items():
             proto = int(proto_str)
                         
             self.data[proto] = EnergyRecord.from_dict(data=vals)
 
-    def get_last_freq(self, protocol_number: int) -> np.ndarray: 
-        
-        if self.data.__getitem__(int(protocol_number)).get("Freq", None): 
-            return self.data.__getitem__(int(protocol_number)).get("Freq")
+    def get_last_freq(self, protocol_number: int) -> np.ndarray:
+        """Retrieve frequencies from the given protocol, falling back to earlier ones."""
+        if protocol_number in self.data:
+            freq = self.data[protocol_number].Freq
+            if freq is not None and len(freq) > 0:
+                return freq
     
-        for i in range(protocol_number-1, -1):   
-            if self.data.__getitem__(int(i)).get("Freq", None):
-                return self.data.__getitem__(int(i)).get("Freq")
+        for i in range(protocol_number - 1, -1, -1):
+            if i in self.data:
+                freq = self.data[i].Freq
+                if freq is not None and len(freq) > 0:
+                    return freq
 
         return np.array([])

@@ -3,7 +3,7 @@ import sys
 from tabulate import tabulate
 import time
 from pathlib import Path
-from typing import Optional, Any, Dict, List, Union
+from typing import Generator, Optional, Any, Dict, List, Union
 from contextlib import contextmanager
 from datetime import timedelta
 
@@ -38,7 +38,8 @@ class Logger(logging.Logger):
     # Application Event
     # ===
     
-    def title_screen(self):
+    def title_screen(self) -> None:
+        """Print the application title banner."""
         self.info(title)
 
     def application_input_received(self, config: Dict[str,Any]) -> None: 
@@ -67,7 +68,8 @@ class Logger(logging.Logger):
                       f"\n {protocol.thr}")            
         self._separator()
 
-    def application_correct_end(self, total_time: timedelta, total_conformers: int):
+    def application_correct_end(self, total_time: timedelta, total_conformers: int) -> None:
+        """Log the successful end of the application with timing."""
         self._separator("Calculation COMPLETED")
         self.info(f"Total elapsed time: {total_time}")
         self.info(f"Final conformers: {total_conformers}")
@@ -99,7 +101,8 @@ class Logger(logging.Logger):
         self._separator()
         self._start_timer(f"protocol_{number}")
 
-    def protocol_end(self, number: int, active_conformers: int, deactivated: int):
+    def protocol_end(self, number: int, active_conformers: int, deactivated: int) -> None:
+        """Log the end of a protocol step with timing and counts."""
         elapsed = self._stop_timer(f"protocol_{number}")
         self.info("")
         self.info(f"Protocol {number} completed in {timedelta(seconds=elapsed)}")
@@ -111,7 +114,8 @@ class Logger(logging.Logger):
     # Calculation Events
     # ===
 
-    def calculation_start(self, conformer_id: int, protocol_number: int, count: int):
+    def calculation_start(self, conformer_id: int, protocol_number: int, count: int) -> None:
+        """Log the start of a single conformer calculation."""
         self.info(f"{count:03d}. {self.ARROW} CONF {conformer_id:03d} {self.SPLIT} Protocol {protocol_number}")
         self._start_timer(f"calc_{conformer_id}_{protocol_number}")
     
@@ -133,19 +137,22 @@ class Logger(logging.Logger):
 
         self._stop_timer(f"calc_{conformer_id}_{protocol_number}")
         text = f"\t{self.TICK} E = {energy:.8f} Eh {self.SPLIT} Time: {elapsed_time:.1f}s"
-        if frequencies.size > 0: 
+        if frequencies is not None and len(frequencies) > 0: 
             n_im_freq = len(frequencies[frequencies<0])
             im_freq = f'({", ".join([f"{i:.2f}" for i in frequencies[frequencies<0]])})' if n_im_freq > 0 else ""
             text += f' {self.SPLIT} Imag. Freq {n_im_freq} {im_freq}'
         self.info(text)
     
-    def calculation_failure(self, conformer_id: int, error: str):
+    def calculation_failure(self, conformer_id: int, error: str) -> None:
+        """Log a failed calculation with the error message."""
         self.error(f"    {self.FAIL} CONF {conformer_id:03d} [FAILED] {self.SPLIT} Error: \n{error[:60]}")
 
-    def missing_previous_thermo(self, conformer_id:int):
+    def missing_previous_thermo(self, conformer_id: int) -> None:
+        """Warn that thermochemical data is unavailable for a conformer."""
         self.warning(f'{self.WARNING} No previous thermochemical data found for conformer {conformer_id}: setting G, H, S, ZPVE to NaN.')
 
-    def missing_param(self, param:str, action:str):
+    def missing_param(self, param: str, action: str) -> None:
+        """Warn that a required parameter is missing."""
         self.warning(f'{self.WARNING} {param} not found. {action}')
     
     
@@ -153,7 +160,8 @@ class Logger(logging.Logger):
     # Pruning Events
     # ===
 
-    def pruning_start(self, protocol_number: int, conformer_count: int):
+    def pruning_start(self, protocol_number: int, conformer_count: int) -> None:
+        """Log the start of the pruning stage."""
         self.info("")
         self._separator("Pruning sequence", width=30, char="~")
         self.debug(f"Starting pruning for protocol {protocol_number}")
@@ -183,14 +191,16 @@ class Logger(logging.Logger):
         self.info(f"Deactivated: {deactivated_count}")
         self.info("")
 
-    def skip_pruning(self, protocol_number: int): 
+    def skip_pruning(self, protocol_number: int) -> None:
+        """Log that pruning was skipped for a protocol."""
         self.warning(f'{self.WARNING} Pruning skipped for Protocol Step {protocol_number}.')
 
     # ===
     # Analysis Events
     # ===
 
-    def pca_analysis(self, conformer_count: int, n_clusters: Optional[int], include_hydrogen: bool, output_file: str):
+    def pca_analysis(self, conformer_count: int, n_clusters: Optional[int], include_hydrogen: bool, output_file: str) -> None:
+        """Log PCA analysis parameters."""
         self.info("")
         self.info(f"PCA Analysis:")
         self.info(f"  Conformers: {conformer_count}")
@@ -199,17 +209,20 @@ class Logger(logging.Logger):
         self.info(f"  Include H: {include_hydrogen}")
         self.info(f"  Output: {output_file}")
     
-    def spectra_generation(self, graph_type: str, output_file: str):
+    def spectra_generation(self, graph_type: str, output_file: str) -> None:
+        """Log that a spectrum file was generated."""
         self.debug(f"  Generated {graph_type} spectrum {self.ARROW} {output_file}")
 
     # ===
     # Checkpoint Events
     # ===
     
-    def checkpoint_saved(self, conformer_count: int):
+    def checkpoint_saved(self, conformer_count: int) -> None:
+        """Log that a checkpoint was saved."""
         self.debug(f"Checkpoint saved: {conformer_count} conformers ")
     
-    def checkpoint_loaded(self, conformer_count: int, protocol_number: int):
+    def checkpoint_loaded(self, conformer_count: int, protocol_number: int) -> None:
+        """Log that a checkpoint was loaded and execution is resuming."""
         self.info(f"Checkpoint loaded: {conformer_count} conformers")
         self.info(f"Resuming from protocol {protocol_number}")
 
@@ -217,21 +230,25 @@ class Logger(logging.Logger):
     # Spectra Events
     # ===
 
-    def spectra_start(self, protocol_number:int):
+    def spectra_start(self, protocol_number: int) -> None:
+        """Log the start of spectra convolution."""
         self._separator("Spectra convolution", width=40, char="-")
         self.debug(f"Starting spectra convolution for protocol {protocol_number}")
         self._start_timer(f"spectra_{protocol_number}")
 
-    def spectra_end(self, protocol_number:int):
+    def spectra_end(self, protocol_number: int) -> None:
+        """Log the end of spectra convolution with timing."""
         elapsed = self._stop_timer(f"spectra_{protocol_number}")
         self.info(f"\n{self.TICK} Sprectra convolution completed in {elapsed:.4f}s")
         self.info("")
 
-    def spectra_skip(self, graph_type: str): 
+    def spectra_skip(self, graph_type: str) -> None:
+        """Log that a graph type will be skipped."""
         self.warning(f'{self.WARNING} No calculation of {graph_type} graphs. Skipping')
 
-    def converter_str(self, i): 
-        if isinstance(i, float): 
+    def converter_str(self, i: Union[int, float]) -> str:
+        """Format a numeric value for display."""
+        if isinstance(i, float):
             return f"{i:.2f}"
         return f"{i}"
 
@@ -246,7 +263,8 @@ class Logger(logging.Logger):
     # Error Handling
     # ===
 
-    def critical_error(self, error_type: str, message: str, **context):
+    def critical_error(self, error_type: str, message: str, **context: Any) -> None:
+        """Log a critical error with type, message and optional context."""
         self._separator("CRITICAL ERROR", char="!")
         self.critical(f"Error Type: {error_type}")
         self.critical(f"Message: {message}")
@@ -255,7 +273,8 @@ class Logger(logging.Logger):
     # Performance Tracking
     # ===
 
-    def _start_timer(self, key: str):
+    def _start_timer(self, key: str) -> None:
+        """Start a named timer."""
         self._timers[key] = time.perf_counter()
     
     def _stop_timer(self, key: str) -> float:
@@ -296,10 +315,8 @@ class Logger(logging.Logger):
 
 
     @contextmanager
-    def track_operation(self, operation_name: str, **context):
-        """
-        Context manager to track operation duration.
-        """
+    def track_operation(self, operation_name: str, **context: Any) -> Generator[None, None, None]:
+        """Context manager to track operation duration."""
         start = time.perf_counter()
         context_str = ", ".join(f"{k}={v}" for k, v in context.items())
         self.debug(

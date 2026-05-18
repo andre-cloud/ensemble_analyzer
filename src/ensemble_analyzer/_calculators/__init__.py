@@ -7,6 +7,6 @@ for module_info in pkgutil.iter_modules(__path__):
         importlib.import_module(f"{__name__}.{module_info.name}")
 
 # Espone il registro globale
-from .base import CALCULATOR_REGISTRY, BaseCalc, register_calculator
+from .base import CALCULATOR_REGISTRY, BaseCalc, BaseMlCalc, ML_CALCULATORS, register_calculator
 
-__all__ = ["CALCULATOR_REGISTRY", "BaseCalc", "register_calculator"]
+__all__ = ["CALCULATOR_REGISTRY", "BaseCalc", "BaseMlCalc", "ML_CALCULATORS", "register_calculator"]

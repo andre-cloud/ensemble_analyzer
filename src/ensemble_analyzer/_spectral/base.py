@@ -38,7 +38,8 @@ class BaseGraph:
     definition: Optional[int] = 4
     interested_area: Optional[list] = None
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Initialize the default graph parameters and energy grid."""
         self.defaults = GraphDefault(self.graph_type)
 
         self.X = np.linspace(self.defaults.start, self.defaults.end, num=10**self.definition)
@@ -64,9 +65,9 @@ class BaseGraph:
             if not self.check_conf(conf, protocol):
                 continue           
 
-            p = conf.energies.__getitem__(protocol_number=population_from).Pop
-            x = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).X)
-            y = np.array(conf.graphs_data.__getitem__(protocol_number=protocol.number, graph_type=self.graph_type).Y) * p
+            p = conf.energies[population_from].Pop
+            x = np.array(conf.graphs_data[protocol.number, self.graph_type].X)
+            y = np.array(conf.graphs_data[protocol.number, self.graph_type].Y) * p
 
             if x.size < 1:
                 continue
@@ -132,9 +133,9 @@ class BaseGraph:
 
         if not conf.active: 
             return False
-        if not conf.graphs_data.__contains__(protocol.number):
+        if protocol.number not in conf.graphs_data:
             return False
-        if not conf.graphs_data.__has_graph_type__(protocol.number, self.graph_type):
+        if not conf.graphs_data.has_graph_type(protocol.number, self.graph_type):
             return False
         return True 
     
@@ -278,7 +279,8 @@ class BaseGraph:
 
 
 @njit(fastmath=True, cache=True)
-def gaussian_njit(X, x0, I, fwhm):
+def gaussian_njit(X: np.ndarray, x0: np.ndarray, I: np.ndarray, fwhm: float) -> np.ndarray:
+    """Compute Gaussian-broadened spectrum via numba."""
     n_x = X.shape[0]
     n_peaks = x0.shape[0]
     Y = np.zeros(n_x)
@@ -303,7 +305,8 @@ def gaussian_njit(X, x0, I, fwhm):
 
 
 @njit(fastmath=True, cache=True)
-def lorentzian_njit(X, x0, I, fwhm):
+def lorentzian_njit(X: np.ndarray, x0: np.ndarray, I: np.ndarray, fwhm: float) -> np.ndarray:
+    """Compute Lorentzian-broadened spectrum via numba."""
     n_peaks = x0.shape[0]
     n_x = X.shape[0]
     Y = np.zeros(n_x)
@@ -321,7 +324,8 @@ def lorentzian_njit(X, x0, I, fwhm):
     return Y
 
 @njit(fastmath=True, cache=True)
-def diversity_function_njit(a, b, weight, max_val):
+def diversity_function_njit(a: np.ndarray, b: np.ndarray, weight: np.ndarray, max_val: float) -> float:
+    """Compute weighted RMSD between two spectra."""
     diff = a - b
     s = 0.0
     n = diff.shape[0]

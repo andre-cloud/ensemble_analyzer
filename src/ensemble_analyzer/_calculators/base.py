@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from typing import Dict, Tuple, Any
+import numpy as np
 
 
 def register_calculator(name):
@@ -11,6 +12,9 @@ def register_calculator(name):
         return cls
 
     return decorator
+
+
+ML_CALCULATORS = {"tblite", "aimnet", "uma"}
 
 
 class BaseCalc(ABC):
@@ -74,4 +78,38 @@ class BaseCalc(ABC):
         """
         pass
 
-CALCULATOR_REGISTRY : Dict[str, BaseCalc]= {}
+
+class BaseMlCalc(BaseCalc):
+    """
+    Base class for ML calculator wrappers (TBLite, AIMNet, UMA).
+    Overrides common_str, optimisation, and frequency for ML behaviour.
+    """
+
+    def common_str(self) -> str:
+        return ""
+
+    def _get_ml_calculator(self, **kwargs):
+        """Override in subclass to return the ML ASE Calculator."""
+        raise NotImplementedError
+
+    def single_point(self) -> Tuple[Any, str]:
+        calc = self._get_ml_calculator()
+        return calc, self.label
+
+    def optimisation(self) -> Tuple[Any, str]:
+        from ase.optimize import BFGS
+        calc = self._get_ml_calculator()
+        atoms = self.conf.get_ase_atoms(calc)
+        with BFGS(atoms) as opt:
+            opt.run(fmax=0.05)
+        self.conf.last_geometry = atoms.get_positions().copy()
+        return calc, self.label
+
+    def frequency(self) -> Tuple[Any, str]:
+        raise NotImplementedError(
+            f"Frequency not implemented for ML calculator '{self.label}'. "
+            "Use a QM calculator (ORCA/Gaussian) for freq steps."
+        )
+
+
+CALCULATOR_REGISTRY : Dict[str, BaseCalc] = {}

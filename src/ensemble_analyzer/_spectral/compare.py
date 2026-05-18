@@ -22,7 +22,8 @@ class ComparedGraph:
     protocol_index: Optional[List[int]] = None
     nm: bool = True
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Initialize loaded computed and experimental data."""
         self._validate_graph_type()
         self.Xr, self.Yr, self.bounders, self.weighted = self._load_experimental()
         self.data = self._load_computed()        
@@ -72,14 +73,17 @@ class ComparedGraph:
         return data
     
     def _extract_protocol_number(self, filename: str) -> str:
+        """Extract the protocol number from a filename."""
         return filename.split("_p")[1].split("_")[0]
     
     def _is_protocol_included(self, proto: str) -> bool:
+        """Check if a protocol should be included in the plot."""
         if self.protocol_index is None:
             return True
         return int(proto) in self.protocol_index
     
     def _normalize_spectrum(self, Y: np.ndarray) -> np.ndarray:
+        """Normalize spectrum intensity relative to the experimental bounding region."""
         if not isinstance(self.bounders, np.ndarray):
             return Y
             
@@ -90,7 +94,8 @@ class ComparedGraph:
             return Y / max_y
         return Y
 
-    def _load_experimental(self) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
+    def _load_experimental(self) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
+        """Load experimental spectrum and boundary files from disk."""
         if not self.experimental_file:
             return None, None, None, None
         
@@ -120,7 +125,7 @@ class ComparedGraph:
             self._plot_spectrum(save, show, in_nm=True, show_ref_weight=show_ref_weight)
     
     def _plot_spectrum(self, save: bool, show: bool, in_nm: bool = False, show_ref_weight:bool = False) -> None:
-        """Internal plotting routine."""
+        """Generate a single comparison plot (eV or nm x-axis)."""
 
         plt.style.use("seaborn-v0_8-paper")
         fig, ax = plt.subplots()
@@ -150,7 +155,7 @@ class ComparedGraph:
                 ax.plot(x_values, Y, lw=1, label=f"Protocol {proto}", alpha=.75)
     
     def _plot_experimental_data(self, ax: plt.Axes, in_nm: bool, show_ref_weight:bool = False) -> None:
-        """Internal plotting routine."""
+        """Plot the experimental reference spectrum and optional weighting function."""
 
         if self.Xr is None or self.bounders is None:
             return
@@ -170,6 +175,7 @@ class ComparedGraph:
 
     
     def _configure_axes(self, ax: plt.Axes, in_nm: bool) -> None:
+        """Set axis labels and optional secondary x-axis."""
 
         if in_nm:
             ax.set_xlabel(r"Wavelength $\lambda$ [nm]")
@@ -184,6 +190,7 @@ class ComparedGraph:
         ax.set_ylabel(self.defaults.axis_label['y'])
     
     def _configure_limits(self, ax: plt.Axes, in_nm: bool) -> None:
+        """Set axis limits with padding."""
 
         y_lim = [-1.05, 1.05] if self.graph_type.upper() in CHIRALS else [-0.05, 1.05]
         ax.set_ylim(y_lim)
@@ -205,11 +212,13 @@ class ComparedGraph:
             ax.invert_xaxis()
     
     def _save_or_show(self, fig: plt.Figure, save: bool, show: bool, in_nm: bool) -> None:
+        """Save figure to disk and/or display it."""
 
         if save:
             suffix = "_nm" if in_nm else ""
             fname = f"{self.graph_type.upper()}_comparison{suffix}.png"
-            pickle.dump(fig, open(f"{self.graph_type.upper()}_comparison{suffix}.pickle", 'wb'))
+            with open(f"{self.graph_type.upper()}_comparison{suffix}.pickle", 'wb') as pf:
+                pickle.dump(fig, pf)
             plt.savefig(fname, dpi=300)
             if self.log:
                 self.log.info(f"Saved {fname}")

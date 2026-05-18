@@ -1,7 +1,7 @@
 
 
 from dataclasses import dataclass
-from typing import Optional, Dict, List
+from typing import Any, Optional, Dict, List
 from pathlib import Path
 import json
 
@@ -34,7 +34,13 @@ class CalculationConfig:
     alpha: float = 4
     P: float = 101.325
         
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """
+        Initialize default values for optional graph settings.
+
+        Ensures that fwhm, shift, and interested dictionaries are always
+        populated with their default 'vibro'/'electro' keys.
+        """
         if self.fwhm is None:
             self.fwhm = {'vibro': None, 'electro': None}
         if self.shift is None:
@@ -97,7 +103,7 @@ class CalculationConfig:
         )
     
     @staticmethod
-    def _args_to_dict(args) -> dict:
+    def _args_to_dict(args: Any) -> dict:
         """
         Convert argparse namespace to settings dictionary.
         
@@ -129,31 +135,25 @@ class CalculationConfig:
         Returns:
             dict: Dictionary suitable for JSON dumping.
         """
-        d = self._args_to_dict(self)
-        
-        # Flatten nested dicts for settings.json compatibility
         result = {
-            "cpu": d["cpu"],
-            "temperature": d["temperature"],
-            "definition": d["definition"],
-            "include_H": d["include_H"],
-            "invert": d["invert"],
+            "cpu": self.cpu,
+            "temperature": self.temperature,
+            "definition": self.definition,
+            "include_H": self.include_H,
+            "invert": self.invert,
         }
         
-        # Flatten fwhm
-        if d["fwhm"]:
-            result["fwhm_vibro"] = d["fwhm"].get("vibro")
-            result["fwhm_electro"] = d["fwhm"].get("electro")
+        if self.fwhm:
+            result["fwhm_vibro"] = self.fwhm.get("vibro")
+            result["fwhm_electro"] = self.fwhm.get("electro")
         
-        # Flatten shift
-        if d["shift"]:
-            result["shift_vibro"] = d["shift"].get("vibro")
-            result["shift_electro"] = d["shift"].get("electro")
+        if self.shift:
+            result["shift_vibro"] = self.shift.get("vibro")
+            result["shift_electro"] = self.shift.get("electro")
         
-        # Flatten interested
-        if d["interested"]:
-            result["interested_vibro"] = d["interested"].get("vibro")
-            result["interested_electro"] = d["interested"].get("electro")
+        if self.interested:
+            result["interested_vibro"] = self.interested.get("vibro")
+            result["interested_electro"] = self.interested.get("electro")
         
         return result
     
@@ -227,7 +227,17 @@ class CalculationConfig:
         if self.definition < 1:
             raise ValueError(f"Definition must be ≥ 1, got {self.definition}")
         
-    def create_log(self, protocols: List[Protocol], conformers: int): 
+    def create_log(self, protocols: List[Protocol], conformers: int) -> dict:
+        """
+        Create a summary dictionary of the calculation setup.
+
+        Args:
+            protocols (List[Protocol]): The list of protocols to be executed.
+            conformers (int): Number of conformers in the ensemble.
+
+        Returns:
+            dict: Summary dictionary with setup details.
+        """
         return {
             'conformers' : conformers, 
             'protocols' : protocols, 

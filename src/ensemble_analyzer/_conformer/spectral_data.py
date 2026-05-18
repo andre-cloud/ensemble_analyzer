@@ -15,7 +15,8 @@ class SpectralRecord:
     X : np.ndarray # energy impulses
     Y : np.ndarray # impulse intensity
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Validate and convert X/Y to 1D numpy arrays of matching shape."""
         if not isinstance(self.X, np.ndarray):
             self.X = np.array(self.X)
         if not isinstance(self.Y, np.ndarray):
@@ -47,10 +48,12 @@ class SpectralRecord:
         )
     
     def __len__(self) -> int:
+        """Number of spectral transitions."""
         return len(self.X)
     
     @property
     def is_empty(self) -> bool:
+        """Check whether the record contains no transitions."""
         return len(self.X) == 0
 
     
@@ -65,30 +68,30 @@ class SpectralStore:
     data: Dict = field(default_factory=lambda: defaultdict(lambda: defaultdict(SpectralRecord)))
 
 
-    def add(self, protocol_number:int, graph_type: Literal['IR', 'VCD', 'UV', 'ECD'], record: SpectralRecord):
-        """Add a spectral record."""
-
+    def add(self, protocol_number: int, graph_type: Literal['IR', 'VCD', 'UV', 'ECD'], record: SpectralRecord) -> None:
+        """Store a spectral record for the given protocol and graph type."""
         self.data[int(protocol_number)][str(graph_type)] = record
 
-    def __getitem__(self, protocol_number:int, graph_type: str) -> SpectralRecord:
-        """Retrieve a spectral record."""
-
+    def __getitem__(self, key) -> SpectralRecord:
+        """Retrieve a spectral record by (protocol_number, graph_type) tuple."""
+        protocol_number, graph_type = key
         return self.data[int(protocol_number)][str(graph_type)]
 
-    def __contains__(self, protocol_number:int) -> bool:
-        """Check if specific graph data exists."""
-        
+    def __contains__(self, protocol_number: int) -> bool:
+        """Check if data exists for the given protocol number."""
         return int(protocol_number) in self.data
     
-    def __has_graph_type__(self, protocol_number:int, graph_type: Literal['IR', 'VCD', 'UV', 'ECD']):
+    def has_graph_type(self, protocol_number: int, graph_type: Literal['IR', 'VCD', 'UV', 'ECD']) -> bool:
+        """Check if a specific graph type exists for the given protocol."""
         return graph_type in self.data[int(protocol_number)]
 
-    def as_dict(self):
-        """Used for checkpoint serialization"""
-        return {k: {k1: v1} for k, v in self.data.items() for k1, v1 in v.items()}
+    def as_dict(self) -> dict:
+        """Used for checkpoint serialization."""
+        return {k: {k1: v1.as_dict() for k1, v1 in v.items()} for k, v in self.data.items()}
     
-    def load(self, input_dict: Dict[int, Dict[str, SpectralRecord]]):
-        self.data = defaultdict(lambda: defaultdict(SpectralRecord))  # reset self.data
+    def load(self, input_dict: dict) -> None:
+        """Restore the store from a serialized dictionary."""
+        self.data = defaultdict(lambda: defaultdict(SpectralRecord))
         for proto_str, graphs in input_dict.get('data', {}).items():
             proto = int(proto_str)
             for graph_type, record_dict in graphs.items():

@@ -21,17 +21,20 @@ def execute_PCA(
     include_H: bool = True,
     legend: bool = True
 ) -> bool:
-    """    
-    
+    """Execute PCA-based clustering on the conformer ensemble.
+
     Args:
-        confs: List of conformers
-        ncluster: Number of clusters (None = auto-detect)
-        fname: Output filename
-        title: Plot title
-        log: Logger instance
-        set_: Set cluster attribute on conformers
-        include_H: Include hydrogen in distance matrix
-        legend: Include legend in plot
+        confs (List[Conformer]): List of conformers.
+        ncluster (Optional[int]): Number of clusters (None = auto-detect).
+        fname (str): Output filename for the plot.
+        title (str): Plot title.
+        log (Logger): Logger instance.
+        set_ (bool): Set cluster attribute on conformers.
+        include_H (bool): Include hydrogen in distance matrix.
+        legend (bool): Include legend in plot.
+
+    Returns:
+        bool: True if PCA was performed successfully, False otherwise.
     """
     
     config = ClusteringConfig(
@@ -54,7 +57,20 @@ def execute_PCA(
         return True
     return False
 
-def validate_possible_PCA(ensemble: List[Conformer], logger: Logger, n_clusters: Optional[Union[int, bool]]):
+def validate_possible_PCA(ensemble: List[Conformer], logger: Logger, n_clusters: Optional[Union[int, bool]]) -> bool:
+    """Check preconditions for PCA execution.
+
+    Verifies that enough active conformers exist and that the number of
+    clusters does not exceed the ensemble size.
+
+    Args:
+        ensemble (List[Conformer]): List of conformers.
+        logger (Logger): Logger instance.
+        n_clusters (Optional[Union[int, bool]]): Requested number of clusters.
+
+    Returns:
+        bool: True if PCA can proceed, False otherwise.
+    """
 
     ensemble = [conf for conf in ensemble if conf.active]
     if len(ensemble) < MIN_CONFORMERS_FOR_PCA:

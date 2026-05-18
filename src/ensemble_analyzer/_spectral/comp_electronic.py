@@ -12,6 +12,7 @@ from ensemble_analyzer._spectral.experimental import ExperimentalGraph
 
 @dataclass
 class ComputedElectronic(BaseGraph):
+    """Convolution handler for electronic spectra (UV, ECD) with Gaussian broadening."""
 
     ref: Optional[ExperimentalGraph] = None
 

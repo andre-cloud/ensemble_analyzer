@@ -96,12 +96,11 @@ State  Energy     Wavelength     R         MX        MY        MZ
         "ext": "out",}
     }
     
-    def __init__(self, output_name, log):
-        """
-        Initialize ORCA parser and detect version.
+    def __init__(self, output_name: str, log: 'Logger') -> None:
+        """Initialize ORCA parser and detect version.
 
         Args:
-            output_name (str): Path to ORCA output file.
+            output_name: Path to ORCA output file.
             log: Logger instance.
         """
         super().__init__(output_name, log)
@@ -122,7 +121,7 @@ State  Energy     Wavelength     R         MX        MY        MZ
             str: Version string (e.g., '5' or '6').
         """
         find = re.findall(r'Program Version (\d)', self.fl)
-        return find[0]
+        return find[0] if find else "0"
 
     def parse_geom(self) -> np.ndarray:
         """
@@ -145,8 +144,10 @@ State  Energy     Wavelength     R         MX        MY        MZ
         Returns:
             float: Energy in Hartree.
         """
-        E = re.findall(self.regex['E'], self.fl)[-1]
-        return float(E)
+        match = re.findall(self.regex['E'], self.fl)
+        if not match:
+            return 0.0
+        return float(match[-1])
 
     def parse_B_m(self) -> Tuple[np.ndarray, np.ndarray]:
         """

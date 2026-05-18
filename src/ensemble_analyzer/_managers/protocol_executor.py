@@ -3,6 +3,7 @@ from typing import List, Union
 import time
 import datetime
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
 
@@ -16,10 +17,9 @@ from ensemble_analyzer.clustering import execute_PCA, get_ensemble
 from ensemble_analyzer._managers.calculation_config import CalculationConfig
 from ensemble_analyzer._managers.checkpoint_manager import CheckpointManager
 from ensemble_analyzer._managers.calculation_executor import CalculationExecutor
-
-# from src.pruning import calculate_rel_energies, check_ensemble, boltzmann
 from ensemble_analyzer._managers.pruning_manager import PruningManager
 
+from ensemble_analyzer._calculators.base import ML_CALCULATORS
 from ensemble_analyzer.constants import DEBUG, MIN_RETENTION_RATE, EH_TO_KCAL
 
 
@@ -37,7 +37,7 @@ class ProtocolExecutor:
         config: CalculationConfig,
         logger: Logger,
         checkpoint_manager: CheckpointManager
-    ):
+    ) -> None:
         """
         Initialize the protocol executor.
 
@@ -162,7 +162,7 @@ class ProtocolExecutor:
             )
             if protocol.block_on_retention_rate:
                 self.logger.critical(f'\t{self.logger.WARNING} threshold: {MIN_RETENTION_RATE*100:.0f}%.\n\t{self.logger.WARNING} Breaking!')
-                raise "Calculation ended for too much pruning"
+                raise RuntimeError("Calculation ended for too much pruning")
     
     def _run_calculations(
         self,
@@ -170,33 +170,73 @@ class ProtocolExecutor:
         protocol: Protocol
     ) -> None:
         """
-        Internal loop to run QM jobs for pending conformers.
+        Run QM jobs for pending conformers.
+
+        Single-point calculations are parallelised with ThreadPoolExecutor.
+        Opt/freq jobs run sequentially with all CPUs allocated to each job.
 
         Args:
             conformers (List[Conformer]): List of conformers.
             protocol (Protocol): Current protocol.
         """
-        
-        count = 1   
-        for conf in conformers:
-            if not conf.active:
-                continue
-            if conf.energies.__contains__(protocol_number=str(protocol.number)):
-                continue
-            
-            success = self.calculator.execute(count, conf, protocol)
-            if not success:
-                conf.active = False
-            
-            # Save checkpoint after each calculation
-            self.checkpoint_manager.save(conformers, self.logger)
-            
-            count += 1
 
-        self.checkpoint_manager.save(conformers, self.logger, log=True)
+        pending = [c for c in conformers
+                   if c.active and str(protocol.number) not in c.energies]
+        if not pending:
+            return
 
-    def _set_relative_energies(self, conformers: List[Conformer], protocol: Protocol):
+        is_sp = not protocol.opt and not protocol.freq
+        is_ml = protocol.calculator.lower() in ML_CALCULATORS
+        total_cpu = self.config.cpu
 
+        if is_sp and not protocol.serial_sp:
+            # Parallel single-point
+            if is_ml:
+                per_job = 1
+                workers = total_cpu
+            else:
+                per_job = min(8, total_cpu)
+                workers = max(1, total_cpu // per_job)
+
+            self.logger.info(
+                f"Running {len(pending)} SP jobs "
+                f"({workers} parallel, {per_job} CPU each)"
+            )
+
+            with ThreadPoolExecutor(max_workers=workers) as pool:
+                fut_map = {
+                    pool.submit(self.calculator.execute, i, c, protocol, per_job): c
+                    for i, c in enumerate(pending, 1)
+                }
+                for f in as_completed(fut_map):
+                    c = fut_map[f]
+                    try:
+                        ok = f.result()
+                    except Exception as e:
+                        self.logger.debug(f"Conf {c.number} failed: {e}")
+                        ok = False
+                    if not ok:
+                        c.active = False
+
+            self.checkpoint_manager.save(conformers, self.logger, log=True)
+        else:
+            # Opt/freq: sequential, all CPUs to each job
+            for i, c in enumerate(pending, 1):
+                success = self.calculator.execute(i, c, protocol, total_cpu)
+                if not success:
+                    c.active = False
+                self.checkpoint_manager.save(conformers, self.logger)
+
+            self.checkpoint_manager.save(conformers, self.logger, log=True)
+
+    def _set_relative_energies(self, conformers: List[Conformer], protocol: Protocol) -> None:
+        """
+        Calculate and store relative energies for active conformers.
+
+        Args:
+            conformers (List[Conformer]): The full ensemble.
+            protocol (Protocol): Current protocol for energy retrieval.
+        """
         active = [conf for conf in conformers if conf.active]
         energies = np.array([conf.get_energy(protocol_number=protocol.number) for conf in active])
         rel_energies = (energies - min(energies)) * EH_TO_KCAL
@@ -208,30 +248,30 @@ class ProtocolExecutor:
 
     def generate_energy_report(self, conformers: List[Conformer], protocol_number: Union[str,int], T:float) -> None:
         """
-        Log a tabular summary of the ensemble status.
+        Log a tabular summary of the ensemble energetic status.
 
         Args:
-            title (str): Title for the table.
             conformers (List[Conformer]): List of conformers to report.
-            protocol (Protocol): Current protocol context.
+            protocol_number (Union[str, int]): Protocol ID for energy retrieval.
+            T (float): Temperature [K] for Boltzmann averaging.
         """
 
         CONFS = [i for i in conformers if i.active]
 
-        dE = np.array([i.energies.__getitem__(protocol_number).E for i in CONFS])
+        dE = np.array([i.energies[protocol_number].E for i in CONFS])
         dE_ZPVE = np.array(
             [
-                i.energies.__getitem__(protocol_number).E + i.energies.__getitem__(protocol_number).zpve
+                i.energies[protocol_number].E + i.energies[protocol_number].zpve
                 for i in CONFS
             ]
         )
         dH = np.array(
             [
-                i.energies.__getitem__(protocol_number).E + i.energies.__getitem__(protocol_number).H
+                i.energies[protocol_number].E + i.energies[protocol_number].H
                 for i in CONFS
             ]
         )
-        dG = np.array([i.energies.__getitem__(protocol_number).G for i in CONFS])
+        dG = np.array([i.energies[protocol_number].G for i in CONFS])
 
         # Boltzmann populations
         _, dE_boltz = self.pruning_manager._boltzmann_distribution(dE, T)

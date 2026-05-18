@@ -40,13 +40,12 @@ class TestCalculators:
 
     def test_gaussian_opt_constraints(self, setup_calc):
         conf, proto = setup_calc
-        proto.constrains = [0, 1] # Atom indices
+        proto.constrains = [[1], [2]] # Atom indices
         
         calc = GaussianCalc(proto, 4, conf)
         ase_calc, label = calc.optimisation()
         
         assert "opt=(modredudant)" in ase_calc.parameters["extra"]
-        # Gaussian indices start at 1
         assert "X 1 F" in ase_calc.parameters["addsec"]
         assert "X 2 F" in ase_calc.parameters["addsec"]
 
@@ -83,9 +82,25 @@ class TestCalculators:
 
     def test_orca_constraints(self, setup_calc):
         conf, proto = setup_calc
-        proto.constrains = [0]
+        proto.constrains = [[1]]
         with patch("ensemble_analyzer._calculators._orca.orca_profile"):
             calc = OrcaCalc(proto, 4, conf)
             ase_calc, label = calc.optimisation()
         
-            assert "%geom Constraints  {C 0 C}end end" in ase_calc.parameters["orcasimpleinput"]
+            assert "%geom Constraints {C 1 C} end end" in ase_calc.parameters["orcasimpleinput"]
+
+    def test_constraints_all_types(self, setup_calc):
+        conf, proto = setup_calc
+        proto.constrains = [[1, 2], [1, 2, 3], [1, 2, 3, 4], [1]]
+
+        with patch("ensemble_analyzer._calculators._orca.orca_profile"):
+            calc = OrcaCalc(proto, 4, conf)
+            ase_calc, label = calc.optimisation()
+            assert "%geom Constraints {B 1 2 C} {A 1 2 3 C} {D 1 2 3 4 C} {C 1 C} end end" in ase_calc.parameters["orcasimpleinput"]
+
+        calc = GaussianCalc(proto, 4, conf)
+        ase_calc, label = calc.optimisation()
+        assert "B 1 2 F" in ase_calc.parameters["addsec"]
+        assert "A 1 2 3 F" in ase_calc.parameters["addsec"]
+        assert "D 1 2 3 4 F" in ase_calc.parameters["addsec"]
+        assert "X 1 F" in ase_calc.parameters["addsec"]

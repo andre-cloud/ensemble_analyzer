@@ -25,7 +25,13 @@ class ComparisonResult:
     should_deactivate: bool
     rmsd: Optional[float] = 0
     
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
+        """
+        Convert the comparison result to a dictionary for logging.
+
+        Returns:
+            dict: Dictionary representation of the comparison.
+        """
         return {
             "Check": self.check_id,
             "Ref": self.reference_id,
@@ -55,7 +61,7 @@ class PruningManager:
         self.include_H = include_H
         self._deactivation_records : List[ComparisonResult] = []
 
-    def prune_ensemble(self, conformers: List[Conformer], protocol: Protocol) -> List[Conformer]: 
+    def prune_ensemble(self, conformers: List[Conformer], protocol: Protocol) -> None: 
         """
         Execute the pruning workflow on the ensemble.
 
@@ -64,11 +70,8 @@ class PruningManager:
         2. Geometric de-duplication based on Energy (thrG) and Rotational Constants (thrB).
 
         Args:
-            conformers (List[Conformer]): The full ensemble to process.
+            conformers (List[Conformer]): The full ensemble to process (modified in-place).
             protocol (Protocol): Protocol containing threshold parameters.
-
-        Returns:
-            List[Conformer]: The processed list (modified in-place, inactive conformers marked).
         """
 
         if self._should_skip_pruning(protocol):
@@ -115,8 +118,18 @@ class PruningManager:
     # Private Functions
     # ===
 
-    def _should_skip_pruning(self, protocol: Protocol) -> bool : 
-        """Check id pruning should be skipped: protocol.no_prune or protocol.graph"""
+    def _should_skip_pruning(self, protocol: Protocol) -> bool:
+        """
+        Determine whether the pruning step should be skipped.
+
+        Pruning is skipped when the protocol is marked as graph-only or no-prune.
+
+        Args:
+            protocol (Protocol): The current protocol.
+
+        Returns:
+            bool: True if pruning should be skipped, False otherwise.
+        """
         if protocol.graph or protocol.no_prune: 
             self.logger.skip_pruning(protocol_number=protocol.number)
             return True
@@ -182,7 +195,7 @@ class PruningManager:
             for ref_idx in range(idx):
                 ref = conformers[ref_idx]
                 
-                if ref.energies.__getitem__(protocol_number=protocol.number).B == 1:
+                if ref.energies[protocol.number].B == 1:
                     continue
 
                 if not ref.active: 
@@ -197,12 +210,15 @@ class PruningManager:
                     break
 
     def _compare_conformers(self, check: Conformer, ref: Conformer, protocol: Protocol) -> ComparisonResult:
-        """Compare two conformers
+        """Compare two conformers using energy and rotational constants.
 
         Args:
-            check (Conformer): Conformer to be check
-            ref (Conformer): Reference conformer
-            protocol (Protocol): Protocol with thresholds
+            check (Conformer): Conformer to be checked.
+            ref (Conformer): Reference conformer.
+            protocol (Protocol): Protocol with thresholds.
+
+        Returns:
+            ComparisonResult: Result of the comparison with deactivation decision.
         """
         delta_e = abs(self._get_effective_energy(check) - self._get_effective_energy(ref)) * EH_TO_KCAL
         delta_b = abs(check.rotatory - ref.rotatory)
@@ -231,7 +247,16 @@ class PruningManager:
     # ===
 
     @staticmethod
-    def _get_effective_energy(conf: Conformer) -> float: 
+    def _get_effective_energy(conf: Conformer) -> float:
+        """
+        Retrieve the effective energy for a conformer.
+
+        Args:
+            conf (Conformer): The conformer to query.
+
+        Returns:
+            float: Effective energy value.
+        """
         return conf.energies.get_energy()
     
     @staticmethod
@@ -283,6 +308,12 @@ class PruningManager:
     # ===
 
     def _log_deactivations(self) -> None:
+        """
+        Log the deactivation records from the similarity pruning step.
+
+        Logs a table of all conformers that were deactivated during
+        duplicate removal, or a message if none were deactivated.
+        """
         if not self._deactivation_records: 
             self.logger.info("No conformers deactivated by similarity check")
             return

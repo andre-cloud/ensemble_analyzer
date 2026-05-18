@@ -77,6 +77,7 @@ class Protocol:
     read_population             : Optional[str|None]            = None
     skip_opt_fail               : Optional[bool]                = False
     block_on_retention_rate     : Optional[bool]                = False
+    serial_sp                   : bool                          = False
     
 
     # ===
@@ -291,4 +292,5 @@ def load_protocol(file: Optional[str]) -> Dict:
     """
     
     default = files("ensemble_analyzer").joinpath("parameters_file/default_protocol.json")
-    return json.load(open(default if not file else file))
+    with open(default if not file else file) as f:
+        return json.load(f)

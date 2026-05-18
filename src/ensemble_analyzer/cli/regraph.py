@@ -62,7 +62,7 @@ def main() -> None:
         for conf in ensemble:
             if not conf.active: continue
             for p in args.idx: 
-                conf.energies.set(p,'Pop',conf.energies.__getitem__(args.read_boltz).Pop)
+                conf.energies.set(p, 'Pop', conf.energies[args.read_boltz].Pop)
     else:
         for protocol_number in args.idx:
             calc_boltzmann(confs=ensemble, protocol_number=protocol_number, temperature=config_mgr.temperature)

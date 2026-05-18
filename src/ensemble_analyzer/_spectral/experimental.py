@@ -20,7 +20,8 @@ class ExperimentalGraph(BaseGraph):
 
     graph_type: Literal['IR', 'VCD', 'UV', 'ECD']
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Initialize defaults and energy grid for experimental data."""
         self.defaults = GraphDefault(self.graph_type)
 
         X = np.linspace(self.defaults.start, self.defaults.end, num=10**self.definition)

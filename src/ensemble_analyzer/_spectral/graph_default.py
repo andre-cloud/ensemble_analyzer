@@ -5,6 +5,8 @@ from typing import Literal
 
 @dataclass
 class GraphDefault: 
+    """Default spectral parameters (range, shift, FWHM, labels) for each graph type."""
+
     graph_type: Literal['IR', 'VCD', 'UV', 'ECD']
     
     def __post_init__(self):

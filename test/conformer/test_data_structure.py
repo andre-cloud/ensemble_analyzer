@@ -72,16 +72,16 @@ class TestDataStructures:
         
         store.add(1, "IR", rec)
         
-        assert store.__has_graph_type__(1, "IR")
-        assert not store.__has_graph_type__(1, "UV")
-        assert not store.__has_graph_type__(2, "IR")
+        assert store.has_graph_type(1, "IR")
+        assert not store.has_graph_type(1, "UV")
+        assert not store.has_graph_type(2, "IR")
         
         # Test retrieval
-        fetched = store.__getitem__(protocol_number=1, graph_type="IR")
+        fetched = store[1, "IR"]
         assert np.allclose(fetched.X, [1, 2])
         
         # Test magic methods
-        assert store.__getitem__(protocol_number=1, graph_type="IR") == fetched
+        assert store[1, "IR"] == fetched
 
     def test_energy_record_property_defaults(self):
         """Test fallback defaults for missing properties."""

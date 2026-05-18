@@ -40,6 +40,9 @@ class ProtocolManager:
 
         Returns:
             None
+
+        Raises:
+            IOError: If the protocol file cannot be written.
         """
 
         data = {p.number: p.__dict__ for p in protocols}
@@ -52,6 +55,9 @@ class ProtocolManager:
 
         Returns:
             List[Protocol]: Reconstructed list of Protocol objects.
+
+        Raises:
+            FileNotFoundError: If the protocol dump file does not exist.
         """
 
         with open(self.protocol_file) as f:
@@ -78,6 +84,9 @@ class ProtocolManager:
 
         Returns:
             int: Protocol ID (returns 0 if file doesn't exist).
+
+        Raises:
+            FileNotFoundError: If the last_protocol marker file does not exist.
         """
 
         with open(self.last_protocol_file) as f:

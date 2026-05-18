@@ -62,9 +62,11 @@ class OrcaCalc(BaseCalc):
         """
         si, ob = self.common_str()
 
+        ase_label = f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_orca"
+
         calculator = ORCA(
             profile=orca_profile,
-            label="orca",
+            label=ase_label,
             orcasimpleinput=si,
             orcablocks=ob,
             charge=self.protocol.charge,
@@ -95,10 +97,12 @@ class OrcaCalc(BaseCalc):
         calc, label = self._std_calc()
         calc.parameters["orcasimpleinput"] += " opt"
         if self.constrains:
-            text = "\n%geom Constraints "
-            for i in self.constrains:
-                text += " {C " + str(i) + " C}"
-            text += "end end\n"
+            tag_map = {1: "C", 2: "B", 3: "A", 4: "D"}
+            parts = []
+            for c in self.constrains:
+                tag = tag_map.get(len(c), "C")
+                parts.append(f"{{{tag} {' '.join(map(str, c))} C}}")
+            text = "\n%geom Constraints " + " ".join(parts) + " end end\n"
             calc.parameters["orcasimpleinput"] += text
             
         if self.protocol.freq:

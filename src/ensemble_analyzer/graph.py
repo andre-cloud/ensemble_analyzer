@@ -11,7 +11,8 @@ from ensemble_analyzer._conformer.conformer import Conformer
 from ensemble_analyzer._logger.logger import Logger
 
 
-def eV_to_nm(eV):
+def eV_to_nm(eV: np.ndarray) -> np.ndarray:
+    """Convert energy in eV to wavelength in nm."""
     return FACTOR_EV_NM / eV
 
 class_ = {

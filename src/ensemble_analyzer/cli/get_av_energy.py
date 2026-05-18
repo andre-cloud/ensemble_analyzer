@@ -37,17 +37,17 @@ def get_thermo_data(conf: Conformer, protocol_number: int, temp: float, mult: in
     """
     
     # 1. Retrieve Electronic Energy (E)
-    if not conf.energies.__contains__(protocol_number):
+    if protocol_number not in conf.energies:
         return np.nan, np.nan, np.nan, np.nan
     
-    record_curr = conf.energies.__getitem__(protocol_number)
+    record_curr = conf.energies[protocol_number]
     E = record_curr.E
     
     # 2. Search for Frequencies (Current step or recursive fallback)
     freq = None
     for step in range(int(protocol_number), -1, -1):
-        if conf.energies.__contains__(step):
-            r = conf.energies.__getitem__(step)
+        if step in conf.energies:
+            r = conf.energies[step]
             if r.Freq is not None and len(r.Freq) > 0:
                 freq = r.Freq
                 break
@@ -63,8 +63,8 @@ def get_thermo_data(conf: Conformer, protocol_number: int, temp: float, mult: in
     # Fallback search for B_vec (Rotational Constants)
     if B_vec is None:
          for step in range(int(protocol_number), -1, -1):
-            if conf.energies.__contains__(step):
-                r = conf.energies.__getitem__(step)
+            if step in conf.energies:
+                r = conf.energies[step]
                 if r.B_vec is not None:
                     B_vec = r.B_vec
                     break
@@ -213,21 +213,20 @@ def main():
         data_rows = []
         
         for c in conformers:
-            # Check if calculation exists for this step and is not being deactivated
-            if not c.energies.__contains__(p_num):
+            if p_num not in c.energies:
                 continue
-            if np.isnan(c.energies.__getitem__(p_num).Pop): 
+            record = c.energies[p_num]
+            if np.isnan(record.Pop):
                 continue
                 
             # Retrieve Energies (Recalculated on the fly)
-            e_val, ezpve_val, h_val, g_val = get_thermo_data(c, p_num, target_temp, int(proto.mult), cut_off=args.cut_off, alpha=args.alpha, pressure=args.pressure, linear=args.linear)
+            e_val, ezpve_val, h_val, g_val = get_thermo_data(
+                c, p_num, target_temp, int(proto.mult),
+                cut_off=args.cut_off, alpha=args.alpha,
+                pressure=args.pressure, linear=args.linear
+            )
             
-            # If even E is missing, skip
             if np.isnan(e_val):
-                continue
-                
-            # Global activity check
-            if not c.active:
                 continue
 
             data_rows.append({

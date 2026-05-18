@@ -3,14 +3,17 @@ from ensemble_analyzer._logger.logger import Logger
 
 from ensemble_analyzer._conformer.conformer import Conformer
 from ensemble_analyzer._protocol.protocol import Protocol
-from ensemble_analyzer.io_utils import move_files
+
 from ensemble_analyzer.constants import regex_parsing
 from ensemble_analyzer.parser_parameter import get_conf_parameters
+from ensemble_analyzer._calculators.base import ML_CALCULATORS
+from ensemble_analyzer._conformer.energy_data import EnergyRecord
 
 import os
 from typing import List
 
 import time
+import numpy as np
 
 
 class CalculationExecutor:
@@ -21,7 +24,7 @@ class CalculationExecutor:
     execution, file management, and result parsing.
     """
     
-    def __init__(self, config: CalculationConfig, logger: Logger):
+    def __init__(self, config: CalculationConfig, logger: Logger) -> None:
         """
         Initialize the executor.
 
@@ -38,6 +41,7 @@ class CalculationExecutor:
         idx: int,
         conf: Conformer,
         protocol: Protocol,
+        cpu: int | None = None,
     ) -> bool:
         """
         Run a calculation for a specific conformer and protocol.
@@ -46,6 +50,7 @@ class CalculationExecutor:
             idx (int): Display index (1-based count for logging).
             conf (Conformer): The conformer to calculate.
             protocol (Protocol): The computational protocol to apply.
+            cpu (int | None): CPUs for this job. Defaults to ``self.config.cpu``.
 
         Returns:
             bool: True if the calculation and parsing were successful, False otherwise.
@@ -56,10 +61,17 @@ class CalculationExecutor:
             protocol_number=protocol.number,
             count=idx,
         )
+
+        per_job_cpu = cpu if cpu is not None else self.config.cpu
+        
+        is_ml = protocol.calculator.lower() in ML_CALCULATORS
         
         # Setup calculator
-        calc, label = protocol.get_calculator(cpu=self.config.cpu, conf=conf)
+        calc, label = protocol.get_calculator(cpu=per_job_cpu, conf=conf)
         atoms = conf.get_ase_atoms(calc)
+        
+        # Ensure output directory exists (ASE writes files via label path)
+        os.makedirs(f"{conf.folder}/protocol_{protocol.number}", exist_ok=True)
         
         # Run calculation
         start_time = time.perf_counter()
@@ -75,11 +87,26 @@ class CalculationExecutor:
                 self.logger.debug(e)
         
         elapsed = time.perf_counter() - start_time
-        
-        # Move files
-        move_files(conf, protocol, label)
-        
-        # Parse output
+
+        if is_ml:
+            energy = atoms.get_potential_energy()
+            conf.energies.add(
+                protocol.number,
+                EnergyRecord(
+                    E=energy,
+                    time=elapsed,
+                )
+            )
+            self.logger.calculation_success(
+                conformer_id=conf.number,
+                protocol_number=protocol.number,
+                energy=energy, gibbs=np.nan,
+                frequencies=np.array([]),
+                elapsed_time=elapsed,
+            )
+            return True
+
+        # Parse output (files already in conf.folder/protocol_N via label path)
         output_file = os.path.join(
             os.getcwd(),
             conf.folder,
@@ -104,7 +131,7 @@ class CalculationExecutor:
         
         if success:
             # Log success
-            data = conf.energies.__getitem__(protocol.number)
+            data = conf.energies[protocol.number]
             self.logger.calculation_success(conformer_id=conf.number,
                 protocol_number=protocol.number,
                 energy=data.E, gibbs=data.G,

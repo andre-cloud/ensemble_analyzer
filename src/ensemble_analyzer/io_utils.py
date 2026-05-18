@@ -1,7 +1,13 @@
+from __future__ import annotations
+
 from pathlib import Path
 import shutil, json
-from typing import Any
+from typing import Any, TYPE_CHECKING
 import numpy as np
+
+if TYPE_CHECKING:
+    from ensemble_analyzer._conformer.conformer import Conformer
+    from ensemble_analyzer._protocol.protocol import Protocol
 
 
 def mkdir(directory: str) -> bool:
@@ -21,7 +27,7 @@ def mkdir(directory: str) -> bool:
     return True
 
 
-def move_files(conf, protocol, label: str) -> None:
+def move_files(conf: Conformer, protocol: Protocol, label: str) -> None:
     """
     Move calculation output files to the conformer's specific folder.
 

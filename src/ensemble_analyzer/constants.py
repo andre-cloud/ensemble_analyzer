@@ -1,6 +1,7 @@
 from scipy.constants import R, c, h, electron_volt, Boltzmann, N_A
 from scipy.constants import physical_constants
 import numpy as np
+from pathlib import Path
 
 import os
 
@@ -21,7 +22,8 @@ FACTOR_EV_NM = h * c / (10**-9 * electron_volt)
 FACTOR_EV_CM_1 = 1 / 8065.544  # to yield eV
 
 
-def eV_to_nm(eV):
+def eV_to_nm(eV: np.ndarray) -> np.ndarray:
+    """Convert energy in eV to wavelength in nm."""
     eV = np.maximum(eV, 1e-2)
     return FACTOR_EV_NM / eV
 
@@ -54,13 +56,18 @@ VIBRO_OR_ELECTRO = {
 LOG_FORMAT = "%(message)s"
 
 
-def ordinal(n):
+def ordinal(n: int) -> str:
+    """Return the ordinal suffix string for an integer."""
     return "%d-%s" % (n, "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10:: 4])
 
 
 regex_parsing = {
-    "orca": {"ext": "out", },
-    "gaussian": {"ext": "log", },
+    "orca": {"ext": "out"},
+    "gaussian": {"ext": "log"},
+    "nwchem": {"ext": "log"},
+    "tblite": {"ext": None},
+    "aimnet": {"ext": None},
+    "uma": {"ext": None},
 }
 
 MARKERS = [
@@ -73,3 +80,26 @@ MIN_RETENTION_RATE = 0.2        # Minimum retention rate
 DEFAULT_RESOLUTION = 500        # Grid resolution for contour plots
 MIN_CONFORMERS_FOR_PCA = 50     # Minimum conformers needed for meaningful PCA
 MIN_WEIGHTED_VALUE = 0.15       # Minimum value for the weight of the autoconvolution
+
+
+def get_models_dir(calculator_name: str, create: bool = True) -> Path:
+    """
+    Return the path to ML model weights for a given calculator.
+
+    Priority:
+    1. ``ENAN_MODELS_DIR`` environment variable (shared/cluster setup).
+    2. ``~/.ensemble_analyzer/models/`` (local default).
+
+    Args:
+        calculator_name (str): Subdirectory name (e.g. ``"aimnet"``, ``"uma"``).
+        create (bool): Create the directory if it does not exist.  Defaults to True.
+
+    Returns:
+        Path: Absolute path to the calculator-specific model directory.
+    """
+    env_path = os.getenv("ENAN_MODELS_DIR")
+    base_dir = Path(env_path) if env_path else Path.home() / ".ensemble_analyzer" / "models"
+    models_dir = base_dir / calculator_name
+    if create:
+        models_dir.mkdir(parents=True, exist_ok=True)
+    return models_dir
