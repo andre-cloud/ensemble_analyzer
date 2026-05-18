@@ -83,6 +83,9 @@ class BaseMlCalc(BaseCalc):
     """
     Base class for ML calculator wrappers (TBLite, AIMNet, UMA).
     Overrides common_str, optimisation, and frequency for ML behaviour.
+
+    ML calculators use OMP_NUM_THREADS to control internal threading
+    (set in calculation_executor.py before each run).
     """
 
     def common_str(self) -> str:

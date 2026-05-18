@@ -10,7 +10,6 @@ from ensemble_analyzer._calculators.base import ML_CALCULATORS
 from ensemble_analyzer._conformer.energy_data import EnergyRecord
 
 import os
-from typing import List
 
 import time
 import numpy as np
@@ -74,28 +73,29 @@ class CalculationExecutor:
         os.makedirs(f"{conf.folder}/protocol_{protocol.number}", exist_ok=True)
         
         # Run calculation
+        os.environ['OMP_NUM_THREADS'] = str(per_job_cpu)
+        os.environ['MKL_NUM_THREADS'] = str(per_job_cpu)
+        os.environ['OPENBLAS_NUM_THREADS'] = str(per_job_cpu)
+
         start_time = time.perf_counter()
-        
+
         with self.logger.track_operation(
             "Single calculation",
             conformer_id=conf.number,
             protocol_number=protocol.number
         ):
             try:
-                atoms.get_potential_energy()
-            except Exception as e: 
+                energy = atoms.get_potential_energy()
+            except Exception as e:
                 self.logger.debug(e)
-        
+                return False
+
         elapsed = time.perf_counter() - start_time
 
         if is_ml:
-            energy = atoms.get_potential_energy()
             conf.energies.add(
                 protocol.number,
-                EnergyRecord(
-                    E=energy,
-                    time=elapsed,
-                )
+                EnergyRecord(E=energy, time=elapsed),
             )
             self.logger.calculation_success(
                 conformer_id=conf.number,
@@ -113,8 +113,7 @@ class CalculationExecutor:
             f"protocol_{protocol.number}",
             f'{conf.number}_p{protocol.number}_{label}.{regex_parsing[protocol.calculator]["ext"]}'
         )
-        
-        # Get parameters
+
         success = get_conf_parameters(
             conf=conf,
             number=protocol.number,
@@ -122,20 +121,21 @@ class CalculationExecutor:
             p=protocol,
             time=elapsed,
             temp=self.config.temperature,
-            log=self.logger, 
-            linear = self.config.linear,
-            cut_off = self.config.cut_off,
-            alpha = self.config.alpha,
-            P = self.config.P,
+            log=self.logger,
+            linear=self.config.linear,
+            cut_off=self.config.cut_off,
+            alpha=self.config.alpha,
+            P=self.config.P,
         )
-        
+
         if success:
-            # Log success
             data = conf.energies[protocol.number]
-            self.logger.calculation_success(conformer_id=conf.number,
+            self.logger.calculation_success(
+                conformer_id=conf.number,
                 protocol_number=protocol.number,
                 energy=data.E, gibbs=data.G,
-                frequencies = data.Freq,
-                elapsed_time=elapsed)
-        
+                frequencies=data.Freq,
+                elapsed_time=elapsed,
+            )
+
         return success

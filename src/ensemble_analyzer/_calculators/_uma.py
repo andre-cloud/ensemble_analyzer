@@ -74,6 +74,8 @@ class UMACalc(BaseMlCalc):
         except ImportError:
             raise ImportError("fairchem-core missing. Install via: pip install fairchem-core")
 
+        torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", 1)))
+
         method = kwargs.pop("method", self.protocol.functional or "uma-s-1.pt")
         device = "cuda" if torch.cuda.is_available() else "cpu"
 
