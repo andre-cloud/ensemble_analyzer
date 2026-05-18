@@ -7,7 +7,11 @@ from ensemble_analyzer._calculators.base import BaseCalc, register_calculator
 from typing import Tuple
 
 
-NWCHEM_COMMAND = os.getenv("NWCHEMCOMMAND") or shutil.which("nwchem")
+NWCHEM_COMMAND = (
+    os.getenv("NWCHEMCOMMAND")
+    or shutil.which("nwchem_openmpi")
+    or shutil.which("nwchem")
+)
 
 
 @register_calculator("nwchem")
