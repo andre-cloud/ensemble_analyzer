@@ -28,9 +28,10 @@ class NWChemCalc(BaseCalc):
             "theory": "dft",
             "xc": self.protocol.functional,
             "basis": self.protocol.basis,
-            "charge": self.protocol.charge,
-            "mult": self.protocol.mult,
+            "dft": {"mult": self.protocol.mult},
         }
+        if self.protocol.charge != 0:
+            kw["charge"] = self.protocol.charge
 
         if self.protocol.solvent:
             solv = self.protocol.solvent.solvent
@@ -45,13 +46,29 @@ class NWChemCalc(BaseCalc):
     def _std_calc(self) -> Tuple[NWChem, str]:
         kw = self.common_str()
         ase_label = f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_nwchem"
+
         command = NWCHEM_COMMAND
         if "nwchem_openmpi" in command and not any(
             x in command for x in ("mpirun", "mpiexec")
         ):
             command = f"mpirun -np {self.cpu} {command}"
         command = f"{command} PREFIX.nwi > PREFIX.nwo"
+
         calculator = NWChem(label=ase_label, command=command, **kw)
+
+        if self.protocol.add_input.strip():
+            add_input = self.protocol.add_input
+            original = calculator.write_input
+
+            def patched_write_input(atoms, properties=None, system_changes=None):
+                original(atoms, properties, system_changes)
+                from pathlib import Path
+                inp = Path(calculator.directory) / calculator.input_filename()
+                with open(inp, "a") as f:
+                    f.write("\n" + add_input + "\n")
+
+            calculator.write_input = patched_write_input
+
         return calculator, "nwchem"
 
     def single_point(self) -> Tuple[NWChem, str]:
@@ -61,11 +78,8 @@ class NWChemCalc(BaseCalc):
         calc, label = self._std_calc()
         calc.parameters["task"] = "optimize"
         if self.protocol.freq:
-            calc.parameters["task"] = "freq"
-            calc.parameters["theory"] = "dft"
+            raise NotImplementedError("Frequency in NWChem are NOT supported for now in EnAn.")
         return calc, label
 
     def frequency(self) -> Tuple[NWChem, str]:
-        calc, label = self._std_calc()
-        calc.parameters["task"] = "freq"
-        return calc, label
+        raise NotImplementedError("Frequency in NWChem are NOT supported for now in EnAn.")

@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import MagicMock, patch
+from ase.calculators.nwchem import NWChem
 from ensemble_analyzer._calculators._nwchem import NWChemCalc
 
 
@@ -25,8 +26,16 @@ class TestNWChemCalc:
         assert kw["theory"] == "dft"
         assert kw["xc"] == "B3LYP"
         assert kw["basis"] == "6-31G*"
-        assert kw["charge"] == 0
-        assert kw["mult"] == 1
+        assert "charge" not in kw
+        assert kw["dft"]["mult"] == 1
+
+    def test_common_str_charge_nonzero(self, setup_calc):
+        conf, proto = setup_calc
+        proto.charge = 2
+        calc = NWChemCalc(proto, 4, conf)
+        kw = calc.common_str()
+        assert kw["charge"] == 2
+        assert kw["dft"]["mult"] == 1
 
     def test_common_str_with_solvent(self, setup_calc):
         conf, proto = setup_calc
@@ -68,12 +77,20 @@ class TestNWChemCalc:
         conf, proto = setup_calc
         proto.freq = True
         calc = NWChemCalc(proto, 4, conf)
-        ase_calc, label = calc.optimisation()
-        assert ase_calc.parameters["task"] == "freq"
+        with pytest.raises(NotImplementedError):
+            calc.optimisation()
 
-    @patch("ensemble_analyzer._calculators._nwchem.NWCHEM_COMMAND", "nwchem")
     def test_frequency(self, setup_calc):
         conf, proto = setup_calc
         calc = NWChemCalc(proto, 4, conf)
-        ase_calc, label = calc.frequency()
-        assert ase_calc.parameters["task"] == "freq"
+        with pytest.raises(NotImplementedError):
+            calc.frequency()
+
+    @patch("ensemble_analyzer._calculators._nwchem.NWCHEM_COMMAND", "nwchem")
+    def test_single_point_with_add_input(self, setup_calc):
+        conf, proto = setup_calc
+        proto.add_input = "scf\n  thresh 1e-8\nend"
+        calc = NWChemCalc(proto, 4, conf)
+        ase_calc, label = calc.single_point()
+        assert label == "nwchem"
+        assert ase_calc.write_input.__name__ != NWChem.write_input.__name__
