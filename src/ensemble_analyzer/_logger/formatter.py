@@ -9,7 +9,7 @@ class ColoredFormatter(logging.Formatter):
 
     COLORS = {
         logging.DEBUG: "\033[90m",
-        logging.INFO: "\033[37m",
+        logging.INFO: "",
         logging.WARNING: "\033[33m",
         logging.ERROR: "\033[31m",
         logging.CRITICAL: "\033[1;31m",
