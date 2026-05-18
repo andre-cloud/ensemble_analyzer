@@ -45,7 +45,13 @@ class NWChemCalc(BaseCalc):
     def _std_calc(self) -> Tuple[NWChem, str]:
         kw = self.common_str()
         ase_label = f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_nwchem"
-        calculator = NWChem(label=ase_label, command=NWCHEM_COMMAND, **kw)
+        command = NWCHEM_COMMAND
+        if "nwchem_openmpi" in command and not any(
+            x in command for x in ("mpirun", "mpiexec")
+        ):
+            command = f"mpirun -np {self.cpu} {command}"
+        command = f"{command} PREFIX.nwi > PREFIX.nwo"
+        calculator = NWChem(label=ase_label, command=command, **kw)
         return calculator, "nwchem"
 
     def single_point(self) -> Tuple[NWChem, str]:
