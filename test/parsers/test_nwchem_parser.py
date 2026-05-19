@@ -21,14 +21,14 @@ Total times  cpu:      10.0s     wall:      12.0s
 """
 
 NWCHEM_FREQ = """
-Vibrational frequencies (cm^{-1}):
-
-       1:   100.00       2:   200.00       3:   300.00
-
-IR Intensities (km/mol):
-
-       1:    10.00       2:     5.00       3:     0.50
-
+ ----------------------------------------------------------------------------
+ Normal Eigenvalue ||           Projected Infra Red Intensities
+  Mode   [cm**-1]  || [atomic units] [(debye/angs)**2] [(KM/mol)] [arbitrary]
+ ------ ---------- || -------------- ----------------- ---------- -----------
+     1      100.00 ||    0.003779           0.087         3.684       0.750
+     2      200.00 ||    0.119336           2.753       116.334      23.682
+     3      300.00 ||    0.119331           2.753       116.330      23.681
+ ----------------------------------------------------------------------------
 
 
 Total times  cpu:      10.0s     wall:      12.0s
@@ -126,7 +126,8 @@ class TestNWChemParser:
             freq, ir, vcd = p.parse_freq()
             assert len(freq) == 3
             assert np.allclose(freq, [100.0, 200.0, 300.0])
-            assert ir.shape[0] == 3
+            assert np.allclose(ir[:, 0], [100.0, 200.0, 300.0])
+            assert np.allclose(ir[:, 1], [3.684, 116.334, 116.330])
             assert vcd.shape == (1, 2)
 
     def test_parse_freq_not_found(self, parser):

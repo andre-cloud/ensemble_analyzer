@@ -23,11 +23,11 @@ class NWChemParser(BaseParser):
         "idx_en_ir": 1,
         "idx_imp_ir": 2,
         "idx_imp_vcd": None,
-        "s_freq": "Vibrational frequencies",
-        "s_IR": "IR Intensities (km/mol):",
+        "s_freq": "NORMAL MODE EIGENVECTORS IN CARTESIAN COORDINATES",
+        "s_IR": "Projected Infra Red Intensities",
         "s_UV": "Excitation energies",
         "s_ECD": "CD Spectrum",
-        "geom_start": "Output coordinates",
+        "geom_start": "Output coordinates in angstroms",
         "finish": "Total times",
         "opt_done": "Optimization converged",
         "ext": "log",
@@ -41,7 +41,7 @@ class NWChemParser(BaseParser):
             self.log.warning(self.skip_message)
 
     def parse_geom(self) -> np.ndarray:
-        fl = self.get_filtered_text(start=self.regex["geom_start"], end=self.regex["break"])
+        fl = self.get_filtered_text(start=self.regex["geom_start"], end="Atomic Mass")
 
         pattern = r"(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s*$"
         coords = np.array(re.findall(pattern, fl, flags=re.MULTILINE), dtype=float)
@@ -73,25 +73,25 @@ class NWChemParser(BaseParser):
         return B, M
 
     def parse_freq(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        if self.regex["s_freq"] not in self.fl:
+        if self.regex["s_IR"] not in self.fl:
             return np.array([]), np.zeros(shape=(1, 2)), np.zeros(shape=(1, 2))
 
-        freq_end = self.regex["s_IR"] if self.regex["s_IR"] in self.fl else "\n\n\n"
-        fl_freq = self.get_filtered_text(start=self.regex["s_freq"], end=freq_end)
+        ir_fl = self.get_filtered_text(start=self.regex["s_IR"], end="\n\n")
+        pattern = r"\s+(\d+)\s+([-\d.]+)\s+\|\|\s+[-\d.]+\s+[-\d.]+\s+([-\d.]+)\s+[-\d.]+"
+        matches = re.findall(pattern, ir_fl)
 
-        freq_pattern = re.compile(r"(?:\d+:)\s*(-?\d+\.\d*)")
-        freq = np.array(freq_pattern.findall(fl_freq), dtype=float)
-
-        ir = np.zeros(shape=(1, 2))
-        if self.regex["s_IR"] in self.fl:
-            ir_fl = self.get_filtered_text(start=self.regex["s_IR"], end="\n\n\n")
-            ir_vals = re.findall(r"(?:\d+:)\s*(-?\d+\.\d+)", ir_fl)
-            ir_arr = np.array(ir_vals, dtype=np.float64)
-            if len(ir_arr) > 0 and len(ir_arr) == len(freq):
-                ir = np.column_stack((freq, ir_arr))
+        if matches:
+            freq = np.array([float(m[1]) for m in matches])
+            ir_arr = np.array([float(m[2]) for m in matches])
+            mask = np.abs(freq) > 1.0
+            freq = freq[mask]
+            ir_arr = ir_arr[mask]
+            ir = np.column_stack((freq, ir_arr)) if len(freq) > 0 else np.zeros(shape=(1, 2))
+        else:
+            freq = np.array([])
+            ir = np.zeros(shape=(1, 2))
 
         vcd = np.zeros(shape=(1, 2))
-
         return freq, ir, vcd
 
     def parse_tddft(self) -> Tuple[np.ndarray, np.ndarray]:
@@ -117,3 +117,13 @@ class NWChemParser(BaseParser):
 
     def normal_termination(self) -> bool:
         return len(re.findall(self.regex["finish"], self.fl)) >= 1
+
+
+
+
+if __name__ == '__main__': 
+    from mock import MagicMock
+    p = NWChemParser('water_nwchem.nwo', log=MagicMock())
+
+    print(p.parse_geom())
+    print(p.parse_freq())
