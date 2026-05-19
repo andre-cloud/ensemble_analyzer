@@ -150,7 +150,12 @@ class Protocol:
         return LEVEL_DEFINITION[self.number_level].upper()
 
     @property
-    def thr(self):
+    def thr(self) -> str:
+        """Formatted string of pruning thresholds.
+
+        Returns:
+            str: Multi-line string with thrG, thrB, and thrGMAX values.
+        """
         return (
             f"\tthrG    : {self.thrG} kcal/mol\n"
             f"\tthrB    : {self.thrB} cm-1\n"
@@ -245,7 +250,12 @@ class Protocol:
         """
         return Protocol(**json)
     
-    def __repr__(self): 
+    def __repr__(self) -> str:
+        """String representation of the protocol step.
+
+        Returns:
+            str: e.g. "wB97X-D4rev/def2-QZVPPD" or "r2SCAN-3c/def2-mTZVPP [water]".
+        """
         if self.solvent:
             return f"{self.functional}/{self.basis} [{self.solvent}]"
         return f"{self.functional}/{self.basis}"
@@ -255,8 +265,8 @@ class Protocol:
     # Initialization
     # ===
 
-    def __post_init__(self):
-
+    def __post_init__(self) -> None:
+        """Post-initialization: validate multiplicity, resolve composite methods, load solvent and thresholds."""
         assert (self.mult > 0 and isinstance(self.mult, int)), \
             f"Multiplicity must be greater than 0, given {self.mult}"
 

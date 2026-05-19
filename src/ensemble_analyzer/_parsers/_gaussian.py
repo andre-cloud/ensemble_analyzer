@@ -48,7 +48,7 @@ class GaussianParser(BaseParser):
             output_name: Path to Gaussian output file.
             log: Logger instance.
         """
-        super().__init__(output_name, log)
+        super().__init__(output_name, log, conf)
         
         self.regex = self.REGEX
         self.correct_exiting = self.normal_termination()
@@ -124,7 +124,7 @@ class GaussianParser(BaseParser):
         ir_pattern   = re.compile(r'IR Inten\s*--\s*((?:[+-]?\d+\.\d+\s*)+)')
         rot_pattern  = re.compile(r'Rot\. str\.\s*--\s*((?:[+-]?\d+\.\d+\s*)+)')
 
-        # estrai e "flatta" in un'unica lista di float
+        # extract and flatten into a single list of floats
         frequencies = np.array([float(x) for m in freq_pattern.findall(fl) for x in m.split()])
         ir_inten    = np.array([float(x) for m in ir_pattern.findall(fl) for x in m.split()])
         rot_str     = np.array([float(x) for m in rot_pattern.findall(fl) for x in m.split()])

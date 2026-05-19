@@ -9,7 +9,8 @@ class GraphDefault:
 
     graph_type: Literal['IR', 'VCD', 'UV', 'ECD']
     
-    def __post_init__(self):
+    def __post_init__(self) -> None:
+        """Set default spectral parameters based on graph type."""
         # units of the graph
         self.units = {
             'IR':   'cm**-1', 

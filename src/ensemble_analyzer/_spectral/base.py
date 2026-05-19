@@ -223,6 +223,14 @@ class BaseGraph:
         ref_norm = self.ref.Y
 
         def callback_optimizer(params: tuple) -> float:
+            """Objective function for spectral parameter optimisation.
+
+            Args:
+                params: (shift, fwhm) tuple.
+
+            Returns:
+                float: RMSD between convolved and reference spectrum.
+            """
             shift, fwhm = params
             Y_conv = self.convolute(self.energies, self.impulse, shift, fwhm)
             Y_conv = self.normalize(Y_conv, idx_min=self.ref.x_min_idx, idx_max=self.ref.x_max_idx)
@@ -291,7 +299,7 @@ def gaussian_njit(X: np.ndarray, x0: np.ndarray, I: np.ndarray, fwhm: float) -> 
     norm = 1.0 / (sigma * np.sqrt(2 * np.pi))
     inv_sigma = 1.0 / sigma
 
-    for j in prange(n_x):  # parallelizzato su X
+    for j in prange(n_x):  # parallelized over X
         yj = 0.0
         Xj = X[j]
         for i in range(n_peaks):

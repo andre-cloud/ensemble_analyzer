@@ -11,7 +11,12 @@ from ensemble_analyzer.clustering import *
 from ensemble_analyzer._clustering.cluster_config import ClusteringConfig
 from ensemble_analyzer._clustering.cluster_manager import ClusteringManager
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
+    """Parse command-line arguments for the clustering tool.
+
+    Returns:
+        argparse.Namespace: Parsed command-line arguments.
+    """
     parser = argparse.ArgumentParser(
         description='Perform PCA analysis and clustering on conformer ensemble',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -50,25 +55,40 @@ python clustering.py ensemble.xyz -o my_pca.png --title "Drug Conformers"
     return args
 
 class CLILogger:
-    def __init__(self, verbose=False):
+    """Simple CLI logger for clustering output."""
+
+    def __init__(self, verbose: bool = False) -> None:
+        """Initialize the CLI logger.
+
+        Args:
+            verbose: Enable debug output if True.
+        """
         self.verbose = verbose
     
-    def info(self, msg):
+    def info(self, msg: str) -> None:
+        """Log an info message."""
         print(f"ℹ️ {msg}")
     
-    def debug(self, msg):
+    def debug(self, msg: str) -> None:
+        """Log a debug message (only shown in verbose mode)."""
         if self.verbose:
             print(f"🔍 {msg}")
     
-    def warning(self, msg):
+    def warning(self, msg: str) -> None:
+        """Log a warning message."""
         print(f"⚠️  {msg}")
     
-    def error(self, msg):
+    def error(self, msg: str) -> None:
+        """Log an error message."""
         print(f"❌ {msg}")
 
-def plot_component_analysis(result, output_base, logger):
-    """
-    Generate loading plot showing feature contributions to principal components.
+def plot_component_analysis(result: Any, output_base: str, logger: CLILogger) -> None:
+    """Generate loading plot showing feature contributions to principal components.
+
+    Args:
+        result: Clustering result object with components attribute.
+        output_base: Base path for output files.
+        logger: Logger instance.
     """
     out_dir = os.path.dirname(output_base) or "."
     base_name = os.path.splitext(os.path.basename(output_base))[0]
@@ -109,10 +129,13 @@ def plot_component_analysis(result, output_base, logger):
     plt.close()
     logger.info(f"✓ Component loadings saved: {loading_file}")
 
-def plot_before_after_pca(result, output_base, logger):
-    """
-    Side-by-side comparison of data before and after PCA transformation,
-    with PCA axes drawn in the original space.
+def plot_before_after_pca(result: Any, output_base: str, logger: CLILogger) -> None:
+    """Side-by-side comparison of data before and after PCA transformation.
+
+    Args:
+        result: Clustering result object with original_features, scores, clusters, components.
+        output_base: Base path for output files.
+        logger: Logger instance.
     """
     out_dir = os.path.dirname(output_base) or "."
     base_name = os.path.splitext(os.path.basename(output_base))[0]
@@ -191,9 +214,13 @@ def plot_before_after_pca(result, output_base, logger):
     plt.close()
     logger.info(f"✓ Before/After comparison saved: {comparison_file}")
 
-def plot_clustering_metrics(result, output_base, logger):
-    """
-    Generate evaluation plots: Scree plot with cumulative variance and Silhouette scores.
+def plot_clustering_metrics(result: Any, output_base: str, logger: CLILogger) -> None:
+    """Generate evaluation plots: Scree plot with cumulative variance and Silhouette scores.
+
+    Args:
+        result: Clustering result object.
+        output_base: Base path for output files.
+        logger: Logger instance.
     """
     out_dir = os.path.dirname(output_base) or "."
     base_name = os.path.splitext(os.path.basename(output_base))[0]
@@ -276,10 +303,13 @@ def plot_clustering_metrics(result, output_base, logger):
         logger.warning("Not enough data points to generate Silhouette plot")
 
 
-def plot_3d_original_space(result, output_base, logger):
-    """
-    Generate a 3D scatter plot of the first 3 original features to illustrate
-    the complexity of the data before PCA transformation.
+def plot_3d_original_space(result: Any, output_base: str, logger: CLILogger) -> None:
+    """Generate a 3D scatter plot of the first 3 original features.
+
+    Args:
+        result: Clustering result object.
+        output_base: Base path for output files.
+        logger: Logger instance.
     """
     out_dir = os.path.dirname(output_base) or "."
     base_name = os.path.splitext(os.path.basename(output_base))[0]
@@ -317,7 +347,7 @@ def plot_3d_original_space(result, output_base, logger):
     # ax.set_zlabel('Feature 3', fontsize=10)
     ax.set_title('Original Features (Pre-PCA)', fontsize=12, fontweight='bold')
     ax.grid()
-    # Imposta un angolo di visualizzazione iniziale
+    # Set an initial viewing angle
     # ax.view_init(elev=20, azim=45)
     
     plt.tight_layout()
@@ -327,7 +357,8 @@ def plot_3d_original_space(result, output_base, logger):
     
     logger.info(f"✓ 3D Original Space plot saved: {plot_file}")
 
-def main():
+def main() -> None:
+    """Run the PCA clustering analysis workflow."""
     args = parse_args()
     logger = CLILogger(verbose=args.verbose)
 

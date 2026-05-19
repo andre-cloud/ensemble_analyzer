@@ -92,7 +92,18 @@ class EnergyStore:
             return data.G
         return data.E
     
-    def set(self, protocol_number: int, property: str, value: Union[float, np.ndarray]):
+    def set(self, protocol_number: int, property: str, value: Union[float, np.ndarray]) -> None:
+        """Set a specific property on an existing EnergyRecord.
+
+        Args:
+            protocol_number: Protocol step number.
+            property: Attribute name on EnergyRecord (e.g. 'E', 'G', 'Pop').
+            value: Value to set.
+
+        Raises:
+            KeyError: If no record exists for the given protocol.
+            AttributeError: If the property does not exist on EnergyRecord.
+        """
         if not self.__contains__(protocol_number):
             raise KeyError(f"Protocol {protocol_number} not found in EnergyStore")
         

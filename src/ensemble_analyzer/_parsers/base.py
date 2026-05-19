@@ -16,7 +16,15 @@ def register_parser(name: str) -> Callable:
         Callable: Decorator that registers the class in PARSER_REGISTRY.
     """
 
-    def decorator(cls):
+    def decorator(cls: type) -> type:
+        """Register a parser class.
+
+        Args:
+            cls: Parser class to register.
+
+        Returns:
+            type: The input class unchanged.
+        """
         PARSER_REGISTRY[name.lower()] = cls
         return cls
 
@@ -161,7 +169,12 @@ class BaseParser(ABC):
 
         Returns:
             np.ndarray: Array of shape (3,) containing B_a, B_b, B_c in cm⁻¹.
+            Falls back to [1, 0, 0] if conformer data is unavailable.
         """
+
+        if self.conf is None or self.conf.last_geometry is None:
+            self.log.warning("No conformer data for B calculation, returning default")
+            return np.array([1.0, 0.0, 0.0])
 
         self.log.debug(f'{self.conf.last_geometry = }')
         atoms = Atoms(

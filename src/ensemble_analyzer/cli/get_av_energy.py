@@ -139,7 +139,8 @@ def calculate_weighted_average(energies: np.ndarray, pops: np.ndarray) -> float:
     # p_valid is in %, divide by 100
     return np.sum(e_valid * (p_valid / 100.0))
 
-def main():
+def main() -> None:
+    """Run the multi-level average energy analysis CLI workflow."""
     parser = argparse.ArgumentParser(description="Multi-Level Average Energy Analysis")
     parser.add_argument("-d", "--dir", default=".", help="Working directory")
     parser.add_argument("-T", "--temp", type=float, help="Temperature (K) for recalculation.")
@@ -328,7 +329,17 @@ def main():
     if args.sub or args.add:
         ops_rows = []
         
-        def perform_op(p1_str, p2_str, op_type):
+        def perform_op(p1_str: str, p2_str: str, op_type: str) -> List:
+            """Perform addition or subtraction on two protocol averages.
+
+            Args:
+                p1_str: First protocol number (as string).
+                p2_str: Second protocol number (as string).
+                op_type: Operation type ("-" or "+").
+
+            Returns:
+                List: Result row for the operations table.
+            """
             try:
                 p1, p2 = int(p1_str), int(p2_str)
             except ValueError:

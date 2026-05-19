@@ -47,12 +47,11 @@ def parse_mapping_file(filepath: Path) -> Dict[str, str]:
     return mapping
 
 
-def batch_mode(args):
-    """
-    Execute edits in non-interactive (batch) mode.
+def batch_mode(args: argparse.Namespace) -> int:
+    """Execute edits in non-interactive (batch) mode.
 
     Args:
-        args (argparse.Namespace): Parsed command-line arguments.
+        args: Parsed command-line arguments.
 
     Returns:
         int: Exit code (0 for success, 1 for error).
@@ -183,10 +182,13 @@ def batch_mode(args):
         return 1
 
 
-def main():
-    """
-    Main entry point for the Graph Editor CLI.
+def main() -> int:
+    """Main entry point for the Graph Editor CLI.
+
     Dispatches control to either the TUI or Batch mode.
+
+    Returns:
+        int: Exit code.
     """
     parser = argparse.ArgumentParser(
         description='Interactive/batch editor for matplotlib pickle files',

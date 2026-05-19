@@ -87,12 +87,11 @@ class Conformer:
 
 
     
-    def write_xyz(self, ):
-        """
-        Write the XYZ string to be stored in a file.
+    def write_xyz(self) -> str:
+        """Generate XYZ-formatted string for file output.
 
         Returns:
-            str: The string in the XYZ formatting.
+            str: XYZ-formatted string, or empty string if conformer is inactive.
         """
         
         if not self.active:
@@ -143,7 +142,16 @@ class Conformer:
     # ===
     # Geometry helpers
     # ===
-    def distance_matrix(self, include_H: bool, geom=None) -> np.ndarray:
+    def distance_matrix(self, include_H: bool, geom: Optional[np.ndarray] = None) -> np.ndarray:
+        """Compute the pairwise distance matrix for the conformer.
+
+        Args:
+            include_H: Whether to include hydrogen atoms.
+            geom: Optional geometry array. Uses last_geometry if None.
+
+        Returns:
+            np.ndarray: Pairwise distance matrix.
+        """
         geo = geom if geom is not None else self.last_geometry
 
         if include_H:
@@ -159,7 +167,16 @@ class Conformer:
     # === 
 
     @staticmethod
-    def load_raw(data) -> 'Conformer':
+    def load_raw(data: dict) -> 'Conformer':
+        """Deserialize a Conformer from a dictionary.
+
+        Args:
+            data: Dictionary with conformer data (number, last_geometry, atoms,
+                  energies, graphs_data, active).
+
+        Returns:
+            Conformer: Restored conformer instance.
+        """
         c = Conformer(
             number=data["number"],
             geom=data["last_geometry"],
@@ -176,17 +193,20 @@ class Conformer:
     # === 
     # Sorting support
     # ===
-    def __lt__(self, other):
+    def __lt__(self, other: 'Conformer') -> bool:
+        """Compare conformers by energy for sorting (lowest first)."""
         if not self.active:
             return 0 < other._last_energy
         return self._last_energy < other._last_energy
 
-    def __gt__(self, other):
+    def __gt__(self, other: 'Conformer') -> bool:
+        """Compare conformers by energy for sorting (highest first)."""
         if not self.active:
             return 0 > other._last_energy
         return self._last_energy > other._last_energy
 
-    def __eq__(self, other):
+    def __eq__(self, other: 'Conformer') -> bool:
+        """Check if two conformers have the same energy."""
         if not self.active:
             return 0 == other._last_energy
         return self._last_energy == other._last_energy

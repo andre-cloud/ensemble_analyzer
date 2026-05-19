@@ -30,7 +30,13 @@ class Logger(logging.Logger):
     SPLIT = "|"
 
 
-    def __init__(self, name:str, level=level_default):
+    def __init__(self, name: str, level: int = level_default) -> None:
+        """Initialize the custom Logger.
+
+        Args:
+            name: Logger name.
+            level: Logging level. Defaults to DEBUG or INFO based on settings.
+        """
         super().__init__(name, level=level)
 
         self._timers: Dict[str, float] = {}
@@ -252,7 +258,14 @@ class Logger(logging.Logger):
             return f"{i:.2f}"
         return f"{i}"
 
-    def spectra_result(self, graph_type: str, parameters: Dict, msg:str): 
+    def spectra_result(self, graph_type: str, parameters: Dict, msg: str) -> None:
+        """Log the result of a spectra convolution with its parameters.
+
+        Args:
+            graph_type: Type of spectrum (IR, VCD, UV, ECD).
+            parameters: Dictionary of convolution parameters.
+            msg: Informational message about the result.
+        """
         res = [f"{k}: {self.converter_str(v)}" for k, v in parameters.items()]
         self._separator(f"{graph_type} Spectra convolution", char="-", width=35)
         self.info(msg)
@@ -278,6 +291,14 @@ class Logger(logging.Logger):
         self._timers[key] = time.perf_counter()
     
     def _stop_timer(self, key: str) -> float:
+        """Stop a named timer and return the elapsed time.
+
+        Args:
+            key: Timer identifier.
+
+        Returns:
+            float: Elapsed time in seconds, or 0.0 if timer not found.
+        """
         if key not in self._timers:
             return 0.0
         elapsed = time.perf_counter() - self._timers[key]

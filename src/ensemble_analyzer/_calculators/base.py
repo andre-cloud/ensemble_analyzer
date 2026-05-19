@@ -1,13 +1,20 @@
 from abc import ABC, abstractmethod
 
-from typing import Dict, Tuple, Any
+from typing import Callable, Dict, Tuple, Any
 import numpy as np
 
 
-def register_calculator(name):
-    """Decorator to register each calculator class."""
+def register_calculator(name: str) -> Callable:
+    """Decorator to register each calculator class.
 
-    def decorator(cls):
+    Args:
+        name: Calculator identifier (e.g. 'orca', 'gaussian').
+
+    Returns:
+        Decorator that registers the class in CALCULATOR_REGISTRY.
+    """
+
+    def decorator(cls: type) -> type:
         CALCULATOR_REGISTRY[name.lower()] = cls
         return cls
 
@@ -39,12 +46,11 @@ class BaseCalc(ABC):
         self.constrains = protocol.constrains
 
     @abstractmethod
-    def common_str(self):
-        """
-        Generate common input strings (keywords, blocks) for the calculator.
+    def common_str(self) -> dict:
+        """Generate common input keywords for the calculator.
 
         Returns:
-            Union[str, Tuple[str, str]]: Input string(s) for the calculator.
+            dict: Dictionary of input keywords for the calculator.
         """
         pass
 
@@ -88,18 +94,37 @@ class BaseMlCalc(BaseCalc):
     (set in calculation_executor.py before each run).
     """
 
-    def common_str(self) -> str:
-        return ""
+    def common_str(self) -> dict:
+        """ML calculators have no special input keywords.
 
-    def _get_ml_calculator(self, **kwargs):
-        """Override in subclass to return the ML ASE Calculator."""
+        Returns:
+            dict: Empty dictionary.
+        """
+        return {}
+
+    def _get_ml_calculator(self, **kwargs: Any) -> Any:
+        """Override in subclass to return the ML ASE Calculator.
+
+        Returns:
+            ASE Calculator instance.
+        """
         raise NotImplementedError
 
     def single_point(self) -> Tuple[Any, str]:
+        """Run a single-point energy calculation with the ML calculator.
+
+        Returns:
+            Tuple[Any, str]: ASE Calculator instance and label.
+        """
         calc = self._get_ml_calculator()
         return calc, self.label
 
     def optimisation(self) -> Tuple[Any, str]:
+        """Run a geometry optimisation with the ML calculator using BFGS.
+
+        Returns:
+            Tuple[Any, str]: ASE Calculator instance and label.
+        """
         from ase.optimize import BFGS
         calc = self._get_ml_calculator()
         atoms = self.conf.get_ase_atoms(calc)
@@ -109,6 +134,11 @@ class BaseMlCalc(BaseCalc):
         return calc, self.label
 
     def frequency(self) -> Tuple[Any, str]:
+        """Frequency calculations are not supported for ML calculators.
+
+        Raises:
+            NotImplementedError: Always raised.
+        """
         raise NotImplementedError(
             f"Frequency not implemented for ML calculator '{self.label}'. "
             "Use a QM calculator (ORCA/Gaussian/NWChem) for Freq steps."

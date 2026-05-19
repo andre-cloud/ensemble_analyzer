@@ -2,6 +2,7 @@ import argparse
 import os
 import sys
 import json
+from typing import List, Union
 
 from importlib.resources import files
 
@@ -275,9 +276,8 @@ def parser_arguments()-> argparse.Namespace:
     return parser.parse_args()
 
 
-def mix_type(values):
-    """
-    Custom argparse type converter for arguments that can be boolean, float, or list of floats.
+def mix_type(values: List[str]) -> Union[bool, float, List[float], None]:
+    """Custom argparse type converter for arguments that can be boolean, float, or list of floats.
     
     Used for parameters like --fwhm-vibro which can be:
     - True/False (toggle default)
@@ -285,7 +285,7 @@ def mix_type(values):
     - List of floats [min, max] (range)
 
     Args:
-        values (List[str]): List of strings from command line.
+        values: List of strings from command line.
 
     Returns:
         Union[bool, float, List[float], None]: The parsed value.

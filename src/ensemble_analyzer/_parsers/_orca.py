@@ -103,7 +103,7 @@ State  Energy     Wavelength     R         MX        MY        MZ
             output_name: Path to ORCA output file.
             log: Logger instance.
         """
-        super().__init__(output_name, log)
+        super().__init__(output_name, log, conf)
         self.version = self.get_version()
         self.regex = self.REGEX[self.version]
 

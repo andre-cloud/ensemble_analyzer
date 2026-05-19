@@ -5,7 +5,7 @@ import sys
 import importlib.util
 from pathlib import Path
 
-# Colori per l'output
+# Colors for output
 GREEN = '\033[92m'
 RED = '\033[91m'
 YELLOW = '\033[93m'

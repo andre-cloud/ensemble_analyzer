@@ -27,6 +27,13 @@ class NWChemParser(BaseParser):
     }
 
     def __init__(self, output_name: str, log, conf=None) -> None:
+        """Initialize NWChem parser.
+
+        Args:
+            output_name: Path to NWChem output file.
+            log: Logger instance.
+            conf: Optional Conformer object.
+        """
         super().__init__(output_name, log, conf)
         self.regex = self.REGEX
         self.correct_exiting = self.normal_termination()
@@ -34,6 +41,11 @@ class NWChemParser(BaseParser):
             self.log.warning(self.skip_message)
 
     def parse_geom(self) -> np.ndarray:
+        """Parse the final geometry from NWChem output.
+
+        Returns:
+            np.ndarray: Cartesian coordinates array of shape (N, 3).
+        """
         fl = self.get_filtered_text(start=self.regex["geom_start"], end="Atomic Mass")
 
         pattern = r"(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s*$"
@@ -41,12 +53,22 @@ class NWChemParser(BaseParser):
         return coords
 
     def parse_energy(self) -> float:
+        """Parse the final electronic energy from NWChem output.
+
+        Returns:
+            float: Energy in Hartree.
+        """
         match = re.findall(self.regex["E"], self.fl)
         if not match:
             return 0.0
         return float(match[-1])
 
     def parse_B_m(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Parse rotational constants and dipole moment from NWChem output.
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]: (B vector, dipole moment vector).
+        """
         match_B = re.findall(self.regex["B"], self.fl)
         if match_B:
             B = np.array(match_B[-1], dtype=float)
@@ -66,6 +88,12 @@ class NWChemParser(BaseParser):
         return B, M
 
     def parse_freq(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+        """Parse vibrational frequencies and IR intensities from NWChem output.
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray, np.ndarray]:
+                (frequencies, IR spectrum data, VCD spectrum data).
+        """
         if self.regex["s_IR"] not in self.fl:
             return np.array([]), np.zeros(shape=(1, 2)), np.zeros(shape=(1, 2))
 
@@ -88,6 +116,11 @@ class NWChemParser(BaseParser):
         return freq, ir, vcd
 
     def parse_tddft(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Parse TD-DFT excited states (UV/ECD) from NWChem output.
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]: (UV data array, ECD data array).
+        """
         uv = np.zeros(shape=(1, 2))
         ecd = np.zeros(shape=(1, 2))
 
@@ -117,9 +150,19 @@ class NWChemParser(BaseParser):
         return uv, ecd
 
     def opt_done(self) -> bool:
+        """Check if geometry optimisation converged successfully.
+
+        Returns:
+            bool: True if converged, False otherwise.
+        """
         return len(re.findall(self.regex["opt_done"], self.fl)) >= 1
 
     def normal_termination(self) -> bool:
+        """Check if the NWChem calculation terminated normally.
+
+        Returns:
+            bool: True if normal termination is detected.
+        """
         return len(re.findall(self.regex["finish"], self.fl)) >= 1
 
 
