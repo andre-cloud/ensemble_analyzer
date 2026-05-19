@@ -5,15 +5,24 @@ from ensemble_analyzer._parsers._nwchem import NWChemParser
 
 
 NWCHEM_OPT = """
-Output coordinates
+Output coordinates in angstroms
   O    0.00000000    0.00000000    0.00000000
   H    0.00000000    0.00000000    1.80000000
+Atomic Mass
 
 Total DFT energy = -76.12345678
 
-Rotational constants (GHz): A = 1.23456 B = 0.98765 C = 0.87654
+Rotational Constants
+--------------------
+A=  1.234560 cm-1  ( 1.776235 K)
+B=  0.987650 cm-1  ( 1.420948 K)
+C=  0.876540 cm-1  ( 1.260972 K)
 
-Dipole Moment (Debye): X = 0.0000 Y = 0.0000 Z = 1.8500
+            Nuclear Dipole moment (a.u.) 
+            ----------------------------
+        X                 Y               Z
+ ---------------- ---------------- ----------------
+     0.0000000000    0.0000000000    0.7279000000
 
 Optimization converged
 
@@ -111,8 +120,8 @@ class TestNWChemParser:
         with patch("builtins.open", mock_open(read_data=NWCHEM_OPT)):
             p = NWChemParser("dummy.log", mock_logger)
             B, M = p.parse_B_m()
-            assert np.allclose(B, [1.23456 / 29.979, 0.98765 / 29.979, 0.87654 / 29.979], atol=1e-4)
-            assert np.allclose(M, [0.0, 0.0, 1.85])
+            assert np.allclose(B, [1.234560, 0.987650, 0.876540], atol=1e-4)
+            assert np.allclose(M, [0.0, 0.0, 0.7279])
 
     def test_parse_B_m_not_found(self, parser):
         parser.fl = "no B or M"

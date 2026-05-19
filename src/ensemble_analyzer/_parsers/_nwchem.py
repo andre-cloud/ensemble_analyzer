@@ -13,9 +13,9 @@ class NWChemParser(BaseParser):
     """
 
     REGEX = {
-        "B": r"Rotational constants \(GHz\):\s*A\s*=\s*(-?\d+\.\d+)\s*B\s*=\s*(-?\d+\.\d+)\s*C\s*=\s*(-?\d+\.\d+)",
-        "units_B": "GHz",
-        "m": r"Dipole Moment \(Debye\):\s*X\s*=\s*(-?\d+\.\d+)\s*Y\s*=\s*(-?\d+\.\d+)\s*Z\s*=\s*(-?\d+\.\d+)",
+        "B": r"Rotational Constants[\s\S]*?A=\s*(-?\d+\.\d+)\s+cm-1\s+\([^)]*\)\s*[\s\S]*?B=\s*(-?\d+\.\d+)\s+cm-1\s+\([^)]*\)\s*[\s\S]*?C=\s*(-?\d+\.\d+)\s+cm-1",
+        "units_B": "cm-1",
+        "m": r"Nuclear Dipole moment[\s\S]*?(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)",
         "E": r"(?:Total DFT energy|SCF energy)\s*=\s*(-?\d+\.\d+)",
         "break": "\n\n",
         "idx_en_tddft": 1,
@@ -126,4 +126,5 @@ if __name__ == '__main__':
     p = NWChemParser('water_nwchem.nwo', log=MagicMock())
 
     print(p.parse_geom())
-    print(p.parse_freq())
+    print(p.parse_B_m())
+    print(p.opt_done())
