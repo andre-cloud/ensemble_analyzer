@@ -1,5 +1,5 @@
 # Ensemble Analyzer <img src="logo.png" align="right" width="150">
-[![Python](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## Conformer Ensemble Pruning Software
@@ -12,7 +12,7 @@
 
 ### Core Capabilities
 - ⚡ **Multi-Protocol Workflows**: Sequential optimization/frequency calculations with automatic pruning
-- 🔬 **Quantum Chemistry Integration**: Support for ORCA, Gaussian, semi-empirical (TBLite), and ML potentials (AIMNet)
+- 🔬 **Quantum Chemistry Integration**: Support for ORCA, Gaussian, NWChem, semi-empirical (TBLite), and ML potentials (AIMNet)
 - 📊 **Advanced Clustering**: PCA-based conformer clustering with multiple feature extraction methods
 - 🎨 **Spectral Analysis**: Generate weighted IR, VCD, UV-vis, and ECD spectra
 - 🔄 **Checkpoint System**: Automatic restart capability with atomic file operations
@@ -38,8 +38,6 @@
 pip install ensemble-analyzer
 
 # With ML potentials (TBLite, AIMNet)
-
-```bash
 pip install "ensemble-analyzer[aimnet]"
 ```
 
@@ -49,6 +47,7 @@ pip install "ensemble-analyzer[aimnet]"
 |---------|-------------|---------|
 | [ORCA](https://orcaforum.kofo.mpg.de/app.php/portal) | Installed binary | `ORCAVERSION="x.y.z"` |
 | [Gaussian](https://gaussian.com) | Licensed installation | — |
+| [NWChem](https://www.nwchem-sw.org) | Installed binary | `NWCHEMCOMMAND` or `PATH` |
 
 ### Semi-empirical & ML Potentials (optional)
 
@@ -70,8 +69,8 @@ export ENAN_MODELS_DIR="/path/to/ml_weights"
 Create `protocol.json`
 ```json
 {
-    "0": {"funcional": "r2SCAN-3c", "opt": true, "freq": true,"cluster": 5, "comment": "Initial Optimization cluster into 5 families"},
-    "1": {"funcional": "wB97X-D4rev", "basis": "def2-QZVPPD", "comment": "Single Point energy evaluation"}
+    "0": {"functional": "r2SCAN-3c", "opt": true, "freq": true,"cluster": 5, "comment": "Initial Optimization cluster into 5 families"},
+    "1": {"functional": "wB97X-D4rev", "basis": "def2-QZVPPD", "comment": "Single Point energy evaluation"}
 }
 
 ```
@@ -85,7 +84,7 @@ ensemble_analyzer --ensemble conformers.xyz --protocol protocol.json --output ca
 ```json
 {
     "0": {"calculator": "tblite", "functional": "GFN2-xTB", "opt": true, "freq": true},
-    "1": {"calculator": "aimnet", "functional": "aimnet2", "cluster": 10},
+    "1": {"calculator": "aimnet", "functional": ****"<aimnet_weights.pt", "cluster": 10},
 }
 ```
 
@@ -96,22 +95,6 @@ ML calculators skip file I/O and parsing — energies are read directly from ASE
 # Automatically resumes from last completed protocol
 ensemble_analyzer --restart
 ```
-
-### CPU Budget
-
-`--cpu <N>` sets the **total CPU budget**. Single-point (SP) calculations are parallelised across conformers; the budget is auto-split:
-
-| `--cpu` | per-job CPUs (QM) | parallel workers |
-|---------|-------------------|------------------|
-| 32      | 8                 | 4                |
-| 16      | 8                 | 2                |
-| 8       | 8                 | 1 (serial)       |
-| 4       | 4                 | 1 (serial)       |
-
-- **Opt/Freq** always run **sequentially** with all CPUs allocated to one job.
-- **ML calculators** ignore per-job CPU; all workers run in parallel.
-- Output files are written directly into `conf_N/protocol_M/` (no file-moving step).
-
 ---
 
 ### Protocol Parameters
@@ -121,20 +104,20 @@ ensemble_analyzer --restart
 | **Calculation Settings** ||||
 | `functional` | str | DFT functional or method | `"B3LYP"`, `"xtb"`, `"HF-3c"` |
 | `basis` | str | Basis set (auto for composite methods) | `"def2-SVP"`, `"def2-TZVP"` |
-| `calculator` | str | QM program / ML potential | `"orca"` (default), `"gaussian"`, `"tblite"`, `"aimnet"` |
+| `calculator` | str | QM program / ML potential | `"orca"` (default), `"gaussian"`, `"nwchem"`, `"tblite"`, `"aimnet"` |
 | `opt` | bool | Optimize geometry | `true`, `false` |
 | `freq` | bool | Calculate frequencies | `true`, `false` |
 | `mult` | int | Spin multiplicity | `1` (singlet), `2` (doublet) |
-| `charge` | int | Molecular charge | |
+| `charge` | int | Molecular charge | `0` (default) |
+| `solvent` | dict | Implicit solvation | `{"solvent": "water", "smd": true}` |
 | **Pruning Thresholds** ||||
 | `thrG` | float | Energy similarity threshold [kcal/mol] | `3.0`, `5.0` |
-| `thrB` | float | Rotatory constant threshold [cm⁻¹] | `30.0`, `50.0` |
+| `thrB` | float | Rotatory constant threshold [cm⁻¹] | `5e-5`, `1e-5` |
 | `thrGMAX` | float | Energy window cutoff [kcal/mol] | `10.0` |
 | `cluster` | bool/int | Enable clustering | `true` (auto), `5` (fixed) |
 | `no_prune` | bool | Disable pruning | `false` (default) |
 | **Advanced** ||||
-| `solvent` | dict | Implicit solvation | `{"solvent": "water", "model": "SMD"}` |
-| `constrains` | list | Geometry constraints (only on cartesians)| `[1,2]` (fix cartesians) |
+| `constraints` | list[list] | Geometry constraints (only on cartesians)| `[[1,2],[1],[1,2,3],[4,3,2,1]]` |
 | `monitor_internals` | list | Track bond/angle/dihedral | `[[0,1], [0,1,2]]` |
 | `skip_opt_fail` | bool | Skip failed optimizations | `false` (default) |
 | `block_on_retention_rate` | bool | Block the calculation has a retention rate lower than the `MIN_RETENTION_RATE` (20%) | `false` (default) |
@@ -151,7 +134,7 @@ Feel free to browse all the possible protocol options and parameters.
 
 ### Regrapher
 
-If you want to change the convolution of your graphs, you can edit the setting.json file. Here, all the global settings are present. When finished, the command `enan_regraph` come handy. It re-run the Graph workflow with these new setting and in few time, you'll have your new graphs.
+If you want to change the convolution of your graphs, you can edit the `settings.json` file. Here, all the global settings are present. When finished, the command `enan_regraph` come handy. It re-run the Graph workflow with these new setting and in few time, you'll have your new graphs.
 ```bash
 usage: enan_regraph [-h] [-rb READ_BOLTZ] [-no-nm] [-w] [--disable-color] idx [idx ...]
 
@@ -172,7 +155,7 @@ options:
 All graphs are saved also as a pickle. This file can be reloaded and from there you can modify every single element of the Matplotlib Figure store in it. This requires some programming skills and, especially, time. Here is where `enan_graph_editor` comes to play. It is once again an interactive terminal interface (based both on rich or InquierPy library) where you can change and personalize every pickle. If you have to modify more files at once, a *batch* mode is implemented as well, so to by-pass the limitation of the manual selection of the interactive TUI. 
 
 ```bash
-usage: enan_graph_editor [-h] [--batch] [--list] [--rename OLD NEW] [--rename-file RENAME_FILE] [--color LABEL COLOR] [--linestyle LABEL STYLE] [--linewidth LABEL WIDTH] [--alpha LABEL ALPHA] [--output OUTPUT] [--format {pickle,png,pdf,svg}] [--preview] [--no-strict]
+usage: enan_graph_editor [-h] [--batch] [--list] [--rename OLD NEW] [--rename-file RENAME_FILE] [--color LABEL COLOR] [--linestyle LABEL STYLE] [--linewidth LABEL WIDTH] [--alpha LABEL ALPHA] [--visibility LABEL bool] [--output OUTPUT] [--format {pickle,png,pdf,svg}] [--no-strict]
                          [--verbose]
                          pickle_file
 
@@ -194,25 +177,27 @@ batch mode options:
   --rename-file RENAME_FILE, -rf RENAME_FILE
                         Mapping file OLD=NEW
   --color LABEL COLOR, -c LABEL COLOR
-                        Change colour
+                        Change color
   --linestyle LABEL STYLE, -ls LABEL STYLE
-                        Change line linestyle (e.g., -, --, :, -. )
+                        Change line style (e.g., -, --, :, -.)
   --linewidth LABEL WIDTH, -lw LABEL WIDTH
                         Change line linewidth (float)
   --alpha LABEL ALPHA, -a LABEL ALPHA
                         Change line transparency (0-1)
+  --visibility LABEL bool, -vis LABEL bool
+                        Toggle line visibility (True/False)
   --output OUTPUT, -o OUTPUT
                         Output file
   --format {pickle,png,pdf,svg}, -f {pickle,png,pdf,svg}
                         Output format
                         
 DEFAULT MODE: Interactive TUI
-  python enan_graph_editor plot.pkl
+  enan_graph_editor plot.pkl
 
 BATCH MODE (examples):
-  python enan_graph_editor plot.pkl --batch --list
-  python enan_graph_editor plot.pkl --batch --rename "Protocol 1" "Proto A"
-  python enan_graph_editor plot.pkl --batch --color "Experimental" red --output new.pkl
+  enan_graph_editor plot.pkl --batch --list
+  enan_graph_editor plot.pkl --batch --rename "Protocol 1" "Proto A"
+  enan_graph_editor plot.pkl --batch --color "Experimental" red --output new.pkl
 ```
 
 ---
@@ -238,7 +223,7 @@ git push origin feature/awesome-feature
 
 ## 📄 License
 
-This software is licensed under the MIT-3.0 License. See the LICENSE file for details.
+This software is licensed under the MIT License. See the LICENSE file for details.
 
 ## 📞 Support and contact
 
