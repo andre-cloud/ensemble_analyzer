@@ -15,7 +15,7 @@ class TestProtocolExecutor:
         return ProtocolExecutor(config, mock_logger, checkpoint)
 
     def test_execute_skips_inactive_and_calculated(self, executor, mock_conformer, mock_protocol):
-        """Verifica che non vengano ricalcolati conformeri già fatti o inattivi."""
+        """Verify that already-computed or inactive conformers are not recalculated."""
         c1 = mock_conformer 
         c2 = MagicMock(active=False) 
         c3 = MagicMock(active=True)

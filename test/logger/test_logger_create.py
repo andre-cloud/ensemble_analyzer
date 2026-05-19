@@ -14,9 +14,9 @@ class TestColoredFormatter:
 
     def test_with_color(self):
         fmt = ColoredFormatter("%(message)s", use_colors=True)
-        record = logging.LogRecord("test", logging.INFO, "", 0, "hello", (), None)
+        record = logging.LogRecord("test", logging.WARNING, "", 0, "hello", (), None)
         result = fmt.format(record)
-        assert result.startswith("\033[37m")
+        assert result.startswith("\033[33m")
         assert result.endswith("\033[0m")
 
     def test_color_by_level(self):

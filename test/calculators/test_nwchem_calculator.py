@@ -55,7 +55,7 @@ class TestNWChemCalc:
         conf, proto = setup_calc
         calc = NWChemCalc(proto, 8, conf)
         kw = calc.common_str()
-        assert kw["memory"] == "16000 mb"
+        assert kw["memory"] == "40000 mb"
 
     @patch("ensemble_analyzer._calculators._nwchem.NWCHEM_COMMAND", "nwchem")
     def test_single_point(self, setup_calc):
@@ -76,15 +76,17 @@ class TestNWChemCalc:
     def test_optimisation_with_freq(self, setup_calc):
         conf, proto = setup_calc
         proto.freq = True
+        proto.opt = True
         calc = NWChemCalc(proto, 4, conf)
-        with pytest.raises(NotImplementedError):
-            calc.optimisation()
+        ase_calc, label = calc.optimisation()
+        assert 'optimize' in ase_calc.parameters["task"].split()
+        assert 'freq' in ase_calc.parameters["task"].split()
 
     def test_frequency(self, setup_calc):
         conf, proto = setup_calc
         calc = NWChemCalc(proto, 4, conf)
-        with pytest.raises(NotImplementedError):
-            calc.frequency()
+        ase_calc, label = calc.frequency()
+        assert ase_calc.parameters["task"] == "freq"
 
     @patch("ensemble_analyzer._calculators._nwchem.NWCHEM_COMMAND", "nwchem")
     def test_single_point_with_add_input(self, setup_calc):
