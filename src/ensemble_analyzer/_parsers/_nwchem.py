@@ -18,15 +18,8 @@ class NWChemParser(BaseParser):
         "m": r"Nuclear Dipole moment[\s\S]*?(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)",
         "E": r"(?:Total DFT energy|SCF energy)\s*=\s*(-?\d+\.\d+)",
         "break": "\n\n",
-        "idx_en_tddft": 1,
-        "idx_imp_tddft": 2,
-        "idx_en_ir": 1,
-        "idx_imp_ir": 2,
-        "idx_imp_vcd": None,
         "s_freq": "NORMAL MODE EIGENVECTORS IN CARTESIAN COORDINATES",
         "s_IR": "Projected Infra Red Intensities",
-        "s_UV": "Excitation energies",
-        "s_ECD": "CD Spectrum",
         "geom_start": "Output coordinates in angstroms",
         "finish": "Total times",
         "opt_done": "Optimization converged",
@@ -98,17 +91,28 @@ class NWChemParser(BaseParser):
         uv = np.zeros(shape=(1, 2))
         ecd = np.zeros(shape=(1, 2))
 
-        if self.regex["s_UV"] in self.fl:
-            uv_text = self.get_filtered_text(start=self.regex["s_UV"], end="\n\n").splitlines()
-            uv_data = self.parse_table(uv_text, [self.regex["idx_en_tddft"], self.regex["idx_imp_tddft"]])
-            if uv_data:
-                uv = np.array(uv_data, dtype=np.float64)
+        root_pat = r"(\d+)\s+singlet a\s+[-\d.]+\s+a\.u\.\s+([-\d.]+)\s+eV"
+        os_pat = r"Dipole Oscillator Strength\s+([-\d.]+)"
+        rs_pat = r"Rotatory Strength \(1E-40 esu\*\*2cm\*\*2\):\s+([-\d.]+)"
 
-        if self.regex["s_ECD"] in self.fl:
-            ecd_text = self.get_filtered_text(start=self.regex["s_ECD"], end="\n\n").splitlines()
-            ecd_data = self.parse_table(ecd_text, [self.regex["idx_en_tddft"], self.regex["idx_imp_tddft"]])
-            if ecd_data:
-                ecd = np.array(ecd_data, dtype=np.float64)
+        uv_list = []
+        ecd_list = []
+        for chunk in self.fl.split("Root "):
+            m = re.search(root_pat, chunk)
+            if not m:
+                continue
+            ev = float(m.group(2))
+            os_m = re.search(os_pat, chunk)
+            rs_m = re.search(rs_pat, chunk)
+            if os_m:
+                uv_list.append([ev, float(os_m.group(1))])
+            if rs_m:
+                ecd_list.append([ev, float(rs_m.group(1))])
+
+        if uv_list:
+            uv = np.array(uv_list, dtype=np.float64)
+        if ecd_list:
+            ecd = np.array(ecd_list, dtype=np.float64)
 
         return uv, ecd
 

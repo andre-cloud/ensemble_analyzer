@@ -44,13 +44,20 @@ Total times  cpu:      10.0s     wall:      12.0s
 """
 
 NWCHEM_TDDFT = """
-Excitation energies
-       1:     5.0000    0.1234
-       2:     6.0000    0.5678
-
-
-
-Total times  cpu:      10.0s     wall:      12.0s
+   Root   1 singlet a              0.183756 a.u.                5.0000 eV 
+   ----------------------------------------------------------------------------
+      Dipole Oscillator Strength                    0.1234000000
+      Rotatory Strength (1E-40 esu**2cm**2):            0.0123000000
+   ----------------------------------------------------------------------------
+   Root   2 singlet a              0.220518 a.u.                6.0000 eV 
+   ----------------------------------------------------------------------------
+      Dipole Oscillator Strength                    0.5678000000
+      Rotatory Strength (1E-40 esu**2cm**2):            0.0000000000
+   ----------------------------------------------------------------------------
+   Root   1 triplet a              0.183756 a.u.                5.0000 eV 
+   ----------------------------------------------------------------------------
+      Transition Moments                    Spin forbidden
+   ----------------------------------------------------------------------------
 """
 
 NWCHEM_CRASHED = """
@@ -153,7 +160,13 @@ class TestNWChemParser:
             assert uv.shape == (2, 2)
             assert np.isclose(uv[0, 0], 5.0)
             assert np.isclose(uv[0, 1], 0.1234)
-            assert ecd.shape == (1, 2)
+            assert np.isclose(uv[1, 0], 6.0)
+            assert np.isclose(uv[1, 1], 0.5678)
+            assert ecd.shape == (2, 2)
+            assert np.isclose(ecd[0, 0], 5.0)
+            assert np.isclose(ecd[0, 1], 0.0123)
+            assert np.isclose(ecd[1, 0], 6.0)
+            assert np.isclose(ecd[1, 1], 0.0)
 
     def test_parse_tddft_not_found(self, parser):
         parser.fl = "no excitations"
