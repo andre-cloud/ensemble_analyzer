@@ -119,7 +119,9 @@ class NWChemCalc(BaseCalc):
 
     def single_point(self) -> Tuple[NWChem, str]:
         calc, label = self._std_calc()
-        calc.parameters["task"] = "energy"
+        if "task" not in self.protocol.add_input:
+            calc.parameters["task"] = "energy"
+        
         return calc, label
 
     def optimisation(self) -> Tuple[NWChem, str]:

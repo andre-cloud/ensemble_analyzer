@@ -60,14 +60,14 @@ class NWChemParser(BaseParser):
             if self.regex["units_B"] != "cm-1":
                 B /= CONVERT_B[self.regex["units_B"]]
         else:
-            self.log.warning("\tB not found, calculating with ASE")
+            self.log.warning(f"\t{self.log.WARNING} B not found, calculating with ASE")
             B = self.calculate_B()
 
         match_M = re.findall(self.regex["m"], self.fl)
         if match_M:
             M = np.array(match_M[-1], dtype=float)
         else:
-            self.log.warning("\tM not found, storing a versor")
+            self.log.warning(f"\t{self.log.WARNING} M not found, storing a versor")
             M = np.array([1, 0, 0])
 
         return B, M
