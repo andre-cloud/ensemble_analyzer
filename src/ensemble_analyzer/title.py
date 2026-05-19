@@ -21,7 +21,7 @@ text = f"""
 MIT license
 v. {version}
 
-GitHub: https://github.com/andre-cloud/Ensemble_Analyzer.git
+GitHub: https://github.com/andre-cloud/ensemble_analyzer.git
 
 """
 

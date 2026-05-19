@@ -91,11 +91,10 @@ class TestParserParameter:
         
         mock_args["p"].opt = True
         
-        # Case 1: Strict (Default) -> Should raise Exception -> caught -> return False
+        # Case 1: Strict (Default) -> Should raise RuntimeError
         mock_args["p"].skip_opt_fail = False
-        success = get_conf_parameters(**mock_args)
-        assert success is False
-        assert mock_args["conf"].active is False
+        with pytest.raises(RuntimeError, match="geometry not converged"):
+            get_conf_parameters(**mock_args)
         
         # Case 2: Permissive -> Should warn and return True but deactivate
         mock_args["conf"].active = True # Reset

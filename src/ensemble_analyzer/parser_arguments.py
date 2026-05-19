@@ -164,14 +164,7 @@ def parser_arguments()-> argparse.Namespace:
         help="Total CPU budget (auto-split across parallel single-point jobs). Default: %(default)s",
         default=8,
     )
-    system_group.add_argument(
-        "-calc",
-        "--calculator",
-        help="Define the calculator to use. Default %(default)s",
-        choices=["orca", "gaussian"],
-        default="orca",
-    )
-
+    
     graph_group = parser.add_argument_group("Graph Parameters")
 
     graph_group.add_argument(

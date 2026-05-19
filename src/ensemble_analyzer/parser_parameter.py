@@ -168,6 +168,8 @@ def get_conf_parameters(
 
         return True
 
+    except RuntimeError:
+        raise
     except Exception as e:
         # 3. CATTURA IL CRASH SILENZIOSO
         log.error(f"UNHANDLED EXCEPTION while parsing Conf {conf.number}: {str(e)}")
