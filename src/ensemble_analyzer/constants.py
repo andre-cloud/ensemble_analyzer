@@ -66,7 +66,7 @@ def ordinal(n: int) -> str:
 regex_parsing = {
     "orca": {"ext": "out"},
     "gaussian": {"ext": "log"},
-    "nwchem": {"ext": "log"},
+    "nwchem": {"ext": "nwo"},
     "tblite": {"ext": None},
     "aimnet": {"ext": None},
 }

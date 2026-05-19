@@ -111,7 +111,7 @@ class BaseMlCalc(BaseCalc):
     def frequency(self) -> Tuple[Any, str]:
         raise NotImplementedError(
             f"Frequency not implemented for ML calculator '{self.label}'. "
-            "Use a QM calculator (ORCA/Gaussian) for freq steps."
+            "Use a QM calculator (ORCA/Gaussian/NWChem) for Freq steps."
         )
 
 

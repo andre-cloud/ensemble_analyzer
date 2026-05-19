@@ -33,8 +33,8 @@ class NWChemParser(BaseParser):
         "ext": "log",
     }
 
-    def __init__(self, output_name: str, log) -> None:
-        super().__init__(output_name, log)
+    def __init__(self, output_name: str, log, conf=None) -> None:
+        super().__init__(output_name, log, conf)
         self.regex = self.REGEX
         self.correct_exiting = self.normal_termination()
         if not self.correct_exiting:
@@ -43,7 +43,7 @@ class NWChemParser(BaseParser):
     def parse_geom(self) -> np.ndarray:
         fl = self.get_filtered_text(start=self.regex["geom_start"], end=self.regex["break"])
 
-        pattern = r"\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)"
+        pattern = r"(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)\s*$"
         coords = np.array(re.findall(pattern, fl, flags=re.MULTILINE), dtype=float)
         return coords
 
@@ -61,7 +61,7 @@ class NWChemParser(BaseParser):
                 B /= CONVERT_B[self.regex["units_B"]]
         else:
             self.log.warning("\tB not found, storing a versor")
-            B = np.array([1, 0, 0])
+            B = self.calculate_B()
 
         match_M = re.findall(self.regex["m"], self.fl)
         if match_M:

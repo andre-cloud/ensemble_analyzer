@@ -41,7 +41,7 @@ class GaussianParser(BaseParser):
     }
 
 
-    def __init__(self, output_name: str, log: 'Logger') -> None:
+    def __init__(self, output_name: str, log: 'Logger', conf=None) -> None:
         """Initialize Gaussian parser and detect version.
 
         Args:

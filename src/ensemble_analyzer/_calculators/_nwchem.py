@@ -1,10 +1,11 @@
 import shutil
 import os
+from pathlib import Path
+import warnings
+from typing import Tuple
 
 from ase.calculators.nwchem import NWChem
 from ensemble_analyzer._calculators.base import BaseCalc, register_calculator
-
-from typing import Tuple
 
 
 NWCHEM_COMMAND = (
@@ -38,10 +39,48 @@ class NWChemCalc(BaseCalc):
             if solv:
                 kw["cosmo"] = {"solvent": solv.lower()}
 
-        memory_mb = self.cpu * 2000
+        memory_mb = self.cpu * 5000
         kw["memory"] = f"{memory_mb} mb"
 
+        current_movecs = os.path.abspath(
+            f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_nwchem/{self.conf.number}_p{self.protocol.number}_nwchem.movecs"
+        ).replace('\\', '/')
+
+        if getattr(self.protocol, "read_orbitals", None):
+            # If read_orbitals is an int, read from that specific protocol. Otherwise, default to previous.
+            prev_p_num = self.protocol.read_orbitals
+            old_movecs = os.path.abspath(
+                f"{self.conf.folder}/protocol_{prev_p_num}/{self.conf.number}_p{self.protocol.number}_nwchem/{self.conf.number}_p{prev_p_num}_nwchem.movecs"
+            ).replace('\\', '/')
+            
+            kw["dft"]["vectors"] = f'input "{old_movecs}" output "{current_movecs}"'
+        else:
+            kw["dft"]["vectors"] = f'output "{current_movecs}"'
+
         return kw
+
+    def _build_constraints(self) -> str:
+        if not self.constrains:
+            return ""
+
+        if isinstance(self.constrains, str):
+            raw = self.constrains
+        elif isinstance(self.constrains, list):
+            if all(isinstance(c, list) for c in self.constrains):
+                atoms = []
+                for constraint in self.constrains:
+                    atoms.extend(str(idx + 1) for idx in constraint)
+                raw = f"fix atom {' '.join(atoms)}"
+            elif all(isinstance(c, str) for c in self.constrains):
+                raw = "\n".join(self.constrains)
+            else:
+                raw = str(self.constrains)
+        else:
+            raw = str(self.constrains)
+
+        if "constraints" not in raw.lower():
+            return f"constraints\n  {raw}\nend"
+        return raw
 
     def _std_calc(self) -> Tuple[NWChem, str]:
         kw = self.common_str()
@@ -52,34 +91,45 @@ class NWChemCalc(BaseCalc):
             x in command for x in ("mpirun", "mpiexec")
         ):
             command = f"mpirun -np {self.cpu} {command}"
-        command = f"{command} PREFIX.nwi > PREFIX.nwo"
+        command = f"{command} {self.conf.number}_p{self.protocol.number}_nwchem.nwi > {self.conf.number}_p{self.protocol.number}_nwchem.nwo"
 
         calculator = NWChem(label=ase_label, command=command, **kw)
 
+        extra = []
         if self.protocol.add_input.strip():
-            add_input = self.protocol.add_input
+            extra.append(self.protocol.add_input)
+
+        constraints_block = self._build_constraints()
+        if constraints_block:
+            extra.append(constraints_block)
+
+        if extra:
+            block = "\n\n".join(extra)
             original = calculator.write_input
 
             def patched_write_input(atoms, properties=None, system_changes=None):
                 original(atoms, properties, system_changes)
-                from pathlib import Path
                 inp = Path(calculator.directory) / calculator.input_filename()
                 with open(inp, "a") as f:
-                    f.write("\n" + add_input + "\n")
+                    f.write("\n" + block + "\n")
 
             calculator.write_input = patched_write_input
 
         return calculator, "nwchem"
 
     def single_point(self) -> Tuple[NWChem, str]:
-        return self._std_calc()
+        calc, label = self._std_calc()
+        calc.parameters["task"] = "energy"
+        return calc, label
 
     def optimisation(self) -> Tuple[NWChem, str]:
         calc, label = self._std_calc()
         calc.parameters["task"] = "optimize"
-        if self.protocol.freq:
-            raise NotImplementedError("Frequency in NWChem are NOT supported for now in EnAn.")
+        if self.protocol.freq: 
+            warnings.warn("Frequency calculation along side Optimization in NWChem is NOT supported in EnAn.", UserWarning)
         return calc, label
 
     def frequency(self) -> Tuple[NWChem, str]:
-        raise NotImplementedError("Frequency in NWChem are NOT supported for now in EnAn.")
+        calc, label = self._std_calc()
+        calc.parameters["task"] = "freq"
+        return calc, label

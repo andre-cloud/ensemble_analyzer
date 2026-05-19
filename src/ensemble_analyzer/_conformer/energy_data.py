@@ -170,7 +170,7 @@ def compute_rotational_constants(conf: 'Conformer', protocol_number: int) -> Non
 
     from ase import Atoms
     atoms = Atoms(
-        symbols="".join(tuple(conf.atoms)),
+        symbols="".join(list(conf.atoms)),
         positions=conf.last_geometry,
     )
     moments = atoms.get_moments_of_inertia()  # [amu·Å²]

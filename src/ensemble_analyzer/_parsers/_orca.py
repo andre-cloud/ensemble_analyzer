@@ -96,7 +96,7 @@ State  Energy     Wavelength     R         MX        MY        MZ
         "ext": "out",}
     }
     
-    def __init__(self, output_name: str, log: 'Logger') -> None:
+    def __init__(self, output_name: str, log: 'Logger', conf=None) -> None:
         """Initialize ORCA parser and detect version.
 
         Args:
