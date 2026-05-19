@@ -162,7 +162,7 @@ State  Energy     Wavelength     R         MX        MY        MZ
             if self.regex['units_B'] != 'cm-1':
                 B /= CONVERT_B[self.regex['units_B']]
         else:
-            self.log.warning("\tB not found, storing a versor")
+            self.log.warning("\tB not found, calculating with ASE")
             B = self.calculate_B()
 
         match_M = re.findall(self.regex['m'], self.fl)

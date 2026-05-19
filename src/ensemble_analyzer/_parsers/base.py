@@ -162,6 +162,8 @@ class BaseParser(ABC):
         Returns:
             np.ndarray: Array of shape (3,) containing B_a, B_b, B_c in cm⁻¹.
         """
+
+        self.log.debug(f'{self.conf.last_geometry = }')
         atoms = Atoms(
             symbols="".join(tuple(self.conf.atoms)),
             positions=self.conf.last_geometry,

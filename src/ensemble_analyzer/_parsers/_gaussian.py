@@ -41,7 +41,7 @@ class GaussianParser(BaseParser):
     }
 
 
-    def __init__(self, output_name: str, log: 'Logger', conf=None) -> None:
+    def __init__(self, output_name: str, log, conf=None) -> None:
         """Initialize Gaussian parser and detect version.
 
         Args:
@@ -83,7 +83,7 @@ class GaussianParser(BaseParser):
             if self.regex['units_B'] != 'cm-1':
                 B /= CONVERT_B[self.regex['units_B']]
         else:
-            self.log.warning("\tB not found, storing a versor")
+            self.log.warning("\tB not found, calculating with ASE")
             B = self.calculate_B()
 
         fl = self.get_filtered_text(start='Dipole moment', end='Quadrupole')
