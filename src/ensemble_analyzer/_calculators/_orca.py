@@ -121,9 +121,10 @@ class OrcaCalc(BaseCalc):
 
         if self.protocol.read_orbitals:
             calculator.parameters["orcasimpleinput"] += " moread"
-            calculator.parameters[
-                "orcablocks"
-            ] += f'\n%moinp "{self.conf.folder}/protocol_{self.protocol.read_orbitals}/orca.gbw"\n'
+            gbw_path = os.path.abspath(
+                f"{self.conf.folder}/protocol_{self.protocol.read_orbitals}/orca.gbw"
+            ).replace('\\', '/')
+            calculator.parameters["orcablocks"] += f'\n%moinp "{gbw_path}"\n'
 
         if "freq" in self.protocol.add_input.lower():
             calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"

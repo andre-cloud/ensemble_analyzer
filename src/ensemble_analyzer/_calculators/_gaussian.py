@@ -51,20 +51,25 @@ class GaussianCalc(BaseCalc):
         ase_label = f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_gaussian"
         label = "gaussian"
 
+        chk_path = os.path.abspath(
+            f"{self.conf.folder}/protocol_{self.protocol.number}/gaussian.chk"
+        ).replace('\\', '/')
+
         calc = Gaussian(
             label=ase_label,
             output_type='N',
             mem=f"{self.cpu*2}GB",
-            chk='gaussian.chk',
+            chk=chk_path,
             extra=route,
             charge=self.protocol.charge,
             mult=self.protocol.mult,
             nprocshared=self.cpu,
         )
         if self.protocol.read_orbitals:
-            calc.oldchk = (
+            oldchk_path = os.path.abspath(
                 f"{self.conf.folder}/protocol_{self.protocol.read_orbitals}/gaussian.chk"
-            )
+            ).replace('\\', '/')
+            calc.oldchk = oldchk_path
 
         return calc, label
 
