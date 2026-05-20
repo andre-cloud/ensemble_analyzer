@@ -129,7 +129,7 @@ class OrcaCalc(BaseCalc):
             calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"
 
         if post:
-            original = calculator.write_input
+            original = calculator.write_inputfiles
 
             def patched_write_input(atoms, properties=None, system_changes=None):
                 original(atoms, properties, system_changes)
