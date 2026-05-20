@@ -59,7 +59,6 @@ class OrcaCalc(BaseCalc):
     Handles input generation for SP, OPT, and FREQ jobs.
     """
 
-    label = "orca"
     VERSION = VERSION if VERSION else 0
 
     def common_str(self) -> Tuple[str, str, str]:
@@ -108,11 +107,12 @@ class OrcaCalc(BaseCalc):
         """
         si, ob, post = self.common_str()
 
-        ase_label = f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_orca"
+        ase_dir = f"{self.conf.folder}/protocol_{self.protocol.number}"
+        label = "orca"
 
         calculator = ORCA(
             profile=orca_profile,
-            label=ase_label,
+            directory=ase_dir,
             orcasimpleinput=si,
             orcablocks=ob,
             charge=self.protocol.charge,
@@ -133,13 +133,13 @@ class OrcaCalc(BaseCalc):
 
             def patched_write_input(atoms, properties=None, system_changes=None):
                 original(atoms, properties, system_changes)
-                inp = Path(calculator.directory) / calculator.input_filename()
+                inp = Path(calculator.directory) / calculator.template.inputname
                 with open(inp, "a") as f:
                     f.write("\n" + post + "\n")
 
             calculator.write_input = patched_write_input
 
-        return calculator, ase_label
+        return calculator, label
 
     def single_point(self) -> Tuple[ORCA, str]:
         """Configure Single Point calculation."""

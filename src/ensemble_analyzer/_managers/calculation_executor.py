@@ -10,7 +10,8 @@ from ensemble_analyzer._calculators.base import ML_CALCULATORS
 from ensemble_analyzer._conformer.energy_data import EnergyRecord, compute_rotational_constants
 
 import os
-
+import shutil
+from pathlib import Path
 import time
 import numpy as np
 
@@ -107,13 +108,20 @@ class CalculationExecutor:
             )
             return True
 
-        # Parse output (files already in conf.folder/protocol_N via label path)
         output_file = os.path.join(
             os.getcwd(),
             conf.folder,
             f"protocol_{protocol.number}",
             f'{conf.number}_p{protocol.number}_{label}.{regex_parsing[protocol.calculator]["ext"]}'
         )
+
+        # GenericFileIOCalculator (ORCA, etc.) writes with template-defined
+        # names inside calc.directory; rename to match parser expectation
+        if hasattr(calc, 'template') and hasattr(calc.template, 'outputname'):
+            src = Path(calc.directory) / calc.template.outputname
+            if src.exists() and os.path.normpath(str(src)) != os.path.normpath(output_file):
+                os.makedirs(os.path.dirname(output_file), exist_ok=True)
+                shutil.move(str(src), output_file)
 
         success = get_conf_parameters(
             conf=conf,
