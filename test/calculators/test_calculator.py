@@ -62,12 +62,13 @@ class TestCalculators:
         # Mock ORCA profile availability
         with patch("ensemble_analyzer._calculators._orca.orca_profile"):
             calc = OrcaCalc(proto, 4, conf)
-            si, ob = calc.common_str()
+            si, ob, post = calc.common_str()
             
             assert "B3LYP 6-31G*" in si
             assert "CPCM" in si 
             assert "nopop" in si
             assert "%pal nprocs 4 end" in ob
+            assert post == ""
 
     def test_orca_freq_block(self, setup_calc):
         conf, proto = setup_calc
@@ -104,3 +105,61 @@ class TestCalculators:
         assert "A 1 2 3 F" in ase_calc.parameters["addsec"]
         assert "D 1 2 3 4 F" in ase_calc.parameters["addsec"]
         assert "X 1 F" in ase_calc.parameters["addsec"]
+
+
+class TestSplitPostBlocks:
+    """Tests for _split_post_blocks edge cases (indented vs compact)."""
+
+    def test_indented_frag(self):
+        from ensemble_analyzer._calculators._orca import _split_post_blocks
+        t = "%frag\n Definition\n  1 {18:27} end\n  2 {0:17} end\n end\nend"
+        pre, post = _split_post_blocks(t)
+        assert pre == ""
+        assert post == "%frag\n Definition\n  1 {18:27} end\n  2 {0:17} end\n end\nend"
+
+    def test_compact_frag(self):
+        from ensemble_analyzer._calculators._orca import _split_post_blocks
+        t = "%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend"
+        pre, post = _split_post_blocks(t)
+        assert pre == ""
+        assert post == "%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend"
+
+    def test_newline_prefix_frag(self):
+        from ensemble_analyzer._calculators._orca import _split_post_blocks
+        t = "\n%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend"
+        pre, post = _split_post_blocks(t)
+        assert post == "%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend"
+
+    def test_mixed_pre_and_post(self):
+        from ensemble_analyzer._calculators._orca import _split_post_blocks
+        t = "%scf maxiter 500 end\n%frag\nDefinition\n1 {18:27} end\nend\nend"
+        pre, post = _split_post_blocks(t)
+        assert pre == "%scf maxiter 500 end"
+        assert post == "%frag\nDefinition\n1 {18:27} end\nend\nend"
+
+    def test_multiple_post_blocks(self):
+        from ensemble_analyzer._calculators._orca import _split_post_blocks
+        t = "%frag\n1 {0:5} end\nend\n%eprnmr\ngtensor 1\nend"
+        pre, post = _split_post_blocks(t)
+        assert pre == ""
+        assert post == "%frag\n1 {0:5} end\nend\n%eprnmr\ngtensor 1\nend"
+
+    def test_pre_non_post_block_and_post(self):
+        from ensemble_analyzer._calculators._orca import _split_post_blocks
+        t = "%output\n print[ P_Mulliken 1 ] end\n%frag\n1 {0:5} end\nend"
+        pre, post = _split_post_blocks(t)
+        assert pre == "%output\n print[ P_Mulliken 1 ] end"
+        assert post == "%frag\n1 {0:5} end\nend"
+
+    def test_empty(self):
+        from ensemble_analyzer._calculators._orca import _split_post_blocks
+        pre, post = _split_post_blocks("")
+        assert pre == ""
+        assert post == ""
+
+    def test_no_post_blocks(self):
+        from ensemble_analyzer._calculators._orca import _split_post_blocks
+        t = "%scf maxiter 500 end\n%maxcore 8000"
+        pre, post = _split_post_blocks(t)
+        assert pre == t
+        assert post == ""
