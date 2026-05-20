@@ -281,8 +281,8 @@ class Protocol:
         else: 
             self.solvent = None
 
-        # Clean additional input
-        self.add_input = self.add_input.replace("'", "\"")
+        # Clean additional input: quote compat + old-format double-brace unescape
+        self.add_input = self.add_input.replace("'", "\"").replace("{{", "{").replace("}}", "}")
 
         # Load eventual more Thresholds
         self.get_thrs(self.load_threshold())

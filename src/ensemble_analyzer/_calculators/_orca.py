@@ -85,7 +85,7 @@ class OrcaCalc(BaseCalc):
 
         si = f"{self.protocol.functional} {self.protocol.basis} {solv} nopop"
 
-        raw_input = self.protocol.add_input.format(CONF=self.conf.folder)
+        raw_input = self.protocol.add_input.replace("CONF", str(self.conf.folder))
         pre, post = _split_post_blocks(raw_input)
 
         ob = (
