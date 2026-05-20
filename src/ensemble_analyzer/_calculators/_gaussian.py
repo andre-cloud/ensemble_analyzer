@@ -63,7 +63,7 @@ class GaussianCalc(BaseCalc):
         )
         if self.protocol.read_orbitals:
             calc.oldchk = (
-                f"{self.conf.folder}/protocol_{self.protocol.read_orbitals}/{self.conf.number}_{self.protocol.read_orbitals}_gaussian.chk"
+                f"{self.conf.folder}/protocol_{self.protocol.read_orbitals}/gaussian.chk"
             )
 
         return calc, label

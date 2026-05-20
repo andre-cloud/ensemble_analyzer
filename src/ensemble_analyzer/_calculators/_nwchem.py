@@ -49,14 +49,14 @@ class NWChemCalc(BaseCalc):
         kw["memory"] = f"{memory_mb} mb"
 
         current_movecs = os.path.abspath(
-            f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_nwchem/{self.conf.number}_p{self.protocol.number}_nwchem.movecs"
+            f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_nwchem/nwchem.movecs"
         ).replace('\\', '/')
 
         if getattr(self.protocol, "read_orbitals", None):
             # If read_orbitals is an int, read from that specific protocol. Otherwise, default to previous.
             prev_p_num = self.protocol.read_orbitals
             old_movecs = os.path.abspath(
-                f"{self.conf.folder}/protocol_{prev_p_num}/{self.conf.number}_p{self.protocol.number}_nwchem/{self.conf.number}_p{prev_p_num}_nwchem.movecs"
+                f"{self.conf.folder}/protocol_{prev_p_num}/{self.conf.number}_p{self.protocol.number}_nwchem/nwchem.movecs"
             ).replace('\\', '/')
             
             kw["dft"]["vectors"] = f'input "{old_movecs}" output "{current_movecs}"'
