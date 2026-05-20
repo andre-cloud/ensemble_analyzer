@@ -139,7 +139,7 @@ class OrcaCalc(BaseCalc):
 
             calculator.write_input = patched_write_input
 
-        return calculator, "orca"
+        return calculator, ase_label
 
     def single_point(self) -> Tuple[ORCA, str]:
         """Configure Single Point calculation."""

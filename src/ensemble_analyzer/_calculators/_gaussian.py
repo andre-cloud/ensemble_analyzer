@@ -65,7 +65,7 @@ class GaussianCalc(BaseCalc):
                 f"{self.conf.folder}/protocol_{self.protocol.read_orbitals}/{self.conf.number}_{self.protocol.read_orbitals}_gaussian.chk"
             )
 
-        return calc, "gaussian"
+        return calc, ase_label
 
     def single_point(self) -> Tuple[Gaussian, str]:
         """Configure Single Point calculation."""

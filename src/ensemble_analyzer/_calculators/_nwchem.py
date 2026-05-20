@@ -22,8 +22,6 @@ class NWChemCalc(BaseCalc):
     Handles input generation for SP, OPT, and FREQ jobs.
     """
 
-    label = "nwchem"
-
     def common_str(self) -> dict:
         """Build the common NWChem input keyword dictionary.
 
@@ -140,7 +138,7 @@ class NWChemCalc(BaseCalc):
 
             calculator.write_input = patched_write_input
 
-        return calculator, "nwchem"
+        return calculator, ase_label
 
     def single_point(self) -> Tuple[NWChem, str]:
         """Configure a single-point energy calculation with NWChem.
