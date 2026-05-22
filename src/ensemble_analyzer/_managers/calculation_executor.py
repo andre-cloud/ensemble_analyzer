@@ -108,21 +108,22 @@ class CalculationExecutor:
             )
             return True
 
+        calc_name = protocol.calculator.lower()
+        ext = regex_parsing[calc_name]["ext"]
         output_file = os.path.join(
             os.getcwd(),
             conf.folder,
             f"protocol_{protocol.number}",
-            f'{conf.number}_p{protocol.number}_{label}.{regex_parsing[protocol.calculator]["ext"]}'
+            f'{conf.number}_p{protocol.number}_{label}.{ext}'
         )
 
-
-        self.logger.debug(calc.template.__dict__)
         # GenericFileIOCalculator (ORCA, etc.) writes with template-defined
         # names inside calc.directory; rename to match parser expectation
         if hasattr(calc, 'template') and hasattr(calc.template, 'outputname'):
-            src = Path(calc.directory) / calc.template.outputname
-            if src.exists() and os.path.normpath(str(src)) != os.path.normpath(output_file):
-                shutil.move(str(src), output_file)
+            src = Path(calc.directory).resolve() / calc.template.outputname
+            dst = Path(output_file)
+            if src.exists() and src != dst:
+                shutil.move(str(src), str(dst))
 
         success = get_conf_parameters(
             conf=conf,
