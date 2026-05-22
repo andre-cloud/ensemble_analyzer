@@ -69,7 +69,7 @@ def get_conf_parameters(
         if not parser.correct_exiting:
             conf.active = False
             log.warning(f"Parser detected abnormal termination for Conf {conf.number}. Deactivating.")
-            return True
+            return False
 
         e = parser.parse_energy()
 
@@ -168,8 +168,6 @@ def get_conf_parameters(
 
         return True
 
-    except RuntimeError:
-        raise
     except Exception as e:
         # 3. CATTURA IL CRASH SILENZIOSO
         log.error(f"UNHANDLED EXCEPTION while parsing Conf {conf.number}: {str(e)}")
