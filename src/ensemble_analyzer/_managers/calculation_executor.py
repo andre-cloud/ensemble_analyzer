@@ -75,7 +75,7 @@ class CalculationExecutor:
         
         # Run calculation
         os.environ['OMP_NUM_THREADS'] = str(per_job_cpu)
-        os.environ['MKL_NUM_THREADS'] = str(per_job_cpu)
+        os.environ['MKL_NUM_THREADS'] = str(per_job_cpu) 
         os.environ['OPENBLAS_NUM_THREADS'] = str(per_job_cpu)
 
         start_time = time.perf_counter()
@@ -116,13 +116,12 @@ class CalculationExecutor:
         )
 
 
-        self.logger.debug(calc.__dict__)
+        self.logger.debug(calc.template.__dict__)
         # GenericFileIOCalculator (ORCA, etc.) writes with template-defined
         # names inside calc.directory; rename to match parser expectation
         if hasattr(calc, 'template') and hasattr(calc.template, 'outputname'):
             src = Path(calc.directory) / calc.template.outputname
             if src.exists() and os.path.normpath(str(src)) != os.path.normpath(output_file):
-                os.makedirs(os.path.dirname(output_file), exist_ok=True)
                 shutil.move(str(src), output_file)
 
         success = get_conf_parameters(
