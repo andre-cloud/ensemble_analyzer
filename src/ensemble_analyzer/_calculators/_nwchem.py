@@ -131,7 +131,7 @@ class NWChemCalc(BaseCalc):
 
             def patched_write_input(atoms: Any, properties: Any = None, system_changes: Any = None) -> None:
                 """Patch write_input to append extra blocks to the NWChem input file."""
-                original(atoms, properties)
+                original(atoms, properties, system_changes)
                 inp = Path(calculator.directory) / calculator.input_filename()
                 with open(inp, "a") as f:
                     f.write("\n" + block + "\n")
