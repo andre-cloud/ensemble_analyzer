@@ -130,15 +130,15 @@ class OrcaCalc(BaseCalc):
             calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"
 
         if post:
-            original = calculator.write_input
+            original = calculator.write_inputfiles
 
             def patched_write_input(atoms, properties=None, system_changes=None):
-                original(atoms, properties, system_changes=system_changes)
+                original(atoms, properties, system_changes)
                 inp = Path(calculator.directory) / calculator.template.inputname
                 with open(inp, "a") as f:
                     f.write("\n" + post + "\n")
 
-            calculator.write_input = patched_write_input
+            calculator.write_inputfiles = patched_write_input
 
         return calculator, label
 
