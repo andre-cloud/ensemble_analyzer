@@ -116,7 +116,7 @@ class CalculationExecutor:
         )
 
 
-        self.log.debug(calc.__dict__)
+        self.logger.debug(calc.__dict__)
         # GenericFileIOCalculator (ORCA, etc.) writes with template-defined
         # names inside calc.directory; rename to match parser expectation
         if hasattr(calc, 'template') and hasattr(calc.template, 'outputname'):
