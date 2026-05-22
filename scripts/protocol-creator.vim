@@ -361,7 +361,6 @@ function! s:StepOptFreq(...)
 endfunction
 
 function! s:NewProtocol()
-  new
   set ft=json
   call setline(1, [
         \ '{',
