@@ -11,7 +11,8 @@
 "   :ProtocolHelp            Show this message
 "
 "   <C-x><C-u>  Omni-completion (field names, functionals, basis sets)
-"   K           Show field documentation (normal & insert mode)
+"   K           Show field documentation (Normal mode)
+"   <C-k>       Show field documentation (Insert mode)
 
 if exists('g:protocol_creator_loaded')
   finish
@@ -207,6 +208,7 @@ function! s:CompleteProtocol(findstart, base)
   endif
   return candidates
 endfunction
+
 " ─── Syntax highlighting ───────────────────────────────────────────
 function! s:SetupProtocolSyntax()
   setlocal omnifunc=s:CompleteProtocol
@@ -229,7 +231,7 @@ augroup protocol_creator_auto
   au BufRead,BufNewFile *protocol*.json call s:SetupProtocolSyntax()
   au BufRead,BufNewFile *.json
         \ if expand('<afile>:p') =~ 'ensemble_analyzer'
-        \ | call s:SetupProtocolSyntax() | endif
+        \ \| call s:SetupProtocolSyntax() \| endif
 augroup END
 
 " ─── Step insert ───────────────────────────────────────────────────
@@ -316,6 +318,7 @@ function! s:Step(...)
         \ ['charge', '0'],
         \ ])
 endfunction
+
 function! s:StepSP(...)
   let n = a:0 ? a:1 : s:NextStepNumber()
   call s:InsertStep(n, [
@@ -325,6 +328,7 @@ function! s:StepSP(...)
         \ ['charge', '0'],
         \ ])
 endfunction
+
 function! s:StepOpt(...)
   let n = a:0 ? a:1 : s:NextStepNumber()
   call s:InsertStep(n, [
@@ -334,6 +338,7 @@ function! s:StepOpt(...)
         \ ['charge', '0'],
         \ ])
 endfunction
+
 function! s:StepFreq(...)
   let n = a:0 ? a:1 : s:NextStepNumber()
   call s:InsertStep(n, [
@@ -343,6 +348,7 @@ function! s:StepFreq(...)
         \ ['charge', '0'],
         \ ])
 endfunction
+
 function! s:StepOptFreq(...)
   let n = a:0 ? a:1 : s:NextStepNumber()
   call s:InsertStep(n, [
@@ -353,6 +359,7 @@ function! s:StepOptFreq(...)
         \ ['charge', '0'],
         \ ])
 endfunction
+
 function! s:NewProtocol()
   new
   set ft=json
@@ -395,6 +402,7 @@ function! s:ShowFieldDoc()
     echo 'Unknown field: ' . word
   endif
 endfunction
+
 function! s:ShowHelp()
   echohl Title
   echo 'protocol-creator.vim  --  :ProtocolHelp  for help'
@@ -407,13 +415,14 @@ function! s:ShowHelp()
   echo '  :ProtocolStepOptFreq [N] insert opt+freq step'
   echo ''
   echo '  <C-x><C-u>  omni-completion for field names, functionals, basis sets'
-  echo '  K           show field documentation'
+  echo '  K           show field documentation (Normal mode)'
+  echo '  <C-k>       show field documentation (Insert mode)'
 endfunction
 
 augroup protocol_creator_maps
   au!
   au FileType json nnoremap <buffer> <silent> K :call <SID>ShowFieldDoc()<CR>
-  au FileType json inoremap <buffer> <silent> K <C-o>:call <SID>ShowFieldDoc()<CR>
+  au FileType json inoremap <buffer> <silent> <C-k> <C-o>:call <SID>ShowFieldDoc()<CR>
 augroup END
 
 " ─── Info ──────────────────────────────────────────────────────────
