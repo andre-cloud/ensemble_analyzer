@@ -212,6 +212,7 @@ endfunction
 " ─── Syntax highlighting ───────────────────────────────────────────
 function! s:SetupProtocolSyntax()
   setlocal omnifunc=s:CompleteProtocol
+  setlocal completefunc=s:CompleteProtocol
   if !exists('g:syntax_on') | syntax enable | endif
   syn keyword eaProtocolField contained
         \ functional basis calculator solvent
