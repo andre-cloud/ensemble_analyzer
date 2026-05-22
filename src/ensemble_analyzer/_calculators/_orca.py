@@ -133,7 +133,7 @@ class OrcaCalc(BaseCalc):
             original = calculator.write_inputfiles
 
             def patched_write_input(atoms, properties=None, system_changes=None):
-                original(atoms, properties, system_changes)
+                original(atoms, properties)
                 inp = Path(calculator.directory) / calculator.template.inputname
                 with open(inp, "a") as f:
                     f.write("\n" + post + "\n")
