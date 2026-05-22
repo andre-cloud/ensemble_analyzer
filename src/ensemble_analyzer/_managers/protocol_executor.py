@@ -188,11 +188,11 @@ class ProtocolExecutor:
         for i, c in enumerate(pending, 1):
             success = self.calculator.execute(i, c, protocol, self.config.cpu)
             if not success:
-                if not protocol.skip_opt_fail:
-                    raise RuntimeError(
-                        f"Critical failure for Conf {c.number} — "
-                        "set skip_opt_fail: true in the protocol to bypass"
-                    )
+                # if not protocol.skip_opt_fail:
+                #     raise RuntimeError(
+                #         f"Critical failure for Conf {c.number} — "
+                #         "set skip_opt_fail: true in the protocol to bypass"
+                #     )
                 c.active = False
             self.checkpoint_manager.save(conformers, self.logger)
 
