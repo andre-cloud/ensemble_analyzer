@@ -115,6 +115,8 @@ class CalculationExecutor:
             f'{conf.number}_p{protocol.number}_{label}.{regex_parsing[protocol.calculator]["ext"]}'
         )
 
+
+        self.log.debug(calc.__dict__)
         # GenericFileIOCalculator (ORCA, etc.) writes with template-defined
         # names inside calc.directory; rename to match parser expectation
         if hasattr(calc, 'template') and hasattr(calc.template, 'outputname'):
