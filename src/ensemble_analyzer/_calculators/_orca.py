@@ -138,7 +138,7 @@ class OrcaCalc(BaseCalc):
                 with open(inp, "a") as f:
                     f.write("\n" + post + "\n")
 
-            calculator.write_input = patched_write_input
+            calculator.write_inputfiles = patched_write_input
 
         return calculator, label
 
