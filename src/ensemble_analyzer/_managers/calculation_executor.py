@@ -86,7 +86,11 @@ class CalculationExecutor:
             protocol_number=protocol.number
         ):
             try:
-                energy = atoms.get_potential_energy()
+                if is_ml:
+                    energy = atoms.get_potential_energy()
+                else:
+                    calc.write_inputfiles(atoms, ['energy'])
+                    calc.template.execute(calc.directory, calc.profile)
             except Exception as e:
                 self.logger.debug(e)
                 return False
