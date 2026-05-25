@@ -122,7 +122,7 @@ class CalculationExecutor:
                     m_vec = np.asarray(dipole)
                 else: 
                     m_vec = np.array([1,1,1])
-                    
+                self.logger.debug(f'{m_vec = }')
                 conf.energies.set(protocol.number, "m_vec", m_vec)
                 conf.energies.set(protocol.number, "m", float(np.linalg.norm(m_vec)))
             else:
