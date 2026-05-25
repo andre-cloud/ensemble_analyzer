@@ -40,7 +40,16 @@ class CheckpointManager:
             None
         """
         
-        data = {conf.number: conf.__dict__ for conf in ensemble}
+        data = {}
+        for conf in ensemble:
+            data[conf.number] = {
+                "number": conf.number,
+                "last_geometry": conf.last_geometry,
+                "atoms": list(conf.atoms),
+                "energies": conf.energies.as_dict(),
+                "graphs_data": conf.graphs_data.as_dict(),
+                "active": conf.active,
+            }
         
         # Write to temporary file first
         with tempfile.NamedTemporaryFile(
