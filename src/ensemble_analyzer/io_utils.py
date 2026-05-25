@@ -81,7 +81,8 @@ class SerialiseEncoder(json.JSONEncoder):
     - NumPy arrays (converted to lists).
     - NumPy numeric types (converted to Python scalars).
     - NaN / Inf floats (converted to None).
-    - Custom objects (via __dict__).
+    - Complex numbers (converted to [real, imag]).
+    - Custom objects with '__dict__' (via obj.__dict__).
     """
     def default(self, obj) -> Any:
         """
@@ -101,4 +102,9 @@ class SerialiseEncoder(json.JSONEncoder):
             return int(obj)
         if isinstance(obj, np.bool_):
             return bool(obj)
-        return obj.__dict__
+        if isinstance(obj, complex):
+            return [obj.real, obj.imag]
+        if hasattr(obj, "__dict__"):
+            return obj.__dict__
+        # Let the base class raise TypeError for anything else
+        return super().default(obj)
