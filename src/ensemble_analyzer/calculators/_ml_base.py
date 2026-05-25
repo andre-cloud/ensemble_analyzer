@@ -17,23 +17,15 @@ class BaseMlCalc(BaseCalc):
         return calc, self.label
 
     def _run_vibrations(self, atoms):
-        ir_intensities = np.array([])
-        try:
-            from ase.vibrations import Infrared
-            vib = Infrared(atoms, name=f"vib_{self.conf.number}_{self.protocol.number}")
-            vib.run()
-            ir_intensities = vib.get_ir_intensities()
-            freqs = vib.get_frequencies()
-        except Exception:
-            from ase.vibrations import Vibrations
-            vib = Vibrations(atoms, name=f"vib_{self.conf.number}_{self.protocol.number}")
-            vib.run()
-            freqs = vib.get_frequencies()
+        from ase.vibrations import Vibrations
+        vib = Vibrations(atoms, name=f"vib_{self.conf.number}_{self.protocol.number}")
+        vib.run()
+        freqs = vib.get_frequencies()
         try:
             vib.clean()
         except Exception:
             pass
-        return freqs, ir_intensities
+        return freqs
 
     def _compute_thermochemistry(self, energy, scaled_freqs):
         from ensemble_analyzer.rrho import free_gibbs_energy
@@ -56,16 +48,6 @@ class BaseMlCalc(BaseCalc):
             except Exception:
                 pass
 
-    def _store_ir_spectrum(self, raw_freqs, ir_intensities):
-        if len(ir_intensities) == 0 or len(raw_freqs) != len(ir_intensities):
-            return
-        from ensemble_analyzer.conformer.spectral_data import SpectralRecord
-        self.conf.graphs_data.add(
-            protocol_number=self.protocol.number,
-            graph_type="IR",
-            record=SpectralRecord(X=raw_freqs, Y=ir_intensities),
-        )
-
     def frequency(self) -> Tuple[Any, str]:
         from ensemble_analyzer.conformer.energy_data import EnergyRecord, compute_rotational_constants
 
@@ -73,7 +55,7 @@ class BaseMlCalc(BaseCalc):
         atoms = self.conf.get_ase_atoms(calc)
 
         start = time.perf_counter()
-        raw_freqs, ir_intensities = self._run_vibrations(atoms)
+        raw_freqs = self._run_vibrations(atoms)
 
         freq_fact = self.protocol.freq_fact
         if freq_fact is None:
@@ -90,7 +72,6 @@ class BaseMlCalc(BaseCalc):
 
         compute_rotational_constants(self.conf, self.protocol.number)
         self._compute_thermochemistry(energy, scaled_freqs)
-        self._store_ir_spectrum(raw_freqs, ir_intensities)
 
         return calc, self.label
 
@@ -108,7 +89,7 @@ class BaseMlCalc(BaseCalc):
         self.conf.last_geometry = atoms.get_positions().copy()
 
         if self.protocol.freq:
-            raw_freqs, ir_intensities = self._run_vibrations(atoms)
+            raw_freqs = self._run_vibrations(atoms)
 
             freq_fact = self.protocol.freq_fact
             if freq_fact is None:
@@ -125,6 +106,5 @@ class BaseMlCalc(BaseCalc):
 
             compute_rotational_constants(self.conf, self.protocol.number)
             self._compute_thermochemistry(energy, scaled_freqs)
-            self._store_ir_spectrum(raw_freqs, ir_intensities)
 
         return calc, self.label
