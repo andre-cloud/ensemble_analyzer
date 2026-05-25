@@ -222,7 +222,7 @@ class PruningManager:
         """
         delta_e = abs(self._get_effective_energy(check) - self._get_effective_energy(ref)) * EH_TO_KCAL
         delta_b = abs(check.rotatory - ref.rotatory)
-        delta_m = abs(check.moment - ref.moment)
+        delta_m = abs(check.moment - ref.moment) if check.moment else np.nan
         
         should_deactivate = (
         delta_e < protocol.thrG and
