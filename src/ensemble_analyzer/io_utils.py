@@ -79,6 +79,8 @@ class SerialiseEncoder(json.JSONEncoder):
 
     Handles serialization of:
     - NumPy arrays (converted to lists).
+    - NumPy numeric types (converted to Python scalars).
+    - NaN / Inf floats (converted to None).
     - Custom objects (via __dict__).
     """
     def default(self, obj) -> Any:
@@ -93,4 +95,10 @@ class SerialiseEncoder(json.JSONEncoder):
         """
         if isinstance(obj, np.ndarray):
             return obj.tolist()
+        if isinstance(obj, np.floating):
+            return None if np.isnan(obj) or np.isinf(obj) else float(obj)
+        if isinstance(obj, np.integer):
+            return int(obj)
+        if isinstance(obj, np.bool_):
+            return bool(obj)
         return obj.__dict__
