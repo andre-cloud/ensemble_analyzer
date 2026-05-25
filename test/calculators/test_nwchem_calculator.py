@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from ase.calculators.nwchem import NWChem
-from ensemble_analyzer._calculators._nwchem import NWChemCalc
+from ensemble_analyzer.calculators.nwchem import NWChemCalc
 
 
 class TestNWChemCalc:
@@ -57,14 +57,14 @@ class TestNWChemCalc:
         kw = calc.common_str()
         assert kw["memory"] == "40000 mb"
 
-    @patch("ensemble_analyzer._calculators._nwchem.NWCHEM_COMMAND", "nwchem")
+    @patch("ensemble_analyzer.calculators.nwchem.NWCHEM_COMMAND", "nwchem")
     def test_single_point(self, setup_calc):
         conf, proto = setup_calc
         calc = NWChemCalc(proto, 4, conf)
         ase_calc, label = calc.single_point()
         assert label == "nwchem"
 
-    @patch("ensemble_analyzer._calculators._nwchem.NWCHEM_COMMAND", "nwchem")
+    @patch("ensemble_analyzer.calculators.nwchem.NWCHEM_COMMAND", "nwchem")
     def test_optimisation(self, setup_calc):
         conf, proto = setup_calc
         proto.freq = False
@@ -72,7 +72,7 @@ class TestNWChemCalc:
         ase_calc, label = calc.optimisation()
         assert ase_calc.parameters["task"] == "optimize"
 
-    @patch("ensemble_analyzer._calculators._nwchem.NWCHEM_COMMAND", "nwchem")
+    @patch("ensemble_analyzer.calculators.nwchem.NWCHEM_COMMAND", "nwchem")
     def test_optimisation_with_freq(self, setup_calc):
         conf, proto = setup_calc
         proto.freq = True
@@ -88,7 +88,7 @@ class TestNWChemCalc:
         ase_calc, label = calc.frequency()
         assert ase_calc.parameters["task"] == "freq"
 
-    @patch("ensemble_analyzer._calculators._nwchem.NWCHEM_COMMAND", "nwchem")
+    @patch("ensemble_analyzer.calculators.nwchem.NWCHEM_COMMAND", "nwchem")
     def test_single_point_with_add_input(self, setup_calc):
         conf, proto = setup_calc
         proto.add_input = "scf\n  thresh 1e-8\nend"

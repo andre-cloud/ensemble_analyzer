@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
 from unittest.mock import MagicMock, mock_open, patch
-from ensemble_analyzer._parsers._nwchem import NWChemParser
+from ensemble_analyzer.parsers.nwchem import NWChemParser
 
 
 NWCHEM_OPT = """

@@ -1,5 +1,6 @@
 from typing import Tuple, Any
-from .base import BaseMlCalc, register_calculator
+from ._ml_base import BaseMlCalc
+from .base import register_calculator
 
 
 @register_calculator("tblite")

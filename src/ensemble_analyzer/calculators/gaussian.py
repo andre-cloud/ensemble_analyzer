@@ -1,6 +1,6 @@
 import os
 from ase.calculators.gaussian import Gaussian
-from ensemble_analyzer._calculators.base import BaseCalc, register_calculator
+from ensemble_analyzer.calculators.base import BaseCalc, register_calculator
 
 from typing import Tuple
 

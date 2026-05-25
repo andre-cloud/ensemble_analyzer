@@ -6,7 +6,7 @@ Verifies regex extraction of geometry, frequencies, energy, and TD-DFT data.
 import pytest
 import numpy as np
 from unittest.mock import MagicMock, mock_open, patch
-from ensemble_analyzer._parsers._gaussian import GaussianParser
+from ensemble_analyzer.parsers.gaussian import GaussianParser
 
 class TestGaussianParser:
     
@@ -74,7 +74,7 @@ class TestGaussianParser:
         """
         
         # Patch constants to ensure deterministic conversion check
-        with patch("ensemble_analyzer._parsers._gaussian.CONVERT_B", {"GHz": 29.9792458}):
+        with patch("ensemble_analyzer.parsers.gaussian.CONVERT_B", {"GHz": 29.9792458}):
             B, M = parser.parse_B_m()
         
         # Verify Dipole

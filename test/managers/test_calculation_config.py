@@ -3,7 +3,7 @@ import json
 from unittest.mock import MagicMock, patch, mock_open
 from pathlib import Path
 from ensemble_analyzer._managers.calculation_config import CalculationConfig
-from ensemble_analyzer._protocol.protocol import Protocol
+from ensemble_analyzer.protocol.protocol import Protocol
 
 
 class TestCalculationConfig:

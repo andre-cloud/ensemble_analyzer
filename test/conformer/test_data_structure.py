@@ -6,8 +6,8 @@ Covers storage, retrieval, and serialization logic.
 import pytest
 import numpy as np
 from datetime import datetime
-from ensemble_analyzer._conformer.energy_data import EnergyStore, EnergyRecord
-from ensemble_analyzer._conformer.spectral_data import SpectralStore, SpectralRecord
+from ensemble_analyzer.conformer.energy_data import EnergyStore, EnergyRecord
+from ensemble_analyzer.conformer.spectral_data import SpectralStore, SpectralRecord
 
 class TestDataStructures:
 

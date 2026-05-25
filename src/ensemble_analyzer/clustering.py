@@ -1,5 +1,5 @@
 
-from ensemble_analyzer._conformer.conformer import Conformer
+from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer._logger.logger import Logger
 
 from ensemble_analyzer._clustering.cluster_config import ClusteringConfig

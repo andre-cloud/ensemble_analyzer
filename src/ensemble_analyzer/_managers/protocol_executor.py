@@ -7,8 +7,8 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
 
-from ensemble_analyzer._conformer.conformer import Conformer
-from ensemble_analyzer._protocol.protocol import Protocol
+from ensemble_analyzer.conformer.conformer import Conformer
+from ensemble_analyzer.protocol.protocol import Protocol
 from ensemble_analyzer._logger.logger import Logger
 from ensemble_analyzer.ensemble_io import save_snapshot
 from ensemble_analyzer.graph import main_spectra
@@ -19,7 +19,7 @@ from ensemble_analyzer._managers.checkpoint_manager import CheckpointManager
 from ensemble_analyzer._managers.calculation_executor import CalculationExecutor
 from ensemble_analyzer._managers.pruning_manager import PruningManager
 
-from ensemble_analyzer._calculators.base import ML_CALCULATORS
+from ensemble_analyzer.calculators.base import ML_CALCULATORS
 from ensemble_analyzer.constants import DEBUG, MIN_RETENTION_RATE, EH_TO_KCAL
 
 

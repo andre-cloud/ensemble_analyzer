@@ -9,10 +9,10 @@ from typing import List, Tuple
 from ensemble_analyzer._logger.create_log import create_logger
 from ensemble_analyzer._managers.checkpoint_manager import CheckpointManager
 from ensemble_analyzer._managers.protocol_manager import ProtocolManager
-from ensemble_analyzer._conformer.conformer import Conformer
+from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.rrho import free_gibbs_energy
 from ensemble_analyzer.constants import EH_TO_KCAL, R, CAL_TO_J
-from ensemble_analyzer.title import title
+from ensemble_analyzer._title import title
 
 def get_thermo_data(conf: Conformer, protocol_number: int, temp: float, mult: int, cut_off:float, alpha: int, pressure: float, linear:bool)-> Tuple[float, float, float, float]:
     """

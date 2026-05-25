@@ -1,13 +1,13 @@
 from ensemble_analyzer._managers.calculation_config import CalculationConfig
 from ensemble_analyzer._logger.logger import Logger
 
-from ensemble_analyzer._conformer.conformer import Conformer
-from ensemble_analyzer._protocol.protocol import Protocol
+from ensemble_analyzer.conformer.conformer import Conformer
+from ensemble_analyzer.protocol.protocol import Protocol
 
 from ensemble_analyzer.constants import regex_parsing
-from ensemble_analyzer.parser_parameter import get_conf_parameters
-from ensemble_analyzer._calculators.base import ML_CALCULATORS
-from ensemble_analyzer._conformer.energy_data import EnergyRecord, compute_rotational_constants
+from ensemble_analyzer._parser_parameter import get_conf_parameters
+from ensemble_analyzer.calculators.base import ML_CALCULATORS
+from ensemble_analyzer.conformer.energy_data import EnergyRecord, compute_rotational_constants
 
 import os
 import shutil
@@ -66,8 +66,19 @@ class CalculationExecutor:
         
         is_ml = protocol.calculator.lower() in ML_CALCULATORS
         
+        # Pass thermochemistry parameters to ML calculators
+        calc_kwargs = {}
+        if is_ml:
+            calc_kwargs = dict(
+                temperature=self.config.temperature,
+                linear=self.config.linear,
+                cut_off=self.config.cut_off,
+                alpha=self.config.alpha,
+                P=self.config.P,
+            )
+
         # Setup calculator
-        calc, label = protocol.get_calculator(cpu=per_job_cpu, conf=conf)
+        calc, label = protocol.get_calculator(cpu=per_job_cpu, conf=conf, **calc_kwargs)
         atoms = conf.get_ase_atoms(calc)
         
         # Ensure output directory exists (ASE writes files via label path)
@@ -87,7 +98,8 @@ class CalculationExecutor:
         ):
             try:
                 if is_ml:
-                    energy = atoms.get_potential_energy()
+                    if protocol.number not in conf.energies:
+                        energy = atoms.get_potential_energy()
                 else:
                     calc.write_inputfiles(atoms, ['energy'])
                     calc.template.execute(calc.directory, calc.profile)
@@ -98,16 +110,21 @@ class CalculationExecutor:
         elapsed = time.perf_counter() - start_time
 
         if is_ml:
-            conf.energies.add(
-                protocol.number,
-                EnergyRecord(E=energy, time=elapsed),
-            )
-            compute_rotational_constants(conf, protocol.number)
+            if protocol.number not in conf.energies:
+                conf.energies.add(
+                    protocol.number,
+                    EnergyRecord(E=energy, time=elapsed),
+                )
+                compute_rotational_constants(conf, protocol.number)
+            else:
+                elapsed = conf.energies[protocol.number].time or 0
+
+            data = conf.energies[protocol.number]
             self.logger.calculation_success(
                 conformer_id=conf.number,
                 protocol_number=protocol.number,
-                energy=energy, gibbs=np.nan,
-                frequencies=np.array([]),
+                energy=data.E, gibbs=data.G,
+                frequencies=data.Freq,
                 elapsed_time=elapsed,
             )
             return True

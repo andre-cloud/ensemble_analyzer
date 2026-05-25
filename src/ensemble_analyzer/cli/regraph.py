@@ -7,10 +7,10 @@ from ensemble_analyzer._managers.checkpoint_manager import CheckpointManager
 from ensemble_analyzer._managers.protocol_manager import ProtocolManager
 from ensemble_analyzer._managers.calculation_config import CalculationConfig
 
-from ensemble_analyzer._conformer.conformer import Conformer
+from ensemble_analyzer.conformer.conformer import Conformer
 
 from ensemble_analyzer.constants import *
-from ensemble_analyzer.title import title
+from ensemble_analyzer._title import title
 from typing import List
 
 import argparse

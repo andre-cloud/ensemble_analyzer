@@ -2,7 +2,7 @@
 from typing import List
 from pathlib import Path
 import json
-from ensemble_analyzer._protocol.protocol import Protocol
+from ensemble_analyzer.protocol.protocol import Protocol
 from ensemble_analyzer.io_utils import SerialiseEncoder
 
 

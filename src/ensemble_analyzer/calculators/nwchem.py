@@ -5,7 +5,7 @@ import warnings
 from typing import Any, Tuple
 
 from ase.calculators.nwchem import NWChem
-from ensemble_analyzer._calculators.base import BaseCalc, register_calculator
+from ensemble_analyzer.calculators.base import BaseCalc, register_calculator
 
 
 NWCHEM_COMMAND = (

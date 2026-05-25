@@ -8,10 +8,10 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 
 from ensemble_analyzer._managers.protocol_executor import ProtocolExecutor
-from ensemble_analyzer._conformer.conformer import Conformer
-from ensemble_analyzer._protocol.protocol import Protocol
+from ensemble_analyzer.conformer.conformer import Conformer
+from ensemble_analyzer.protocol.protocol import Protocol
 
-@patch("ensemble_analyzer._conformer.conformer.mkdir")
+@patch("ensemble_analyzer.conformer.conformer.mkdir")
 def test_full_workflow_simulation(mock_mkdir, mock_logger):
     """
     Simulates a complete cycle: Input Ensemble -> Protocol (Calc + Pruning) -> Output.

@@ -5,11 +5,11 @@ import numpy as np
 from ensemble_analyzer.constants import regex_parsing
 from ensemble_analyzer.rrho import free_gibbs_energy
 from ensemble_analyzer.constants import *
-from ensemble_analyzer._parsers.base import PARSER_REGISTRY
+from ensemble_analyzer.parsers.base import PARSER_REGISTRY
 
-from ensemble_analyzer._conformer.conformer import Conformer
-from ensemble_analyzer._conformer.energy_data import EnergyRecord
-from ensemble_analyzer._conformer.spectral_data import SpectralRecord
+from ensemble_analyzer.conformer.conformer import Conformer
+from ensemble_analyzer.conformer.energy_data import EnergyRecord
+from ensemble_analyzer.conformer.spectral_data import SpectralRecord
 
 from ensemble_analyzer._logger.logger import Logger
 

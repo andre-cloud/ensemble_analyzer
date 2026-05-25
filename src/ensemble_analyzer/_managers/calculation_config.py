@@ -5,7 +5,7 @@ from typing import Any, Optional, Dict, List
 from pathlib import Path
 import json
 
-from ensemble_analyzer._protocol.protocol import Protocol
+from ensemble_analyzer.protocol.protocol import Protocol
 
 @dataclass
 class CalculationConfig:

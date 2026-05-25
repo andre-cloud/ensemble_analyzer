@@ -5,10 +5,10 @@ import json
 
 from importlib.resources import files
 
-from ensemble_analyzer._conformer.conformer import Conformer
-from ensemble_analyzer._calculators import CALCULATOR_REGISTRY
+from ensemble_analyzer.conformer.conformer import Conformer
+from ensemble_analyzer.calculators import CALCULATOR_REGISTRY
 
-from ensemble_analyzer._protocol.solvent import Solvent
+from ensemble_analyzer.protocol.solvent import Solvent
 
 from pathlib import Path
 
@@ -196,13 +196,14 @@ class Protocol:
             internals.append(f"{INTERNALS[len(internal)]} {'-'.join(str(i) for i in internal)}")
         return internals
 
-    def get_calculator(self, cpu: int, conf:Conformer) -> Any:
+    def get_calculator(self, cpu: int, conf: Conformer, **kwargs) -> Any:
         """
         Instantiate the appropriate ASE calculator wrapper.
 
         Args:
             cpu (int): Number of CPUs to assign to the calculator.
             conf (Conformer): The conformer to be calculated.
+            **kwargs: Extra keyword arguments forwarded to the calculator constructor.
 
         Returns:
             Any: Configured calculator instance (e.g. OrcaCalc).
@@ -219,7 +220,7 @@ class Protocol:
             )
 
         calc_class = CALCULATOR_REGISTRY[calc_name]
-        calc_instance = calc_class(self, cpu, conf)
+        calc_instance = calc_class(self, cpu, conf, **kwargs)
         
         mode_map = {
             "opt": calc_instance.optimisation,

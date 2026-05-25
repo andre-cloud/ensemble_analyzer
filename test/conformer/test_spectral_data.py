@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from ensemble_analyzer._conformer.spectral_data import SpectralRecord, SpectralStore
+from ensemble_analyzer.conformer.spectral_data import SpectralRecord, SpectralStore
 
 
 class TestSpectralRecord:

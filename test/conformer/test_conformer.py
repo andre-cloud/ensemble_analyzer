@@ -6,14 +6,14 @@ Verifies initialization, XYZ generation, sorting, and distance matrix calculatio
 import pytest
 import numpy as np
 from unittest.mock import patch, MagicMock
-from ensemble_analyzer._conformer.conformer import Conformer
+from ensemble_analyzer.conformer.conformer import Conformer
 
 class TestConformer:
     
     @pytest.fixture
     def basic_conformer(self):
         """Fixture for a basic Conformer, mocking filesystem operations."""
-        with patch("ensemble_analyzer._conformer.conformer.mkdir"):
+        with patch("ensemble_analyzer.conformer.conformer.mkdir"):
             return Conformer(
                 number=1,
                 geom=np.array([[0.,0.,0.], [0.,0.,1.]]),

@@ -3,8 +3,8 @@ import os, re
 import numpy as np
 from typing import List, Tuple, Optional
 
-from ensemble_analyzer._conformer.conformer import Conformer
-from ensemble_analyzer._conformer.energy_data import EnergyRecord
+from ensemble_analyzer.conformer.conformer import Conformer
+from ensemble_analyzer.conformer.energy_data import EnergyRecord
 from ensemble_analyzer._logger.logger import Logger
 
 

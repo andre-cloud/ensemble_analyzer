@@ -1,6 +1,6 @@
 import pytest
 import numpy as np
-from ensemble_analyzer._conformer.energy_data import EnergyRecord, EnergyStore
+from ensemble_analyzer.conformer.energy_data import EnergyRecord, EnergyStore
 
 
 class TestEnergyRecord:

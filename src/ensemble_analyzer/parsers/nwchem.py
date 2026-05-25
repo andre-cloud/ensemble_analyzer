@@ -1,4 +1,4 @@
-from ensemble_analyzer._parsers.base import BaseParser, register_parser
+from ensemble_analyzer.parsers.base import BaseParser, register_parser
 from ensemble_analyzer.constants import *
 
 import re

@@ -6,8 +6,8 @@ from ensemble_analyzer._spectral.experimental import ExperimentalGraph
 from ensemble_analyzer._spectral.comp_electronic import ComputedElectronic
 from ensemble_analyzer._spectral.comp_vibronic import ComputedVibronic
 from ensemble_analyzer._spectral.compare import ComparedGraph
-from ensemble_analyzer._protocol.protocol import Protocol
-from ensemble_analyzer._conformer.conformer import Conformer
+from ensemble_analyzer.protocol.protocol import Protocol
+from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer._logger.logger import Logger
 
 

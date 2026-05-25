@@ -5,7 +5,7 @@ from ase.atoms import Atoms
 
 
 from ensemble_analyzer.io_utils import mkdir
-from ensemble_analyzer._calculators.base import BaseCalc
+from ensemble_analyzer.calculators.base import BaseCalc
 
 from .energy_data import EnergyRecord, EnergyStore
 from .spectral_data import SpectralRecord, SpectralStore

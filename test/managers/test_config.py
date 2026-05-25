@@ -4,7 +4,7 @@ Tests for Configuration classes.
 import pytest
 from unittest.mock import MagicMock
 from ensemble_analyzer._managers.calculation_config import CalculationConfig
-from ensemble_analyzer._protocol.protocol import Protocol
+from ensemble_analyzer.protocol.protocol import Protocol
 from ensemble_analyzer._clustering.cluster_config import ClusteringConfig
 
 def test_calculation_config_defaults():

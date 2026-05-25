@@ -1,4 +1,5 @@
-version = "1.0.0"
+from importlib.metadata import version
+version = version("ensemble_analyzer")
 text = f"""
 
 ███████╗███╗   ██╗███████╗███████╗███╗   ███╗██████╗ ██╗     ███████╗

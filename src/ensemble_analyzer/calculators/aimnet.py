@@ -1,6 +1,7 @@
 import os
 from typing import Tuple, Any
-from .base import BaseMlCalc, register_calculator
+from ._ml_base import BaseMlCalc
+from .base import register_calculator
 from ensemble_analyzer.constants import get_models_dir
 from pathlib import Path
 

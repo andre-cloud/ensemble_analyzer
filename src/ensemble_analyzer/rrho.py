@@ -317,7 +317,7 @@ def free_gibbs_energy(
 
 
 if __name__ == "__main__":
-    from ensemble_analyzer.parser_parameter import get_param, get_freq
+    from ensemble_analyzer._parser_parameter import get_param, get_freq
     import sys
 
     args = sys.argv[1:]

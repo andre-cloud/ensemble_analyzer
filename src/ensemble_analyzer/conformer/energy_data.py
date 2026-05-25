@@ -4,7 +4,7 @@ import numpy as np
 from ensemble_analyzer.constants import ROT_CONST_FACTOR
 
 if TYPE_CHECKING:
-    from ensemble_analyzer._conformer.conformer import Conformer
+    from ensemble_analyzer.conformer.conformer import Conformer
 
 
 

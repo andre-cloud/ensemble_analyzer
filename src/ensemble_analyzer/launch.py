@@ -1,18 +1,18 @@
 from pathlib import Path
 from typing import Tuple, List
 
-from ensemble_analyzer._protocol.protocol import Protocol
+from ensemble_analyzer.protocol.protocol import Protocol
 from ensemble_analyzer._logger.create_log import create_logger
 from ensemble_analyzer._logger.logger import Logger
 
-from ensemble_analyzer.parser_arguments import parser_arguments
-from ensemble_analyzer._protocol.protocol import load_protocol
+from ensemble_analyzer._parser_arguments import parser_arguments
+from ensemble_analyzer.protocol.protocol import load_protocol
 from ensemble_analyzer.ensemble_io import read_ensemble
-from ensemble_analyzer.title import title
+from ensemble_analyzer._title import title
 
 from ensemble_analyzer.constants import DEBUG
-from ensemble_analyzer._conformer.conformer import Conformer
-from ensemble_analyzer._protocol.protocol import Protocol
+from ensemble_analyzer.conformer.conformer import Conformer
+from ensemble_analyzer.protocol.protocol import Protocol
 
 from ensemble_analyzer._managers.checkpoint_manager import CheckpointManager
 from ensemble_analyzer._managers.protocol_manager import ProtocolManager

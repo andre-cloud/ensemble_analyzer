@@ -6,8 +6,8 @@ from typing import Any, TYPE_CHECKING
 import numpy as np
 
 if TYPE_CHECKING:
-    from ensemble_analyzer._conformer.conformer import Conformer
-    from ensemble_analyzer._protocol.protocol import Protocol
+    from ensemble_analyzer.conformer.conformer import Conformer
+    from ensemble_analyzer.protocol.protocol import Protocol
 
 
 def mkdir(directory: str) -> bool:

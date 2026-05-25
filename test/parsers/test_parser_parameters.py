@@ -7,7 +7,7 @@ import pytest
 import numpy as np
 from unittest.mock import MagicMock, patch
 from datetime import datetime
-from ensemble_analyzer.parser_parameter import get_conf_parameters
+from ensemble_analyzer._parser_parameter import get_conf_parameters
 
 class TestParserParameter:
 
@@ -41,7 +41,7 @@ class TestParserParameter:
             "log": mock_logger
         }
 
-    @patch("ensemble_analyzer.parser_parameter.PARSER_REGISTRY")
+    @patch("ensemble_analyzer._parser_parameter.PARSER_REGISTRY")
     def test_successful_parsing_full(self, mock_registry, mock_args):
         """Test parsing of a complete calculation (OPT+FREQ) with valid results."""
         # Setup Mock Parser
@@ -66,7 +66,7 @@ class TestParserParameter:
         mock_args["p"].freq = True
         
         # Execute
-        with patch("ensemble_analyzer.parser_parameter.free_gibbs_energy") as mock_rrho:
+        with patch("ensemble_analyzer._parser_parameter.free_gibbs_energy") as mock_rrho:
             # Mock thermodynamics calculation
             mock_rrho.return_value = (-100.1, 0.1, -100.05, 0.05) # G, ZPVE, H, S
             
@@ -78,7 +78,7 @@ class TestParserParameter:
         # Verify geometry update
         assert np.array_equal(mock_args["conf"].last_geometry, np.zeros((3,3)))
 
-    @patch("ensemble_analyzer.parser_parameter.PARSER_REGISTRY")
+    @patch("ensemble_analyzer._parser_parameter.PARSER_REGISTRY")
     def test_optimization_failure(self, mock_registry, mock_args):
         """Test handling of failed optimization."""
         MockParserClass = MagicMock()
@@ -103,7 +103,7 @@ class TestParserParameter:
         assert success is True
         assert mock_args["conf"].active is False # Still deactivated, but handled gracefully
 
-    @patch("ensemble_analyzer.parser_parameter.PARSER_REGISTRY")
+    @patch("ensemble_analyzer._parser_parameter.PARSER_REGISTRY")
     def test_missing_frequencies_inheritance(self, mock_registry, mock_args):
         """Test fetching thermo data from previous step when frequencies are missing."""
         MockParserClass = MagicMock()
@@ -135,7 +135,7 @@ class TestParserParameter:
         stored_record = mock_args["conf"].energies.add.call_args[0][1]
         assert stored_record.G == -100.1 # -100.0 + (-0.1)
 
-    @patch("ensemble_analyzer.parser_parameter.PARSER_REGISTRY")
+    @patch("ensemble_analyzer._parser_parameter.PARSER_REGISTRY")
     def test_crash_detection(self, mock_registry, mock_args):
         """Test detection of abnormal termination."""
         MockParserClass = MagicMock()

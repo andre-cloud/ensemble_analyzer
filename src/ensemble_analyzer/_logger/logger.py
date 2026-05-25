@@ -10,7 +10,7 @@ from datetime import timedelta
 
 
 from ensemble_analyzer.constants import DEBUG
-from ensemble_analyzer.title import title
+from ensemble_analyzer._title import title
 
 
 

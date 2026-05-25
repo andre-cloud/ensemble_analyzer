@@ -5,8 +5,8 @@ import datetime
 
 from dataclasses import dataclass
 
-from ensemble_analyzer._conformer.conformer import Conformer
-from ensemble_analyzer._protocol.protocol import Protocol
+from ensemble_analyzer.conformer.conformer import Conformer
+from ensemble_analyzer.protocol.protocol import Protocol
 from ensemble_analyzer.ensemble_io import save_snapshot
 from ensemble_analyzer.graph import plot_comparative_graphs
 from ensemble_analyzer.clustering import execute_PCA

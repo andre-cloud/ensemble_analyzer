@@ -1,5 +1,5 @@
 from ase.calculators.orca import ORCA, OrcaProfile
-from ensemble_analyzer._calculators.base import BaseCalc, register_calculator
+from ensemble_analyzer.calculators.base import BaseCalc, register_calculator
 import shutil
 import os
 from pathlib import Path

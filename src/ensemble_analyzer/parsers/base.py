@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Tuple
 from ase import Atoms
-from ensemble_analyzer._conformer.conformer import Conformer
+from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.constants import ROT_CONST_FACTOR
 
 import numpy as np

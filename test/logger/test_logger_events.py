@@ -18,7 +18,7 @@ class TestLoggerEvents:
         return l
 
     def test_title_screen(self, log):
-        from ensemble_analyzer.title import title
+        from ensemble_analyzer._title import title
         log.title_screen()
         log.info.assert_called_with(title)
 
