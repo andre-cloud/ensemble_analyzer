@@ -17,15 +17,30 @@ class BaseMlCalc(BaseCalc):
         return calc, self.label
 
     def _run_vibrations(self, atoms):
-        from ase.vibrations import Vibrations
-        vib = Vibrations(atoms, name=f"vib_{self.conf.number}_{self.protocol.number}")
-        vib.run()
-        freqs = vib.get_frequencies()
         try:
-            vib.clean()
+            from ase.vibrations import Infrared
+            ir = Infrared(atoms, name=f"vib_{self.conf.number}_{self.protocol.number}")
+            ir.run()
+            freqs = ir.get_frequencies()
+            ir_intensities = ir.intensities.copy()
+        except (AttributeError, NotImplementedError):
+            from ase.vibrations import Vibrations
+            ir = Vibrations(atoms, name=f"vib_{self.conf.number}_{self.protocol.number}")
+            ir.run()
+            freqs = ir.get_frequencies()
+            ir_intensities = np.zeros(len(freqs))
+        try:
+            ir.clean()
         except Exception:
             pass
-        return freqs
+        # ASE returns complex when Hessian has negative eigenvalues.
+        # Convert: imaginary freq → negative real, real freq → positive real.
+        freqs = np.where(
+            np.abs(freqs.imag) > 1e-8,
+            -freqs.imag,
+            freqs.real,
+        )
+        return freqs, ir_intensities
 
     def _compute_thermochemistry(self, energy, scaled_freqs):
         from ensemble_analyzer.rrho import free_gibbs_energy
@@ -50,12 +65,13 @@ class BaseMlCalc(BaseCalc):
 
     def frequency(self) -> Tuple[Any, str]:
         from ensemble_analyzer.conformer.energy_data import EnergyRecord, compute_rotational_constants
+        from ensemble_analyzer.conformer.spectral_data import SpectralRecord
 
         calc = self._get_ml_calculator()
         atoms = self.conf.get_ase_atoms(calc)
 
         start = time.perf_counter()
-        raw_freqs = self._run_vibrations(atoms)
+        raw_freqs, ir_intensities = self._run_vibrations(atoms)
 
         freq_fact = self.protocol.freq_fact
         if freq_fact is None:
@@ -70,6 +86,12 @@ class BaseMlCalc(BaseCalc):
             EnergyRecord(E=energy, Freq=scaled_freqs, time=elapsed),
         )
 
+        self.conf.graphs_data.add(
+            protocol_number=self.protocol.number,
+            graph_type='IR',
+            record=SpectralRecord(X=scaled_freqs, Y=ir_intensities),
+        )
+
         compute_rotational_constants(self.conf, self.protocol.number)
         self._compute_thermochemistry(energy, scaled_freqs)
 
@@ -78,6 +100,7 @@ class BaseMlCalc(BaseCalc):
     def optimisation(self) -> Tuple[Any, str]:
         from ase.optimize import BFGS
         from ensemble_analyzer.conformer.energy_data import EnergyRecord, compute_rotational_constants
+        from ensemble_analyzer.conformer.spectral_data import SpectralRecord
 
         calc = self._get_ml_calculator()
         atoms = self.conf.get_ase_atoms(calc)
@@ -89,7 +112,7 @@ class BaseMlCalc(BaseCalc):
         self.conf.last_geometry = atoms.get_positions().copy()
 
         if self.protocol.freq:
-            raw_freqs = self._run_vibrations(atoms)
+            raw_freqs, ir_intensities = self._run_vibrations(atoms)
 
             freq_fact = self.protocol.freq_fact
             if freq_fact is None:
@@ -102,6 +125,12 @@ class BaseMlCalc(BaseCalc):
             self.conf.energies.add(
                 self.protocol.number,
                 EnergyRecord(E=energy, Freq=scaled_freqs, time=elapsed),
+            )
+
+            self.conf.graphs_data.add(
+                protocol_number=self.protocol.number,
+                graph_type='IR',
+                record=SpectralRecord(X=scaled_freqs, Y=ir_intensities),
             )
 
             compute_rotational_constants(self.conf, self.protocol.number)

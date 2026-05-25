@@ -91,11 +91,12 @@ class TestParserParameter:
         
         mock_args["p"].opt = True
         
-        # Case 1: Strict (Default) -> Should raise RuntimeError
+        # Case 1: Strict (Default) -> RuntimeError caught by generic handler, returns False
         mock_args["p"].skip_opt_fail = False
-        with pytest.raises(RuntimeError, match="geometry not converged"):
-            get_conf_parameters(**mock_args)
-        
+        success = get_conf_parameters(**mock_args)
+        assert success is False
+        assert mock_args["conf"].active is False
+
         # Case 2: Permissive -> Should warn and return True but deactivate
         mock_args["conf"].active = True # Reset
         mock_args["p"].skip_opt_fail = True
@@ -143,10 +144,10 @@ class TestParserParameter:
         mock_registry.__getitem__.return_value = MockParserClass
         
         mock_parser.correct_exiting = False # Gaussian crashed
-        
+    
         success = get_conf_parameters(**mock_args)
-        
-        assert success is True # Handled "gracefully" in logic flow
+    
+        assert success is False # Handled "gracefully" in logic flow
         assert mock_args["conf"].active is False
         mock_args["log"].warning.assert_called_with(
             "Parser detected abnormal termination for Conf 1. Deactivating."

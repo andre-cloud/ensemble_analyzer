@@ -102,8 +102,6 @@ class SerialiseEncoder(json.JSONEncoder):
             return int(obj)
         if isinstance(obj, np.bool_):
             return bool(obj)
-        if isinstance(obj, complex):
-            return [obj.real, obj.imag]
         if hasattr(obj, "__dict__"):
             return obj.__dict__
         # Let the base class raise TypeError for anything else

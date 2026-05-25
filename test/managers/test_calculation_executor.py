@@ -12,21 +12,21 @@ class TestCalculationExecutor:
         config.cpu = 4
         return CalculationExecutor(config, mock_logger)
 
+    @patch("ensemble_analyzer._managers.calculation_executor.compute_rotational_constants")
     @patch("ensemble_analyzer._managers.calculation_executor.get_conf_parameters")
-    def test_execute_success(self, mock_get_params, executor, mock_conformer, mock_protocol):
+    def test_execute_success(self, mock_get_params, mock_rot_const, executor, mock_conformer, mock_protocol):
         mock_get_params.return_value = True
-        
-        # Ensure protocol.calculator is a valid key (e.g., 'orca' or 'gaussian')
-        # Note: mock_protocol from fixture already sets calculator="orca"
-        # but we ensure get_calculator returns a tuple
+
+        # Use an ML calculator to test the ML execution path
+        mock_protocol.calculator = "tblite"
         mock_calc = MagicMock()
         mock_protocol.get_calculator.return_value = (mock_calc, "label")
-        
+
         mock_atoms = MagicMock()
         mock_conformer.get_ase_atoms.return_value = mock_atoms
-        
+
         success = executor.execute(1, mock_conformer, mock_protocol)
-        
+
         assert success is True
         mock_atoms.get_potential_energy.assert_called_once()
         executor.logger.calculation_success.assert_called_once()

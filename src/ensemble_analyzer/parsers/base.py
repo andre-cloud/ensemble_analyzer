@@ -38,7 +38,7 @@ class BaseParser(ABC):
     to be compatible with Ensemble Analyzer.
     """
 
-    def __init__(self, output_name: str, log: 'Logger', conf: Conformer) -> None:
+    def __init__(self, output_name: str, log, conf: Conformer) -> None:
         """Initialize the parser.
 
         Args:

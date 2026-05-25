@@ -8,6 +8,7 @@ class TestNWChemCalc:
 
     @pytest.fixture
     def setup_calc(self, mock_conformer, mock_protocol):
+        mock_conformer.folder = "conf_1"
         mock_protocol.charge = 0
         mock_protocol.mult = 1
         mock_protocol.solvent = MagicMock()
@@ -62,7 +63,7 @@ class TestNWChemCalc:
         conf, proto = setup_calc
         calc = NWChemCalc(proto, 4, conf)
         ase_calc, label = calc.single_point()
-        assert label == "nwchem"
+        assert label == "conf_1/protocol_1/1_p1_nwchem"
 
     @patch("ensemble_analyzer.calculators.nwchem.NWCHEM_COMMAND", "nwchem")
     def test_optimisation(self, setup_calc):
@@ -94,5 +95,5 @@ class TestNWChemCalc:
         proto.add_input = "scf\n  thresh 1e-8\nend"
         calc = NWChemCalc(proto, 4, conf)
         ase_calc, label = calc.single_point()
-        assert label == "nwchem"
+        assert label == "conf_1/protocol_1/1_p1_nwchem"
         assert ase_calc.write_input.__name__ != NWChem.write_input.__name__
