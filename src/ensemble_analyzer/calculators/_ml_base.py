@@ -81,10 +81,10 @@ class BaseMlCalc(BaseCalc):
         if self.protocol.ts:
             from sella import Sella
             opt = Sella(atoms)
-            opt.run(fmax=0.01, log=f'{self.conf.folder}/protocol_{self.protocol.number}/opt.log')
+            opt.run(fmax=0.01, logfile=f'{self.conf.folder}/protocol_{self.protocol.number}/opt.log')
         else:
             with BFGS(atoms) as opt:
-                opt.run(fmax=0.01, log=f'{self.conf.folder}/protocol_{self.protocol.number}/opt.log')
+                opt.run(fmax=0.01, logfile=f'{self.conf.folder}/protocol_{self.protocol.number}/opt.log')
         self.conf.last_geometry = atoms.get_positions().copy()
         if self.protocol.freq:
             self._post_optimization_vibrations(atoms, start)
