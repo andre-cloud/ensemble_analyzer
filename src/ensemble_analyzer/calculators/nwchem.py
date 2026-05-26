@@ -130,7 +130,7 @@ class NWChemCalc(BaseCalc):
 
             calculator.write_input = patched_write_input
 
-        return calculator, ase_label
+        return calculator, "nwchem"
 
     def _add_sp_keywords(self, calc: NWChem) -> None:
         if "task" not in self.protocol.add_input:
