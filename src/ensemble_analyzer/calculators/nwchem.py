@@ -137,7 +137,7 @@ class NWChemCalc(BaseCalc):
             calc.parameters["task"] = "energy"
 
     def _add_opt_keywords(self, calc: NWChem) -> None:
-        calc.parameters["task"] = "optimize"
+        calc.parameters["task"] = "optimize ts" if self.protocol.ts else "optimize"
         if self.protocol.freq: 
             calc.parameters["task"] += "\ntask dft freq"
 

@@ -66,10 +66,18 @@ class GaussianCalc(BaseCalc):
         return calc, label
 
     def _add_opt_keywords(self, calc: Gaussian) -> None:
-        if not self.protocol.constrains:
-            calc.parameters["extra"] += " opt"
+        if self.protocol.ts:
+            opt_str = " opt=(ts,calcfc,noeigentest)"
         else:
-            calc.parameters["extra"] += " opt=(modredudant)"
+            opt_str = " opt"
+
+        if not self.protocol.constrains:
+            calc.parameters["extra"] += opt_str
+        else:
+            if self.protocol.ts:
+                calc.parameters["extra"] += " opt=(ts,modredudant,calcfc,noeigentest)"
+            else:
+                calc.parameters["extra"] += " opt=(modredudant)"
             tag_map = {1: "X", 2: "B", 3: "A", 4: "D"}
             lines = []
             for c in self.protocol.constrains:

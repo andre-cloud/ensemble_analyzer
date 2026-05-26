@@ -18,6 +18,7 @@ class TestNWChemCalc:
         mock_protocol.read_orbitals = False
         mock_protocol.constrains = []
         mock_protocol.freq = False
+        mock_protocol.ts = False
         return mock_conformer, mock_protocol
 
     def test_common_str_basic(self, setup_calc):

@@ -53,6 +53,7 @@ class Protocol:
     mult                        : int                           = 1
     charge                      : int                           = 0
     opt                         : Optional[bool]                = False
+    ts                          : Optional[bool]                = False
     freq                        : Optional[bool]                = False
     freq_fact                   : Optional[float]               = 1
     constrains                  : Optional[list]                = field(default_factory=list)
@@ -272,6 +273,9 @@ class Protocol:
 
         assert (self.mult > 0 and isinstance(self.mult, int)), \
             f"Multiplicity must be greater than 0, given {self.mult}"
+
+        if self.ts and not self.opt:
+            self.opt = True
 
         if self.functional.lower() in COMPOSITE_METHODS:
             self.basis = COMPOSITE_METHODS[self.functional.lower()]

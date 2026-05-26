@@ -134,7 +134,7 @@ class OrcaCalc(BaseCalc):
         return calculator, label
 
     def _add_opt_keywords(self, calc: ORCA) -> None:
-        calc.parameters["orcasimpleinput"] += " opt"
+        calc.parameters["orcasimpleinput"] += " OptTS" if self.protocol.ts else " opt"
         if self.constrains:
             tag_map = {1: "C", 2: "B", 3: "A", 4: "D"}
             parts = []

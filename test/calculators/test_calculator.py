@@ -27,6 +27,7 @@ class TestCalculators:
         mock_protocol.add_input = ""
         mock_protocol.read_orbitals = False
         mock_protocol.constrains = []
+        mock_protocol.ts = False
         
         return mock_conformer, mock_protocol
 
