@@ -105,7 +105,9 @@ class CalculationExecutor:
                         calc.write_inputfiles = lambda atoms, properties=None: calc.write_input(atoms, properties)
                     else:
                         calc.write_inputfiles(atoms, ['energy'])
-                        calc.template.execute(calc.directory, calc.profile)
+
+                    calc.template.execute(calc.directory, calc.profile)
+                    
             except Exception as e:
                 self.logger.debug(e)
                 return False
