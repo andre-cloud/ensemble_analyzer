@@ -7,7 +7,7 @@ from ensemble_analyzer.protocol.protocol import Protocol
 from ensemble_analyzer.constants import regex_parsing
 from ensemble_analyzer._parser_parameter import get_conf_parameters
 from ensemble_analyzer.calculators.base import ML_CALCULATORS
-from ensemble_analyzer.conformer.energy_data import EnergyRecord, compute_rotational_constants
+from ensemble_analyzer.conformer.energy_data import EnergyRecord, compute_rotational_constants, copy_thermochemical_corrections
 
 import os
 import shutil
@@ -125,6 +125,8 @@ class CalculationExecutor:
                 self.logger.debug(f'{m_vec = }')
                 conf.energies.set(protocol.number, "m_vec", m_vec)
                 conf.energies.set(protocol.number, "m", float(np.linalg.norm(m_vec)))
+
+                copy_thermochemical_corrections(conf, protocol.number)
             else:
                 elapsed = conf.energies[protocol.number].time or 0
 

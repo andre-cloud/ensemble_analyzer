@@ -43,25 +43,12 @@ class BaseMlCalc(BaseCalc):
         return freqs, ir_intensities
 
     def _compute_thermochemistry(self, energy, scaled_freqs):
-        from ensemble_analyzer.rrho import free_gibbs_energy
-        rec = self.conf.energies[self.protocol.number]
-        pos_freq = scaled_freqs[scaled_freqs > 0]
-        if len(pos_freq) > 0 and rec.B_vec is not None:
-            try:
-                g, zpve, h_val, s_val = free_gibbs_energy(
-                    SCF=energy, T=self.temperature, freq=pos_freq,
-                    mw=self.conf.weight_mass, B=rec.B_vec,
-                    m=self.protocol.mult,
-                    linear=self.linear, cut_off=self.cut_off,
-                    alpha=self.alpha, P=self.P,
-                )
-                self.conf.energies.set(self.protocol.number, "G", g)
-                self.conf.energies.set(self.protocol.number, "G_E", g - energy)
-                self.conf.energies.set(self.protocol.number, "zpve", zpve)
-                self.conf.energies.set(self.protocol.number, "H", h_val)
-                self.conf.energies.set(self.protocol.number, "S", s_val)
-            except Exception:
-                pass
+        from ensemble_analyzer.conformer.energy_data import compute_thermochemistry
+        compute_thermochemistry(
+            self.conf, self.protocol.number, energy, scaled_freqs,
+            self.temperature, self.linear, self.cut_off, self.alpha, self.P,
+            self.protocol.mult,
+        )
 
     def frequency(self) -> Tuple[Any, str]:
         from ensemble_analyzer.conformer.energy_data import EnergyRecord, compute_rotational_constants

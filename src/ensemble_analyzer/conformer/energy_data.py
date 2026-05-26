@@ -193,3 +193,38 @@ def compute_rotational_constants(conf: 'Conformer', protocol_number: int) -> Non
 
     conf.energies.set(protocol_number, "B", float(np.linalg.norm(B_vec)))
     conf.energies.set(protocol_number, "B_vec", B_vec)
+
+
+def compute_thermochemistry(
+    conf: 'Conformer', protocol_number, energy, freqs,
+    temperature, linear, cut_off, alpha, P, mult,
+) -> None:
+    from ensemble_analyzer.rrho import free_gibbs_energy
+    rec = conf.energies[protocol_number]
+    pos_freq = freqs[freqs > 0]
+    if len(pos_freq) > 0 and rec.B_vec is not None:
+        try:
+            g, zpve, h_val, s_val = free_gibbs_energy(
+                SCF=energy, T=temperature, freq=pos_freq,
+                mw=conf.weight_mass, B=rec.B_vec, m=mult,
+                linear=linear, cut_off=cut_off, alpha=alpha, P=P,
+            )
+            conf.energies.set(protocol_number, "G", g)
+            conf.energies.set(protocol_number, "G_E", g - energy)
+            conf.energies.set(protocol_number, "zpve", zpve)
+            conf.energies.set(protocol_number, "H", h_val)
+            conf.energies.set(protocol_number, "S", s_val)
+        except Exception:
+            pass
+
+
+def copy_thermochemical_corrections(conf: 'Conformer', target_protocol: int) -> None:
+    for p in range(target_protocol - 1, -1, -1):
+        if p in conf.energies:
+            prev = conf.energies[p]
+            if not np.isnan(prev.G_E):
+                rec = conf.energies[target_protocol]
+                for attr in ("G_E", "zpve", "H", "S"):
+                    setattr(rec, attr, getattr(prev, attr))
+                rec.G = rec.E + rec.G_E
+                return
