@@ -104,6 +104,7 @@ class EnergyStore:
             KeyError: If no record exists for the given protocol.
             AttributeError: If the property does not exist on EnergyRecord.
         """
+        protocol_number = int(protocol_number)
         if not self.__contains__(protocol_number):
             raise KeyError(f"Protocol {protocol_number} not found in EnergyStore")
         
