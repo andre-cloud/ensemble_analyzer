@@ -83,12 +83,12 @@ class BaseMlCalc(BaseCalc):
         atoms = self.conf.get_ase_atoms(calc)
         start = time.perf_counter()
         if self.protocol.ts:
-            from sella import Sella
-            opt = Sella(atoms, logfile=f'{self.conf.folder}/protocol_{self.protocol.number}/opt.log')
-            opt.run(fmax=0.01)
-        else:
-            with BFGS(atoms, logfile=f'{self.conf.folder}/protocol_{self.protocol.number}/opt.log') as opt:
+            with Sella(atoms) as opt: #, logfile=f'{self.conf.folder}/protocol_{self.protocol.number}/opt.log')
                 opt.run(fmax=0.01)
+        else:
+            with BFGS(atoms) as opt: #, logfile=f'{self.conf.folder}/protocol_{self.protocol.number}/opt.log')
+                opt.run(fmax=0.01)
+                
         self.conf.last_geometry = atoms.get_positions().copy()
         if self.protocol.freq:
             self._post_optimization_vibrations(atoms, start)
