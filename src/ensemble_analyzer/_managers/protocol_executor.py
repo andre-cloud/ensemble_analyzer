@@ -71,15 +71,13 @@ class ProtocolExecutor:
             protocol (Protocol): The protocol step definition.
         """
 
-        active_count = len([c for c in conformers if c.active])
-        
         # Start protocol
         self.logger.protocol_start(
             number=protocol.number,
             level=protocol.calculation_level,
             functional=protocol.functional,
             basis=protocol.basis,
-            active_conformers=active_count
+            active_conformers=len([c for c in conformers if c.active])
         )
         
         protocol_start_time = time.perf_counter()
@@ -92,7 +90,13 @@ class ProtocolExecutor:
         self.logger.info(
             f"\nTotal elapsed time for protocol {protocol.number}: "
             f"{datetime.timedelta(seconds=protocol_elapsed)}"
-        )      
+        )
+
+        active_count = len([c for c in conformers if c.active])
+        if active_count == 0:
+            self.logger.warning(f"All conformers inactive — skipping pruning, spectra, and reports for protocol {protocol.number}")
+            self.checkpoint_manager.save(conformers, self.logger)
+            return
 
         self.generate_report("Summary Before Pruning", conformers=conformers, protocol=protocol)
         
@@ -129,23 +133,25 @@ class ProtocolExecutor:
         
         self.generate_report("Summary After Pruning", conformers=conformers, protocol=protocol)
 
-        self.generate_energy_report(conformers=conformers, protocol_number=protocol.number, T=self.config.temperature)
+        if final_active > 0:
+            self.generate_energy_report(conformers=conformers, protocol_number=protocol.number, T=self.config.temperature)
 
         # Save snapshot
         save_snapshot(f"ensemble_after_{protocol.number}.xyz", conformers, self.logger)
 
         # Generate spectra
-        main_spectra(
-            conformers,
-            protocol,
-            self.logger,
-            invert=self.config.invert,
-            read_pop=protocol.read_population,
-            fwhm=self.config.fwhm,
-            shift=self.config.shift,
-            definition=self.config.definition,
-            interested_area=self.config.interested
-        )
+        if final_active > 0:
+            main_spectra(
+                conformers,
+                protocol,
+                self.logger,
+                invert=self.config.invert,
+                read_pop=protocol.read_population,
+                fwhm=self.config.fwhm,
+                shift=self.config.shift,
+                definition=self.config.definition,
+                interested_area=self.config.interested
+            )
         
         # Protocol end
         self.logger.protocol_end(
@@ -207,6 +213,8 @@ class ProtocolExecutor:
             protocol (Protocol): Current protocol for energy retrieval.
         """
         active = [conf for conf in conformers if conf.active]
+        if not active:
+            return
         energies = np.array([conf.get_energy(protocol_number=protocol.number) for conf in active])
         rel_energies = (energies - min(energies)) * EH_TO_KCAL
 
@@ -226,6 +234,9 @@ class ProtocolExecutor:
         """
 
         CONFS = [i for i in conformers if i.active]
+        if not CONFS:
+            self.logger.warning(f"No active conformers for energy report (protocol {protocol_number})")
+            return
 
         dE = np.array([i.energies[protocol_number].E for i in CONFS])
         dE_ZPVE = np.array(

@@ -121,7 +121,7 @@ class CalculationOrchestrator:
             total_conformers=final_count
         )
         
-        retention_rate = final_count / initial_number
+        retention_rate = final_count / initial_number if initial_number > 0 else 0.0
         # Log critical if whole complex retention rate is < MIN_RETENTION_RATE
         if retention_rate < MIN_RETENTION_RATE:
             self.logger.critical(

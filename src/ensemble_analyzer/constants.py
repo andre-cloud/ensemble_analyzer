@@ -45,6 +45,8 @@ def boltzmann_distribution(
     energies: np.ndarray,
     temperature: float,
 ) -> tuple[np.ndarray, np.ndarray]:
+    if energies.size == 0:
+        return np.array([]), np.array([])
     rel_energies = energies - energies.min()
     exponent = -(rel_energies * EH_TO_KCAL * 1000 * CAL_TO_J) / (R * temperature)
     weights = np.exp(exponent)
