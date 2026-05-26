@@ -268,6 +268,8 @@ class Protocol:
 
     def __post_init__(self) -> None:
         """Post-initialization: validate multiplicity, resolve composite methods, load solvent and thresholds."""
+        self.number = int(self.number)
+
         assert (self.mult > 0 and isinstance(self.mult, int)), \
             f"Multiplicity must be greater than 0, given {self.mult}"
 
