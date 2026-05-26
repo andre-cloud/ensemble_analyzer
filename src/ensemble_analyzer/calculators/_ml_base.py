@@ -8,6 +8,10 @@ from ensemble_analyzer.conformer.energy_data import EnergyRecord, compute_rotati
 from ensemble_analyzer.conformer.spectral_data import SpectralRecord
 from ase.optimize import BFGS
 from ase.vibrations import Infrared, Vibrations
+try:
+    from sella import Sella
+except ImportError:
+    Sella = None
 
 
 class BaseMlCalc(BaseCalc):
@@ -80,11 +84,11 @@ class BaseMlCalc(BaseCalc):
         start = time.perf_counter()
         if self.protocol.ts:
             from sella import Sella
-            opt = Sella(atoms)
-            opt.run(fmax=0.01, logfile=f'{self.conf.folder}/protocol_{self.protocol.number}/opt.log')
+            opt = Sella(atoms, logfile=f'{self.conf.folder}/protocol_{self.protocol.number}/opt.log')
+            opt.run(fmax=0.01)
         else:
-            with BFGS(atoms) as opt:
-                opt.run(fmax=0.01, logfile=f'{self.conf.folder}/protocol_{self.protocol.number}/opt.log')
+            with BFGS(atoms, logfile=f'{self.conf.folder}/protocol_{self.protocol.number}/opt.log') as opt:
+                opt.run(fmax=0.01)
         self.conf.last_geometry = atoms.get_positions().copy()
         if self.protocol.freq:
             self._post_optimization_vibrations(atoms, start)
