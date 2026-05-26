@@ -3,17 +3,17 @@
 from ensemble_analyzer._logger.create_log import create_logger
 from ensemble_analyzer.graph import main_spectra, plot_comparative_graphs
 
-from ensemble_analyzer._managers.checkpoint_manager import CheckpointManager
-from ensemble_analyzer._managers.protocol_manager import ProtocolManager
+from ensemble_analyzer.ensemble_io import load_workflow_data
 from ensemble_analyzer._managers.calculation_config import CalculationConfig
 
 from ensemble_analyzer.conformer.conformer import Conformer
 
-from ensemble_analyzer.constants import *
+from ensemble_analyzer.constants import compute_boltzmann_populations
 from ensemble_analyzer._title import title
 from typing import List
 
 import argparse
+import numpy as np
 from datetime import datetime
 
 def parse_argument() -> argparse.Namespace:
@@ -48,12 +48,9 @@ def main() -> None:
     log.info(title)
     log._separator("Regraphing computed spectrum")
 
-    checkpoint_mgr = CheckpointManager()
-    protocol_mgr = ProtocolManager()
     config_mgr = CalculationConfig().load() # settings
 
-    ensemble = checkpoint_mgr.load() # ensemble
-    protocol = protocol_mgr.load() # protocol
+    ensemble, protocol = load_workflow_data()
 
     start = datetime.now()
 
@@ -65,7 +62,7 @@ def main() -> None:
                 conf.energies.set(p, 'Pop', conf.energies[args.read_boltz].Pop)
     else:
         for protocol_number in args.idx:
-            calc_boltzmann(confs=ensemble, protocol_number=protocol_number, temperature=config_mgr.temperature)
+            compute_boltzmann_populations(confs=ensemble, protocol_number=protocol_number, temperature=config_mgr.temperature)
 
     for i in args.idx:
         prot_obj = protocol[i]
@@ -76,29 +73,6 @@ def main() -> None:
 
 
     log.application_correct_end(total_conformers=len([c for c in ensemble if c.active]), total_time=datetime.now()-start)
-
-def calc_boltzmann(confs: List[Conformer], temperature: float, protocol_number:int) -> None: 
-    """
-    Recalculate Boltzmann populations for a specific protocol step.
-
-    Args:
-        confs (List[Conformer]): List of conformers.
-        temperature (float): Temperature in Kelvin.
-        protocol_number (int): Protocol ID to calculate for.
-    """
-
-    active: List[Conformer] = [conf for conf in confs if conf.active]
-    energy = np.array([conf.get_energy(protocol_number=protocol_number) for conf in active])
-    rel_en = energy - np.min(energy)
-
-    exponent = np.exp(-rel_en * CAL_TO_J * 1000 * EH_TO_KCAL /(R*temperature))
-    populations = exponent/exponent.sum()
-    for idx, conf in enumerate(active):
-        conf.energies.set(protocol_number=protocol_number, property="Pop", value=populations[idx] * 100)
-        conf.energies.set(protocol_number=protocol_number, property='Erel', value=rel_en[idx] * EH_TO_KCAL)
-
-    return None
-
 
 if __name__ == '__main__':
 

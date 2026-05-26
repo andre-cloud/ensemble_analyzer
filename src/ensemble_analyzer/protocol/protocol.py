@@ -2,15 +2,15 @@
 from dataclasses import dataclass, field
 from typing import Union, Optional, List, Dict, Literal, Any
 import json
-
 from importlib.resources import files
-
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.calculators import CALCULATOR_REGISTRY
-
 from ensemble_analyzer.protocol.solvent import Solvent
-
 from pathlib import Path
+
+
+def sort_protocols(protocols: List['Protocol']) -> List['Protocol']:
+    return sorted(protocols, key=lambda x: int(x.number))
 
 
 

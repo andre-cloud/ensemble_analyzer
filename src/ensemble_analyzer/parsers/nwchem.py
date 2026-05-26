@@ -1,5 +1,4 @@
 from ensemble_analyzer.parsers.base import BaseParser, register_parser
-from ensemble_analyzer.constants import *
 
 import re
 import numpy as np
@@ -26,20 +25,6 @@ class NWChemParser(BaseParser):
         "ext": "log",
     }
 
-    def __init__(self, output_name: str, log, conf=None) -> None:
-        """Initialize NWChem parser.
-
-        Args:
-            output_name: Path to NWChem output file.
-            log: Logger instance.
-            conf: Optional Conformer object.
-        """
-        super().__init__(output_name, log, conf)
-        self.regex = self.REGEX
-        self.correct_exiting = self.normal_termination()
-        if not self.correct_exiting:
-            self.log.warning(self.skip_message)
-
     def parse_geom(self) -> np.ndarray:
         """Parse the final geometry from NWChem output.
 
@@ -52,40 +37,7 @@ class NWChemParser(BaseParser):
         coords = np.array(re.findall(pattern, fl, flags=re.MULTILINE), dtype=float)
         return coords
 
-    def parse_energy(self) -> float:
-        """Parse the final electronic energy from NWChem output.
 
-        Returns:
-            float: Energy in Hartree.
-        """
-        match = re.findall(self.regex["E"], self.fl)
-        if not match:
-            return 0.0
-        return float(match[-1])
-
-    def parse_B_m(self) -> Tuple[np.ndarray, np.ndarray]:
-        """Parse rotational constants and dipole moment from NWChem output.
-
-        Returns:
-            Tuple[np.ndarray, np.ndarray]: (B vector, dipole moment vector).
-        """
-        match_B = re.findall(self.regex["B"], self.fl)
-        if match_B:
-            B = np.array(match_B[-1], dtype=float)
-            if self.regex["units_B"] != "cm-1":
-                B /= CONVERT_B[self.regex["units_B"]]
-        else:
-            self.log.warning(f"\t{self.log.WARNING} B not found, calculating with ASE")
-            B = self.calculate_B()
-
-        match_M = re.findall(self.regex["m"], self.fl)
-        if match_M:
-            M = np.array(match_M[-1], dtype=float)
-        else:
-            self.log.warning(f"\t{self.log.WARNING} M not found, storing a versor")
-            M = np.array([1, 0, 0])
-
-        return B, M
 
     def parse_freq(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """Parse vibrational frequencies and IR intensities from NWChem output.
@@ -149,21 +101,7 @@ class NWChemParser(BaseParser):
 
         return uv, ecd
 
-    def opt_done(self) -> bool:
-        """Check if geometry optimisation converged successfully.
 
-        Returns:
-            bool: True if converged, False otherwise.
-        """
-        return len(re.findall(self.regex["opt_done"], self.fl)) >= 1
-
-    def normal_termination(self) -> bool:
-        """Check if the NWChem calculation terminated normally.
-
-        Returns:
-            bool: True if normal termination is detected.
-        """
-        return len(re.findall(self.regex["finish"], self.fl)) >= 1
 
 
 

@@ -74,3 +74,37 @@ def mock_protocol():
     proto.thrGMAX = 999.0
     
     return proto
+
+
+@pytest.fixture
+def energy_record():
+    from ensemble_analyzer.conformer.energy_data import EnergyRecord
+    return EnergyRecord(
+        E=-100.0, G=-99.0, H=-98.5, zpve=0.05,
+        B=1.5, m=2.0, Pop=50.0, Erel=0.0, time=5.0,
+        Freq=np.array([100.0, 200.0, 300.0])
+    )
+
+
+@pytest.fixture
+def energy_store():
+    from ensemble_analyzer.conformer.energy_data import EnergyStore, EnergyRecord
+    store = EnergyStore()
+    store.add(1, EnergyRecord(E=-100.0, G=-99.0, H=-98.5, zpve=0.05, Pop=50.0))
+    store.add(2, EnergyRecord(E=-200.0, G=-198.0, Pop=80.0))
+    return store
+
+
+@pytest.fixture
+def conformer():
+    from ensemble_analyzer.conformer.conformer import Conformer
+    from ensemble_analyzer.conformer.energy_data import EnergyRecord
+    conf = Conformer(
+        number=1,
+        geom=np.array([[0.0, 0.0, 0.0], [1.2, 0.0, 0.0]]),
+        atoms=("C", "O"),
+        raw=True
+    )
+    conf.energies.add(1, EnergyRecord(E=-100.0, G=-99.0, Pop=50.0))
+    conf.energies.add(2, EnergyRecord(E=-200.0, G=-198.0, Pop=50.0))
+    return conf

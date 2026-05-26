@@ -4,7 +4,7 @@ from ensemble_analyzer.conformer.conformer import Conformer
 
 from pathlib import Path
 
-from ensemble_analyzer.constants import *
+from ensemble_analyzer.constants import EH_TO_KCAL, DEFAULT_RESOLUTION, MARKERS
 
 from .cluster_config import ClusteringConfig, PCAResult
 
@@ -221,7 +221,7 @@ class ClusteringManager:
         # Step 4: Determine cluster number
         if n_clusters is None:
             self.logger.debug("Auto-detecting optimal cluster number...")
-            n_clusters = self._find_optimal_clusters(pca_scores)
+            n_clusters, _, _ = self.find_optimal_clusters(pca_scores)
             self.logger.info(f"  Optimal clusters detected: {n_clusters}")
         
         # Step 5: K-Means clustering
@@ -289,7 +289,7 @@ class ClusteringManager:
         
         return np.array(eigenvalues_list)
     
-    def _find_optimal_clusters(self, features: np.ndarray) -> int:
+    def find_optimal_clusters(self, features: np.ndarray) -> tuple:
         """
         Find optimal number of clusters using silhouette score.
         
@@ -297,21 +297,22 @@ class ClusteringManager:
             features: Feature matrix (n_samples, n_features)
             
         Returns:
-            Optimal number of clusters
+            tuple: (optimal_k, k_range, silhouette_scores)
         """
         
-        min_k = max(int(len(features)*.1), 2) # Set as 10% of the ensemble length or 2
-        max_k = int(len(features)*.8) # Set as the 80% of the ensemble length
+        min_k = max(int(len(features)*.1), 2)
+        max_k = int(len(features)*.8)
         
         if max_k < min_k:
             self.logger.warning(
                 f"Cannot optimize clusters: max_k ({max_k}) < min_k ({min_k}). "
                 f"Using min_k={min_k}"
             )
-            return min_k
+            k_range = range(min_k, min_k + 1)
+            return min_k, k_range, [0.0]
         
         k_range = range(min_k, max_k + 1)
-        silhouette_scores = []
+        scores = []
         
         for k in k_range:
             kmeans = KMeans(
@@ -321,16 +322,16 @@ class ClusteringManager:
             )
             labels = kmeans.fit_predict(features)
             score = silhouette_score(features, labels)
-            silhouette_scores.append(score)
+            scores.append(score)
         
-        optimal_k = k_range[np.argmax(silhouette_scores)]
-        best_score = max(silhouette_scores)
+        optimal_k = k_range[np.argmax(scores)]
+        best_score = max(scores)
         
         self.logger.debug(
             f"  Silhouette scores: k={optimal_k} (score={best_score:.3f})"
         )
         
-        return optimal_k
+        return optimal_k, k_range, scores
     
     # ===
     # Private Methods - Visualization

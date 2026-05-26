@@ -2,8 +2,9 @@ from abc import ABC, abstractmethod
 from typing import Callable, Dict, List, Tuple
 from ase import Atoms
 from ensemble_analyzer.conformer.conformer import Conformer
-from ensemble_analyzer.constants import ROT_CONST_FACTOR
+from ensemble_analyzer.constants import ROT_CONST_FACTOR, CONVERT_B
 
+import re
 import numpy as np
 
 def register_parser(name: str) -> Callable:
@@ -31,100 +32,68 @@ def register_parser(name: str) -> Callable:
     return decorator
 
 class BaseParser(ABC):
-    """
-    Abstract Base Class for output parsers.
-    
-    This class defines the interface that any new QM software parser must implement
-    to be compatible with Ensemble Analyzer.
-    """
+    REGEX: Dict = {}
 
-    def __init__(self, output_name: str, log, conf: Conformer) -> None:
-        """Initialize the parser.
-
-        Args:
-            output_name: Path to the output file to parse.
-            log: Logger instance for warnings and debug info.
-        """
-
+    def __init__(self, output_name: str, log, conf: Conformer = None) -> None:
         with open(output_name) as f:
             self.fl = f.read()
-
         self.log = log
         self.conf = conf
         self.skip_message = "ATTENTION: Calculation CRASHED, impossible parsing. Conformer will be deactivated and no longer considered"
-    
+        self._init_regex()
+        self.correct_exiting = self.normal_termination()
+        if not self.correct_exiting:
+            self.log.warning(self.skip_message)
+
+    def _init_regex(self) -> None:
+        self.regex = self.REGEX
+
     @abstractmethod
     def parse_geom(self) -> np.ndarray:
-        """Extract the final geometry from the output.
-
-        Returns:
-            np.ndarray: Array of shape (N_atoms, 3) containing Cartesian coordinates.
-        """
         pass
 
-    @abstractmethod
     def parse_B_m(self) -> Tuple[np.ndarray, np.ndarray]:
-        """Extract Rotational Constants and Dipole Moment.
+        match_B = re.findall(self.regex['B'], self.fl)
+        if match_B:
+            B = np.array(match_B[-1], dtype=float)
+            if self.regex['units_B'] != 'cm-1':
+                B /= CONVERT_B[self.regex['units_B']]
+        else:
+            self.log.warning(f"\t{self.log.WARNING} B not found, calculating with ASE")
+            B = self.calculate_B()
 
-        Returns:
-            Tuple[np.ndarray, np.ndarray]:
-                - Rotational constants vector (B_vec).
-                - Dipole moment vector (M_vec).
-        """
-        pass
+        dipole_text = self._get_dipole_text()
+        match_M = re.findall(self.regex['m'], dipole_text)
+        if match_M:
+            M = np.array(match_M[-1], dtype=float)
+        else:
+            self.log.warning(f"\t{self.log.WARNING} M not found, storing a versor")
+            M = np.array([1, 0, 0])
+        return B, M
 
-    @abstractmethod
+    def _get_dipole_text(self) -> str:
+        return self.fl
+
     def parse_energy(self) -> float:
-        """Extract the final electronic energy.
+        match = re.findall(self.regex['E'], self.fl)
+        if not match:
+            return 0.0
+        return float(match[-1])
 
-        Returns:
-            float: Electronic energy in Hartree (Eh).
-        """
-        pass
-    
     @abstractmethod
     def parse_freq(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
-        """Extract vibrational frequencies and spectral data (IR/VCD).
-
-        Returns:
-            Tuple[np.ndarray, np.ndarray, np.ndarray]:
-                - Array of frequencies [cm^-1].
-                - IR spectrum data (X, Y).
-                - VCD spectrum data (X, Y).
-        """
         pass
 
     @abstractmethod
     def parse_tddft(self) -> Tuple[np.ndarray, np.ndarray]:
-        """Extract TD-DFT excited states data (UV/ECD).
-
-        Returns:
-            Tuple[np.ndarray, np.ndarray]:
-                - UV spectrum data (Energy, Intensity).
-                - ECD spectrum data (Energy, Rotational Strength).
-        """
         pass
 
-    @abstractmethod
     def opt_done(self) -> bool:
-        """
-        Check if geometry optimization converged successfully.
+        return len(re.findall(self.regex['opt_done'], self.fl)) >= 1
 
-        Returns:
-            bool: True if converged, False otherwise.
-        """
-        pass
-
-    @abstractmethod
     def normal_termination(self) -> bool:
-        """
-        Check if the calculation terminated normally.
+        return len(re.findall(self.regex['finish'], self.fl)) >= 1
 
-        Returns:
-            bool: True if normal termination is detected.
-        """
-        pass
-    
     def get_filtered_text(self, start:str, end:str) -> str:
         """
         Extract a section of text between two delimiters.

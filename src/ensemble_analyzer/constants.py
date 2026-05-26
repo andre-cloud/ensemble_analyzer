@@ -40,6 +40,17 @@ CHIRALS = ["VCD", "ECD"]
 
 GRAPHS = ['IR', 'VCD', 'UV', 'ECD']
 
+
+def boltzmann_distribution(
+    energies: np.ndarray,
+    temperature: float,
+) -> tuple[np.ndarray, np.ndarray]:
+    rel_energies = energies - energies.min()
+    exponent = -(rel_energies * EH_TO_KCAL * 1000 * CAL_TO_J) / (R * temperature)
+    weights = np.exp(exponent)
+    population = weights / weights.sum()
+    return rel_energies * EH_TO_KCAL, population
+
 CONVERT_B = {
     'GHz': 29.979000,
 }
@@ -81,6 +92,17 @@ MIN_RETENTION_RATE = 0.2        # Minimum retention rate
 DEFAULT_RESOLUTION = 500        # Grid resolution for contour plots
 MIN_CONFORMERS_FOR_PCA = 50     # Minimum conformers needed for meaningful PCA
 MIN_WEIGHTED_VALUE = 0.15       # Minimum value for the weight of the autoconvolution
+
+
+def compute_boltzmann_populations(conformers, protocol_number: int, temperature: float) -> None:
+    active = [c for c in conformers if c.active]
+    if not active:
+        return
+    energies = np.array([c.get_energy(protocol_number=protocol_number) for c in active])
+    rel_en, pops = boltzmann_distribution(energies, temperature)
+    for c, rel_e, p in zip(active, rel_en, pops):
+        c.energies.set(protocol_number, 'Pop', p * 100)
+        c.energies.set(protocol_number, 'Erel', rel_e)
 
 
 def get_models_dir(calculator_name: str, create: bool = True) -> Path:

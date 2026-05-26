@@ -57,10 +57,7 @@ class Conformer:
 
     def get_energy(self, protocol_number: int) -> float:
         """Return Gibbs free energy if available, else electronic energy."""
-        energies = self.energies[protocol_number]
-        if not np.isnan(energies.G):
-            return energies.G
-        return energies.E
+        return self.energies.get_energy(protocol_number)
     
     def create_log(self, protocol_number: int, monitor_internals: List[List[int]]) -> tuple:
         """Build a log tuple with conformer data and optional internal coordinates."""

@@ -7,7 +7,7 @@ from typing import Union, Optional, Literal
 from ensemble_analyzer._spectral.graph_default import GraphDefault
 from ensemble_analyzer._spectral.base import BaseGraph
 
-from ensemble_analyzer.constants import *
+from ensemble_analyzer.constants import FACTOR_EV_NM, MIN_WEIGHTED_VALUE
 
 @dataclass
 class ExperimentalGraph(BaseGraph): 
@@ -22,11 +22,7 @@ class ExperimentalGraph(BaseGraph):
 
     def __post_init__(self) -> None:
         """Initialize defaults and energy grid for experimental data."""
-        self.defaults = GraphDefault(self.graph_type)
-
-        X = np.linspace(self.defaults.start, self.defaults.end, num=10**self.definition)
-        self.X = X[np.argsort(X)]
-
+        super().__post_init__()
         self.fname: Optional[str] = self.defaults.experimental_fname
 
     def read(self) -> None:

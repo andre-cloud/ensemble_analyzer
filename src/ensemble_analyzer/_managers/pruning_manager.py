@@ -7,7 +7,7 @@ from collections import defaultdict
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.protocol.protocol import Protocol
 from ensemble_analyzer._logger.logger import Logger
-from ensemble_analyzer.constants import R, EH_TO_KCAL, CAL_TO_J
+from ensemble_analyzer.constants import R, EH_TO_KCAL, CAL_TO_J, boltzmann_distribution
 
 
 # ===
@@ -282,26 +282,10 @@ class PruningManager:
     
     @staticmethod
     def _boltzmann_distribution(
-        energies: np.ndarray, 
+        energies: np.ndarray,
         temperature: float
-    ) -> Tuple[np.ndarray, np.ndarray]: 
-        """Calculate the Boltzmann distribution
-
-        Args:
-            energies (np.ndarray): Array of energies [Eh]
-            temperature (float): Temperature [K]
-
-        Returns:
-            Tuple[np.ndarray, np.ndarray]: Relative_energies and population
-        """
-
-        rel_energies = energies - energies.min()
-        exponent = -(rel_energies * EH_TO_KCAL * 1000 * CAL_TO_J) / (R * temperature)
-        boltz_weights = np.exp(exponent)
-
-        population = boltz_weights / boltz_weights.sum()
-
-        return rel_energies * EH_TO_KCAL, population
+    ) -> Tuple[np.ndarray, np.ndarray]:
+        return boltzmann_distribution(energies, temperature)
     
     # ===
     # Logging

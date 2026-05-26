@@ -2,9 +2,8 @@ import re
 import os
 import numpy as np
 
-from ensemble_analyzer.constants import regex_parsing
+from ensemble_analyzer.constants import regex_parsing, GRAPHS
 from ensemble_analyzer.rrho import free_gibbs_energy
-from ensemble_analyzer.constants import *
 from ensemble_analyzer.parsers.base import PARSER_REGISTRY
 
 from ensemble_analyzer.conformer.conformer import Conformer

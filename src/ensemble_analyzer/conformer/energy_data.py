@@ -85,9 +85,9 @@ class EnergyStore:
         """Serialize to a dictionary for checkpoint storage."""
         return {k: v.as_dict() for k, v in self.data.items()}
     
-    def get_energy(self) -> float:
-        """Return Gibbs free energy from the last protocol, else electronic energy."""
-        data = self.last()
+    def get_energy(self, protocol_number: int = None) -> float:
+        """Return Gibbs free energy from a protocol, else electronic energy."""
+        data = self[protocol_number] if protocol_number is not None else self.last()
         if not np.isnan(data.G):
             return data.G
         return data.E
@@ -147,6 +147,15 @@ class EnergyStore:
                     return freq
 
         return np.array([])
+
+    def get_last_bvec(self, protocol_number: int) -> Optional[np.ndarray]:
+        """Retrieve B_vec from the given protocol, falling back to earlier ones."""
+        for i in range(protocol_number, -1, -1):
+            if i in self.data:
+                bv = self.data[i].B_vec
+                if bv is not None:
+                    return bv
+        return None
 
 
 def compute_rotational_constants(conf: 'Conformer', protocol_number: int) -> None:

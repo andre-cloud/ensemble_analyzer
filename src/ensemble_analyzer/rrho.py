@@ -1,9 +1,6 @@
 import numpy as np
 from typing import Optional
-try:
-    from ensemble_analyzer.constants import *
-except ModuleNotFoundError: 
-    from ensemble_analyzer.constants import *
+from ensemble_analyzer.constants import h, c, J_TO_H, Boltzmann, N_A
 
 def calc_damp(frequency: np.ndarray, cut_off: float, alpha: int) -> np.ndarray:
     r"""

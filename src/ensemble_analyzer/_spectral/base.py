@@ -13,7 +13,7 @@ from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.protocol.protocol import Protocol
 from ensemble_analyzer._logger.logger import Logger
 
-from ensemble_analyzer.constants import *
+from ensemble_analyzer.constants import CHIRALS
 
 @dataclass
 class BaseGraph: 

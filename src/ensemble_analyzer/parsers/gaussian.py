@@ -1,7 +1,6 @@
 
 
 from ensemble_analyzer.parsers.base import BaseParser, register_parser
-from ensemble_analyzer.constants import * 
 
 import re
 import numpy as np
@@ -41,21 +40,6 @@ class GaussianParser(BaseParser):
     }
 
 
-    def __init__(self, output_name: str, log, conf=None) -> None:
-        """Initialize Gaussian parser and detect version.
-
-        Args:
-            output_name: Path to Gaussian output file.
-            log: Logger instance.
-        """
-        super().__init__(output_name, log, conf)
-        
-        self.regex = self.REGEX
-        self.correct_exiting = self.normal_termination()
-
-        if not self.correct_exiting: 
-            self.log.warning(self.skip_message)
-
     def parse_geom(self) -> np.ndarray:
         """
         Parse final geometry coordinates.
@@ -70,43 +54,8 @@ class GaussianParser(BaseParser):
         coords = np.array(re.findall(pattern, fl, flags=re.MULTILINE), dtype=float)
         return coords
 
-    def parse_B_m(self) -> Tuple[np.ndarray, np.ndarray]:
-        """
-        Parse Rotational Constants and Dipole Moment.
-
-        Returns:
-            Tuple[np.ndarray, np.ndarray]: (B vector, Dipole vector).
-        """
-        match_B = re.findall(self.regex['B'], self.fl)
-        if match_B:
-            B = np.array(match_B[-1], dtype=float)
-            if self.regex['units_B'] != 'cm-1':
-                B /= CONVERT_B[self.regex['units_B']]
-        else:
-            self.log.warning(f"\t{self.log.WARNING} B not found, calculating with ASE")
-            B = self.calculate_B()
-
-        fl = self.get_filtered_text(start='Dipole moment', end='Quadrupole')
-        match_M = re.findall(self.regex['m'], fl)
-        if match_M:
-            M = np.array(match_M[-1], dtype=float)
-        else: 
-            self.log.warning(f"\t{self.log.WARNING} M not found, storing a versor")
-            M = np.array([1,0,0])
-
-        return B, M
-
-    def parse_energy(self) -> float:
-        """
-        Parse final Single Point Energy.
-
-        Returns:
-            float: Energy in Hartree.
-        """
-        match = re.findall(self.regex['E'], self.fl)
-        if not match:
-            return 0.0
-        return float(match[-1])
+    def _get_dipole_text(self) -> str:
+        return self.get_filtered_text(start='Dipole moment', end='Quadrupole')
     
     def parse_freq(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
@@ -153,15 +102,6 @@ class GaussianParser(BaseParser):
         R = np.array([m for m in ecd_pattern.findall(ecd)], dtype=np.float64)
 
         return np.column_stack((energies,f)), np.column_stack((energies,R))
-
-    def opt_done(self) -> bool:
-        """Check if optimization has converged."""
-        return len(re.findall(self.regex['opt_done'], self.fl)) >= 1
-
-    def normal_termination(self) -> bool:
-        """Check if normal calculation ended."""
-        return len(re.findall(self.regex['finish'], self.fl)) >= 1
-
 
 if __name__ == '__main__':
 

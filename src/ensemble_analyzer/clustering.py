@@ -5,7 +5,7 @@ from ensemble_analyzer._logger.logger import Logger
 from ensemble_analyzer._clustering.cluster_config import ClusteringConfig
 from ensemble_analyzer._clustering.cluster_manager import ClusteringManager
 
-from ensemble_analyzer.constants import * 
+from ensemble_analyzer.constants import MIN_CONFORMERS_FOR_PCA
 
 from typing import List, Optional, Union
 

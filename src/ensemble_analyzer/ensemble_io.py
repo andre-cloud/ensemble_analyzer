@@ -1,11 +1,19 @@
 import os, re
-
 import numpy as np
 from typing import List, Tuple, Optional
-
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.conformer.energy_data import EnergyRecord
 from ensemble_analyzer._logger.logger import Logger
+
+
+def load_workflow_data() -> Tuple[List[Conformer], List['Protocol']]:
+    from ensemble_analyzer._managers.checkpoint_manager import CheckpointManager
+    from ensemble_analyzer._managers.protocol_manager import ProtocolManager
+    ckpt = CheckpointManager()
+    confs = ckpt.load()
+    pm = ProtocolManager()
+    protos = pm.load()
+    return confs, protos
 
 
 def _parse_xyz_str(fl: List[str], raw: bool =False) -> Tuple[np.ndarray, np.ndarray, Optional[float]]:

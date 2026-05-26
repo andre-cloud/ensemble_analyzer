@@ -1,5 +1,7 @@
 from importlib.metadata import version
+
 version = version("ensemble_analyzer")
+
 text = f"""
 
 ███████╗███╗   ██╗███████╗███████╗███╗   ███╗██████╗ ██╗     ███████╗

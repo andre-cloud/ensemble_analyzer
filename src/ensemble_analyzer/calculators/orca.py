@@ -4,7 +4,7 @@ import shutil
 import os
 from pathlib import Path
 
-from typing import Tuple
+from typing import Tuple, Any
 
 _POST_COORDS_KEYWORDS = frozenset({'%frag', '%eprnmr', '%nmr', '%rel', '%epr'})
 
@@ -95,16 +95,7 @@ class OrcaCalc(BaseCalc):
 
         return si, ob, post
 
-    def _std_calc(self) -> Tuple[ORCA, str]:
-        """
-        Create standard ORCA calculator with common settings.
-
-        Post-coordinate blocks (%frag, %eprnmr, etc.) from add_input are
-        auto-split and appended after the *xyz section via write_input patching.
-
-        Returns:
-            Tuple[ORCA, str]: Initialized ASE ORCA calculator and label.
-        """
+    def _build_calculator(self) -> Tuple[Any, str]:
         si, ob, post = self.common_str()
 
         ase_dir = f"{self.conf.folder}/protocol_{self.protocol.number}"
@@ -121,9 +112,9 @@ class OrcaCalc(BaseCalc):
 
         if self.protocol.read_orbitals:
             calculator.parameters["orcasimpleinput"] += " moread"
-            gbw_path = os.path.abspath(
-                f"{self.conf.folder}/protocol_{self.protocol.read_orbitals}/orca.gbw"
-            ).replace('\\', '/')
+            gbw_path = self._build_path(
+                self.conf.folder, f"protocol_{self.protocol.read_orbitals}", "orca.gbw"
+            )
             calculator.parameters["orcablocks"] += f'\n%moinp "{gbw_path}"\n'
 
         if "freq" in self.protocol.add_input.lower():
@@ -142,17 +133,7 @@ class OrcaCalc(BaseCalc):
 
         return calculator, label
 
-    def single_point(self) -> Tuple[ORCA, str]:
-        """Configure Single Point calculation."""
-        return self._std_calc()
-
-    def optimisation(self) -> Tuple[ORCA, str]:
-        """
-        Configure Geometry Optimization.
-        Adds constraints if specified in protocol.
-        """
-
-        calc, label = self._std_calc()
+    def _add_opt_keywords(self, calc: ORCA) -> None:
         calc.parameters["orcasimpleinput"] += " opt"
         if self.constrains:
             tag_map = {1: "C", 2: "B", 3: "A", 4: "D"}
@@ -162,19 +143,15 @@ class OrcaCalc(BaseCalc):
                 parts.append(f"{{{tag} {' '.join(map(str, c))} C}}")
             text = "\n%geom Constraints " + " ".join(parts) + " end end\n"
             calc.parameters["orcasimpleinput"] += text
-            
+
         if self.protocol.freq:
             calc.parameters["orcasimpleinput"] += " freq"
-            if self.VERSION > 5:
-                calc.parameters["orcablocks"] += "\n%freq vcd true end\n"
+            self._maybe_add_vcd(calc)
 
-        return calc, label
-
-    def frequency(self) -> Tuple[ORCA, str]:
-        """Configure Frequency calculation."""
-        
-        calc, label = self._std_calc()
+    def _add_freq_keywords(self, calc: ORCA) -> None:
         calc.parameters["orcasimpleinput"] += " freq"
+        self._maybe_add_vcd(calc)
+
+    def _maybe_add_vcd(self, calc: ORCA) -> None:
         if self.VERSION > 5:
             calc.parameters["orcablocks"] += "\n%freq vcd true end\n"
-        return calc, label

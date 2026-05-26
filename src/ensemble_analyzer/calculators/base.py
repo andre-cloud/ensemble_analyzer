@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 
 from typing import Callable, Dict, Tuple, Any
 import numpy as np
+import os
 
 
 def register_calculator(name: str) -> Callable:
@@ -32,17 +33,40 @@ class BaseCalc(ABC):
     def common_str(self) -> dict:
         pass
 
-    @abstractmethod
+    # --- Hook methods (override in subclasses) ---
+
+    def _build_calculator(self) -> Tuple[Any, str]:
+        raise NotImplementedError
+
+    def _add_sp_keywords(self, calc: Any) -> None:
+        pass
+
+    def _add_opt_keywords(self, calc: Any) -> None:
+        pass
+
+    def _add_freq_keywords(self, calc: Any) -> None:
+        pass
+
+    # --- Template methods ---
+
     def single_point(self) -> Tuple[Any, str]:
-        pass
+        calc, label = self._build_calculator()
+        self._add_sp_keywords(calc)
+        return calc, label
 
-    @abstractmethod
     def optimisation(self) -> Tuple[Any, str]:
-        pass
+        calc, label = self._build_calculator()
+        self._add_opt_keywords(calc)
+        return calc, label
 
-    @abstractmethod
     def frequency(self) -> Tuple[Any, str]:
-        pass
+        calc, label = self._build_calculator()
+        self._add_freq_keywords(calc)
+        return calc, label
+
+    @staticmethod
+    def _build_path(*parts: str) -> str:
+        return os.path.abspath(os.path.join(*parts)).replace('\\', '/')
 
 
 CALCULATOR_REGISTRY : Dict[str, BaseCalc] = {}

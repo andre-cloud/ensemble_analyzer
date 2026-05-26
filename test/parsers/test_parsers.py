@@ -74,7 +74,7 @@ class TestGaussianParser:
         """
         
         # Patch constants to ensure deterministic conversion check
-        with patch("ensemble_analyzer.parsers.gaussian.CONVERT_B", {"GHz": 29.9792458}):
+        with patch("ensemble_analyzer.parsers.base.CONVERT_B", {"GHz": 29.9792458}):
             B, M = parser.parse_B_m()
         
         # Verify Dipole

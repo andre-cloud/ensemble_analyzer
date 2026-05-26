@@ -1,8 +1,7 @@
-import os
 from ase.calculators.gaussian import Gaussian
 from ensemble_analyzer.calculators.base import BaseCalc, register_calculator
 
-from typing import Tuple
+from typing import Tuple, Any
 
 @register_calculator("gaussian")
 class GaussianCalc(BaseCalc):
@@ -38,22 +37,15 @@ class GaussianCalc(BaseCalc):
 
         return route
 
-    def _std_calc(self) -> Tuple[Gaussian, str]:
-        """
-        Create standard Gaussian calculator.
-
-        Returns:
-            Tuple[Gaussian, str]: Initialized calculator and label.
-        """
-
+    def _build_calculator(self) -> Tuple[Any, str]:
         route = self.common_str()
 
         ase_label = f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_gaussian"
         label = "gaussian"
 
-        chk_path = os.path.abspath(
-            f"{self.conf.folder}/protocol_{self.protocol.number}/gaussian.chk"
-        ).replace('\\', '/')
+        chk_path = self._build_path(
+            self.conf.folder, f"protocol_{self.protocol.number}", "gaussian.chk"
+        )
 
         calc = Gaussian(
             label=ase_label,
@@ -66,26 +58,14 @@ class GaussianCalc(BaseCalc):
             nprocshared=self.cpu,
         )
         if self.protocol.read_orbitals:
-            oldchk_path = os.path.abspath(
-                f"{self.conf.folder}/protocol_{self.protocol.read_orbitals}/gaussian.chk"
-            ).replace('\\', '/')
+            oldchk_path = self._build_path(
+                self.conf.folder, f"protocol_{self.protocol.read_orbitals}", "gaussian.chk"
+            )
             calc.oldchk = oldchk_path
 
         return calc, label
 
-    def single_point(self) -> Tuple[Gaussian, str]:
-        """Configure Single Point calculation."""
-
-        calc, label = self._std_calc()
-        return calc, label
-
-    def optimisation(self) -> Tuple[Gaussian, str]:
-        """
-        Configure Geometry Optimization.
-        Handles modredundant constraints.
-        """
-
-        calc, label = self._std_calc()
+    def _add_opt_keywords(self, calc: Gaussian) -> None:
         if not self.protocol.constrains:
             calc.parameters["extra"] += " opt"
         else:
@@ -105,11 +85,5 @@ class GaussianCalc(BaseCalc):
         if self.protocol.freq: 
             calc.parameters["extra"] += " freq=(HPModes,vcd)"
 
-        return calc, label
-
-    def frequency(self) -> Tuple[Gaussian, str]:
-        """Configure Frequency calculation."""
-
-        calc, label = self._std_calc()
+    def _add_freq_keywords(self, calc: Gaussian) -> None:
         calc.parameters["extra"] += " freq=(HPModes,vcd)"
-        return calc, label

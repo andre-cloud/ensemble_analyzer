@@ -4,8 +4,6 @@ from typing import Optional, Union, List
 import numpy as np
 
 
-from ensemble_analyzer.constants import *
-
 from ensemble_analyzer._spectral.base import BaseGraph
 from ensemble_analyzer._spectral.experimental import ExperimentalGraph
 

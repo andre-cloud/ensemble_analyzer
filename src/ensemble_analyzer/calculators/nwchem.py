@@ -48,17 +48,18 @@ class NWChemCalc(BaseCalc):
         memory_mb = self.cpu * 5000
         kw["memory"] = f"{memory_mb} mb"
 
-        current_movecs = os.path.abspath(
-            f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_nwchem/nwchem.movecs"
-        ).replace('\\', '/')
+        current_movecs = self._build_path(
+            self.conf.folder, f"protocol_{self.protocol.number}",
+            f"{self.conf.number}_p{self.protocol.number}_nwchem", "nwchem.movecs"
+        )
 
         if getattr(self.protocol, "read_orbitals", None):
-            # If read_orbitals is an int, read from that specific protocol. Otherwise, default to previous.
             prev_p_num = self.protocol.read_orbitals
-            old_movecs = os.path.abspath(
-                f"{self.conf.folder}/protocol_{prev_p_num}/{self.conf.number}_p{self.protocol.number}_nwchem/nwchem.movecs"
-            ).replace('\\', '/')
-            
+            old_movecs = self._build_path(
+                self.conf.folder, f"protocol_{prev_p_num}",
+                f"{self.conf.number}_p{self.protocol.number}_nwchem", "nwchem.movecs"
+            )
+
             kw["dft"]["vectors"] = f'input "{old_movecs}" output "{current_movecs}"'
         else:
             kw["dft"]["vectors"] = f'output "{current_movecs}"'
@@ -96,15 +97,7 @@ class NWChemCalc(BaseCalc):
             return f"constraints\n  {raw}\nend"
         return raw
 
-    def _std_calc(self) -> Tuple[NWChem, str]:
-        """Build a standard NWChem calculator instance with common keywords.
-
-        Handles MPI command construction, patched write_input for extra
-        input blocks and constraints.
-
-        Returns:
-            Tuple[NWChem, str]: ASE NWChem calculator and label string.
-        """
+    def _build_calculator(self) -> Tuple[Any, str]:
         kw = self.common_str()
         ase_label = f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_nwchem"
 
@@ -130,7 +123,6 @@ class NWChemCalc(BaseCalc):
             original = calculator.write_input
 
             def patched_write_input(atoms: Any, properties: Any = None, system_changes: Any = None) -> None:
-                """Patch write_input to append extra blocks to the NWChem input file."""
                 original(atoms, properties, system_changes)
                 inp = Path(calculator.directory) / calculator.input_filename()
                 with open(inp, "a") as f:
@@ -140,36 +132,14 @@ class NWChemCalc(BaseCalc):
 
         return calculator, ase_label
 
-    def single_point(self) -> Tuple[NWChem, str]:
-        """Configure a single-point energy calculation with NWChem.
-
-        Returns:
-            Tuple[NWChem, str]: ASE NWChem calculator and label string.
-        """
-        calc, label = self._std_calc()
+    def _add_sp_keywords(self, calc: NWChem) -> None:
         if "task" not in self.protocol.add_input:
             calc.parameters["task"] = "energy"
-        
-        return calc, label
 
-    def optimisation(self) -> Tuple[NWChem, str]:
-        """Configure a geometry optimisation with NWChem.
-
-        Returns:
-            Tuple[NWChem, str]: ASE NWChem calculator and label string.
-        """
-        calc, label = self._std_calc()
+    def _add_opt_keywords(self, calc: NWChem) -> None:
         calc.parameters["task"] = "optimize"
         if self.protocol.freq: 
             calc.parameters["task"] += "\ntask dft freq"
-        return calc, label
 
-    def frequency(self) -> Tuple[NWChem, str]:
-        """Configure a frequency calculation with NWChem.
-
-        Returns:
-            Tuple[NWChem, str]: ASE NWChem calculator and label string.
-        """
-        calc, label = self._std_calc()
+    def _add_freq_keywords(self, calc: NWChem) -> None:
         calc.parameters["task"] = "freq"
-        return calc, label

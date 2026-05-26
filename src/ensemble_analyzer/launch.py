@@ -14,7 +14,7 @@ from ensemble_analyzer.constants import DEBUG
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.protocol.protocol import Protocol
 
-from ensemble_analyzer._managers.checkpoint_manager import CheckpointManager
+from ensemble_analyzer.ensemble_io import load_workflow_data
 from ensemble_analyzer._managers.protocol_manager import ProtocolManager
 from ensemble_analyzer._managers.calculation_config import CalculationConfig
 from ensemble_analyzer._managers.calculator_orchestration import CalculationOrchestrator
@@ -50,25 +50,23 @@ def main() -> None:
     log.info(title)
     
     # 4. Load or initialize data
-    checkpoint_mgr = CheckpointManager()
-    protocol_mgr = ProtocolManager()
+    from ensemble_analyzer.protocol.protocol import sort_protocols
     
     if args.restart:
-        conformers = checkpoint_mgr.load()
-        protocols = protocol_mgr.load()
-        start_from = protocol_mgr.load_last_completed()
+        conformers, protocols = load_workflow_data()
+        start_from = ProtocolManager().load_last_completed()
     else:
         # 4.1 Load protocols
         protocol_data = load_protocol(args.protocol)
         protocols = [Protocol(number=idx, **protocol_data[idx]) for idx in protocol_data]
-        protocol_mgr.save(protocols)
+        ProtocolManager().save(protocols)
         
         # 4.2 Load ensemble
         conformers = read_ensemble(args.ensemble, log)
         start_from = 0
     
     # 5. Create configuration and sort the protocols loaded by the number
-    protocols.sort(key=lambda x: int(x.number))
+    protocols = sort_protocols(protocols)
     config = CalculationConfig.from_args(args, start_from)
     
     # 6. Log application start

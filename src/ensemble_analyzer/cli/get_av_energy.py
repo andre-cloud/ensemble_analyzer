@@ -7,11 +7,11 @@ from pathlib import Path
 from typing import List, Tuple
 
 from ensemble_analyzer._logger.create_log import create_logger
-from ensemble_analyzer._managers.checkpoint_manager import CheckpointManager
-from ensemble_analyzer._managers.protocol_manager import ProtocolManager
+from ensemble_analyzer.ensemble_io import load_workflow_data
+from ensemble_analyzer.protocol.protocol import sort_protocols
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.rrho import free_gibbs_energy
-from ensemble_analyzer.constants import EH_TO_KCAL, R, CAL_TO_J
+from ensemble_analyzer.constants import EH_TO_KCAL, boltzmann_distribution
 from ensemble_analyzer._title import title
 
 def get_thermo_data(conf: Conformer, protocol_number: int, temp: float, mult: int, cut_off:float, alpha: int, pressure: float, linear:bool)-> Tuple[float, float, float, float]:
@@ -44,34 +44,13 @@ def get_thermo_data(conf: Conformer, protocol_number: int, temp: float, mult: in
     E = record_curr.E
     
     # 2. Search for Frequencies (Current step or recursive fallback)
-    freq = None
-    for step in range(int(protocol_number), -1, -1):
-        if step in conf.energies:
-            r = conf.energies[step]
-            if r.Freq is not None and len(r.Freq) > 0:
-                freq = r.Freq
-                break
-    
-    # If no frequencies found, return only E
-    if freq is None:
+    freq = conf.energies.get_last_freq(int(protocol_number))
+    if len(freq) == 0:
         return E, np.nan, np.nan, np.nan
 
     # 3. Necessary data for RRHO
     mw = conf.weight_mass
-    B_vec = record_curr.B_vec
-    
-    # Fallback search for B_vec (Rotational Constants)
-    if B_vec is None:
-         for step in range(int(protocol_number), -1, -1):
-            if step in conf.energies:
-                r = conf.energies[step]
-                if r.B_vec is not None:
-                    B_vec = r.B_vec
-                    break
-    
-    # Dummy fallback to avoid crashes if B is missing but Freq exists (rare edge case)
-    if B_vec is None:
-        B_vec = np.array([1.0, 1.0, 1.0]) 
+    B_vec = conf.energies.get_last_bvec(int(protocol_number)) or np.array([1.0, 1.0, 1.0])
 
     # 4. Thermodynamic Calculation
     try:
@@ -85,36 +64,12 @@ def get_thermo_data(conf: Conformer, protocol_number: int, temp: float, mult: in
         return E, np.nan, np.nan, np.nan
 
 def calculate_population_vector(energies: np.ndarray, temp: float) -> np.ndarray:
-    """
-    Calculate Boltzmann population percentages from an energy vector.
-
-    Args:
-        energies (np.ndarray): Array of energies in Hartree (Eh). Can contain NaNs.
-        temp (float): Temperature [K].
-
-    Returns:
-        np.ndarray: Array of populations [%]. Sum of valid entries equals 100.
-        Returns NaN at indices where input energy was NaN.
-    """
-
     mask = ~np.isnan(energies)
     if not np.any(mask):
         return np.full(energies.shape, np.nan)
-    
-    valid_energies = energies[mask]
-    
-    # Delta E in kcal/mol relative to the valid minimum
-    rel_energies = (valid_energies - valid_energies.min()) * EH_TO_KCAL
-    
-    # Boltzmann: exp(-dE / RT)
-    exponent = -(rel_energies * 1000 * CAL_TO_J) / (R * temp)
-    weights = np.exp(exponent)
-    
-    valid_pops = weights / weights.sum() * 100
-    
-    # Reconstruct full vector
+    _, valid_pops = boltzmann_distribution(energies[mask], temp)
     pops = np.full(energies.shape, np.nan)
-    pops[mask] = valid_pops
+    pops[mask] = valid_pops * 100
     return pops
 
 def calculate_weighted_average(energies: np.ndarray, pops: np.ndarray) -> float:
@@ -190,15 +145,12 @@ def main() -> None:
     cwd = os.getcwd()
     os.chdir(work_dir)
     try:
-        ckpt_mgr = CheckpointManager()
-        conformers = ckpt_mgr.load()
-        protocol_mgr = ProtocolManager( )
-        protocols = protocol_mgr.load()
+        conformers, protocols = load_workflow_data()
     finally:
         os.chdir(cwd)
 
     # Sort protocols numerically
-    protocols.sort(key=lambda x: int(x.number))
+    protocols = sort_protocols(protocols)
     
     final_summary_rows = []
     

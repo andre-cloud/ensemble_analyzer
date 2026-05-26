@@ -82,16 +82,15 @@ class CLILogger:
         """Log an error message."""
         print(f"❌ {msg}")
 
-def plot_component_analysis(result: Any, output_base: str, logger: CLILogger) -> None:
+def plot_component_analysis(result: Any, out_dir: str, base_name: str, logger: CLILogger) -> None:
     """Generate loading plot showing feature contributions to principal components.
 
     Args:
         result: Clustering result object with components attribute.
-        output_base: Base path for output files.
+        out_dir: Output directory.
+        base_name: Base filename (without extension).
         logger: Logger instance.
     """
-    out_dir = os.path.dirname(output_base) or "."
-    base_name = os.path.splitext(os.path.basename(output_base))[0]
     
     logger.info("Generating component loading analysis...")
     
@@ -129,16 +128,15 @@ def plot_component_analysis(result: Any, output_base: str, logger: CLILogger) ->
     plt.close()
     logger.info(f"✓ Component loadings saved: {loading_file}")
 
-def plot_before_after_pca(result: Any, output_base: str, logger: CLILogger) -> None:
+def plot_before_after_pca(result: Any, out_dir: str, base_name: str, logger: CLILogger) -> None:
     """Side-by-side comparison of data before and after PCA transformation.
 
     Args:
         result: Clustering result object with original_features, scores, clusters, components.
-        output_base: Base path for output files.
+        out_dir: Output directory.
+        base_name: Base filename (without extension).
         logger: Logger instance.
     """
-    out_dir = os.path.dirname(output_base) or "."
-    base_name = os.path.splitext(os.path.basename(output_base))[0]
     
     logger.info("Generating before/after PCA comparison...")
     
@@ -214,16 +212,15 @@ def plot_before_after_pca(result: Any, output_base: str, logger: CLILogger) -> N
     plt.close()
     logger.info(f"✓ Before/After comparison saved: {comparison_file}")
 
-def plot_clustering_metrics(result: Any, output_base: str, logger: CLILogger) -> None:
+def plot_clustering_metrics(result: Any, out_dir: str, base_name: str, logger: CLILogger) -> None:
     """Generate evaluation plots: Scree plot with cumulative variance and Silhouette scores.
 
     Args:
         result: Clustering result object.
-        output_base: Base path for output files.
+        out_dir: Output directory.
+        base_name: Base filename (without extension).
         logger: Logger instance.
     """
-    out_dir = os.path.dirname(output_base) or "."
-    base_name = os.path.splitext(os.path.basename(output_base))[0]
     
     logger.info("Generating clustering metric plots...")
     
@@ -272,17 +269,11 @@ def plot_clustering_metrics(result: Any, output_base: str, logger: CLILogger) ->
     logger.info(f"✓ Scree plot saved: {scree_file}")
 
     features = result.scores
-    min_k = max(int(len(features) * 0.1), 2)
-    max_k = int(len(features) * 0.8)
+    from ensemble_analyzer._clustering.cluster_manager import ClusteringManager
+    dummy_mgr = ClusteringManager(logger=logger)
+    opt_k, k_range, scores = dummy_mgr.find_optimal_clusters(features)
     
-    if max_k > min_k:
-        k_range = range(min_k, max_k + 1)
-        scores = []
-        for k in k_range:
-            kmeans = KMeans(n_clusters=k, n_init='auto', random_state=500)
-            labels = kmeans.fit_predict(features)
-            scores.append(silhouette_score(features, labels))
-        
+    if len(k_range) > 1:
         plt.figure(figsize=(8, 5))
         plt.plot(k_range, scores, marker='s', color='orange')
         plt.axvline(
@@ -303,16 +294,15 @@ def plot_clustering_metrics(result: Any, output_base: str, logger: CLILogger) ->
         logger.warning("Not enough data points to generate Silhouette plot")
 
 
-def plot_3d_original_space(result: Any, output_base: str, logger: CLILogger) -> None:
+def plot_3d_original_space(result: Any, out_dir: str, base_name: str, logger: CLILogger) -> None:
     """Generate a 3D scatter plot of the first 3 original features.
 
     Args:
         result: Clustering result object.
-        output_base: Base path for output files.
+        out_dir: Output directory.
+        base_name: Base filename (without extension).
         logger: Logger instance.
     """
-    out_dir = os.path.dirname(output_base) or "."
-    base_name = os.path.splitext(os.path.basename(output_base))[0]
     
     logger.info("Generating 3D original space plot...")
     
@@ -398,9 +388,11 @@ def main() -> None:
     )
 
     if result:
-        plot_clustering_metrics(result, args.output, logger)
-        plot_component_analysis(result, args.output, logger)
-        plot_before_after_pca(result, args.output, logger)
+        out_dir = os.path.dirname(args.output) or "."
+        base_name = os.path.splitext(os.path.basename(args.output))[0]
+        plot_clustering_metrics(result, out_dir, base_name, logger)
+        plot_component_analysis(result, out_dir, base_name, logger)
+        plot_before_after_pca(result, out_dir, base_name, logger)
 
         print(f"\n{'='*60}")
         print(f"RESULTS")
