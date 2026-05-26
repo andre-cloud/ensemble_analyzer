@@ -270,7 +270,6 @@ def plot_clustering_metrics(result: Any, out_dir: str, base_name: str, logger: C
     logger.info(f"✓ Scree plot saved: {scree_file}")
 
     features = result.scores
-    from ensemble_analyzer._clustering.cluster_manager import ClusteringManager
     dummy_mgr = ClusteringManager(logger=logger)
     opt_k, k_range, scores = dummy_mgr.find_optimal_clusters(features)
     

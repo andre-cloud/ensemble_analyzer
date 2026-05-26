@@ -6,6 +6,8 @@ Provides shared mocks for Logger, Conformer, and Protocol to be used across the 
 import pytest
 import numpy as np
 from unittest.mock import MagicMock
+from ensemble_analyzer.conformer.energy_data import EnergyRecord, EnergyStore
+from ensemble_analyzer.conformer.conformer import Conformer
 
 @pytest.fixture
 def mock_logger():
@@ -78,7 +80,6 @@ def mock_protocol():
 
 @pytest.fixture
 def energy_record():
-    from ensemble_analyzer.conformer.energy_data import EnergyRecord
     return EnergyRecord(
         E=-100.0, G=-99.0, H=-98.5, zpve=0.05,
         B=1.5, m=2.0, Pop=50.0, Erel=0.0, time=5.0,
@@ -88,7 +89,6 @@ def energy_record():
 
 @pytest.fixture
 def energy_store():
-    from ensemble_analyzer.conformer.energy_data import EnergyStore, EnergyRecord
     store = EnergyStore()
     store.add(1, EnergyRecord(E=-100.0, G=-99.0, H=-98.5, zpve=0.05, Pop=50.0))
     store.add(2, EnergyRecord(E=-200.0, G=-198.0, Pop=80.0))
@@ -97,8 +97,6 @@ def energy_store():
 
 @pytest.fixture
 def conformer():
-    from ensemble_analyzer.conformer.conformer import Conformer
-    from ensemble_analyzer.conformer.energy_data import EnergyRecord
     conf = Conformer(
         number=1,
         geom=np.array([[0.0, 0.0, 0.0], [1.2, 0.0, 0.0]]),

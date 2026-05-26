@@ -4,6 +4,8 @@ Verifies formatting, timer tracking, and context managers.
 """
 
 import pytest
+import time as time_module
+import numpy as np
 from unittest.mock import MagicMock
 from datetime import timedelta
 from ensemble_analyzer._logger.logger import Logger
@@ -24,8 +26,7 @@ class TestLogger:
     def test_timers(self, log):
         """Test internal timer logic."""
         log._start_timer("test")
-        import time
-        time.sleep(0.01)
+        time_module.sleep(0.01)
         elapsed = log._stop_timer("test")
         assert elapsed > 0.0
         assert log._stop_timer("unknown") == 0.0
@@ -41,7 +42,6 @@ class TestLogger:
 
     def test_calculation_success_format(self, log):
         """Test formatting of calculation success message."""
-        import numpy as np
         # Case 1: No imag freq (array present, but none < 0)
         log.calculation_success(1, 1, -100.0, -100.0, 5.0, np.array([10.0, 20.0]))
         call_args = log.info.call_args[0][0]

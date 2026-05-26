@@ -1,4 +1,5 @@
 import pytest
+import os
 import numpy as np
 from unittest.mock import MagicMock, patch
 from ensemble_analyzer._spectral.base import BaseGraph
@@ -146,7 +147,6 @@ class TestBaseGraph:
         assert div > 0
 
     def test_dump_xy_data(self, base, tmp_path):
-        import os
         fname = str(tmp_path / "test.xy")
         base.dump_XY_data(np.array([1.0, 2.0]), np.array([0.5, 1.0]), fname)
         assert os.path.exists(fname)

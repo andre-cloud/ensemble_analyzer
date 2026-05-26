@@ -4,11 +4,11 @@ from typing import List, Tuple, Optional
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.conformer.energy_data import EnergyRecord
 from ensemble_analyzer._logger.logger import Logger
+from ensemble_analyzer._managers.checkpoint_manager import CheckpointManager
+from ensemble_analyzer._managers.protocol_manager import ProtocolManager
 
 
 def load_workflow_data() -> Tuple[List[Conformer], List['Protocol']]:
-    from ensemble_analyzer._managers.checkpoint_manager import CheckpointManager
-    from ensemble_analyzer._managers.protocol_manager import ProtocolManager
     ckpt = CheckpointManager()
     confs = ckpt.load()
     pm = ProtocolManager()

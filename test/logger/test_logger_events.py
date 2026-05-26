@@ -3,6 +3,7 @@ import numpy as np
 from unittest.mock import MagicMock
 from datetime import timedelta
 from ensemble_analyzer._logger.logger import Logger
+from ensemble_analyzer._title import title
 
 
 class TestLoggerEvents:
@@ -18,7 +19,6 @@ class TestLoggerEvents:
         return l
 
     def test_title_screen(self, log):
-        from ensemble_analyzer._title import title
         log.title_screen()
         log.info.assert_called_with(title)
 

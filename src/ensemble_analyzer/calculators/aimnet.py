@@ -4,6 +4,12 @@ from ._ml_base import BaseMlCalc
 from .base import register_calculator
 from ensemble_analyzer.constants import get_models_dir
 from pathlib import Path
+try:
+    import torch
+    from aimnet.calculators import AIMNet2ASE
+except ImportError:
+    torch = None
+    AIMNet2ASE = None
 
 
 @register_calculator("aimnet")
@@ -25,10 +31,7 @@ class AIMNetCalc(BaseMlCalc):
         Returns:
             Any: AIMNet2 ASE calculator instance.
         """
-        try:
-            import torch
-            from aimnet.calculators import AIMNet2ASE
-        except ImportError:
+        if AIMNet2ASE is None:
             raise ImportError(
                 "aimnet module missing. Install via: pip install aimnet[ase]@git+https://github.com/isayevlab/aimnetcentral.git"
             )

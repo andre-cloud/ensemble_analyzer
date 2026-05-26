@@ -5,6 +5,7 @@ Interactive interface based on InquirerPy and Rich.
 """
 
 import sys
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -382,7 +383,6 @@ class InteractiveTUI:
 
     def save_flow(self) -> None:
         """Interactive flow to save."""
-        from pathlib import Path
         
         # Output format
         format_choice = inquirer.select(

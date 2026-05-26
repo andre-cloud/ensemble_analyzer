@@ -1,6 +1,10 @@
 from typing import Tuple, Any
 from ._ml_base import BaseMlCalc
 from .base import register_calculator
+try:
+    from tblite.ase import TBLite as TB
+except ImportError:
+    TB = None
 
 
 @register_calculator("tblite")
@@ -22,9 +26,7 @@ class TBLiteCalc(BaseMlCalc):
         Returns:
             Any: TBLite ASE calculator instance.
         """
-        try:
-            from tblite.ase import TBLite as TB
-        except ImportError:
+        if TB is None:
             raise ImportError("tblite module missing. Install via: pip install tblite")
 
         method = kwargs.pop("method", self.protocol.functional or "GFN2-xTB")

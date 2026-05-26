@@ -2,6 +2,8 @@ from dataclasses import dataclass, field, asdict
 from typing import Optional, Dict, Tuple, Union, TYPE_CHECKING
 import numpy as np
 from ensemble_analyzer.constants import ROT_CONST_FACTOR
+from ensemble_analyzer.rrho import free_gibbs_energy
+from ase import Atoms
 
 if TYPE_CHECKING:
     from ensemble_analyzer.conformer.conformer import Conformer
@@ -189,7 +191,6 @@ def compute_rotational_constants(conf: 'Conformer', protocol_number: int) -> Non
     if record.B is not None:
         return
 
-    from ase import Atoms
     atoms = Atoms(
         symbols="".join(list(conf.atoms)),
         positions=conf.last_geometry,
@@ -209,7 +210,6 @@ def compute_thermochemistry(
     conf: 'Conformer', protocol_number, energy, freqs,
     temperature, linear, cut_off, alpha, P, mult,
 ) -> None:
-    from ensemble_analyzer.rrho import free_gibbs_energy
     rec = conf.energies[protocol_number]
     pos_freq = freqs[freqs > 0]
     if len(pos_freq) > 0 and rec.B_vec is not None:

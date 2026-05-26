@@ -13,6 +13,7 @@ from ensemble_analyzer.conformer.spectral_data import SpectralRecord
 from ensemble_analyzer._logger.logger import Logger
 
 from datetime import datetime
+import traceback
 
 
 def tranform_float(freq: float) -> str:
@@ -170,7 +171,6 @@ def get_conf_parameters(
     except Exception as e:
         # 3. CATTURA IL CRASH SILENZIOSO
         log.error(f"UNHANDLED EXCEPTION while parsing Conf {conf.number}: {str(e)}")
-        import traceback
         log.debug(traceback.format_exc()) 
         
         conf.active = False 

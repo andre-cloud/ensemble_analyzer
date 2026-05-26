@@ -6,6 +6,11 @@ import importlib.util
 from pathlib import Path
 
 # Colors for output
+try:
+    import aimnet
+except ImportError:
+    aimnet = None
+
 GREEN = '\033[92m'
 RED = '\033[91m'
 YELLOW = '\033[93m'
@@ -116,10 +121,9 @@ def check_ml_potentials() -> None:
         log_warn("TBLite NOT installed. Install: pip install \"ensemble-analyzer[tblite]\"")
 
     # AIMNet
-    try:
-        import aimnet
+    if aimnet is not None:
         log_pass("aimnet found.")
-    except ImportError:
+    else:
         log_warn("aimnet NOT installed. Install: pip install \"ensemble-analyzer[aimnet]\"")
 
 def check_models_dir() -> None:

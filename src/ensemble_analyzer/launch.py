@@ -1,18 +1,16 @@
 from pathlib import Path
 from typing import Tuple, List
 
-from ensemble_analyzer.protocol.protocol import Protocol
+from ensemble_analyzer.protocol.protocol import Protocol, load_protocol, sort_protocols
 from ensemble_analyzer._logger.create_log import create_logger
 from ensemble_analyzer._logger.logger import Logger
 
 from ensemble_analyzer._parser_arguments import parser_arguments
-from ensemble_analyzer.protocol.protocol import load_protocol
 from ensemble_analyzer.ensemble_io import read_ensemble
 from ensemble_analyzer._title import title
 
 from ensemble_analyzer.constants import DEBUG
 from ensemble_analyzer.conformer.conformer import Conformer
-from ensemble_analyzer.protocol.protocol import Protocol
 
 from ensemble_analyzer.ensemble_io import load_workflow_data
 from ensemble_analyzer._managers.protocol_manager import ProtocolManager
@@ -50,8 +48,6 @@ def main() -> None:
     log.info(title)
     
     # 4. Load or initialize data
-    from ensemble_analyzer.protocol.protocol import sort_protocols
-    
     if args.restart:
         conformers, protocols = load_workflow_data()
         start_from = ProtocolManager().load_last_completed()
