@@ -101,12 +101,15 @@ class CalculationExecutor:
                     if protocol.number not in conf.energies:
                         energy = atoms.get_potential_energy()
                 else:
-                    if not hasattr(calc, 'write_inputfiles'):
-                        calc.write_inputfiles = lambda atoms, properties=None: calc.write_input(atoms, properties)
-                    else:
+                    if hasattr(calc, 'write_inputfiles'):
                         calc.write_inputfiles(atoms, ['energy'])
+                    else:
+                        calc.write_input(atoms, properties=['energy'])
 
-                    calc.template.execute(calc.directory, calc.profile)
+                    if hasattr(calc, 'template'):
+                        calc.template.execute(calc.directory, calc.profile)
+                    else:
+                        calc.execute()
                     
             except Exception as e:
                 self.logger.debug(e)
