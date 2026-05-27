@@ -14,11 +14,6 @@ class NormalModeAnalyzer:
         self.n_atoms = len(atoms)
         self.n_modes = self.normal_modes.shape[0]
 
-    def is_null_mode(self, mode: int) -> bool:
-        displ = self.normal_modes[mode]
-        total = np.sum(displ ** 2)
-        return total < 1e-14
-
     def localize_mode(self, mode: int) -> np.ndarray:
         displ = self.normal_modes[mode]
         sq = np.sum(displ ** 2, axis=1)

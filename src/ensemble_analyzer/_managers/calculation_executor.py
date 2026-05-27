@@ -256,19 +256,6 @@ class CalculationExecutor:
         )
         significant, _ = analyzer.classify_negative_freqs(freqs, threshold)
 
-        # Filter out null modes (zero displacement vectors)
-        null_neg = [i for i in neg_idx if analyzer.is_null_mode(i)]
-        if null_neg:
-            self.logger.info(
-                f"Conf {conf.number}: null normal mode(s) "
-                + ", ".join(f"{i} ({freqs[i]:.2f})" for i in null_neg)
-                + " — skipping"
-            )
-            neg_idx = np.array([i for i in neg_idx if i not in null_neg])
-            significant = [i for i in significant if i not in null_neg]
-            if len(neg_idx) == 0:
-                return False, None
-
         if protocol.ts:
             return self._handle_ts_imaginary(
                 conf, protocol, freqs, neg_idx, significant, analyzer,
@@ -302,9 +289,6 @@ class CalculationExecutor:
             atoms=conf.atoms,
         )
         significant, noise = analyzer.classify_negative_freqs(freqs, threshold)
-
-        # Skip null modes in logging
-        significant = [i for i in significant if not analyzer.is_null_mode(i)]
 
         if noise:
             self.logger.debug(
