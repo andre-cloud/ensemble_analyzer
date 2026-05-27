@@ -50,6 +50,8 @@ class CalculationExecutor:
             if not success:
                 return False
 
+            self._log_imaginary_localization(conf, protocol)
+
             if attempt == 0 and protocol.opt and protocol.freq:
                 need_retry, new_geom = self._check_imaginary_and_displace(
                     conf, protocol,
@@ -261,6 +263,40 @@ class CalculationExecutor:
             geom=conf.last_geometry,
             atoms=conf.atoms,
         )
+        significant, _ = analyzer.classify_negative_freqs(freqs, threshold)
+
+        if protocol.ts:
+            return self._handle_ts_imaginary(
+                conf, protocol, freqs, modes, neg_idx, significant, analyzer,
+            )
+        return self._handle_opt_imaginary(
+            conf, protocol, freqs, neg_idx, significant, analyzer,
+        )
+
+    def _log_imaginary_localization(
+        self,
+        conf: Conformer,
+        protocol: Protocol,
+    ) -> None:
+        if protocol.number not in conf.energies:
+            return
+        data = conf.energies[protocol.number]
+        freqs = data.Freq
+        modes = data.NormalModes
+        if not isinstance(freqs, np.ndarray) or freqs.size == 0:
+            return
+        if not isinstance(modes, np.ndarray) or modes.shape[0] == 0:
+            return
+        neg_idx = np.where(freqs < 0)[0]
+        if len(neg_idx) == 0:
+            return
+
+        threshold = abs(protocol.neg_freq_threshold)
+        analyzer = NormalModeAnalyzer(
+            normal_modes=modes,
+            geom=conf.last_geometry,
+            atoms=conf.atoms,
+        )
         significant, noise = analyzer.classify_negative_freqs(freqs, threshold)
 
         if noise:
@@ -282,14 +318,6 @@ class CalculationExecutor:
                     + ", ".join(f"{a}({p:.1f}%)" for _, a, p in details["top_atoms"])
                 )
             self.logger.debug(f"Conf {conf.number}: significant imag " + " | ".join(parts))
-
-        if protocol.ts:
-            return self._handle_ts_imaginary(
-                conf, protocol, freqs, modes, neg_idx, significant, analyzer,
-            )
-        return self._handle_opt_imaginary(
-            conf, protocol, freqs, neg_idx, significant, analyzer,
-        )
 
     # ------------------------------------------------------------------
     # Case A: opt + freq (no TS)
