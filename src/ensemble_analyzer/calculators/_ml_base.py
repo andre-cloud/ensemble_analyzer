@@ -41,7 +41,14 @@ class BaseMlCalc(BaseCalc):
             -freqs.imag,
             freqs.real,
         )
-        return freqs, ir_intensities
+
+        n_atoms = len(atoms)
+        n_modes = len(freqs)
+        normal_modes = np.zeros((n_modes, n_atoms, 3))
+        for i in range(n_modes):
+            normal_modes[i] = ir.get_mode(i)
+
+        return freqs, ir_intensities, normal_modes
 
     def _compute_thermochemistry(self, energy, scaled_freqs):
         compute_thermochemistry(
@@ -51,14 +58,14 @@ class BaseMlCalc(BaseCalc):
         )
 
     def _post_optimization_vibrations(self, atoms, start):
-        raw_freqs, ir_intensities = self._run_vibrations(atoms)
+        raw_freqs, ir_intensities, normal_modes = self._run_vibrations(atoms)
         freq_fact = self.protocol.freq_fact or 1.0
         scaled_freqs = raw_freqs * freq_fact
         energy = atoms.get_potential_energy()
         elapsed = time.perf_counter() - start
         self.conf.energies.add(
             self.protocol.number,
-            EnergyRecord(E=energy, Freq=scaled_freqs, time=elapsed),
+            EnergyRecord(E=energy, Freq=scaled_freqs, NormalModes=normal_modes, time=elapsed),
         )
         compute_rotational_constants(self.conf, self.protocol.number)
         self._compute_thermochemistry(energy, scaled_freqs)

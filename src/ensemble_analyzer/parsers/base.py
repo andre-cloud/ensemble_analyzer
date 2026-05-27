@@ -84,6 +84,9 @@ class BaseParser(ABC):
     def parse_freq(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         pass
 
+    def parse_normal_modes(self, n_atoms: int) -> np.ndarray:
+        return np.empty((0, n_atoms, 3))
+
     @abstractmethod
     def parse_tddft(self) -> Tuple[np.ndarray, np.ndarray]:
         pass

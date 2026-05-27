@@ -84,6 +84,64 @@ class TestGaussianParser:
         expected_B0 = 10.0 / 29.9792458
         assert np.isclose(B[0], expected_B0)
 
+    def test_parse_normal_modes(self, parser):
+        parser.fl = """
+Harmonic frequencies (cm**-1), IR intensities (KM/Mole), Raman scattering
+ Frequencies --   100.00   200.00   300.00
+ Red. masses --      1.00      1.00      1.00
+ Frc consts  --      0.10      0.20      0.30
+ IR Inten    --      1.00      2.00      3.00
+  Atom  AN      X      Y      Z        X      Y      Z        X      Y      Z
+     1   1     1.00   0.00   0.00     0.00   1.00   0.00     0.00   0.00   1.00
+     2   1     0.00   1.00   0.00     1.00   0.00   0.00     0.00   0.00   0.00
+ Frequencies --   400.00   500.00
+ Red. masses --      1.00      1.00
+ Frc consts  --      0.40      0.50
+ IR Inten    --      4.00      5.00
+  Atom  AN      X      Y      Z        X      Y      Z
+     1   1     0.00   0.00   1.00     1.00   0.00   0.00
+     2   1     1.00   0.00   0.00     0.00   1.00   0.00
+
+
+"""
+        modes = parser.parse_normal_modes(n_atoms=2)
+        assert modes.shape == (5, 2, 3)
+        assert np.allclose(modes[0, 0], [1.0, 0.0, 0.0])
+        assert np.allclose(modes[0, 1], [0.0, 1.0, 0.0])
+        assert np.allclose(modes[1, 0], [0.0, 1.0, 0.0])
+        assert np.allclose(modes[1, 1], [1.0, 0.0, 0.0])
+        assert np.allclose(modes[2, 0], [0.0, 0.0, 1.0])
+        assert np.allclose(modes[2, 1], [0.0, 0.0, 0.0])
+        assert np.allclose(modes[3, 0], [0.0, 0.0, 1.0])
+        assert np.allclose(modes[3, 1], [1.0, 0.0, 0.0])
+        assert np.allclose(modes[4, 0], [1.0, 0.0, 0.0])
+        assert np.allclose(modes[4, 1], [0.0, 1.0, 0.0])
+
+    def test_parse_normal_modes_not_found(self, parser):
+        parser.fl = "no frequencies here"
+        modes = parser.parse_normal_modes(n_atoms=2)
+        assert modes.shape == (0, 2, 3)
+
+    def test_parse_normal_modes_two_decimals(self, parser):
+        parser.fl = """
+Harmonic frequencies (cm**-1), IR intensities (KM/Mole), Raman scattering
+ Frequencies --  3216.87   3229.39
+ Red. masses --      1.10      1.10
+ Frc consts  --      6.73      6.73
+ IR Inten    --      2.00     12.01
+  Atom  AN      X      Y      Z        X      Y      Z
+     1   6     0.00  -0.00  -0.01     0.01  -0.01  -0.03
+     2   6    -0.00   0.00   0.00     0.00  -0.07  -0.01
+
+
+"""
+        modes = parser.parse_normal_modes(n_atoms=2)
+        assert modes.shape == (2, 2, 3)
+        assert np.allclose(modes[0, 0], [0.00, -0.00, -0.01], atol=0.005)
+        assert np.allclose(modes[0, 1], [-0.00, 0.00, 0.00], atol=0.005)
+        assert np.allclose(modes[1, 0], [0.01, -0.01, -0.03], atol=0.005)
+        assert np.allclose(modes[1, 1], [0.00, -0.07, -0.01], atol=0.005)
+
     def test_parse_tddft_found(self, parser):
         """Test parsing of UV and ECD spectra from TD-DFT output."""
         parser.fl = """

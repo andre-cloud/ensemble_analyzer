@@ -147,6 +147,34 @@ Program Version 6
 Some partial output but no termination
 """
 
+ORCA6_NORMAL_MODES = """
+Program Version 6
+
+NORMAL MODES
+------------
+
+These modes are the Cartesian displacements weighted by the diagonal matrix
+M(i,i)=1/sqrt(m[i]) where m[i] is the mass of the displaced atom
+Thus, these vectors are normalized but *not* orthogonal
+
+                  0          1          2          3          4          5    
+      0       1.000000   0.000000   0.000000   0.000000   0.000000   0.000000
+      1       0.000000   1.000000   0.000000   0.000000   0.000000   0.000000
+      2       0.000000   0.000000   1.000000   0.000000   0.000000   0.000000
+      3       0.000000   0.000000   0.000000   1.000000   0.000000   0.000000
+      4       0.000000   0.000000   0.000000   0.000000   1.000000   0.000000
+      5       0.000000   0.000000   0.000000   0.000000   0.000000   1.000000
+                  6    
+      0       0.010000
+      1       0.020000
+      2       0.030000
+      3       0.040000
+      4       0.050000
+      5       0.060000
+
+ORCA TERMINATED NORMALLY
+"""
+
 
 class TestOrcaParser:
 
@@ -262,3 +290,28 @@ class TestOrcaParser:
         uv, ecd = parser_v6.parse_tddft()
         assert uv.shape == (1, 2)
         assert ecd.shape == (1, 2)
+
+    def test_parse_normal_modes(self, mock_logger):
+        with patch("builtins.open", mock_open(read_data=ORCA6_NORMAL_MODES)):
+            p = OrcaParser("dummy.out", mock_logger)
+            modes = p.parse_normal_modes(n_atoms=2)
+        assert modes.shape == (7, 2, 3)
+        assert np.allclose(modes[0, 0], [1.0, 0.0, 0.0])
+        assert np.allclose(modes[0, 1], [0.0, 0.0, 0.0])
+        assert np.allclose(modes[1, 0], [0.0, 1.0, 0.0])
+        assert np.allclose(modes[1, 1], [0.0, 0.0, 0.0])
+        assert np.allclose(modes[2, 0], [0.0, 0.0, 1.0])
+        assert np.allclose(modes[2, 1], [0.0, 0.0, 0.0])
+        assert np.allclose(modes[3, 0], [0.0, 0.0, 0.0])
+        assert np.allclose(modes[3, 1], [1.0, 0.0, 0.0])
+        assert np.allclose(modes[4, 0], [0.0, 0.0, 0.0])
+        assert np.allclose(modes[4, 1], [0.0, 1.0, 0.0])
+        assert np.allclose(modes[5, 0], [0.0, 0.0, 0.0])
+        assert np.allclose(modes[5, 1], [0.0, 0.0, 1.0])
+        assert np.allclose(modes[6, 0], [0.01, 0.02, 0.03])
+        assert np.allclose(modes[6, 1], [0.04, 0.05, 0.06])
+
+    def test_parse_normal_modes_not_found(self, parser_v6):
+        parser_v6.fl = "no normal modes"
+        modes = parser_v6.parse_normal_modes(n_atoms=2)
+        assert modes.shape == (0, 2, 3)

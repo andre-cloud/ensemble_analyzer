@@ -8,6 +8,7 @@ from ensemble_analyzer.constants import regex_parsing
 from ensemble_analyzer._parser_parameter import get_conf_parameters
 from ensemble_analyzer.calculators.base import ML_CALCULATORS
 from ensemble_analyzer.conformer.energy_data import EnergyRecord, compute_rotational_constants, copy_thermochemical_corrections
+from ensemble_analyzer.mode_analysis import NormalModeAnalyzer
 
 import os
 import shutil
@@ -17,25 +18,15 @@ import numpy as np
 
 
 class CalculationExecutor:
-    """
-    Executes single conformer calculations.
-    
-    Orchestrates the lifecycle of a single QM job: input generation,
-    execution, file management, and result parsing.
-    """
-    
+
     def __init__(self, config: CalculationConfig, logger: Logger) -> None:
-        """
-        Initialize the executor.
-
-        Args:
-            config (CalculationConfig): Global configuration.
-            logger (Logger): Application logger.
-        """
-
         self.config = config
         self.logger = logger
-    
+
+    # ------------------------------------------------------------------
+    # Public entry point
+    # ------------------------------------------------------------------
+
     def execute(
         self,
         idx: int,
@@ -43,30 +34,67 @@ class CalculationExecutor:
         protocol: Protocol,
         cpu: int | None = None,
     ) -> bool:
-        """
-        Run a calculation for a specific conformer and protocol.
-
-        Args:
-            idx (int): Display index (1-based count for logging).
-            conf (Conformer): The conformer to calculate.
-            protocol (Protocol): The computational protocol to apply.
-            cpu (int | None): CPUs for this job. Defaults to ``self.config.cpu``.
-
-        Returns:
-            bool: True if the calculation and parsing were successful, False otherwise.
-        """
-
-        self.logger.calculation_start(
-            conformer_id=conf.number,
-            protocol_number=protocol.number,
-            count=idx,
-        )
-
         per_job_cpu = cpu if cpu is not None else self.config.cpu
-        
+        retry = False
+        new_geom = None
+
+        for attempt in range(2):
+            if attempt > 0:
+                if protocol.number in conf.energies:
+                    del conf.energies.data[protocol.number]
+                conf.last_geometry = new_geom.copy()
+
+            success = self._run_single(
+                idx, conf, protocol, per_job_cpu, attempt,
+            )
+            if not success:
+                return False
+
+            if attempt == 0 and protocol.opt and protocol.freq:
+                need_retry, new_geom = self._check_imaginary_and_displace(
+                    conf, protocol,
+                )
+                if need_retry:
+                    retry = True
+                    continue
+
+            retry = False
+            break
+
+        if retry:
+            self.logger.warning(
+                f"Conf {conf.number} still has problematic imaginary "
+                f"frequencies after displacement – deactivating"
+            )
+            conf.active = False
+
+        return True
+
+    # ------------------------------------------------------------------
+    # Single calculation run (ML or QM)
+    # ------------------------------------------------------------------
+
+    def _run_single(
+        self,
+        idx: int,
+        conf: Conformer,
+        protocol: Protocol,
+        cpu: int,
+        attempt: int,
+    ) -> bool:
+        if attempt == 0:
+            self.logger.calculation_start(
+                conformer_id=conf.number,
+                protocol_number=protocol.number,
+                count=idx,
+            )
+        else:
+            self.logger.info(
+                f"  Retry – displaced geometry for Conf {conf.number}"
+            )
+
         is_ml = protocol.calculator.lower() in ML_CALCULATORS
-        
-        # Pass thermochemistry parameters to ML calculators
+
         calc_kwargs = {}
         if is_ml:
             calc_kwargs = dict(
@@ -77,24 +105,22 @@ class CalculationExecutor:
                 P=self.config.P,
             )
 
-        # Setup calculator
-        calc, label = protocol.get_calculator(cpu=per_job_cpu, conf=conf, **calc_kwargs)
+        calc, label = protocol.get_calculator(cpu=cpu, conf=conf, **calc_kwargs)
         atoms = conf.get_ase_atoms(calc)
-        
-        # Ensure output directory exists (ASE writes files via label path)
         os.makedirs(f"{conf.folder}/protocol_{protocol.number}", exist_ok=True)
-        
-        # Run calculation
-        os.environ['OMP_NUM_THREADS'] = str(per_job_cpu)
-        os.environ['MKL_NUM_THREADS'] = str(per_job_cpu) 
-        os.environ['OPENBLAS_NUM_THREADS'] = str(per_job_cpu)
+
+        os.environ['OMP_NUM_THREADS'] = str(cpu)
+        os.environ['MKL_NUM_THREADS'] = str(cpu)
+        os.environ['OPENBLAS_NUM_THREADS'] = str(cpu)
 
         start_time = time.perf_counter()
+
+        energy = None
 
         with self.logger.track_operation(
             "Single calculation",
             conformer_id=conf.number,
-            protocol_number=protocol.number
+            protocol_number=protocol.number,
         ):
             try:
                 if is_ml:
@@ -105,12 +131,10 @@ class CalculationExecutor:
                         calc.write_inputfiles(atoms, ['energy'])
                     else:
                         calc.write_input(atoms, properties=['energy'])
-
                     if hasattr(calc, 'template'):
                         calc.template.execute(calc.directory, calc.profile)
                     else:
                         calc.execute()
-                    
             except Exception as e:
                 self.logger.debug(e)
                 return False
@@ -118,27 +142,37 @@ class CalculationExecutor:
         elapsed = time.perf_counter() - start_time
 
         if is_ml:
-            if protocol.number not in conf.energies:
-                conf.energies.add(
-                    protocol.number,
-                    EnergyRecord(E=energy, time=elapsed),
-                )
-                compute_rotational_constants(conf, protocol.number)
-                
-                dipole = atoms.get_dipole_moment()
-                if dipole is not None:
-                    m_vec = np.asarray(dipole)
-                else: 
-                    m_vec = np.array([1,1,1])
-                self.logger.debug(f'{m_vec = }')
-                conf.energies.set(protocol.number, "m_vec", m_vec)
-                conf.energies.set(protocol.number, "m", float(np.linalg.norm(m_vec)))
+            return self._finalize_ml(conf, protocol, atoms, energy, elapsed,
+                                     attempt)
+        return self._finalize_qm(conf, protocol, calc, label, elapsed)
 
-                copy_thermochemical_corrections(conf, protocol.number)
+    # ------------------------------------------------------------------
+    # ML finalisation
+    # ------------------------------------------------------------------
+
+    def _finalize_ml(
+        self, conf, protocol, atoms, energy, elapsed, attempt,
+    ) -> bool:
+        if protocol.number not in conf.energies:
+            conf.energies.add(
+                protocol.number,
+                EnergyRecord(E=energy, time=elapsed),
+            )
+            compute_rotational_constants(conf, protocol.number)
+            dipole = atoms.get_dipole_moment()
+            if dipole is not None:
+                m_vec = np.asarray(dipole)
             else:
-                elapsed = conf.energies[protocol.number].time or 0
+                m_vec = np.array([1, 1, 1])
+            conf.energies.set(protocol.number, "m_vec", m_vec)
+            conf.energies.set(protocol.number, "m",
+                              float(np.linalg.norm(m_vec)))
+            copy_thermochemical_corrections(conf, protocol.number)
+        else:
+            elapsed = conf.energies[protocol.number].time or 0
 
-            data = conf.energies[protocol.number]
+        data = conf.energies[protocol.number]
+        if attempt == 0:
             self.logger.calculation_success(
                 conformer_id=conf.number,
                 protocol_number=protocol.number,
@@ -146,8 +180,13 @@ class CalculationExecutor:
                 frequencies=data.Freq,
                 elapsed_time=elapsed,
             )
-            return True
+        return True
 
+    # ------------------------------------------------------------------
+    # QM finalisation
+    # ------------------------------------------------------------------
+
+    def _finalize_qm(self, conf, protocol, calc, label, elapsed) -> bool:
         calc_name = protocol.calculator.lower()
         ext = regex_parsing[calc_name]["ext"]
         output_file = os.path.join(
@@ -157,8 +196,6 @@ class CalculationExecutor:
             f'{conf.number}_p{protocol.number}_{label}.{ext}'
         )
 
-        # GenericFileIOCalculator (ORCA, etc.) writes with template-defined
-        # names inside calc.directory; rename to match parser expectation
         if hasattr(calc, 'template') and hasattr(calc.template, 'outputname'):
             src = Path(calc.directory).resolve() / calc.template.outputname
             dst = Path(output_file)
@@ -188,5 +225,178 @@ class CalculationExecutor:
                 frequencies=data.Freq,
                 elapsed_time=elapsed,
             )
-
         return success
+
+    # ------------------------------------------------------------------
+    # Imaginary frequency validation + displacement
+    # ------------------------------------------------------------------
+
+    def _check_imaginary_and_displace(
+        self,
+        conf: Conformer,
+        protocol: Protocol,
+    ) -> tuple[bool, np.ndarray | None]:
+        data = conf.energies[protocol.number]
+        freqs = data.Freq
+        modes = data.NormalModes
+
+        if not isinstance(freqs, np.ndarray) or freqs.size == 0:
+            return False, None
+        if not isinstance(modes, np.ndarray) or modes.shape[0] == 0:
+            return False, None
+
+        threshold = abs(protocol.neg_freq_threshold)
+        neg_idx = np.where(freqs < 0)[0]
+        if len(neg_idx) == 0:
+            if protocol.ts:
+                self.logger.warning(
+                    f"Conf {conf.number}: TS with 0 imaginary frequencies – "
+                    f"deactivating"
+                )
+                conf.active = False
+            return False, None
+
+        analyzer = NormalModeAnalyzer(
+            normal_modes=modes,
+            geom=conf.last_geometry,
+            atoms=conf.atoms,
+        )
+        significant, noise = analyzer.classify_negative_freqs(freqs, threshold)
+
+        if noise:
+            self.logger.debug(
+                f"Conf {conf.number}: noise imaginary freq(s) ≤ "
+                f"{protocol.neg_freq_threshold}i: "
+                f"{', '.join(f'{freqs[i]:.2f}' for i in noise)}"
+            )
+        for i in significant:
+            details = analyzer.imag_mode_summary(i, protocol.ts_target)
+            parts = [f"mode {i} ({freqs[i]:.2f})"]
+            if "fragments" in details:
+                parts.append(
+                    ", ".join(f"{k}={v:.1f}%" for k, v in details["fragments"].items())
+                )
+            if details["top_atoms"]:
+                parts.append(
+                    "atoms: "
+                    + ", ".join(f"{a}({p:.1f}%)" for _, a, p in details["top_atoms"])
+                )
+            self.logger.debug(f"Conf {conf.number}: significant imag " + " | ".join(parts))
+
+        if protocol.ts:
+            return self._handle_ts_imaginary(
+                conf, protocol, freqs, modes, neg_idx, significant, analyzer,
+            )
+        return self._handle_opt_imaginary(
+            conf, protocol, freqs, neg_idx, significant, analyzer,
+        )
+
+    # ------------------------------------------------------------------
+    # Case A: opt + freq (no TS)
+    # ------------------------------------------------------------------
+
+    def _handle_opt_imaginary(
+        self, conf, protocol, freqs, neg_idx, significant, analyzer,
+    ) -> tuple[bool, np.ndarray | None]:
+        if len(significant) == 0:
+            return False, None
+        if not protocol.auto_displace:
+            self.logger.warning(
+                f"Conf {conf.number}: {len(significant)} negative "
+                f"freq(s) > {protocol.neg_freq_threshold}i – auto_displace "
+                f"disabled, proceeding anyway"
+            )
+            return False, None
+
+        mode_idx = significant[0]
+        new_geom = analyzer.displace_geometry(mode_idx, protocol.displace_scale)
+        self.logger.info(
+            f"  Displacing along mode {mode_idx} (freq={freqs[mode_idx]:.2f}) "
+            f"and re-optimising"
+        )
+        return True, new_geom
+
+    # ------------------------------------------------------------------
+    # Case B: TS
+    # ------------------------------------------------------------------
+
+    def _handle_ts_imaginary(
+        self, conf, protocol, freqs, modes, neg_idx, significant, analyzer,
+    ) -> tuple[bool, np.ndarray | None]:
+        n_sig = len(significant)
+        if n_sig == 0:
+            return False, None
+
+        ts_target = protocol.ts_target
+        min_ov = protocol.min_overlap
+
+        # Sort negative modes by absolute value (descending)
+        sorted_idx = sorted(neg_idx, key=lambda i: abs(freqs[i]), reverse=True)
+
+        def _on_target(mode_i):
+            if not ts_target:
+                return True
+            frag = analyzer.localize_mode_fragment(mode_i, ts_target)
+            total = sum(frag.values())
+            details = ", ".join(f"{k}={v:.1f}%" for k, v in frag.items())
+            self.logger.info(
+                f"  Mode {mode_i} ({freqs[mode_i]:.2f}): {details}"
+            )
+            return total >= min_ov
+
+        largest = sorted_idx[0]
+        largest_on_target = _on_target(largest)
+
+        # B.1
+        if len(neg_idx) == 0:
+            return False, None
+
+        if n_sig == 1:
+            if largest_on_target:
+                return False, None
+            top = analyzer.imag_mode_summary(largest,
+                                             fragments=ts_target)
+            atom_info = "; ".join(
+                f"{s} {a}" for a, s, p in top["top_atoms"]
+            )
+            self.logger.warning(
+                f"Conf {conf.number}: TS mode NOT on target. "
+                f"Largest displacement on atoms: {atom_info}"
+            )
+            conf.active = False
+            return False, None
+
+        rank2 = sorted_idx[1] if len(sorted_idx) > 1 else None
+
+        if largest_on_target:
+            if len(significant) == 1:
+                return False, None
+            if rank2 is not None and abs(freqs[rank2]) > protocol.neg_freq_threshold:
+                new_geom = analyzer.displace_geometry(
+                    rank2, protocol.displace_scale
+                )
+                self.logger.info(
+                    f"  TS: mode {largest} on target, displacing along "
+                    f"2nd mode {rank2} ({freqs[rank2]:.2f}) and re-optimising"
+                )
+                return True, new_geom
+            return False, None
+
+        if rank2 is not None and _on_target(rank2):
+            new_geom = analyzer.displace_geometry(
+                largest, protocol.displace_scale
+            )
+            self.logger.info(
+                f"  TS: 2nd mode {rank2} on target, displacing along "
+                f"mode {largest} ({freqs[largest]:.2f}) and re-optimising"
+            )
+            return True, new_geom
+
+        top = analyzer.imag_mode_summary(largest, fragments=ts_target)
+        atom_info = "; ".join(f"{s} {a}" for a, s, p in top["top_atoms"])
+        self.logger.warning(
+            f"Conf {conf.number}: no TS mode localised on target. "
+            f"Largest mode on atoms: {atom_info}"
+        )
+        conf.active = False
+        return False, None

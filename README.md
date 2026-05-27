@@ -13,6 +13,7 @@
 ### Core Capabilities
 - ⚡ **Multi-Protocol Workflows**: Sequential optimization/frequency calculations with automatic pruning
 - 🔬 **Quantum Chemistry Integration**: Support for ORCA, Gaussian, NWChem, semi-empirical (TBLite), and ML potentials (AIMNet)
+- 🧪 **Transition State Optimization**: TS mode validation with fragment localization, automatic displacement and re-optimization of spurious imaginary frequencies (B.1–B.6 logic)
 - 📊 **Advanced Clustering**: PCA-based conformer clustering with multiple feature extraction methods
 - 🎨 **Spectral Analysis**: Generate weighted IR, VCD, UV-vis, and ECD spectra
 - 🔄 **Checkpoint System**: Automatic restart capability with atomic file operations
@@ -90,7 +91,17 @@ ensemble_analyzer --ensemble conformers.xyz --protocol protocol.json --output ca
 
 ML calculators skip file I/O and parsing — energies are read directly from ASE atoms.
 
-### 4. Restart from Checkpoint
+### 4. Transition State Optimization with Mode Validation
+```json
+{
+    "0": {"calculator": "orca", "functional": "wB97X-D4rev", "basis": "def2-TZVPPD", "opt": true, "ts": true, "freq": true,
+          "ts_target": {"reactive": [0, 1, 2, 3], "spectator": [4, 5, 6, 7, 8, 9]},
+          "comment": "TS optimization with fragment-based imag mode validation"}
+}
+```
+`ts: true` enables Sella optimizer for ML calculators and `OptTS`/`opt=(ts,…)` for QM programs. The B.1–B.6 logic validates whether the imaginary frequency localizes on `ts_target`, displaces and re-optimizes when a spurious mode is detected.
+
+### 5. Restart from Checkpoint
 ```bash
 # Automatically resumes from last completed protocol
 ensemble_analyzer --restart
@@ -111,6 +122,13 @@ ensemble_analyzer --restart
 | `charge` | int | Molecular charge | `0` (default) |
 | `fmax` | float | Convergence threshold for ML optimizers (BFGS/Sella) [eV/Å] | `0.01` (default) |
 | `solvent` | dict | Implicit solvation | `{"solvent": "water", "smd": true}` |
+| **TS Analysis** ||||
+| `ts` | bool | Enable TS optimization (forces `auto_displace=true`, uses Sella for ML) | `false` |
+| `ts_target` | dict | Fragment atom lists for TS mode validation | `{"reactive": [0,1,2]}` |
+| `min_overlap` | float | Min % displacement on `ts_target` to accept negative freq | `50.0` |
+| `auto_displace` | bool | Auto-displace along imaginary mode + re-optimize | `false` (forced `true` when `ts: true`) |
+| `displace_scale` | float | Displacement scale factor [Å] | `0.3` |
+| `neg_freq_threshold` | float | Frequencies with |ν| ≤ threshold treated as noise [cm⁻¹] | `20.0` |
 | **Pruning Thresholds** ||||
 | `thrG` | float | Energy similarity threshold [kcal/mol] | `3.0`, `5.0` |
 | `thrB` | float | Rotatory constant threshold [cm⁻¹] | `5e-5`, `1e-5` |

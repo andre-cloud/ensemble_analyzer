@@ -70,6 +70,35 @@ Total DFT energy = -76.12345678
 Total times  cpu:      10.0s     wall:      12.0s
 """
 
+NWCHEM_NORMAL_MODES = """
+
+NORMAL MODE EIGENVECTORS IN CARTESIAN COORDINATES
+          -------------------------------------------------
+             (Projected Frequencies expressed in cm-1)
+
+                    1           2           3           4           5           6
+
+ P.Frequency      100.00      200.00      300.00      400.00      500.00      600.00
+
+           1       1.000000   0.000000   0.000000   0.000000   0.000000   0.000000
+           2       0.000000   1.000000   0.000000   0.000000   0.000000   0.000000
+           3       0.000000   0.000000   1.000000   0.000000   0.000000   0.000000
+           4       0.000000   0.000000   0.000000   1.000000   0.000000   0.000000
+           5       0.000000   0.000000   0.000000   0.000000   1.000000   0.000000
+           6       0.000000   0.000000   0.000000   0.000000   0.000000   1.000000
+
+                    7
+
+ P.Frequency      700.00
+
+           1       0.010000
+           2       0.020000
+           3       0.030000
+           4       0.040000
+           5       0.050000
+           6       0.060000
+"""
+
 
 class TestNWChemParser:
 
@@ -173,3 +202,28 @@ class TestNWChemParser:
         uv, ecd = parser.parse_tddft()
         assert uv.shape == (1, 2)
         assert ecd.shape == (1, 2)
+
+    def test_parse_normal_modes(self, mock_logger):
+        with patch("builtins.open", mock_open(read_data=NWCHEM_NORMAL_MODES)):
+            p = NWChemParser("dummy.log", mock_logger)
+            modes = p.parse_normal_modes(n_atoms=2)
+        assert modes.shape == (7, 2, 3)
+        assert np.allclose(modes[0, 0], [1.0, 0.0, 0.0])
+        assert np.allclose(modes[0, 1], [0.0, 0.0, 0.0])
+        assert np.allclose(modes[1, 0], [0.0, 1.0, 0.0])
+        assert np.allclose(modes[1, 1], [0.0, 0.0, 0.0])
+        assert np.allclose(modes[2, 0], [0.0, 0.0, 1.0])
+        assert np.allclose(modes[2, 1], [0.0, 0.0, 0.0])
+        assert np.allclose(modes[3, 0], [0.0, 0.0, 0.0])
+        assert np.allclose(modes[3, 1], [1.0, 0.0, 0.0])
+        assert np.allclose(modes[4, 0], [0.0, 0.0, 0.0])
+        assert np.allclose(modes[4, 1], [0.0, 1.0, 0.0])
+        assert np.allclose(modes[5, 0], [0.0, 0.0, 0.0])
+        assert np.allclose(modes[5, 1], [0.0, 0.0, 1.0])
+        assert np.allclose(modes[6, 0], [0.01, 0.02, 0.03])
+        assert np.allclose(modes[6, 1], [0.04, 0.05, 0.06])
+
+    def test_parse_normal_modes_not_found(self, parser):
+        parser.fl = "no normal modes"
+        modes = parser.parse_normal_modes(n_atoms=2)
+        assert modes.shape == (0, 2, 3)

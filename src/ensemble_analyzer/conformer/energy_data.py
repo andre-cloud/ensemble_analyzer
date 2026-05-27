@@ -30,12 +30,13 @@ class EnergyRecord:
     time    : Optional[float]           = None          # Calculation elapsed time [s]
     Erel    : float                     = np.nan        # Relative Energy [kcal/mol]
     Freq    : Optional[np.ndarray]      = None          # Vibrational Frequencies [cm-1]
+    NormalModes : Optional[np.ndarray]  = None          # Normal mode vectors (n_modes, n_atoms, 3)
 
     def as_dict(self) -> dict:
         """Convert record to dictionary, handling numpy arrays."""
 
         data = asdict(self)
-        for key in ['B_vec', 'm_vec', 'Freq']:
+        for key in ['B_vec', 'm_vec', 'Freq', 'NormalModes']:
             if data[key] is not None:
                 data[key] = data[key].tolist()
         return data
@@ -44,7 +45,7 @@ class EnergyRecord:
     def from_dict(cls, data: dict) -> 'EnergyRecord':
         """Create record from dictionary, restoring numpy arrays."""
 
-        for key in ['B_vec', 'm_vec', 'Freq']:
+        for key in ['B_vec', 'm_vec', 'Freq', 'NormalModes']:
             if data.get(key) is not None:
                 data[key] = np.array(data[key])
         

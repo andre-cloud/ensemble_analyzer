@@ -67,6 +67,61 @@ class NWChemParser(BaseParser):
         vcd = np.zeros(shape=(1, 2))
         return freq, ir, vcd
 
+    def parse_normal_modes(self, n_atoms: int) -> np.ndarray:
+        if self.regex["s_freq"] not in self.fl:
+            return np.empty((0, n_atoms, 3))
+        try:
+            section = self.fl.split(self.regex["s_freq"])[-1]
+            section = section.split("\n\n\n")[0]
+            lines = section.strip().split("\n")
+            n_total = 3 * n_atoms
+            max_col = -1
+            for line in lines:
+                stripped = line.strip()
+                if not stripped or stripped.startswith("---"):
+                    continue
+                header_match = re.match(r'^\s*(\d+(?:\s+\d+)*)\s*$', stripped)
+                if header_match:
+                    cols = [int(x) for x in header_match.group(1).split()]
+                    if cols and cols[-1] > max_col:
+                        max_col = cols[-1]
+            if max_col < 0:
+                return np.empty((0, n_atoms, 3))
+            matrix = np.zeros((n_total, max_col))
+            current_columns = []
+            for line in lines:
+                stripped = line.strip()
+                if not stripped or stripped.startswith("---"):
+                    continue
+                header_match = re.match(r'^\s*(\d+(?:\s+\d+)*)\s*$', stripped)
+                if header_match:
+                    current_columns = [int(x) for x in header_match.group(1).split()]
+                    continue
+                if stripped.startswith("P.Frequency"):
+                    continue
+                data_match = re.match(
+                    r'^\s*(\d+)\s+((?:[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?\s*)+)', stripped
+                )
+                if data_match and current_columns:
+                    row_idx = int(data_match.group(1)) - 1
+                    coeff_str = data_match.group(2)
+                    coeffs = [float(c) for c in re.findall(
+                        r'[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?', coeff_str
+                    )]
+                    for i, c in enumerate(coeffs):
+                        if i < len(current_columns) and row_idx < n_total:
+                            col = current_columns[i] - 1
+                            if col < max_col:
+                                matrix[row_idx, col] = c
+            n_modes = matrix.shape[1]
+            all_modes = np.zeros((n_modes, n_atoms, 3))
+            for mode_idx in range(n_modes):
+                vec = matrix[:n_total, mode_idx]
+                all_modes[mode_idx] = vec.reshape(n_atoms, 3)
+            return all_modes
+        except Exception:
+            return np.empty((0, n_atoms, 3))
+
     def parse_tddft(self) -> Tuple[np.ndarray, np.ndarray]:
         """Parse TD-DFT excited states (UV/ECD) from NWChem output.
 

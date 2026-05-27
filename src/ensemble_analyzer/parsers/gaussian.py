@@ -80,6 +80,48 @@ class GaussianParser(BaseParser):
 
         return frequencies, np.column_stack((frequencies,ir_inten)), np.column_stack((frequencies,rot_str))
 
+    def parse_normal_modes(self, n_atoms: int) -> np.ndarray:
+        if self.regex['s_freq'] not in self.fl:
+            return np.empty((0, n_atoms, 3))
+        fl = self.get_filtered_text(start=self.regex['s_freq'], end=self.regex['e_freq'])
+        parts = fl.split('Frequencies --')
+        if len(parts) < 2:
+            return np.empty((0, n_atoms, 3))
+        all_modes = []
+        for chunk in parts[1:]:
+            lines = chunk.split('\n')
+            freq_vals = re.findall(r'[-+]?\d+\.\d+(?:[eE][+-]?\d+)?', lines[0])
+            n_freq = min(len(freq_vals), 3)
+            if n_freq == 0:
+                continue
+            idx = 1
+            while idx < len(lines):
+                line = lines[idx].strip()
+                if not line:
+                    idx += 1
+                    continue
+                if re.match(r'^\s*\d+\s+\d+', line):
+                    break
+                idx += 1
+            mode_disps = np.zeros((n_freq, n_atoms, 3))
+            for i in range(idx, min(idx + n_atoms, len(lines))):
+                line = lines[i].strip()
+                if not line or not re.match(r'^\d+\s+\d+', line):
+                    break
+                parts_line = line.split()
+                if len(parts_line) < 2 + 3 * n_freq:
+                    continue
+                atom_idx = int(parts_line[0]) - 1
+                vals = [float(x) for x in parts_line[2:]]
+                for k in range(n_freq):
+                    mode_disps[k, atom_idx, 0] = vals[3 * k]
+                    mode_disps[k, atom_idx, 1] = vals[3 * k + 1]
+                    mode_disps[k, atom_idx, 2] = vals[3 * k + 2]
+            all_modes.append(mode_disps)
+        if not all_modes:
+            return np.empty((0, n_atoms, 3))
+        return np.vstack(all_modes)
+
     def parse_tddft(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         Parse TD-DFT excited states for UV and ECD spectra.

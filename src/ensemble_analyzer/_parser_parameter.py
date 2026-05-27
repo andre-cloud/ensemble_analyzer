@@ -89,6 +89,7 @@ def get_conf_parameters(
                     raise RuntimeError(f"Calculation for Conf {conf.number} did not finish: geometry not converged correctly")
 
         freq = np.array([])
+        normal_modes = None
         if p.freq or 'freq' in p.add_input.lower() or 'freq' in p.functional.lower():
             freq, ir, vcd = parser.parse_freq()
             if freq.size == 0:
@@ -98,6 +99,7 @@ def get_conf_parameters(
                 raise IOError("No frequency in the output file")
 
             freq *= p.freq_fact
+            normal_modes = parser.parse_normal_modes(n_atoms=len(conf.atoms))
 
         B_vec, M_vec = parser.parse_B_m()
         b = np.linalg.norm(B_vec) if B_vec is not None else 0
@@ -141,6 +143,7 @@ def get_conf_parameters(
                 H=H if not np.isnan(g) else np.nan,
                 S=S if not np.isnan(g) else np.nan,
                 Freq=freq,
+                NormalModes=normal_modes,
                 B_vec=B_vec,
                 m_vec=M_vec,
             )
