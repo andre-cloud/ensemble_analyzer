@@ -198,14 +198,11 @@ State  Energy     Wavelength     R         MX        MY        MZ
                         if i < len(current_columns) and row_idx < n_total:
                             col = current_columns[i]
                             matrix[row_idx, col] = c
-            nonzero = [c for c in range(matrix.shape[1])
-                       if np.sum(matrix[:n_total, c] ** 2) > 1e-14]
-            if not nonzero:
-                return np.empty((0, n_atoms, 3))
-            all_modes = np.zeros((len(nonzero), n_atoms, 3))
-            for i, col in enumerate(nonzero):
-                vec = matrix[:n_total, col]
-                all_modes[i] = vec.reshape(n_atoms, 3)
+            n_modes = matrix.shape[1]
+            all_modes = np.zeros((n_modes, n_atoms, 3))
+            for mode_idx in range(n_modes):
+                vec = matrix[:n_total, mode_idx]
+                all_modes[mode_idx] = vec.reshape(n_atoms, 3)
             return all_modes
         except Exception:
             return np.empty((0, n_atoms, 3))

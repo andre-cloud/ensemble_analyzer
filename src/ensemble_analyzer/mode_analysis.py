@@ -8,7 +8,9 @@ class NormalModeAnalyzer:
         geom: np.ndarray,
         atoms: tuple[str, ...],
     ):
-        self.normal_modes = np.asarray(normal_modes, dtype=float)
+        modes = np.asarray(normal_modes, dtype=float)
+        keep = np.array([np.sum(m ** 2) > 1e-14 for m in modes])
+        self.normal_modes = modes[keep]
         self.geom = np.asarray(geom, dtype=float)
         self.atoms = atoms
         self.n_atoms = len(atoms)
@@ -18,8 +20,6 @@ class NormalModeAnalyzer:
         displ = self.normal_modes[mode]
         sq = np.sum(displ ** 2, axis=1)
         total = np.sum(sq)
-        if total < 1e-14:
-            return np.zeros(self.n_atoms)
         return (sq / total) * 100.0
 
     def localize_mode_fragment(
