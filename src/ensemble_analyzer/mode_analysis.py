@@ -24,7 +24,7 @@ class NormalModeAnalyzer:
         keep = np.array([np.sum(m ** 2) > 1e-14 for m in modes])
         modes = modes[keep]
         masses = np.array([_get_mass(a) for a in atoms], dtype=float)
-        self.normal_modes = modes / np.sqrt(masses[np.newaxis, :, np.newaxis])
+        self.normal_modes = modes / np.sqrt(masses[:, None])
         self.geom = np.asarray(geom, dtype=float)
         self.atoms = atoms
         self.n_atoms = len(atoms)
