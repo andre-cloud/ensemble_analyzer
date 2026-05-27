@@ -1,10 +1,6 @@
 from dataclasses import dataclass
 from typing import List, Optional, Union, Literal
 import numpy as np
-import logging
-from scipy.optimize import minimize
-from numba import njit, prange
-
 from datetime import datetime
 
 from ensemble_analyzer._spectral.graph_default import GraphDefault
@@ -15,22 +11,140 @@ from ensemble_analyzer._logger.logger import Logger
 
 from ensemble_analyzer.constants import CHIRALS
 
+
+# ---------------------------------------------------------------------------
+# Lazy numba — compiled on first call, pure-numpy vectorised fallback
+# ---------------------------------------------------------------------------
+
+_NUMBA_COMPILED = {}
+
+def _gaussian_numpy(X, x0, I, fwhm):
+    sigma = fwhm / (2 * np.sqrt(2 * np.log(2)))
+    norm = 1.0 / (sigma * np.sqrt(2 * np.pi))
+    dx = (X[:, np.newaxis] - x0[np.newaxis, :]) / sigma
+    return norm * np.exp(-0.5 * dx ** 2) @ I
+
+
+def _lorentzian_numpy(X, x0, I, fwhm):
+    n_peaks = x0.shape[0]
+    n_x = X.shape[0]
+    Y = np.zeros(n_x)
+    if n_peaks == 0:
+        return Y
+    fwhm2 = fwhm * fwhm
+    for i in range(n_peaks):
+        xi = x0[i]
+        Ii = I[i]
+        if Ii == 0.0:
+            continue
+        dx = X - xi
+        Y += Ii * fwhm2 / (fwhm2 + 4.0 * dx * dx)
+    return Y
+
+
+def _diversity_numpy(a, b, weight, max_val):
+    diff = a - b
+    return np.sqrt(np.sum(weight * diff * diff) / diff.shape[0]) / max_val
+
+
+def _compile_numba():
+    if _NUMBA_COMPILED:
+        return
+    from numba import njit, prange
+
+    @njit(cache=True, fastmath=True)
+    def _gauss(X, x0, I, fwhm):
+        n_x = X.shape[0]
+        n_peaks = x0.shape[0]
+        Y = np.zeros(n_x)
+        if n_peaks == 0:
+            return Y
+        sigma = fwhm / (2 * np.sqrt(2 * np.log(2)))
+        norm = 1.0 / (sigma * np.sqrt(2 * np.pi))
+        inv_sigma = 1.0 / sigma
+        for j in prange(n_x):
+            yj = 0.0
+            Xj = X[j]
+            for i in range(n_peaks):
+                Ii = I[i]
+                if Ii == 0.0:
+                    continue
+                dx = (Xj - x0[i]) * inv_sigma
+                yj += Ii * norm * np.exp(-0.5 * dx * dx)
+            Y[j] = yj
+        return Y
+
+    @njit(cache=True, fastmath=True)
+    def _lor(X, x0, I, fwhm):
+        n_peaks = x0.shape[0]
+        n_x = X.shape[0]
+        Y = np.zeros(n_x)
+        if n_peaks == 0:
+            return Y
+        fwhm2 = fwhm * fwhm
+        for i in prange(n_peaks):
+            xi = x0[i]
+            Ii = I[i]
+            if Ii == 0.0:
+                continue
+            for j in range(n_x):
+                dx = X[j] - xi
+                Y[j] += Ii * fwhm2 / (fwhm2 + 4.0 * dx * dx)
+        return Y
+
+    @njit(cache=True, fastmath=True)
+    def _div(a, b, weight, max_val):
+        diff = a - b
+        s = 0.0
+        n = diff.shape[0]
+        for i in prange(n):
+            s += weight[i] * diff[i] * diff[i]
+        return np.sqrt(s / n) / max_val
+
+    _NUMBA_COMPILED['gaussian'] = _gauss
+    _NUMBA_COMPILED['lorentzian'] = _lor
+    _NUMBA_COMPILED['diversity'] = _div
+
+
+def gaussian_njit(X, x0, I, fwhm):
+    if 'gaussian' not in _NUMBA_COMPILED:
+        _compile_numba()
+    return _NUMBA_COMPILED['gaussian'](X, x0, I, fwhm)
+
+
+def lorentzian_njit(X, x0, I, fwhm):
+    if 'lorentzian' not in _NUMBA_COMPILED:
+        _compile_numba()
+    return _NUMBA_COMPILED['lorentzian'](X, x0, I, fwhm)
+
+
+def diversity_function_njit(a, b, weight, max_val):
+    if 'diversity' not in _NUMBA_COMPILED:
+        _compile_numba()
+    return _NUMBA_COMPILED['diversity'](a, b, weight, max_val)
+
+
+# ---------------------------------------------------------------------------
+# BaseGraph
+# ---------------------------------------------------------------------------
+
+
 @dataclass
-class BaseGraph: 
+class BaseGraph:
     """
     Base class for spectral graph generation and convolution.
-    
-    Handles the retrieval of discrete transitions from conformers, 
-    convolution with line-shape functions, and auto-optimization of 
+
+    Handles the retrieval of discrete transitions from conformers,
+    convolution with line-shape functions, and auto-optimization of
     spectral parameters (shift, fwhm) against a reference.
     """
 
-    confs: List[Conformer]  
-    protocol : Protocol
+    confs: List[Conformer]
+    protocol: Protocol
     graph_type: Literal['IR', 'VCD', 'UV', 'ECD']
-    log: Logger  
+    log: Logger
 
-    invert : Optional[bool] = False
+    invert: Optional[bool] = False
     fwhm_user: Optional[Union[List[float], float]] = None
     shift_user: Optional[Union[List[float], float]] = None
 
@@ -39,31 +153,19 @@ class BaseGraph:
     interested_area: Optional[list] = None
 
     def __post_init__(self) -> None:
-        """Initialize the default graph parameters and energy grid."""
         self.defaults = GraphDefault(self.graph_type)
 
-        self.X = np.linspace(self.defaults.start, self.defaults.end, num=10**self.definition)
+        self.X = np.linspace(self.defaults.start, self.defaults.end, num=10 ** self.definition)
         self.X = self.X[np.argsort(self.X)]
 
-    def retrieve_data(self, protocol:Protocol) -> None: 
-        """
-        Collect and aggregate spectral transitions from all active conformers.
-        
-        Extracts excitation energies (X) and intensities (Y) weighted by 
-        Boltzmann population.
-
-        Args:
-            protocol (Protocol): The protocol step to retrieve data from.
-        """
-
+    def retrieve_data(self, protocol: Protocol) -> None:
         self.impulse = []
         self.energies = []
         population_from = str(self.read_population) if self.read_population else str(protocol.number)
 
         for conf in self.confs:
-
             if not self.check_conf(conf, protocol):
-                continue           
+                continue
 
             p = conf.energies[population_from].Pop
             x = np.array(conf.graphs_data[protocol.number, self.graph_type].X)
@@ -71,12 +173,11 @@ class BaseGraph:
 
             if x.size < 1:
                 continue
-            if self.invert: 
+            if self.invert:
                 y *= -1
-            
+
             self.energies.append(x)
             self.impulse.append(y)
-
 
         if len(self.energies) > 0:
             self.energies = np.concatenate(self.energies)
@@ -85,260 +186,148 @@ class BaseGraph:
             self.energies = np.array([])
             self.impulse = np.array([])
 
-    def normalize(self, Y: np.ndarray, idx_min: Optional[int] = None, idx_max: Optional[int] = None) -> np.ndarray:
-        """
-        Normalize the spectrum intensity.
-
-        Args:
-            Y (np.ndarray): The intensity array to normalize.
-            idx_min (Optional[int]): Start index for local normalization range.
-            idx_max (Optional[int]): End index for local normalization range.
-
-        Returns:
-            np.ndarray: Normalized intensity array (max value = 1 or -1).
-        """
-
+    def normalize(self, Y: np.ndarray, idx_min: Optional[int] = None,
+                  idx_max: Optional[int] = None) -> np.ndarray:
         if idx_min is not None and idx_max is not None:
             max_value = np.max(np.abs(Y[idx_min:idx_max]))
-        else: 
+        else:
             max_value = np.max(np.abs(Y))
 
         return Y / max_value
 
-    
     def dump_XY_data(self, X: np.ndarray, Y: np.ndarray, fname: str) -> None:
-        """
-        Save X,Y data to a text file.
-
-        Args:
-            X (np.ndarray): X axis values.
-            Y (np.ndarray): Y axis values.
-            fname (str): Output filename.
-        """
-
-        data = np.column_stack((X,Y))
+        data = np.column_stack((X, Y))
         np.savetxt(fname, data, delimiter=' ')
 
     def check_conf(self, conf: Conformer, protocol: Protocol) -> bool:
-        """
-        Verify if a conformer has valid data for the current protocol.
-
-        Args:
-            conf (Conformer): Conformer to check.
-            protocol (Protocol): Current protocol.
-
-        Returns:
-            bool: True if data exists and conformer is active.
-        """
-
-        if not conf.active: 
+        if not conf.active:
             return False
         if protocol.number not in conf.graphs_data:
             return False
         if not conf.graphs_data.has_graph_type(protocol.number, self.graph_type):
             return False
-        return True 
-    
+        return True
 
-    def diversity_function(self, a: np.ndarray, b: np.ndarray, w: Optional[np.ndarray] = None) -> float:
-        """
-        Calculate the dissimilarity between two spectra (RMSD-like metric).
-
-        Args:
-            a (np.ndarray): First spectrum array.
-            b (np.ndarray): Second spectrum array (reference).
-            w (Optional[np.ndarray]): Weighting array. If None, uses reference weights.
-
-        Returns:
-            float: Dissimilarity score.
-        """
-
-        # RMSD
+    def diversity_function(self, a: np.ndarray, b: np.ndarray,
+                           w: Optional[np.ndarray] = None) -> float:
         MAX = 1 if self.graph_type not in CHIRALS else 2
         w = self.ref.weight if w is None else w
         return diversity_function_njit(a=a, b=b, weight=w, max_val=MAX)
 
-
-    def set_boundaries(self) -> None: 
-        """Initialize optimization bounds for Shift and FWHM."""
-
-        if isinstance(self.shift_user, list): 
+    def set_boundaries(self) -> None:
+        if isinstance(self.shift_user, list):
             self.shift_bounds = self.shift_user
         elif isinstance(self.shift_user, float) or isinstance(self.shift_user, int):
             self.shift_bounds = [self.shift_user, self.shift_user]
         elif not self.shift_user:
             self.shift_bounds = self.defaults.shift_intervals
-        
-        if isinstance(self.fwhm_user, list): 
+
+        if isinstance(self.fwhm_user, list):
             self.fwhm_bounds = self.fwhm_user
         elif isinstance(self.fwhm_user, float) or isinstance(self.fwhm_user, int):
             self.fwhm_bounds = [self.fwhm_user, self.fwhm_user]
         elif not self.fwhm_user:
             self.fwhm_bounds = self.defaults.fwhm_intervals
 
-        
-
     def compute_spectrum(self) -> None:
-        """
-        Main driver to compute the final convoluted spectrum.
-        
-        Performs:
-        1. Data retrieval.
-        2. Auto-convolution (optimization against reference) OR default convolution.
-        3. Saving of results.
-        """
-
         self.log.debug("Compute spectrum")
         self.set_boundaries()
         self.log.debug("Retrieving data")
         self.retrieve_data(self.protocol)
 
-        # after retrieving data, ensure we actually have peaks
-        if self.energies.size == 0 or self.energies[self.energies!=0].size == 0:
+        if self.energies.size == 0 or self.energies[self.energies != 0].size == 0:
             self.log.spectra_skip(self.graph_type)
             return
 
-        if self.ref: 
+        if self.ref:
             self.autoconvolution()
         else:
             self.SHIFT = self.defaults.shift
             self.FWHM = self.defaults.fwhm
 
-            Y = self.convolute(energies=self.energies, impulses=self.impulse, shift=self.SHIFT, fwhm=self.FWHM)
+            Y = self.convolute(energies=self.energies, impulses=self.impulse,
+                               shift=self.SHIFT, fwhm=self.FWHM)
 
             self.Y = self.normalize(Y)
 
-            self.log.spectra_result(graph_type=self.graph_type, parameters={"Shift": self.SHIFT, "FWHM": self.FWHM}, msg=f"Using default parameters, Reference {self.graph_type} Spectra not found")
+            self.log.spectra_result(
+                graph_type=self.graph_type,
+                parameters={"Shift": self.SHIFT, "FWHM": self.FWHM},
+                msg=f"Using default parameters, Reference {self.graph_type} Spectra not found",
+            )
 
         if self.Y[~np.isnan(self.Y)].size > 0:
             self.log.debug(f'Saving {self.graph_type} spectra convoluted')
-            self.dump_XY_data(self.X, self.Y, f'{self.graph_type}_p{self.protocol.number}_comp.xy')
-
+            self.dump_XY_data(self.X, self.Y,
+                              f'{self.graph_type}_p{self.protocol.number}_comp.xy')
 
     def autoconvolution(self) -> None:
-        """
-        Optimize Shift and FWHM to maximize similarity with experimental reference.
-        """
-        
+        from scipy.optimize import minimize
+
         ref_norm = self.ref.Y
 
-        def callback_optimizer(params: tuple) -> float:
-            """Objective function for spectral parameter optimisation.
-
-            Args:
-                params: (shift, fwhm) tuple.
-
-            Returns:
-                float: RMSD between convolved and reference spectrum.
-            """
+        def callback_optimizer(params):
             shift, fwhm = params
             Y_conv = self.convolute(self.energies, self.impulse, shift, fwhm)
-            Y_conv = self.normalize(Y_conv, idx_min=self.ref.x_min_idx, idx_max=self.ref.x_max_idx)
+            Y_conv = self.normalize(Y_conv, idx_min=self.ref.x_min_idx,
+                                    idx_max=self.ref.x_max_idx)
             rmsd = self.diversity_function(Y_conv, ref_norm)
             return rmsd
-        
+
         initial_guess = [
-            sum(self.shift_bounds)*.5, 
-            sum(self.fwhm_bounds)*.5, 
+            sum(self.shift_bounds) * .5,
+            sum(self.fwhm_bounds) * .5,
         ]
 
         st = datetime.now()
 
         result = minimize(
-            fun=callback_optimizer, x0=initial_guess, bounds=(self.shift_bounds, self.fwhm_bounds), options={"maxiter": 1000}#, method="Powell"
-        ) 
+            fun=callback_optimizer, x0=initial_guess,
+            bounds=(self.shift_bounds, self.fwhm_bounds),
+            options={"maxiter": 1000},
+        )
         end = datetime.now()
 
-        if result.success: 
+        if result.success:
             self.SHIFT, self.FWHM = result.x
             t = "Spectra convolution results:"
-        else: 
+        else:
             self.SHIFT, self.FWHM = self.defaults.shift, self.defaults.fwhm
             t = "Spectra convolution did NOT converged. Using default parameters:"
 
+        Y = self.convolute(energies=self.energies, impulses=self.impulse,
+                           shift=self.SHIFT, fwhm=self.FWHM)
+        self.Y = self.normalize(Y, idx_min=self.ref.x_min_idx,
+                                idx_max=self.ref.x_max_idx)
 
-        Y = self.convolute(energies=self.energies, impulses=self.impulse, shift=self.SHIFT, fwhm=self.FWHM)
-        self.Y = self.normalize(Y, idx_min=self.ref.x_min_idx, idx_max=self.ref.x_max_idx)
+        diversity = self.diversity_function(
+            self.Y[self.ref.x_min_idx:self.ref.x_max_idx],
+            ref_norm[self.ref.x_min_idx:self.ref.x_max_idx],
+        )
+        similarity = ((1 if self.graph_type not in CHIRALS else 2) - diversity) / \
+                     (1 if self.graph_type not in CHIRALS else 2) * 100
 
-        diversity = self.diversity_function(self.Y[self.ref.x_min_idx:self.ref.x_max_idx], ref_norm[self.ref.x_min_idx:self.ref.x_max_idx])
-        similarity = ((1 if self.graph_type not in CHIRALS else 2)-diversity)/(1 if self.graph_type not in CHIRALS else 2)*100
+        diversity_unw = self.diversity_function(
+            self.Y[self.ref.x_min_idx:self.ref.x_max_idx],
+            ref_norm[self.ref.x_min_idx:self.ref.x_max_idx],
+            w=np.ones_like(self.Y[self.ref.x_min_idx:self.ref.x_max_idx]),
+        )
+        similarity_unw = ((1 if self.graph_type not in CHIRALS else 2) - diversity_unw) / \
+                          (1 if self.graph_type not in CHIRALS else 2) * 100
 
-        diversity_unw = self.diversity_function(self.Y[self.ref.x_min_idx:self.ref.x_max_idx], ref_norm[self.ref.x_min_idx:self.ref.x_max_idx], w=np.ones_like(self.Y[self.ref.x_min_idx:self.ref.x_max_idx]))
-        similarity_unw = ((1 if self.graph_type not in CHIRALS else 2)-diversity_unw)/(1 if self.graph_type not in CHIRALS else 2)*100
-
-        self.log.spectra_result(graph_type=self.graph_type, parameters=
-                                {"Shift": self.SHIFT, "FWHM": self.FWHM, "Similarity": similarity, "Similarity Unweighted": similarity_unw, "Time": (end-st), "Cycle": f"{result.nfev}"},
-                                msg=t)
-
-
+        self.log.spectra_result(
+            graph_type=self.graph_type,
+            parameters={
+                "Shift": self.SHIFT, "FWHM": self.FWHM,
+                "Similarity": similarity,
+                "Similarity Unweighted": similarity_unw,
+                "Time": (end - st), "Cycle": f"{result.nfev}",
+            },
+            msg=t,
+        )
 
     def gaussian(self, x0: np.ndarray, I: np.ndarray, fwhm: float) -> np.ndarray:
-        """Compute Gaussian convolution."""
-        
         return gaussian_njit(self.X, x0, I, fwhm)
-    
+
     def lorentzian(self, x0: np.ndarray, I: np.ndarray, fwhm: float) -> np.ndarray:
-        """Compute Lorentzian convolution."""
-
         return lorentzian_njit(self.X, x0, I, fwhm)
-
-
-
-
-
-@njit(fastmath=True, cache=True)
-def gaussian_njit(X: np.ndarray, x0: np.ndarray, I: np.ndarray, fwhm: float) -> np.ndarray:
-    """Compute Gaussian-broadened spectrum via numba."""
-    n_x = X.shape[0]
-    n_peaks = x0.shape[0]
-    Y = np.zeros(n_x)
-    if n_peaks == 0:
-        return Y
-
-    sigma = fwhm / (2 * np.sqrt(2 * np.log(2)))
-    norm = 1.0 / (sigma * np.sqrt(2 * np.pi))
-    inv_sigma = 1.0 / sigma
-
-    for j in prange(n_x):  # parallelized over X
-        yj = 0.0
-        Xj = X[j]
-        for i in range(n_peaks):
-            Ii = I[i]
-            if Ii == 0.0:
-                continue
-            dx = (Xj - x0[i]) * inv_sigma
-            yj += Ii * norm * np.exp(-0.5 * dx * dx)
-        Y[j] = yj
-    return Y
-
-
-@njit(fastmath=True, cache=True)
-def lorentzian_njit(X: np.ndarray, x0: np.ndarray, I: np.ndarray, fwhm: float) -> np.ndarray:
-    """Compute Lorentzian-broadened spectrum via numba."""
-    n_peaks = x0.shape[0]
-    n_x = X.shape[0]
-    Y = np.zeros(n_x)
-    if n_peaks == 0:
-        return Y
-    fwhm2 = fwhm * fwhm
-    for i in prange(n_peaks):
-        xi = x0[i]
-        Ii = I[i]
-        if Ii == 0.0:
-            continue
-        for j in range(n_x):
-            dx = X[j] - xi
-            Y[j] += Ii * fwhm2 / (fwhm2 + 4.0 * dx * dx)
-    return Y
-
-@njit(fastmath=True, cache=True)
-def diversity_function_njit(a: np.ndarray, b: np.ndarray, weight: np.ndarray, max_val: float) -> float:
-    """Compute weighted RMSD between two spectra."""
-    diff = a - b
-    s = 0.0
-    n = diff.shape[0]
-    for i in prange(n):
-        s += weight[i] * diff[i] * diff[i]
-
-    return np.sqrt(s / n) / max_val
-

@@ -4,7 +4,6 @@ from typing import Union, Optional, List, Dict, Literal, Any
 import json
 from importlib.resources import files
 from ensemble_analyzer.conformer.conformer import Conformer
-from ensemble_analyzer.calculators import CALCULATOR_REGISTRY
 from ensemble_analyzer.protocol.solvent import Solvent
 from pathlib import Path
 
@@ -220,6 +219,8 @@ class Protocol:
         Raises:
             ValueError: If the calculator type is not registered.
         """
+
+        from ensemble_analyzer.calculators import CALCULATOR_REGISTRY
 
         calc_name = self.calculator.lower()
         if calc_name not in CALCULATOR_REGISTRY:

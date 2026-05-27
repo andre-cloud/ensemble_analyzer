@@ -1,63 +1,15 @@
-from scipy.constants import R, c, h, electron_volt, Boltzmann, N_A
-from scipy.constants import physical_constants
-import numpy as np
+import os
 from pathlib import Path
 
-import os
+# --- Light constants (no numpy/scipy needed) ---
 
 DEBUG = bool(os.getenv("DEBUG"))
 MAX_TRY = 5
 
-
-# Physical CONSTANTS
-
-# R = 8.314462618 J/(mol K)
-# h = 6.62607015e-34 J*s
-# c = 2.9979245800E+10 cm/s
-# Boltzmann = 1.380649e-23 J/K
-# J_TO_H = 2.2937122783963e+17 Eh/J
-# AMU_TO_KG = 1.6605390666e-27 kg*mol/g
-
-FACTOR_EV_NM = h * c / (10**-9 * electron_volt)
-FACTOR_EV_CM_1 = 1 / 8065.544  # to yield eV
-
-
-def eV_to_nm(eV: np.ndarray) -> np.ndarray:
-    """Convert energy in eV to wavelength in nm."""
-    eV = np.maximum(eV, 1e-2)
-    return FACTOR_EV_NM / eV
-
-
-c = c * 100  # convert speed of light in cm/s
-J_TO_H = physical_constants["joule-hartree relationship"][0]
-AMU_TO_KG = physical_constants["atomic mass constant"][0]
-
-EH_TO_KCAL = 627.5096080305927
-CAL_TO_J = 4.186
-
-
 CHIRALS = ["VCD", "ECD"]
-
 GRAPHS = ['IR', 'VCD', 'UV', 'ECD']
 
-
-def boltzmann_distribution(
-    energies: np.ndarray,
-    temperature: float,
-) -> tuple[np.ndarray, np.ndarray]:
-    if energies.size == 0:
-        return np.array([]), np.array([])
-    rel_energies = energies - energies.min()
-    exponent = -(rel_energies * EH_TO_KCAL * 1000 * CAL_TO_J) / (R * temperature)
-    weights = np.exp(exponent)
-    population = weights / weights.sum()
-    return rel_energies * EH_TO_KCAL, population
-
-CONVERT_B = {
-    'GHz': 29.979000,
-}
-
-ROT_CONST_FACTOR = h / (8 * np.pi**2 * c * AMU_TO_KG * 1e-20)
+CONVERT_B = {'GHz': 29.979000}
 
 VIBRO_OR_ELECTRO = {
     'IR': 'vibro',
@@ -66,15 +18,21 @@ VIBRO_OR_ELECTRO = {
     'ECD': 'electro',
 }
 
-
-# Logger constants
 LOG_FORMAT = "%(message)s"
 
+EH_TO_KCAL = 627.5096080305927
+CAL_TO_J = 4.186
 
-def ordinal(n: int) -> str:
-    """Return the ordinal suffix string for an integer."""
-    return "%d-%s" % (n, "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10:: 4])
+MARKERS = [
+    ".", ",", "o", "v", "^", "<", ">", "1", "2", "3",
+    "4", "8", "s", "p", "*", "h", "H", "+", "x", "D",
+    "d", "|", "_", "P", "X",
+]
 
+MIN_RETENTION_RATE = 0.2
+DEFAULT_RESOLUTION = 500
+MIN_CONFORMERS_FOR_PCA = 50
+MIN_WEIGHTED_VALUE = 0.15
 
 regex_parsing = {
     "orca": {"ext": "out"},
@@ -84,19 +42,70 @@ regex_parsing = {
     "aimnet": {"ext": None},
 }
 
-MARKERS = [
-    ".", ",", "o", "v", "^", "<", ">", "1", "2", "3",
-    "4", "8", "s", "p", "*", "h", "H", "+", "x", "D",
-    "d", "|", "_", "P", "X",
-]
+# --- Lazy — initialised on first access to scipy/numpy-dependent constants ---
 
-MIN_RETENTION_RATE = 0.2        # Minimum retention rate
-DEFAULT_RESOLUTION = 500        # Grid resolution for contour plots
-MIN_CONFORMERS_FOR_PCA = 50     # Minimum conformers needed for meaningful PCA
-MIN_WEIGHTED_VALUE = 0.15       # Minimum value for the weight of the autoconvolution
+_LAZY_INIT = False
+
+def _ensure_lazy():
+    global _LAZY_INIT, np, R, c, h, electron_volt, Boltzmann, N_A, \
+           FACTOR_EV_NM, FACTOR_EV_CM_1, J_TO_H, AMU_TO_KG, ROT_CONST_FACTOR
+    if _LAZY_INIT:
+        return
+
+    import numpy as _np
+    from scipy.constants import R as _R, c as _c, h as _h, \
+        electron_volt as _ev, Boltzmann as _B, N_A as _NA
+    from scipy.constants import physical_constants
+
+    _J_TO_H = physical_constants["joule-hartree relationship"][0]
+    _AMU_TO_KG = physical_constants["atomic mass constant"][0]
+
+    g = globals()
+    g['np'] = _np
+    g['R'] = _R
+    g['h'] = _h
+    g['electron_volt'] = _ev
+    g['Boltzmann'] = _B
+    g['N_A'] = _NA
+    g['FACTOR_EV_NM'] = _h * _c / (10 ** -9 * _ev)
+    g['FACTOR_EV_CM_1'] = 1 / 8065.544
+    g['c'] = _c * 100
+    g['J_TO_H'] = _J_TO_H
+    g['AMU_TO_KG'] = _AMU_TO_KG
+    g['ROT_CONST_FACTOR'] = _h / (8 * np.pi ** 2 * g['c'] * _AMU_TO_KG * 1e-20)
+
+    _LAZY_INIT = True
+
+
+# --- Functions (their bodies depend on lazy constants) ---
+
+
+def eV_to_nm(eV: "np.ndarray") -> "np.ndarray":
+    _ensure_lazy()
+    eV = np.maximum(eV, 1e-2)
+    return FACTOR_EV_NM / eV
+
+
+def boltzmann_distribution(
+    energies: "np.ndarray",
+    temperature: float,
+) -> tuple["np.ndarray", "np.ndarray"]:
+    _ensure_lazy()
+    if energies.size == 0:
+        return np.array([]), np.array([])
+    rel_energies = energies - energies.min()
+    exponent = -(rel_energies * EH_TO_KCAL * 1000 * CAL_TO_J) / (R * temperature)
+    weights = np.exp(exponent)
+    population = weights / weights.sum()
+    return rel_energies * EH_TO_KCAL, population
+
+
+def ordinal(n: int) -> str:
+    return "%d-%s" % (n, "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10:: 4])
 
 
 def compute_boltzmann_populations(conformers, protocol_number: int, temperature: float) -> None:
+    import numpy as np
     active = [c for c in conformers if c.active]
     if not active:
         return
@@ -108,23 +117,19 @@ def compute_boltzmann_populations(conformers, protocol_number: int, temperature:
 
 
 def get_models_dir(calculator_name: str, create: bool = True) -> Path:
-    """
-    Return the path to ML model weights for a given calculator.
-
-    Priority:
-    1. ``ENAN_MODELS_DIR`` environment variable (shared/cluster setup).
-    2. ``~/.ensemble_analyzer/models/`` (local default).
-
-    Args:
-        calculator_name (str): Subdirectory name (e.g. ``"aimnet"``).
-        create (bool): Create the directory if it does not exist.  Defaults to True.
-
-    Returns:
-        Path: Absolute path to the calculator-specific model directory.
-    """
     env_path = os.getenv("ENAN_MODELS_DIR")
     base_dir = Path(env_path) if env_path else Path.home() / ".ensemble_analyzer" / "models"
     models_dir = base_dir / calculator_name
     if create:
         models_dir.mkdir(parents=True, exist_ok=True)
     return models_dir
+
+
+def __getattr__(name):
+    heavy = {'np', 'R', 'c', 'h', 'electron_volt', 'Boltzmann', 'N_A',
+             'FACTOR_EV_NM', 'FACTOR_EV_CM_1', 'J_TO_H', 'AMU_TO_KG',
+             'ROT_CONST_FACTOR'}
+    if name in heavy:
+        _ensure_lazy()
+        return globals()[name]
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

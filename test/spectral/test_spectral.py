@@ -93,7 +93,7 @@ class TestSpectral:
         # Boundaries must be set before optimization
         base_setup.set_boundaries()
         
-        with patch("ensemble_analyzer._spectral.base.minimize") as mock_min:
+        with patch("scipy.optimize.minimize") as mock_min:
             mock_min.return_value.success = True
             mock_min.return_value.x = [0.5, 0.5] 
             

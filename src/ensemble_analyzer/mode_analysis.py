@@ -1,8 +1,4 @@
 import numpy as np
-from typing import Optional
-
-
-THRESHOLD_IMAG = 20.0
 
 
 class NormalModeAnalyzer:
@@ -45,7 +41,7 @@ class NormalModeAnalyzer:
     @staticmethod
     def classify_negative_freqs(
         freqs: np.ndarray,
-        threshold: float = THRESHOLD_IMAG,
+        threshold: float = 20.0,
     ) -> tuple[list[int], list[int]]:
         neg = np.where(freqs < 0)[0]
         significant = [int(i) for i in neg if abs(freqs[i]) > threshold]
@@ -55,7 +51,7 @@ class NormalModeAnalyzer:
     def imag_mode_summary(
         self,
         mode: int,
-        fragments: Optional[dict[str, list[int]]] = None,
+        fragments: dict[str, list[int]] | None = None,
     ) -> dict:
         atomic = self.localize_mode(mode)
         top_idx = np.argsort(atomic)[-5:][::-1]

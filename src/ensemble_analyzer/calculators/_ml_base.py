@@ -1,4 +1,4 @@
-from typing import Tuple, Any
+from typing import Any
 import time
 import numpy as np
 
@@ -18,7 +18,7 @@ class BaseMlCalc(BaseCalc):
     def _get_ml_calculator(self, **kwargs: Any) -> Any:
         raise NotImplementedError
 
-    def single_point(self) -> Tuple[Any, str]:
+    def single_point(self) -> tuple[Any, str]:
         calc = self._get_ml_calculator()
         return calc, self.label
 
@@ -42,10 +42,8 @@ class BaseMlCalc(BaseCalc):
             freqs.real,
         )
 
-        n_atoms = len(atoms)
-        n_modes = len(freqs)
-        normal_modes = np.zeros((n_modes, n_atoms, 3))
-        for i in range(n_modes):
+        normal_modes = np.zeros((len(freqs), len(atoms), 3))
+        for i in range(len(freqs)):
             normal_modes[i] = ir.get_mode(i)
 
         return freqs, ir_intensities, normal_modes
@@ -75,24 +73,21 @@ class BaseMlCalc(BaseCalc):
             record=SpectralRecord(X=scaled_freqs, Y=ir_intensities),
         )
 
-    def frequency(self) -> Tuple[Any, str]:
+    def frequency(self) -> tuple[Any, str]:
         calc = self._get_ml_calculator()
         atoms = self.conf.get_ase_atoms(calc)
         start = time.perf_counter()
         self._post_optimization_vibrations(atoms, start)
         return calc, self.label
 
-    def optimisation(self) -> Tuple[Any, str]:
+    def optimisation(self) -> tuple[Any, str]:
         calc = self._get_ml_calculator()
         atoms = self.conf.get_ase_atoms(calc)
         start = time.perf_counter()
-        if self.protocol.ts:
-            with Sella(atoms) as opt:
-                opt.run(fmax=self.protocol.fmax)
-        else:
-            with LBFGS(atoms) as opt:
-                opt.run(fmax=self.protocol.fmax)
-                
+        Opt = Sella if self.protocol.ts else LBFGS
+        with Opt(atoms) as opt:
+            opt.run(fmax=self.protocol.fmax)
+
         self.conf.last_geometry = atoms.get_positions().copy()
         if self.protocol.freq:
             self._post_optimization_vibrations(atoms, start)

@@ -35,19 +35,17 @@ class CalculationExecutor:
         cpu: int | None = None,
     ) -> bool:
         per_job_cpu = cpu if cpu is not None else self.config.cpu
-        retry = False
-        new_geom = None
+        need_retry = False
+        new_geom: np.ndarray | None = None
 
         for attempt in range(2):
             if attempt > 0:
-                if protocol.number in conf.energies:
-                    del conf.energies.data[protocol.number]
+                conf.energies.data.pop(protocol.number, None)
                 conf.last_geometry = new_geom.copy()
 
-            success = self._run_single(
+            if not self._run_single(
                 idx, conf, protocol, per_job_cpu, attempt,
-            )
-            if not success:
+            ):
                 return False
 
             self._log_imaginary_localization(conf, protocol)
@@ -57,13 +55,10 @@ class CalculationExecutor:
                     conf, protocol,
                 )
                 if need_retry:
-                    retry = True
                     continue
-
-            retry = False
             break
 
-        if retry:
+        if need_retry:
             self.logger.warning(
                 f"Conf {conf.number} still has problematic imaginary "
                 f"frequencies after displacement – deactivating"
@@ -109,7 +104,7 @@ class CalculationExecutor:
 
         calc, label = protocol.get_calculator(cpu=cpu, conf=conf, **calc_kwargs)
         atoms = conf.get_ase_atoms(calc)
-        os.makedirs(f"{conf.folder}/protocol_{protocol.number}", exist_ok=True)
+        (Path(conf.folder) / f"protocol_{protocol.number}").mkdir(parents=True, exist_ok=True)
 
         os.environ['OMP_NUM_THREADS'] = str(cpu)
         os.environ['MKL_NUM_THREADS'] = str(cpu)
@@ -129,13 +124,13 @@ class CalculationExecutor:
                     if protocol.number not in conf.energies:
                         energy = atoms.get_potential_energy()
                 else:
-                    if hasattr(calc, 'write_inputfiles'):
+                    try:
                         calc.write_inputfiles(atoms, ['energy'])
-                    else:
+                    except AttributeError:
                         calc.write_input(atoms, properties=['energy'])
-                    if hasattr(calc, 'template'):
+                    try:
                         calc.template.execute(calc.directory, calc.profile)
-                    else:
+                    except AttributeError:
                         calc.execute()
             except Exception as e:
                 self.logger.debug(e)
@@ -161,11 +156,7 @@ class CalculationExecutor:
                 EnergyRecord(E=energy, time=elapsed),
             )
             compute_rotational_constants(conf, protocol.number)
-            dipole = atoms.get_dipole_moment()
-            if dipole is not None:
-                m_vec = np.asarray(dipole)
-            else:
-                m_vec = np.array([1, 1, 1])
+            m_vec = np.asarray(dipole) if (dipole := atoms.get_dipole_moment()) is not None else np.array([1, 1, 1])
             conf.energies.set(protocol.number, "m_vec", m_vec)
             conf.energies.set(protocol.number, "m",
                               float(np.linalg.norm(m_vec)))
@@ -191,18 +182,18 @@ class CalculationExecutor:
     def _finalize_qm(self, conf, protocol, calc, label, elapsed) -> bool:
         calc_name = protocol.calculator.lower()
         ext = regex_parsing[calc_name]["ext"]
-        output_file = os.path.join(
-            os.getcwd(),
-            conf.folder,
-            f"protocol_{protocol.number}",
+        output_file = (
+            Path.cwd() / conf.folder / f"protocol_{protocol.number}" /
             f'{conf.number}_p{protocol.number}_{label}.{ext}'
         )
 
-        if hasattr(calc, 'template') and hasattr(calc.template, 'outputname'):
+        try:
             src = Path(calc.directory).resolve() / calc.template.outputname
-            dst = Path(output_file)
-            if src.exists() and src != dst:
-                shutil.move(str(src), str(dst))
+        except AttributeError:
+            pass
+        else:
+            if src.exists() and src != output_file:
+                shutil.move(src, output_file)
 
         success = get_conf_parameters(
             conf=conf,
@@ -267,7 +258,7 @@ class CalculationExecutor:
 
         if protocol.ts:
             return self._handle_ts_imaginary(
-                conf, protocol, freqs, modes, neg_idx, significant, analyzer,
+                conf, protocol, freqs, neg_idx, significant, analyzer,
             )
         return self._handle_opt_imaginary(
             conf, protocol, freqs, neg_idx, significant, analyzer,
@@ -349,7 +340,7 @@ class CalculationExecutor:
     # ------------------------------------------------------------------
 
     def _handle_ts_imaginary(
-        self, conf, protocol, freqs, modes, neg_idx, significant, analyzer,
+        self, conf, protocol, freqs, neg_idx, significant, analyzer,
     ) -> tuple[bool, np.ndarray | None]:
         n_sig = len(significant)
         if n_sig == 0:
@@ -357,69 +348,64 @@ class CalculationExecutor:
 
         ts_target = protocol.ts_target
         min_ov = protocol.min_overlap
+        threshold = protocol.neg_freq_threshold
 
-        # Sort negative modes by absolute value (descending)
         sorted_idx = sorted(neg_idx, key=lambda i: abs(freqs[i]), reverse=True)
 
-        def _on_target(mode_i):
+        def _on_target(mode_i: int) -> bool:
             if not ts_target:
                 return True
             frag = analyzer.localize_mode_fragment(mode_i, ts_target)
-            total = sum(frag.values())
             details = ", ".join(f"{k}={v:.1f}%" for k, v in frag.items())
-            self.logger.info(
-                f"  Mode {mode_i} ({freqs[mode_i]:.2f}): {details}"
-            )
-            return total >= min_ov
+            self.logger.info(f"  Mode {mode_i} ({freqs[mode_i]:.2f}): {details}")
+            return sum(frag.values()) >= min_ov
 
         largest = sorted_idx[0]
-        largest_on_target = _on_target(largest)
-
-        # B.1
-        if len(neg_idx) == 0:
-            return False, None
-
-        if n_sig == 1:
-            if largest_on_target:
-                return False, None
-            top = analyzer.imag_mode_summary(largest,
-                                             fragments=ts_target)
-            atom_info = "; ".join(
-                f"{s} {a}" for a, s, p in top["top_atoms"]
-            )
-            self.logger.warning(
-                f"Conf {conf.number}: TS mode NOT on target. "
-                f"Largest displacement on atoms: {atom_info}"
-            )
-            conf.active = False
-            return False, None
-
         rank2 = sorted_idx[1] if len(sorted_idx) > 1 else None
+        rank2_sig = rank2 is not None and abs(freqs[rank2]) > threshold
 
-        if largest_on_target:
-            if len(significant) == 1:
+        largest_on_target = _on_target(largest)
+        rank2_on_target = rank2 is not None and rank2_sig and _on_target(rank2)
+
+        match (n_sig, largest_on_target, rank2_sig, rank2_on_target):
+            case (1, True, _, _):
+                # B.2: single significant, on target → OK
                 return False, None
-            if rank2 is not None and abs(freqs[rank2]) > protocol.neg_freq_threshold:
-                new_geom = analyzer.displace_geometry(
-                    rank2, protocol.displace_scale
+
+            case (1, False, _, _):
+                # B.3: single significant, NOT on target → deactivate
+                top = analyzer.imag_mode_summary(largest, fragments=ts_target)
+                atom_info = "; ".join(f"{s} {a}" for a, s, p in top["top_atoms"])
+                self.logger.warning(
+                    f"Conf {conf.number}: TS mode NOT on target. "
+                    f"Largest displacement on atoms: {atom_info}"
                 )
+                conf.active = False
+                return False, None
+
+            case (_, True, False, _):
+                # B.4: largest on target, rank2 is noise/absent → OK
+                return False, None
+
+            case (_, True, True, _):
+                # B.5: largest on target, rank2 significant → displace rank2
+                new_geom = analyzer.displace_geometry(rank2, protocol.displace_scale)
                 self.logger.info(
                     f"  TS: mode {largest} on target, displacing along "
                     f"2nd mode {rank2} ({freqs[rank2]:.2f}) and re-optimising"
                 )
                 return True, new_geom
-            return False, None
 
-        if rank2 is not None and _on_target(rank2):
-            new_geom = analyzer.displace_geometry(
-                largest, protocol.displace_scale
-            )
-            self.logger.info(
-                f"  TS: 2nd mode {rank2} on target, displacing along "
-                f"mode {largest} ({freqs[largest]:.2f}) and re-optimising"
-            )
-            return True, new_geom
+            case (_, False, _, True):
+                # B.6: largest NOT on target, rank2 on target → displace largest
+                new_geom = analyzer.displace_geometry(largest, protocol.displace_scale)
+                self.logger.info(
+                    f"  TS: 2nd mode {rank2} on target, displacing along "
+                    f"mode {largest} ({freqs[largest]:.2f}) and re-optimising"
+                )
+                return True, new_geom
 
+        # Fallback: no TS mode localised on target
         top = analyzer.imag_mode_summary(largest, fragments=ts_target)
         atom_info = "; ".join(f"{s} {a}" for a, s, p in top["top_atoms"])
         self.logger.warning(
