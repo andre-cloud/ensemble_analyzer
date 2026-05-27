@@ -306,7 +306,7 @@ class CalculationExecutor:
             if details["top_atoms"]:
                 parts.append(
                     "atoms: "
-                    + ", ".join(f"{a}({p:.1f}%)" for _, a, p in details["top_atoms"])
+                    +                     ", ".join(f"{idx}:{a}({p:.1f}%)" for idx, a, p in details["top_atoms"])
                 )
             self.logger.debug(f"Conf {conf.number}: significant imag " + " | ".join(parts))
 

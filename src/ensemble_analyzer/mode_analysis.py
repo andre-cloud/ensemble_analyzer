@@ -1,4 +1,16 @@
 import numpy as np
+from ase import Atoms as ASE_Atoms
+
+
+_ATOMIC_MASSES: dict[str, float] = {}
+
+
+def _get_mass(symbol: str) -> float:
+    m = _ATOMIC_MASSES.get(symbol)
+    if m is None:
+        m = ASE_Atoms(symbol).get_masses()[0]
+        _ATOMIC_MASSES[symbol] = m
+    return m
 
 
 class NormalModeAnalyzer:
@@ -10,7 +22,9 @@ class NormalModeAnalyzer:
     ):
         modes = np.asarray(normal_modes, dtype=float)
         keep = np.array([np.sum(m ** 2) > 1e-14 for m in modes])
-        self.normal_modes = modes[keep]
+        modes = modes[keep]
+        masses = np.array([_get_mass(a) for a in atoms], dtype=float)
+        self.normal_modes = modes / np.sqrt(masses[np.newaxis, :, np.newaxis])
         self.geom = np.asarray(geom, dtype=float)
         self.atoms = atoms
         self.n_atoms = len(atoms)
