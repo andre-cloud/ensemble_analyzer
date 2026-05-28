@@ -364,6 +364,21 @@ class CalculationExecutor:
         rank2 = sorted_idx[1] if len(sorted_idx) > 1 else None
         rank2_sig = rank2 is not None and abs(freqs[rank2]) > threshold
 
+        # Log TS mode projection onto internal coordinates
+        # Percentages are normalised over all molecular internals for comparability
+        if loc_freq:
+            internals = NormalModeAnalyzer.derive_internals_from_fragments(loc_freq)
+            all_internals = NormalModeAnalyzer.derive_internals_from_connectivity(
+                conf.atoms, conf.last_geometry,
+            )
+            if internals:
+                proj = analyzer.project_on_internals(
+                    largest, internals,
+                    normalization_internals=all_internals,
+                )
+                detail = ", ".join(f"{l}={c:+.4f} ({p:.1f}%)" for l, c, p in proj)
+                self.logger.info(f"  Mode {largest} ({freqs[largest]:.2f}) projection: {detail}")
+
         largest_on_target = _on_target(largest)
         rank2_on_target = rank2 is not None and rank2_sig and _on_target(rank2)
 
