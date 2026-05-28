@@ -1,5 +1,12 @@
 import numpy as np
+from ase import Atoms as ASE_Atoms
 from ensemble_analyzer.mode_analysis import NormalModeAnalyzer
+
+
+def _to_mw(modes_cart: np.ndarray, atoms: tuple[str, ...]) -> np.ndarray:
+    """Convert Cartesian normal modes to mass-weighted."""
+    masses = ASE_Atoms("".join(atoms)).get_masses()
+    return modes_cart * np.sqrt(masses[:, None])
 
 
 class TestDeriveInternalsFromFragments:
@@ -59,6 +66,7 @@ class TestProjectOnInternals:
         modes[0, 0] = [-0.5, 0.0, 0.0]
         modes[0, 1] = [0.5, 0.0, 0.0]
 
+        modes = _to_mw(modes, atoms)
         ana = NormalModeAnalyzer(modes, geom, atoms)
         result = ana.project_on_internals(0, [[0, 1]])  # bond C-O
         assert len(result) == 1
@@ -75,7 +83,7 @@ class TestProjectOnInternals:
         modes = np.zeros((1, 2, 3))
         modes[0, 0] = [0.5, 0.0, 0.0]
         modes[0, 1] = [-0.5, 0.0, 0.0]
-
+        modes = _to_mw(modes, atoms)
         ana = NormalModeAnalyzer(modes, geom, atoms)
         result = ana.project_on_internals(0, [[0, 1]])
         label, comp, pct = result[0]
@@ -95,7 +103,7 @@ class TestProjectOnInternals:
         modes[0, 0] = [0.0, 0.0, 0.0]
         modes[0, 1] = [0.0, 0.0, 0.0]
         modes[0, 2] = [0.0, 0.01, 0.0]
-
+        modes = _to_mw(modes, atoms)
         ana = NormalModeAnalyzer(modes, geom, atoms)
         result = ana.project_on_internals(0, [[0, 1, 2]])
         assert len(result) == 1
@@ -114,7 +122,7 @@ class TestProjectOnInternals:
         ])
         modes = np.zeros((1, 4, 3))
         modes[0, 3] = [0.0, 0.0, 0.01]
-
+        modes = _to_mw(modes, atoms)
         ana = NormalModeAnalyzer(modes, geom, atoms)
         result = ana.project_on_internals(0, [[0, 1, 2, 3]])
         assert len(result) == 1
@@ -131,7 +139,7 @@ class TestProjectOnInternals:
         ])
         modes = np.zeros((1, 3, 3))
         modes[0, 1] = [0.01, 0.0, 0.0]
-
+        modes = _to_mw(modes, atoms)
         ana = NormalModeAnalyzer(modes, geom, atoms)
         internals = [[0, 1], [1, 2]]
         result = ana.project_on_internals(0, internals)
@@ -149,7 +157,7 @@ class TestProjectOnInternals:
         modes = np.zeros((1, 2, 3))
         modes[0, 0] = [1e-6, 0.0, 0.0]
         modes[0, 1] = [1e-6, 0.0, 0.0]
-
+        modes = _to_mw(modes, atoms)
         ana = NormalModeAnalyzer(modes, geom, atoms)
         result = ana.project_on_internals(0, [[0, 1]])
         label, comp, pct = result[0]
@@ -165,7 +173,7 @@ class TestProjectOnInternals:
         modes = np.zeros((1, 3, 3))
         modes[0, 0] = [-0.3, 0.0, 0.0]
         modes[0, 1] = [0.3, 0.0, 0.0]
-
+        modes = _to_mw(modes, atoms)
         ana = NormalModeAnalyzer(modes, geom, atoms)
         fragments = [[0, 1]]
         internals = NormalModeAnalyzer.derive_internals_from_fragments(fragments)
@@ -236,7 +244,7 @@ class TestProjectOnInternalsWithNormalization:
         ])
         modes = np.zeros((1, 3, 3))
         modes[0, 2] = [0.0, 0.01, 0.0]
-
+        modes = _to_mw(modes, atoms)
         ana = NormalModeAnalyzer(modes, geom, atoms)
         # Only the angle
         internals = [[0, 1, 2]]
@@ -262,7 +270,7 @@ class TestProjectOnInternalsWithNormalization:
         modes[0, 0] = [-0.3, 0.0, 0.0]
         modes[0, 1] = [0.6, 0.0, 0.0]
         modes[0, 2] = [-0.3, 0.0, 0.0]
-
+        modes = _to_mw(modes, atoms)
         ana = NormalModeAnalyzer(modes, geom, atoms)
         internals = [[0, 1]]  # only one bond
         all_internals = NormalModeAnalyzer.derive_internals_from_connectivity(atoms, geom)

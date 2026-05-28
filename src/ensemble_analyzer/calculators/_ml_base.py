@@ -71,9 +71,11 @@ class BaseMlCalc(BaseCalc):
             freqs.real,
         )
 
+        masses = atoms.get_masses()
         normal_modes = np.zeros((len(freqs), len(atoms), 3))
         for i in range(len(freqs)):
-            normal_modes[i] = ir.get_mode(i)
+            mode_cart = ir.get_mode(i)
+            normal_modes[i] = mode_cart * np.sqrt(masses[:, None])
 
         return freqs, ir_intensities, normal_modes
 

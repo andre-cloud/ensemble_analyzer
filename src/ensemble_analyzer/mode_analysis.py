@@ -54,7 +54,8 @@ class NormalModeAnalyzer:
     def displace_geometry(
         self, mode: int, scale: float = 0.3
     ) -> np.ndarray:
-        return self.geom + scale * self.normal_modes[mode]
+        real_displacements = self.normal_modes[mode] / np.sqrt(self.masses[:, None])
+        return self.geom + scale * real_displacements
 
     @staticmethod
     def classify_negative_freqs(
