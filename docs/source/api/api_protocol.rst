@@ -3,7 +3,7 @@ Protocol Configuration
 
 Classes for defining computational steps and settings.
 
-.. automodule:: ensemble_analyzer._protocol.protocol
+.. automodule:: ensemble_analyzer.protocol.protocol
    :members:
    :undoc-members:
 
