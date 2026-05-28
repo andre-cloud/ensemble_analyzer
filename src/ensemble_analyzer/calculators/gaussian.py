@@ -67,7 +67,24 @@ class GaussianCalc(BaseCalc):
 
     def _add_opt_keywords(self, calc: Gaussian) -> None:
         if self.protocol.ts:
-            opt_str = " opt=(ts,calcfc,noeigentest)"
+            ts_opt = " opt=(ts,calcfc,noeigentest)"
+            ts_opt_cons = " opt=(ts,modredudant,calcfc,noeigentest)"
+            add_input = self.protocol.add_input or ""
+            if 'oldchk' not in add_input and 'readfc' not in add_input and 'calcfc' not in add_input:
+                src = self._find_hessian_source_protocol()
+                if src is not None:
+                    if self.protocol.read_orbitals:
+                        if str(self.protocol.read_orbitals) == str(src):
+                            ts_opt = " opt=(readfc,ts,noeigentest)"
+                            ts_opt_cons = " opt=(readfc,ts,modredudant,noeigentest)"
+                    else:
+                        chk_path = self._build_path(
+                            self.conf.folder, f"protocol_{src}", "gaussian.chk"
+                        )
+                        calc.oldchk = chk_path
+                        ts_opt = " opt=(readfc,ts,noeigentest)"
+                        ts_opt_cons = " opt=(readfc,ts,modredudant,noeigentest)"
+            opt_str = ts_opt
         else:
             opt_str = " opt"
 
@@ -75,7 +92,7 @@ class GaussianCalc(BaseCalc):
             calc.parameters["extra"] += opt_str
         else:
             if self.protocol.ts:
-                calc.parameters["extra"] += " opt=(ts,modredudant,calcfc,noeigentest)"
+                calc.parameters["extra"] += ts_opt_cons
             else:
                 calc.parameters["extra"] += " opt=(modredudant)"
             tag_map = {1: "X", 2: "B", 3: "A", 4: "D"}

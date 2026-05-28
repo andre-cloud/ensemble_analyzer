@@ -135,6 +135,19 @@ class OrcaCalc(BaseCalc):
 
     def _add_opt_keywords(self, calc: ORCA) -> None:
         calc.parameters["orcasimpleinput"] += " OptTS" if self.protocol.ts else " opt"
+
+        if self.protocol.ts:
+            add_input = self.protocol.add_input or ""
+            if 'inhessname' not in add_input and 'calc_hess' not in add_input:
+                src = self._find_hessian_source_protocol()
+                if src is not None:
+                    hess_path = self._build_path(
+                        self.conf.folder, f"protocol_{src}", "orca.hess"
+                    )
+                    calc.parameters["orcablocks"] += f'\n%geom inhessname "{hess_path}" end\n'
+                else:
+                    calc.parameters["orcablocks"] += '\n%geom calc_hess true end\n'
+
         if self.constrains:
             tag_map = {1: "C", 2: "B", 3: "A", 4: "D"}
             parts = []

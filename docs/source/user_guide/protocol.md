@@ -56,7 +56,7 @@ These parameters define the level of theory and the type of calculation to be pe
     List of atom index groups that the imaginary frequency should localize on. When set, gates the B.1–B.6 post-processing logic: validates whether each significant negative mode falls on these groups (auto-named `Frag1`, `Frag2`, …), displaces and re-optimizes when a spurious mode is detected. Without `loc_freq`, even with `"ts": true`, the TS-specific post-processing is skipped.
     * *Example:* `[[0, 1, 2, 3], [4, 5, 6]]` defines two fragments.
 
-* **`min_overlap`** (float)
+* **`min_localization`** (float)
     Minimum percentage of squared atomic displacement that must localize on the `loc_freq` fragments for a negative frequency to be considered "on target". Default: `50.0`.
 
 * **`auto_displace`** (bool)

@@ -138,6 +138,11 @@ class NWChemCalc(BaseCalc):
 
     def _add_opt_keywords(self, calc: NWChem) -> None:
         calc.parameters["task"] = "optimize ts" if self.protocol.ts else "optimize"
+        if self.protocol.ts:
+            add_input = self.protocol.add_input or ""
+            if 'inhess' not in add_input:
+                src = self._find_hessian_source_protocol()
+                calc.parameters["driver"] = {"inhess": 2 if src is not None else 1}
         if self.protocol.freq: 
             calc.parameters["task"] += "\ntask dft freq"
 

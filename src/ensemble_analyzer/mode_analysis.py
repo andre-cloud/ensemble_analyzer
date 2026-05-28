@@ -23,18 +23,31 @@ class NormalModeAnalyzer:
         modes = np.asarray(normal_modes, dtype=float)
         keep = np.array([np.sum(m ** 2) > 1e-14 for m in modes])
         self.normal_modes = modes[keep]
-        # masses = np.array([_get_mass(a) for a in atoms], dtype=float)
-        # self.normal_modes = modes / np.sqrt(masses[:, None])
+        self.masses = np.array([_get_mass(a) for a in atoms], dtype=float)
         self.geom = np.asarray(geom, dtype=float)
         self.atoms = atoms
         self.n_atoms = len(atoms)
         self.n_modes = self.normal_modes.shape[0]
 
+        # modes = np.asarray(normal_modes, dtype=float)
+        # keep = np.array([np.sum(m ** 2) > 1e-14 for m in modes])
+        # self.normal_modes = modes[keep]
+        # masses = np.array([_get_mass(a) for a in atoms], dtype=float)
+        # self.normal_modes = modes / np.sqrt(masses[:, None])
+        # self.geom = np.asarray(geom, dtype=float)
+        # self.atoms = atoms
+        # self.n_atoms = len(atoms)
+        # self.n_modes = self.normal_modes.shape[0]
+
     def localize_mode(self, mode: int) -> np.ndarray:
-        displ = self.normal_modes[mode]
-        sq = np.sum(displ ** 2, axis=1)
-        total = np.sum(sq)
-        return (sq / total) * 100.0
+        
+        real_displacements = self.normal_modes[mode] / np.sqrt(self.masses[:, None])
+        distances = np.linalg.norm(real_displacements, axis=1)
+        total_distance = np.sum(distances)
+        if total_distance == 0:
+            return np.zeros_like(distances)
+            
+        return (distances / total_distance) * 100.0
 
     def localize_mode_fragment(
         self,

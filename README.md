@@ -125,7 +125,7 @@ ensemble_analyzer --restart
 | **TS Analysis** ||||
 | `ts` | bool | Enable TS optimization (uses Sella for ML calculators) | `false` |
 | `loc_freq` | list[list] | Atom index groups for TS mode validation | `[[0,1,2], [3,4,5]]` |
-| `min_overlap` | float | Min % displacement on `loc_freq` fragments to accept negative freq | `50.0` |
+| `min_localization` | float | Min % displacement on `loc_freq` fragments to accept negative freq | `50.0` |
 | `auto_displace` | bool | Auto-displace along imaginary mode + re-optimize | `false` |
 | `displace_scale` | float | Displacement scale factor [Å] | `0.3` |
 | `neg_freq_threshold` | float | Frequencies with |ν| ≤ threshold treated as noise [cm⁻¹] | `20.0` |

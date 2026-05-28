@@ -77,6 +77,17 @@ class BaseMlCalc(BaseCalc):
 
         return freqs, ir_intensities, normal_modes
 
+    def _compute_starting_hessian(self, atoms):
+        prefix = f"{self.conf.folder}/protocol_{self.protocol.number}/ts_hess"
+        try:
+            ir = Infrared(atoms, name=prefix)
+            ir.run()
+            return ir.H.copy()
+        except (AttributeError, NotImplementedError):
+            vib = Vibrations(atoms, name=prefix)
+            vib.run()
+            return vib.H.copy()
+
     def _compute_thermochemistry(self, energy, scaled_freqs):
         compute_thermochemistry(
             self.conf, self.protocol.number, energy, scaled_freqs,
@@ -92,7 +103,10 @@ class BaseMlCalc(BaseCalc):
         elapsed = time.perf_counter() - start
         self.conf.energies.add(
             self.protocol.number,
-            EnergyRecord(E=energy, Freq=scaled_freqs, NormalModes=normal_modes, time=elapsed),
+            EnergyRecord(
+                E=energy, Freq=scaled_freqs, NormalModes=normal_modes,
+                time=elapsed, calculator=self.protocol.calculator,
+            ),
         )
         compute_rotational_constants(self.conf, self.protocol.number)
         self._compute_thermochemistry(energy, scaled_freqs)
@@ -114,8 +128,13 @@ class BaseMlCalc(BaseCalc):
         atoms = self.conf.get_ase_atoms(calc)
         self._apply_ase_constraints(atoms)
         start = time.perf_counter()
+        if self.protocol.ts:
+            hessian = self._compute_starting_hessian(atoms)
+            sella_kwargs = {'H0': hessian}
+        else:
+            sella_kwargs = {}
         Opt = Sella if self.protocol.ts else LBFGS
-        with Opt(atoms) as opt:
+        with Opt(atoms, **sella_kwargs) as opt:
             opt.run(fmax=self.protocol.fmax)
 
         self.conf.last_geometry = atoms.get_positions().copy()

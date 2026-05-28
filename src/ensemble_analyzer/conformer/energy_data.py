@@ -31,6 +31,7 @@ class EnergyRecord:
     Erel    : float                     = np.nan        # Relative Energy [kcal/mol]
     Freq    : Optional[np.ndarray]      = None          # Vibrational Frequencies [cm-1]
     NormalModes : Optional[np.ndarray]  = None          # Normal mode vectors (n_modes, n_atoms, 3)
+    calculator : str                     = ""            # Calculator name (e.g. "orca", "tblite")
 
     def as_dict(self) -> dict:
         """Convert record to dictionary, handling numpy arrays."""
@@ -114,7 +115,7 @@ class EnergyStore:
         if not hasattr(self.data[protocol_number], property):
             raise AttributeError(
                 f"EnergyRecord has no attribute '{property}'. "
-                f"Valid: E, G, H, S, G_E, zpve, B, B_vec, m, m_vec, Pop, time, Erel, Freq"
+                f"Valid: E, G, H, S, G_E, zpve, B, B_vec, m, m_vec, Pop, time, Erel, Freq, calculator"
             )
         
         setattr(self.data[protocol_number], property, value)

@@ -153,7 +153,7 @@ class CalculationExecutor:
         if protocol.number not in conf.energies:
             conf.energies.add(
                 protocol.number,
-                EnergyRecord(E=energy, time=elapsed),
+                EnergyRecord(E=energy, time=elapsed, calculator=protocol.calculator),
             )
             compute_rotational_constants(conf, protocol.number)
             m_vec = np.asarray(dipole) if (dipole := atoms.get_dipole_moment()) is not None else np.array([1, 1, 1])
@@ -347,7 +347,7 @@ class CalculationExecutor:
             return False, None
 
         loc_freq = protocol.loc_freq
-        min_ov = protocol.min_overlap
+        min_ov = protocol.min_localization
         threshold = protocol.neg_freq_threshold
 
         sorted_idx = sorted(neg_idx, key=lambda i: abs(freqs[i]), reverse=True)

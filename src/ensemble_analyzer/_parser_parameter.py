@@ -146,6 +146,7 @@ def get_conf_parameters(
                 NormalModes=normal_modes,
                 B_vec=B_vec,
                 m_vec=M_vec,
+                calculator=p.calculator,
             )
         )
         log.debug(f'{log.TICK} Energy Data are stored correctly')
