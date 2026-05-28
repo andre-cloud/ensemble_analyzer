@@ -2,7 +2,9 @@ import numpy as np
 from ase import Atoms as ASE_Atoms
 from ase.data import covalent_radii, atomic_numbers
 
+
 _ATOMIC_MASSES: dict[str, float] = {}
+
 
 def _get_mass(symbol: str) -> float:
     m = _ATOMIC_MASSES.get(symbol)
@@ -20,9 +22,7 @@ class NormalModeAnalyzer:
         atoms: tuple[str, ...],
     ):
         modes = np.asarray(normal_modes, dtype=float)
-        # Filtro per scartare traslazioni/rotazioni
         keep = np.array([np.sum(m ** 2) > 1e-14 for m in modes])
-        # Manteniamo i vettori pesati per la massa per coerenza termodinamica
         self.normal_modes = modes[keep]
         
         self.masses = np.array([_get_mass(a) for a in atoms], dtype=float)
@@ -32,13 +32,57 @@ class NormalModeAnalyzer:
         self.n_modes = self.normal_modes.shape[0]
 
     def localize_mode(self, mode: int) -> np.ndarray:
-        """Calcola la percentuale di spostamento geometrico cartesiano per atomo."""
         real_displacements = self.normal_modes[mode] / np.sqrt(self.masses[:, None])
         distances = np.linalg.norm(real_displacements, axis=1)
         total_distance = np.sum(distances)
         if total_distance == 0:
             return np.zeros_like(distances)
+            
         return (distances / total_distance) * 100.0
+
+    def localize_mode_fragment(
+        self,
+        mode: int,
+        fragments: list[list[int]],
+    ) -> dict[str, float]:
+        atomic = self.localize_mode(mode)
+        return {
+            f"Frag{i+1}": float(np.sum(atomic[indices]))
+            for i, indices in enumerate(fragments)
+        }
+
+    def displace_geometry(
+        self, mode: int, scale: float = 0.3
+    ) -> np.ndarray:
+        return self.geom + scale * self.normal_modes[mode]
+
+    @staticmethod
+    def classify_negative_freqs(
+        freqs: np.ndarray,
+        threshold: float = 20.0,
+    ) -> tuple[list[int], list[int]]:
+        neg = np.where(freqs < 0)[0]
+        significant = [int(i) for i in neg if abs(freqs[i]) > threshold]
+        noise = [int(i) for i in neg if abs(freqs[i]) <= threshold]
+        return significant, noise
+
+    @staticmethod
+    def derive_internals_from_fragments(
+        fragments: list[list[int]],
+    ) -> list[list[int]]:
+        internals: list[list[int]] = []
+        for frag in fragments:
+            n = len(frag)
+            if n >= 2:
+                for i in range(n - 1):
+                    internals.append([frag[i], frag[i + 1]])
+            if n >= 3:
+                for i in range(n - 2):
+                    internals.append([frag[i], frag[i + 1], frag[i + 2]])
+            if n >= 4:
+                for i in range(n - 3):
+                    internals.append([frag[i], frag[i + 1], frag[i + 2], frag[i + 3]])
+        return internals
 
     @staticmethod
     def derive_internals_from_connectivity(
@@ -46,7 +90,6 @@ class NormalModeAnalyzer:
         positions: np.ndarray,
         scale: float = 1.3,
     ) -> list[list[int]]:
-        """Genera legami, angoli e diedri dalla topologia spaziale usando i raggi covalenti."""
         n = len(symbols)
         if n < 2:
             return []
@@ -54,7 +97,6 @@ class NormalModeAnalyzer:
         bonds: set[tuple[int, int]] = set()
         for i in range(n):
             for j in range(i + 1, n):
-                # Bug ASE risolto: indice corretto per covalent_radii
                 r_cov = covalent_radii[atomic_numbers[symbols[i]]] + covalent_radii[atomic_numbers[symbols[j]]]
                 d = np.linalg.norm(positions[i] - positions[j])
                 if d < scale * r_cov:
@@ -67,11 +109,9 @@ class NormalModeAnalyzer:
 
         internals: list[list[int]] = []
 
-        # Legami (2 atomi)
         for i, j in bonds:
             internals.append([i, j])
 
-        # Angoli (3 atomi)
         for j in range(n):
             neighbors = sorted(adj[j])
             for p in range(len(neighbors)):
@@ -79,7 +119,6 @@ class NormalModeAnalyzer:
                     i, k = neighbors[p], neighbors[q]
                     internals.append([i, j, k])
 
-        # Diedri (4 atomi)
         for j in range(n):
             for k in adj[j]:
                 if k <= j:
@@ -120,7 +159,6 @@ class NormalModeAnalyzer:
             positions=self.geom.copy(),
         )
         
-        # Bug Fisico risolto: Estrae gli spostamenti geometrici puri (rimuove la massa)
         real_displacements = self.normal_modes[mode] / np.sqrt(self.masses[:, None])
         displacement = real_displacements * step_size
 
@@ -136,16 +174,20 @@ class NormalModeAnalyzer:
                 q_plus = atoms_plus.get_distance(*idx)
                 q_minus = atoms_minus.get_distance(*idx)
                 comp = (q_plus - q_minus) / (2 * step_size)
+
             elif n == 3:
                 q_plus = atoms_plus.get_angle(*idx)
                 q_minus = atoms_minus.get_angle(*idx)
                 comp = (q_plus - q_minus) / (2 * step_size)
+
             elif n == 4:
                 q_plus = atoms_plus.get_dihedral(*idx)
                 q_minus = atoms_minus.get_dihedral(*idx)
                 diff = q_plus - q_minus
-                if diff > 180: diff -= 360
-                elif diff < -180: diff += 360
+                if diff > 180:
+                    diff -= 360
+                elif diff < -180:
+                    diff += 360
                 comp = diff / (2 * step_size)
             else:
                 continue
@@ -156,7 +198,6 @@ class NormalModeAnalyzer:
         return raw
 
     def _arc_weight(self, comp: float, idx: list[int]) -> float:
-        """Converte le variazioni angolari in lunghezza d'arco equivalente (Ångström)."""
         if len(idx) == 2:
             return abs(comp)
         deg2rad = np.pi / 180.0
@@ -167,36 +208,78 @@ class NormalModeAnalyzer:
         mean_r = self._mean_bond_length(atoms, idx)
         return abs(comp * deg2rad) * mean_r
 
+    def project_on_internals(
+        self,
+        mode: int,
+        internals: list[list[int]],
+        normalization_internals: list[list[int]] | None = None,
+        step_size: float = 1e-3,
+    ) -> list[tuple[str, float, float]]:
+        norm_set = normalization_internals if normalization_internals is not None else internals
+        raw_norm = self._compute_raw_components(mode, norm_set, step_size)
+        if not raw_norm:
+            return []
+
+        arc_weights = [self._arc_weight(comp, idx) for _, comp, idx in raw_norm]
+        total = sum(arc_weights)
+        if total < 1e-30:
+            return [(self._format_internal_label(idx), 0.0, 0.0) for idx in internals]
+
+        pct_map: dict[str, float] = {}
+        for (label, _, _), arc in zip(raw_norm, arc_weights):
+            pct_map[label] = float(arc / total * 100.0)
+
+        result: list[tuple[str, float, float]] = []
+        for idx in internals:
+            label = self._format_internal_label(idx)
+            comp = 0.0
+            for lbl, c, i in raw_norm:
+                if lbl == label:
+                    comp = c
+                    break
+            result.append((label, comp, pct_map.get(label, 0.0)))
+
+        return result
+
+    def imag_mode_summary(
+        self,
+        mode: int,
+        fragments: list[list[int]] | None = None,
+    ) -> dict:
+        atomic = self.localize_mode(mode)
+        top_idx = np.argsort(atomic)[-5:][::-1]
+        top_atoms = [
+            (int(idx), self.atoms[idx], float(atomic[idx]))
+            for idx in top_idx
+            if atomic[idx] > 1.0
+        ]
+        result = {
+            "mode": mode,
+            "top_atoms": top_atoms,
+        }
+        if fragments:
+            result["fragments"] = self.localize_mode_fragment(mode, fragments)
+        return result
+
     def get_dominant_internals(
         self, 
         mode: int, 
         threshold_pct: float = 1.0,
         step_size: float = 1e-3
     ) -> dict[str, list[tuple[str, float, float]]]:
-        """
-        Deriva automaticamente tutte le coordinate, calcola le proiezioni, 
-        e restituisce SOLO quelle che superano la soglia percentuale (es. > 1%).
-        Ideale per scartare il rumore a 0.0% e isolare i moti chiave.
-        
-        Ritorna un dizionario diviso per categoria: {'Bonds': [...], 'Angles': [...], 'Dihedrals': [...]}
-        """
-        # 1. Genera tutta la topologia corretta
         all_internals = self.derive_internals_from_connectivity(self.atoms, self.geom)
-        
-        # 2. Calcola componenti raw e pesi ad arco
         raw_norm = self._compute_raw_components(mode, all_internals, step_size)
+        
+        results = {"Bonds": [], "Angles": [], "Dihedrals": []}
         if not raw_norm:
-            return {"Bonds": [], "Angles": [], "Dihedrals": []}
+            return results
 
         arc_weights = [self._arc_weight(comp, idx) for _, comp, idx in raw_norm]
         total = sum(arc_weights)
         
-        results = {"Bonds": [], "Angles": [], "Dihedrals": []}
-        
         if total < 1e-30:
             return results
 
-        # 3. Filtra e smista i risultati
         for (label, comp, idx), arc in zip(raw_norm, arc_weights):
             pct = float((arc / total) * 100.0)
             
@@ -209,14 +292,12 @@ class NormalModeAnalyzer:
                 elif len(idx) == 4:
                     results["Dihedrals"].append(entry)
                     
-        # Ordina ogni lista per percentuale decrescente
         for key in results:
             results[key].sort(key=lambda x: x[2], reverse=True)
             
         return results
 
     def print_mode_decomposition(self, mode: int, threshold_pct: float = 1.0):
-        """Metodo di utilità per stampare la decomposizione in modo leggibile (come una tabella)."""
         dominant = self.get_dominant_internals(mode, threshold_pct)
         
         print(f"=== Decomposizione Modo {mode} (Top Contributi > {threshold_pct}%) ===")
