@@ -3,7 +3,7 @@ from typing import List
 from pathlib import Path
 import json
 from ensemble_analyzer.protocol.protocol import Protocol
-from ensemble_analyzer.io_utils import SerialiseEncoder
+from ensemble_analyzer.io_utils import write_json
 
 
 
@@ -47,7 +47,7 @@ class ProtocolManager:
 
         data = {p.number: p.__dict__ for p in protocols}
         with open(self.protocol_file, 'w') as f:
-            json.dump(data, f, indent=4, cls=SerialiseEncoder)
+            write_json(data, f, indent=4)
     
     def load(self) -> List[Protocol]:
         """

@@ -7,7 +7,7 @@ import shutil
 
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer._logger.logger import Logger
-from ensemble_analyzer.io_utils import SerialiseEncoder
+from ensemble_analyzer.io_utils import write_json
 
 class CheckpointManager:
     """
@@ -58,7 +58,7 @@ class CheckpointManager:
             suffix='.tmp',
             dir=self.checkpoint_file.parent
         ) as tmp:
-            json.dump(data, tmp, indent=4, cls=SerialiseEncoder)
+            write_json(data, tmp, indent=4)
             tmp_path = Path(tmp.name)
         
         # Atomic move

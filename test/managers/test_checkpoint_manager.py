@@ -28,13 +28,13 @@ class TestCheckpointManager:
             mock_temp_file.name = "temp_checkpoint.tmp"
             
             with patch("ensemble_analyzer._managers.checkpoint_manager.shutil.move") as mock_move:
-                with patch("json.dump") as mock_json_dump:
+                with patch("ensemble_analyzer._managers.checkpoint_manager.write_json") as mock_write_json:
                     
                     manager.save([mock_conformer], mock_logger, log=True)
                     
-                    # Verify json dump called with correct data structure
-                    mock_json_dump.assert_called()
-                    args, _ = mock_json_dump.call_args
+                    # Verify write_json called with correct data structure
+                    mock_write_json.assert_called()
+                    args, _ = mock_write_json.call_args
                     data_arg = args[0]
                     assert 1 in data_arg # Key should be conformer number
                     
