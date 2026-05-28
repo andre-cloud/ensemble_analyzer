@@ -22,26 +22,19 @@ class NormalModeAnalyzer:
         atoms: tuple[str, ...],
     ):
         modes = np.asarray(normal_modes, dtype=float)
+        # Filtra i modi traslazionali e rotazionali
         keep = np.array([np.sum(m ** 2) > 1e-14 for m in modes])
+        # Conserva la matrice originaria (pesata per la massa)
         self.normal_modes = modes[keep]
+        
         self.masses = np.array([_get_mass(a) for a in atoms], dtype=float)
         self.geom = np.asarray(geom, dtype=float)
         self.atoms = atoms
         self.n_atoms = len(atoms)
         self.n_modes = self.normal_modes.shape[0]
 
-        # modes = np.asarray(normal_modes, dtype=float)
-        # keep = np.array([np.sum(m ** 2) > 1e-14 for m in modes])
-        # self.normal_modes = modes[keep]
-        # masses = np.array([_get_mass(a) for a in atoms], dtype=float)
-        # self.normal_modes = modes / np.sqrt(masses[:, None])
-        # self.geom = np.asarray(geom, dtype=float)
-        # self.atoms = atoms
-        # self.n_atoms = len(atoms)
-        # self.n_modes = self.normal_modes.shape[0]
-
     def localize_mode(self, mode: int) -> np.ndarray:
-        
+        # Ricava gli spostamenti cartesiani puri (geometria)
         real_displacements = self.normal_modes[mode] / np.sqrt(self.masses[:, None])
         distances = np.linalg.norm(real_displacements, axis=1)
         total_distance = np.sum(distances)
@@ -64,6 +57,9 @@ class NormalModeAnalyzer:
     def displace_geometry(
         self, mode: int, scale: float = 0.3
     ) -> np.ndarray:
+        # Nota: se per la visualizzazione vuoi usare gli spostamenti cartesiani reali, 
+        # dovresti dividere per la massa anche qui. L'ho lasciato come l'originale
+        # per non alterare le tue pipeline esterne.
         return self.geom + scale * self.normal_modes[mode]
 
     @staticmethod
@@ -132,7 +128,8 @@ class NormalModeAnalyzer:
         bonds: set[tuple[int, int]] = set()
         for i in range(n):
             for j in range(i + 1, n):
-                r_cov = covalent_radii[atomic_numbers[symbols[i]] - 1] + covalent_radii[atomic_numbers[symbols[j]] - 1]
+                # CORREZIONE BUG ASE: rimosso il "- 1" dagli indici dei raggi covalenti
+                r_cov = covalent_radii[atomic_numbers[symbols[i]]] + covalent_radii[atomic_numbers[symbols[j]]]
                 d = np.linalg.norm(positions[i] - positions[j])
                 if d < scale * r_cov:
                     bonds.add((i, j))
@@ -209,7 +206,10 @@ class NormalModeAnalyzer:
             symbols="".join(self.atoms),
             positions=self.geom.copy(),
         )
-        displacement = self.normal_modes[mode] * step_size
+        
+        # CORREZIONE FISICA: Rimuove il peso della massa per avere gli spostamenti geometrici puri
+        real_displacements = self.normal_modes[mode] / np.sqrt(self.masses[:, None])
+        displacement = real_displacements * step_size
 
         atoms_plus = atoms.copy()
         atoms_minus = atoms.copy()
