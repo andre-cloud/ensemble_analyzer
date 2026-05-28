@@ -256,7 +256,7 @@ class CalculationExecutor:
         )
         significant, _ = analyzer.classify_negative_freqs(freqs, threshold)
 
-        if protocol.ts:
+        if protocol.ts and protocol.loc_freq:
             return self._handle_ts_imaginary(
                 conf, protocol, freqs, neg_idx, significant, analyzer,
             )
@@ -297,7 +297,7 @@ class CalculationExecutor:
                 f"{', '.join(f'{freqs[i]:.2f}' for i in noise)}"
             )
         for i in significant:
-            details = analyzer.imag_mode_summary(i, protocol.ts_target)
+            details = analyzer.imag_mode_summary(i, protocol.loc_freq)
             parts = [f"mode {i} ({freqs[i]:.2f})"]
             if "fragments" in details:
                 parts.append(
@@ -346,16 +346,16 @@ class CalculationExecutor:
         if n_sig == 0:
             return False, None
 
-        ts_target = protocol.ts_target
+        loc_freq = protocol.loc_freq
         min_ov = protocol.min_overlap
         threshold = protocol.neg_freq_threshold
 
         sorted_idx = sorted(neg_idx, key=lambda i: abs(freqs[i]), reverse=True)
 
         def _on_target(mode_i: int) -> bool:
-            if not ts_target:
+            if not loc_freq:
                 return True
-            frag = analyzer.localize_mode_fragment(mode_i, ts_target)
+            frag = analyzer.localize_mode_fragment(mode_i, loc_freq)
             details = ", ".join(f"{k}={v:.1f}%" for k, v in frag.items())
             self.logger.info(f"  Mode {mode_i} ({freqs[mode_i]:.2f}): {details}")
             return sum(frag.values()) >= min_ov
@@ -374,7 +374,7 @@ class CalculationExecutor:
 
             case (1, False, _, _):
                 # B.3: single significant, NOT on target → deactivate
-                top = analyzer.imag_mode_summary(largest, fragments=ts_target)
+                top = analyzer.imag_mode_summary(largest, fragments=loc_freq)
                 atom_info = "; ".join(f"{s} {a}" for a, s, p in top["top_atoms"])
                 self.logger.warning(
                     f"Conf {conf.number}: TS mode NOT on target. "
@@ -406,7 +406,7 @@ class CalculationExecutor:
                 return True, new_geom
 
         # Fallback: no TS mode localised on target
-        top = analyzer.imag_mode_summary(largest, fragments=ts_target)
+        top = analyzer.imag_mode_summary(largest, fragments=loc_freq)
         atom_info = "; ".join(f"{s} {a}" for a, s, p in top["top_atoms"])
         self.logger.warning(
             f"Conf {conf.number}: no TS mode localised on target. "

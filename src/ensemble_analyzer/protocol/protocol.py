@@ -80,7 +80,7 @@ class Protocol:
     block_on_retention_rate     : Optional[bool]                = False
 
     # TS mode analysis
-    ts_target                   : Optional[Dict[str, list]]     = None
+    loc_freq                    : Optional[list[list[int]]]     = None
     min_overlap                 : Optional[float]               = 50.0
     auto_displace               : Optional[bool]                = False
     displace_scale              : Optional[float]               = 0.3
@@ -285,9 +285,6 @@ class Protocol:
 
         if self.ts and not self.opt:
             self.opt = True
-
-        if self.ts:
-            self.auto_displace = True
 
         if self.functional.lower() in COMPOSITE_METHODS:
             self.basis = COMPOSITE_METHODS[self.functional.lower()]

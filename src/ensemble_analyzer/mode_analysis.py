@@ -39,12 +39,12 @@ class NormalModeAnalyzer:
     def localize_mode_fragment(
         self,
         mode: int,
-        fragments: dict[str, list[int]],
+        fragments: list[list[int]],
     ) -> dict[str, float]:
         atomic = self.localize_mode(mode)
         return {
-            name: float(np.sum(atomic[indices]))
-            for name, indices in fragments.items()
+            f"Frag{i+1}": float(np.sum(atomic[indices]))
+            for i, indices in enumerate(fragments)
         }
 
     def displace_geometry(
@@ -65,7 +65,7 @@ class NormalModeAnalyzer:
     def imag_mode_summary(
         self,
         mode: int,
-        fragments: dict[str, list[int]] | None = None,
+        fragments: list[list[int]] | None = None,
     ) -> dict:
         atomic = self.localize_mode(mode)
         top_idx = np.argsort(atomic)[-5:][::-1]
