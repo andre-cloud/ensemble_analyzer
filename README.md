@@ -95,11 +95,11 @@ ML calculators skip file I/O and parsing — energies are read directly from ASE
 ```json
 {
     "0": {"calculator": "orca", "functional": "wB97X-D4rev", "basis": "def2-TZVPPD", "opt": true, "ts": true, "freq": true,
-          "ts_target": {"reactive": [0, 1, 2, 3], "spectator": [4, 5, 6, 7, 8, 9]},
+          "loc_freq": [[0, 1, 2, 3], [4, 5, 6, 7, 8, 9]],
           "comment": "TS optimization with fragment-based imag mode validation"}
 }
 ```
-`ts: true` enables Sella optimizer for ML calculators and `OptTS`/`opt=(ts,…)` for QM programs. The B.1–B.6 logic validates whether the imaginary frequency localizes on `ts_target`, displaces and re-optimizes when a spurious mode is detected.
+`ts: true` enables Sella optimizer for ML calculators and `OptTS`/`opt=(ts,…)` for QM programs. When `loc_freq` is set, the B.1–B.6 logic validates whether the imaginary frequency localizes on the listed atom groups (`Frag1`, `Frag2`, …), displaces and re-optimizes when a spurious mode is detected.
 
 ### 5. Restart from Checkpoint
 ```bash
@@ -123,10 +123,10 @@ ensemble_analyzer --restart
 | `fmax` | float | Convergence threshold for ML optimizers (BFGS/Sella) [eV/Å] | `0.01` (default) |
 | `solvent` | dict | Implicit solvation | `{"solvent": "water", "smd": true}` |
 | **TS Analysis** ||||
-| `ts` | bool | Enable TS optimization (forces `auto_displace=true`, uses Sella for ML) | `false` |
-| `ts_target` | dict | Fragment atom lists for TS mode validation | `{"reactive": [0,1,2]}` |
-| `min_overlap` | float | Min % displacement on `ts_target` to accept negative freq | `50.0` |
-| `auto_displace` | bool | Auto-displace along imaginary mode + re-optimize | `false` (forced `true` when `ts: true`) |
+| `ts` | bool | Enable TS optimization (uses Sella for ML calculators) | `false` |
+| `loc_freq` | list[list] | Atom index groups for TS mode validation | `[[0,1,2], [3,4,5]]` |
+| `min_overlap` | float | Min % displacement on `loc_freq` fragments to accept negative freq | `50.0` |
+| `auto_displace` | bool | Auto-displace along imaginary mode + re-optimize | `false` |
 | `displace_scale` | float | Displacement scale factor [Å] | `0.3` |
 | `neg_freq_threshold` | float | Frequencies with |ν| ≤ threshold treated as noise [cm⁻¹] | `20.0` |
 | **Pruning Thresholds** ||||
