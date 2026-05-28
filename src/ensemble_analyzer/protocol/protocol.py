@@ -59,6 +59,10 @@ class Protocol:
     constrains                  : Optional[list]                = field(default_factory=list)
     read_orbitals               : Optional[str]                 = ""
     add_input                   : Optional[str]                 = ""
+
+    # TD-DFT settings
+    nroots                      : Optional[int]                 = None
+    tda                         : Optional[bool]                = False
     
     # Pruning & Clustering
     graph                       : Optional[bool]                = False

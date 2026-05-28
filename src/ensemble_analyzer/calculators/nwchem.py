@@ -26,17 +26,24 @@ class NWChemCalc(BaseCalc):
         """Build the common NWChem input keyword dictionary.
 
         Includes theory, functional, basis, memory, and optional solvent,
-        charge, and orbital reading directives.
+        charge, and orbital reading directives. When nroots is set, uses
+        tddft theory and configures excited-state parameters.
 
         Returns:
             dict: NWChem input keywords.
         """
+        nroots = self.protocol.nroots
+        is_tddft = isinstance(nroots, int) and nroots > 0
         kw = {
-            "theory": "dft",
+            "theory": "tddft" if is_tddft else "dft",
             "xc": self.protocol.functional,
             "basis": self.protocol.basis,
             "dft": {"mult": self.protocol.mult},
         }
+        if is_tddft:
+            kw["nroots"] = nroots
+            tda = self.protocol.tda
+            kw["tddft"] = {"tda": True} if isinstance(tda, bool) and tda else True
         if self.protocol.charge != 0:
             kw["charge"] = self.protocol.charge
 
@@ -143,8 +150,10 @@ class NWChemCalc(BaseCalc):
             if 'inhess' not in add_input:
                 src = self._find_hessian_source_protocol()
                 calc.parameters["driver"] = {"inhess": 2 if src is not None else 1}
-        if self.protocol.freq: 
-            calc.parameters["task"] += "\ntask dft freq"
+        if self.protocol.freq:
+            nroots = self.protocol.nroots
+            freq_task = "tddft" if (isinstance(nroots, int) and nroots > 0) else "dft"
+            calc.parameters["task"] += f"\ntask {freq_task} freq"
 
     def _add_freq_keywords(self, calc: NWChem) -> None:
         calc.parameters["task"] = "freq"

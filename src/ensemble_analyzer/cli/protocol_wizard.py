@@ -446,6 +446,20 @@ def protocol_step(step_num: int, level: str = "Basic") -> dict[str, Any]:
         ).execute()
     
     # ==========================================
+    # TD-DFT SETTINGS (Intermediate or Advanced)
+    # ==========================================
+    if level in ["Intermediate", "Advanced"]:
+        if inquirer.confirm(
+            message="Run TD-DFT (excited states calculation)?",
+            default=False
+        ).execute():
+            step["nroots"] = get_int_input("Number of excited states (nroots):", default="10")
+            step["tda"] = inquirer.confirm(
+                message="Use Tamm-Dancoff approximation (TDA)?",
+                default=True
+            ).execute()
+
+    # ==========================================
     # ADVANCED LEVEL
     # ==========================================
     if level == "Advanced":

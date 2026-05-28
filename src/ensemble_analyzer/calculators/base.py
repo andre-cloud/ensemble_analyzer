@@ -58,21 +58,27 @@ class BaseCalc(ABC):
     def _add_freq_keywords(self, calc: Any) -> None:
         pass
 
+    def _add_tddft_keywords(self, calc: Any) -> None:
+        pass
+
     # --- Template methods ---
 
     def single_point(self) -> Tuple[Any, str]:
         calc, label = self._build_calculator()
         self._add_sp_keywords(calc)
+        self._add_tddft_keywords(calc)
         return calc, label
 
     def optimisation(self) -> Tuple[Any, str]:
         calc, label = self._build_calculator()
         self._add_opt_keywords(calc)
+        self._add_tddft_keywords(calc)
         return calc, label
 
     def frequency(self) -> Tuple[Any, str]:
         calc, label = self._build_calculator()
         self._add_freq_keywords(calc)
+        self._add_tddft_keywords(calc)
         return calc, label
 
     @staticmethod

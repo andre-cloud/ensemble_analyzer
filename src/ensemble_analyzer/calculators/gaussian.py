@@ -112,3 +112,13 @@ class GaussianCalc(BaseCalc):
 
     def _add_freq_keywords(self, calc: Gaussian) -> None:
         calc.parameters["extra"] += " freq=(HPModes,vcd)"
+
+    def _add_tddft_keywords(self, calc: Gaussian) -> None:
+        nroots = self.protocol.nroots
+        if isinstance(nroots, int) and nroots > 0:
+            td_str = f" td=(nstates={nroots}"
+            tda = self.protocol.tda
+            if isinstance(tda, bool) and tda:
+                td_str += ",tda"
+            td_str += ")"
+            calc.parameters["extra"] += td_str

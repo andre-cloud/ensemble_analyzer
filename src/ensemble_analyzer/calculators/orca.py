@@ -165,6 +165,15 @@ class OrcaCalc(BaseCalc):
         calc.parameters["orcasimpleinput"] += " freq"
         self._maybe_add_vcd(calc)
 
+    def _add_tddft_keywords(self, calc: ORCA) -> None:
+        nroots = self.protocol.nroots
+        if isinstance(nroots, int) and nroots > 0:
+            tda = self.protocol.tda
+            tda_val = "true" if (isinstance(tda, bool) and tda) else "false"
+            calc.parameters["orcablocks"] += (
+                f"\n%tddft nroots {nroots} tda {tda_val} end\n"
+            )
+
     def _maybe_add_vcd(self, calc: ORCA) -> None:
         if self.VERSION > 5:
             calc.parameters["orcablocks"] += "\n%freq vcd true end\n"
