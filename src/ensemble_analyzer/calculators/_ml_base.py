@@ -8,6 +8,7 @@ from ensemble_analyzer.conformer.energy_data import EnergyRecord, compute_rotati
 from ensemble_analyzer.conformer.spectral_data import SpectralRecord
 from ase.optimize import LBFGS
 from ase.vibrations import Infrared, Vibrations
+from ase.constraints import FixAtoms, FixInternals
 from sella import Sella
 
 
@@ -17,6 +18,36 @@ class BaseMlCalc(BaseCalc):
 
     def _get_ml_calculator(self, **kwargs: Any) -> Any:
         raise NotImplementedError
+
+    def _apply_ase_constraints(self, atoms):
+        if not self.constrains:
+            return
+        fix_atoms = []
+        bonds = []
+        angles = []
+        dihedrals = []
+        for c in self.constrains:
+            if not isinstance(c, (list, tuple)):
+                continue
+            idx = [i - 1 for i in c]
+            if len(c) == 1:
+                fix_atoms.append(idx[0])
+            elif len(c) == 2:
+                bonds.append([None, idx])
+            elif len(c) == 3:
+                angles.append([None, idx])
+            elif len(c) == 4:
+                dihedrals.append([None, idx])
+        ase_constraints = []
+        if fix_atoms:
+            ase_constraints.append(FixAtoms(indices=fix_atoms))
+        if bonds or angles or dihedrals:
+            ase_constraints.append(FixInternals(
+                bonds=bonds if bonds else None,
+                angles_deg=angles if angles else None,
+                dihedrals_deg=dihedrals if dihedrals else None,
+            ))
+        atoms.set_constraint(ase_constraints)
 
     def single_point(self) -> tuple[Any, str]:
         calc = self._get_ml_calculator()
@@ -34,8 +65,6 @@ class BaseMlCalc(BaseCalc):
             freqs = ir.get_frequencies()
             ir_intensities = np.zeros(len(freqs))
 
-        # ASE returns complex when Hessian has negative eigenvalues.
-        # Convert: imaginary freq → negative real, real freq → positive real.
         freqs = np.where(
             np.abs(freqs.imag) > 1e-8,
             -freqs.imag,
@@ -83,6 +112,7 @@ class BaseMlCalc(BaseCalc):
     def optimisation(self) -> tuple[Any, str]:
         calc = self._get_ml_calculator()
         atoms = self.conf.get_ase_atoms(calc)
+        self._apply_ase_constraints(atoms)
         start = time.perf_counter()
         Opt = Sella if self.protocol.ts else LBFGS
         with Opt(atoms) as opt:
@@ -90,5 +120,6 @@ class BaseMlCalc(BaseCalc):
 
         self.conf.last_geometry = atoms.get_positions().copy()
         if self.protocol.freq:
+            atoms.set_constraint(None)
             self._post_optimization_vibrations(atoms, start)
         return calc, self.label
