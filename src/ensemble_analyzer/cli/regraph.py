@@ -36,7 +36,7 @@ def main() -> None:
     start = datetime.now()
 
     if args.read_boltz:
-        assert str(args.read_boltz) in [p.number for p in protocol], \
+        assert args.read_boltz in [p.number for p in protocol], \
             f"{args.read_boltz} is not a specified step in the protocol file"
         for conf in ensemble:
             if not conf.active:
@@ -50,8 +50,9 @@ def main() -> None:
                 temperature=config_mgr.temperature,
             )
 
+    protocol_map = {p.number: p for p in protocol}
     for i in args.idx:
-        prot_obj = protocol[i]
+        prot_obj = protocol_map[i]
         main_spectra(
             ensemble, prot_obj, log=log, invert=config_mgr.invert,
             shift=config_mgr.shift, fwhm=config_mgr.fwhm,
