@@ -144,11 +144,14 @@ State  Energy     Wavelength     R         MX        MY        MZ
         freq = freq[freq!=0]
 
         # IR
-        ir_text = self.get_filtered_text(start=self.regex['s_IR'], end='\n\n').splitlines()
-        ir = np.array(self.parse_table(ir_text, [self.regex['idx_en_ir'], self.regex['idx_imp_ir']]), dtype=np.float64)
+        if self.regex['s_IR'] not in self.fl:
+            ir = np.zeros(shape=(1,2))
+        else:
+            ir_text = self.get_filtered_text(start=self.regex['s_IR'], end='\n\n').splitlines()
+            ir = np.array(self.parse_table(ir_text, [self.regex['idx_en_ir'], self.regex['idx_imp_ir']]), dtype=np.float64)
 
         # VCD
-        if self.version == '5' or self.regex['s_VCD'] not in self.fl:
+        if self.regex['s_VCD'] is None or self.regex['s_VCD'] not in self.fl:
             vcd = np.zeros(shape=(1,2))
         else: 
             vcd_text = self.get_filtered_text(start=self.regex['s_VCD'], end='\n\n').splitlines()
