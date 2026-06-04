@@ -4,7 +4,7 @@ from ensemble_analyzer._logger.logger import Logger
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.protocol.protocol import Protocol
 
-from ensemble_analyzer.constants import regex_parsing
+from ensemble_analyzer.constants import EV_TO_EH, regex_parsing
 from ensemble_analyzer._parser_parameter import get_conf_parameters
 from ensemble_analyzer.calculators.base import ML_CALCULATORS
 from ensemble_analyzer.conformer.energy_data import EnergyRecord, compute_rotational_constants, copy_thermochemical_corrections
@@ -122,7 +122,7 @@ class CalculationExecutor:
             try:
                 if is_ml:
                     if protocol.number not in conf.energies:
-                        energy = atoms.get_potential_energy()
+                        energy = atoms.get_potential_energy() * EV_TO_EH
                 else:
                     try:
                         calc.write_inputfiles(atoms, ['energy'])

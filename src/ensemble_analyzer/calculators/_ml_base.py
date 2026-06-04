@@ -4,6 +4,7 @@ import numpy as np
 
 from .base import BaseCalc
 
+from ensemble_analyzer.constants import EV_TO_EH
 from ensemble_analyzer.conformer.energy_data import EnergyRecord, compute_rotational_constants, compute_thermochemistry
 from ensemble_analyzer.conformer.spectral_data import SpectralRecord
 from ase.optimize import LBFGS
@@ -90,7 +91,7 @@ class BaseMlCalc(BaseCalc):
         raw_freqs, ir_intensities, normal_modes = self._run_vibrations(atoms)
         freq_fact = self.protocol.freq_fact or 1.0
         scaled_freqs = raw_freqs * freq_fact
-        energy = atoms.get_potential_energy()
+        energy = atoms.get_potential_energy() * EV_TO_EH
         elapsed = time.perf_counter() - start
         self.conf.energies.add(
             self.protocol.number,
