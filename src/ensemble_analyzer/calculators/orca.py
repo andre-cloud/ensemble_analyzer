@@ -111,14 +111,11 @@ class OrcaCalc(BaseCalc):
         )
 
         if self.protocol.read_orbitals:
-            calculator.parameters["orcasimpleinput"] += " moread"
+            calculator.parameters["orcasimpleinput"] += "\n! moread\n"
             gbw_path = self._build_path(
                 self.conf.folder, f"protocol_{self.protocol.read_orbitals}", "orca.gbw"
             )
             calculator.parameters["orcablocks"] += f'\n%moinp "{gbw_path}"\n'
-
-        if "freq" in self.protocol.add_input.lower():
-            calculator.parameters["orcablocks"] += "\n%freq vcd true end\n"
 
         if post:
             original = calculator.write_inputfiles
@@ -134,7 +131,7 @@ class OrcaCalc(BaseCalc):
         return calculator, label
 
     def _add_opt_keywords(self, calc: ORCA) -> None:
-        calc.parameters["orcasimpleinput"] += " OptTS" if self.protocol.ts else " opt"
+        calc.parameters["orcasimpleinput"] += "\n! OptTS \n" if self.protocol.ts else "\n! opt\n"
 
         if self.protocol.ts:
             add_input = self.protocol.add_input or ""
@@ -158,11 +155,11 @@ class OrcaCalc(BaseCalc):
             calc.parameters["orcasimpleinput"] += text
 
         if self.protocol.freq:
-            calc.parameters["orcasimpleinput"] += " freq"
+            calc.parameters["orcasimpleinput"] += "\n! freq\n"
             self._maybe_add_vcd(calc)
 
     def _add_freq_keywords(self, calc: ORCA) -> None:
-        calc.parameters["orcasimpleinput"] += " freq"
+        calc.parameters["orcasimpleinput"] += "\n! freq\n"
         self._maybe_add_vcd(calc)
 
     def _add_tddft_keywords(self, calc: ORCA) -> None:
