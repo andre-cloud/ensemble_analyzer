@@ -69,7 +69,7 @@ def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, inv
             shift_user=shift.get(VIBRO_OR_ELECTRO[graph_type], None),
             fwhm_user=fwhm.get(VIBRO_OR_ELECTRO[graph_type], None),
             read_population=read_pop,
-            definition=definition
+            definition=int(definition)
         )
 
         graph.compute_spectrum()

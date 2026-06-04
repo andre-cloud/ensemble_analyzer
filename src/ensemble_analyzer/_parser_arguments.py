@@ -170,6 +170,7 @@ def parser_arguments()-> argparse.Namespace:
 
     graph_group.add_argument(
         "--definition",
+        type=int,
         help="Define the Number of samples to generate the linear space of the X axis: 10^definition. USE WITH CAUTION. Default %(default)s",
         default=4,
     )
