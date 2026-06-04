@@ -134,6 +134,7 @@ def _normalize_protocols(protocol: Any) -> list:
 def _normalize_ensemble(ensemble: Any, log) -> list:
     """Accept str | Conformer | list[Conformer] → list[Conformer]."""
     from ensemble_analyzer.conformer.conformer import Conformer
+    from ensemble_analyzer.ensemble_io import read_ensemble
 
     if isinstance(ensemble, Conformer):
         return [ensemble]
