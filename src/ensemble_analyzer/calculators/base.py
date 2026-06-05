@@ -1,8 +1,84 @@
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 
-from typing import Callable, Dict, Tuple, Any, Optional
+from typing import Callable, Tuple, Any, Optional
+import importlib
 import numpy as np
 import os
+import pkgutil
+
+
+class LazyCalculatorRegistry:
+    """Dict-like registry that imports calculator modules on demand.
+
+    Convention: calculator name ``"foo"`` → module ``calculators/foo.py``.
+    The module's ``@register_calculator`` decorator populates the registry at
+    import time; importing is deferred until the calculator is actually needed.
+    """
+
+    def __init__(self) -> None:
+        self._loaded: dict[str, type] = {}
+        self._all_names: set[str] | None = None
+
+    # -- discovery ---------------------------------------------------------------
+
+    def _discover_all(self) -> None:
+        if self._all_names is not None:
+            return
+        pkg = importlib.import_module("ensemble_analyzer.calculators")
+        self._all_names = {
+            m.name
+            for m in pkgutil.iter_modules(pkg.__path__)
+            if m.name not in ("base", "_ml_base", "__init__")
+        }
+
+    def _load(self, name: str) -> None:
+        name = name.lower()
+        if name not in self._loaded:
+            importlib.import_module(f"ensemble_analyzer.calculators.{name}")
+
+    # -- Mapping interface -------------------------------------------------------
+
+    def __getitem__(self, name: str) -> type:
+        name = name.lower()
+        self._load(name)
+        if name not in self._loaded:
+            raise KeyError(
+                f"Calculator {name!r} not found or not registered"
+            )
+        return self._loaded[name]
+
+    def __setitem__(self, name: str, cls: type) -> None:
+        self._loaded[name.lower()] = cls
+
+    def __contains__(self, name: str) -> bool:
+        name = name.lower()
+        if name in self._loaded:
+            return True
+        try:
+            self._load(name)
+            return name in self._loaded
+        except ImportError:
+            return False
+
+    def __iter__(self):
+        self._discover_all()
+        return iter(self._all_names)
+
+    def __len__(self):
+        self._discover_all()
+        return len(self._all_names)
+
+    def keys(self):
+        self._discover_all()
+        return iter(self._all_names)
+
+    def get(self, name: str, default: Any = None) -> Any:
+        try:
+            return self[name]
+        except KeyError:
+            return default
 
 
 def register_calculator(name: str) -> Callable:
@@ -13,7 +89,7 @@ def register_calculator(name: str) -> Callable:
     return decorator
 
 
-ML_CALCULATORS = {"tblite", "aimnet", "uma"}
+ML_CALCULATORS: set[str] = {"tblite", "aimnet", "uma"}
 
 
 class BaseCalc(ABC):
@@ -86,4 +162,4 @@ class BaseCalc(ABC):
         return os.path.abspath(os.path.join(*parts)).replace('\\', '/')
 
 
-CALCULATOR_REGISTRY : Dict[str, BaseCalc] = {}
+CALCULATOR_REGISTRY = LazyCalculatorRegistry()
