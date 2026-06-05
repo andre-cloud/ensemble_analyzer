@@ -65,8 +65,12 @@ aimnet = [
     "torch",
     "aimnet[ase] @ git+https://github.com/isayevlab/aimnetcentral.git",
 ]
+uma = [
+    "torch",
+    "fairchem-core",
+]
 ml = [
-    "ensemble-analyzer[tblite,aimnet]",
+    "ensemble-analyzer[tblite,aimnet,uma]",
 ]
 dev = [
     "pytest>=7.0",

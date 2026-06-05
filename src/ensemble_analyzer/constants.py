@@ -41,6 +41,7 @@ regex_parsing = {
     "nwchem": {"ext": "nwo"},
     "tblite": {"ext": None},
     "aimnet": {"ext": None},
+    "uma": {"ext": None},
 }
 
 # --- Lazy — initialised on first access to scipy/numpy-dependent constants ---
