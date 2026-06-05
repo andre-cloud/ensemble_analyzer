@@ -25,7 +25,7 @@ def main() -> None:
     from ensemble_analyzer._title import title
     fname_out = 'regraph.log'
     log = create_logger(fname_out, logger_name="enan_regraphy", debug=True,
-                        disable_color=False if not args.disable_color else True)
+                        disable_color=args.disable_color)
     log.info(title)
     log._separator("Regraphing computed spectrum")
 

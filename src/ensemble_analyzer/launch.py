@@ -62,7 +62,7 @@ def main(
         restart = args.restart
         base = args.output.rsplit(".", 1)[0]
         output = f"{base}_restart.out" if restart else args.output
-        disable_color = not args.disable_color
+        disable_color = args.disable_color
 
     elif restart:
         base = output.rsplit(".", 1)[0]
