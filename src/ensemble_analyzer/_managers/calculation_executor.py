@@ -156,7 +156,11 @@ class CalculationExecutor:
                 EnergyRecord(E=energy, time=elapsed, calculator=protocol.calculator),
             )
             compute_rotational_constants(conf, protocol.number)
-            m_vec = np.asarray(dipole) if (dipole := atoms.get_dipole_moment()) is not None else np.array([1, 1, 1])
+            try:
+                dipole = atoms.get_dipole_moment()
+            except Exception:
+                dipole = None
+            m_vec = np.asarray(dipole) if dipole is not None else np.array([1, 1, 1])
             conf.energies.set(protocol.number, "m_vec", m_vec)
             conf.energies.set(protocol.number, "m",
                               float(np.linalg.norm(m_vec)))
