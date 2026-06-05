@@ -90,7 +90,6 @@ class TestUMAMlCalc:
                     mock_load.assert_called_once_with(
                         path=model_file,
                         device="cpu",
-                        inference_settings="turbo",
                     )
                     assert result is not None
 
@@ -127,5 +126,4 @@ class TestUMAMlCalc:
                     mock_load.assert_called_once_with(
                         path=custom_model,
                         device="cpu",
-                        inference_settings="turbo",
                     )

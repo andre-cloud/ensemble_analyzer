@@ -40,7 +40,6 @@ class UMAMlCalc(BaseMlCalc):
         predictor = load_predict_unit(
             path=model_path,
             device=device,
-            inference_settings="turbo",
         )
 
         class _UMAWrappedCalc(FAIRChemCalculator):
