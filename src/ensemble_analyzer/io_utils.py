@@ -1,8 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
-import shutil, json
-from typing import Any, TYPE_CHECKING
+import json
+from dataclasses import asdict, is_dataclass
+from typing import TYPE_CHECKING, Any
+
 import numpy as np
 
 if TYPE_CHECKING:
@@ -122,6 +123,8 @@ def _serialise(obj: Any) -> Any:
         return {k: _serialise(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
         return [_serialise(item) for item in obj]
+    if is_dataclass(obj) and not isinstance(obj, type):
+        return _serialise(asdict(obj))
     return obj
 
 
