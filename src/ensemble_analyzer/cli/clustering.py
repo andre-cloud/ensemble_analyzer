@@ -315,16 +315,10 @@ def main() -> None:
     print(f"{'=' * 60}\n")
 
     logger.info(f"Loading ensemble from {args.file}...")
+
     try:
-        ensemble = read_ensemble(args.file, raw=True)
+        ensemble = read_ensemble(args.file, logger, raw=True)
         logger.info(f"✓ Loaded {len(ensemble)} conformers")
-    except TypeError:
-        try:
-            ensemble = read_ensemble(args.file, logger, raw=True)
-            logger.info(f"✓ Loaded {len(ensemble)} conformers")
-        except Exception as e:
-            logger.error(f"Failed to load ensemble: {e}")
-            exit(1)
     except Exception as e:
         logger.error(f"Failed to load ensemble: {e}")
         exit(1)

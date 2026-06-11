@@ -3,11 +3,15 @@ Tests for IO Utilities.
 Verifies file movement, directory creation, json encoding and file tailing.
 """
 
-import pytest
-import numpy as np
+import io
 import json
+
+import numpy as np
+import pytest
 from unittest.mock import patch, MagicMock, mock_open
-from ensemble_analyzer.io_utils import mkdir, move_files, tail, SerialiseEncoder
+
+from ensemble_analyzer.io_utils import mkdir, move_files, tail, write_json, SerialiseEncoder
+from ensemble_analyzer.protocol.solvent import Solvent
 
 class TestIOUtils:
 
@@ -78,3 +82,17 @@ class TestIOUtils:
         data_obj = {"obj": DummyObj()}
         json_str_obj = json.dumps(data_obj, cls=SerialiseEncoder)
         assert '"val": 42' in json_str_obj
+
+    def test_write_json_dataclass(self):
+        """write_json serialises dataclass objects like Solvent."""
+        data = {
+            "0": {
+                "functional": "r2scan-3c",
+                "solvent": Solvent("CHCl3"),
+            }
+        }
+        buf = io.StringIO()
+        write_json(data, buf)
+        result = json.loads(buf.getvalue())
+        assert result["0"]["solvent"] == {"solvent": "CHCl3", "smd": False}
+        assert result["0"]["functional"] == "r2scan-3c"
