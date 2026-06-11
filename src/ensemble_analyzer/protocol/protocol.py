@@ -56,6 +56,7 @@ class Protocol:
     freq                        : Optional[bool]                = False
     freq_fact                   : Optional[float]               = 1
     fmax                        : Optional[float]               = 0.01
+    maxstep                     : Optional[float]               = 0.2
     constrains                  : Optional[list]                = field(default_factory=list)
     read_orbitals               : Optional[str]                 = ""
     add_input                   : Optional[str]                 = ""
