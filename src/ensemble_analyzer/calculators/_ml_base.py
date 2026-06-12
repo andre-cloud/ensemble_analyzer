@@ -78,6 +78,8 @@ class BaseMlCalc(BaseCalc):
             mode_cart = ir.get_mode(i)
             normal_modes[i] = mode_cart * np.sqrt(masses[:, None])
 
+        ir.clean()
+
         return freqs, ir_intensities, normal_modes
 
     def _compute_thermochemistry(self, energy, scaled_freqs):
