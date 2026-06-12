@@ -120,9 +120,13 @@ class BaseMlCalc(BaseCalc):
         atoms = self.conf.get_ase_atoms(calc)
         self._apply_ase_constraints(atoms)
         start = time.perf_counter()
-        Opt = Sella if self.protocol.ts else LBFGS
-        with Opt(atoms, maxstep=self.protocol.maxstep) as opt:
-            opt.run(fmax=self.protocol.fmax)
+
+        if self.protocol.ts:
+            with Sella(atoms) as opt:
+                opt.run(fmax=self.protocol.fmax)
+        else:
+            with LBFGS(atoms, maxstep=self.protocol.maxstep) as opt:
+                opt.run(fmax=self.protocol.fmax)
 
         self.conf.last_geometry = atoms.get_positions().copy()
         if self.protocol.freq:
