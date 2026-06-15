@@ -39,9 +39,10 @@ class EnergyRecord:
         data = asdict(self)
 
         if data['Freq'] is not None:
+            data['Freq'] = np.array(data['Freq'])
             neg_mask = data['Freq'] < 0
-            data['Freq'] = data['Freq'].tolist()
             data['NormalModes'] = np.array(data['NormalModes'])[neg_mask].tolist()
+            data['Freq'] = data['Freq'].tolist()
 
         for key in ['B_vec', 'm_vec']:
             if data[key] is not None:
