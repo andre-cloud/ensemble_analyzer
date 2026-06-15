@@ -41,7 +41,11 @@ class EnergyRecord:
         if data['Freq'] is not None:
             data['Freq'] = np.array(data['Freq'])
             neg_mask = data['Freq'] < 0
-            data['NormalModes'] = np.array(data['NormalModes'])[neg_mask].tolist()
+            if data['NormalModes'] is not None:
+                normal_modes = np.array(data['NormalModes'])
+                if len(normal_modes) == len(neg_mask):
+                    normal_modes = normal_modes[neg_mask]
+                data['NormalModes'] = normal_modes.tolist()
             data['Freq'] = data['Freq'].tolist()
 
         for key in ['B_vec', 'm_vec']:

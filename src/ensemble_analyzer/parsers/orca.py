@@ -141,7 +141,8 @@ State  Energy     Wavelength     R         MX        MY        MZ
         pattern = r'(?:\d+:)\s*(-?\d+.\d*)'
         # freq
         freq = np.array(re.findall(pattern, fl, flags=re.MULTILINE), dtype=float)
-        freq = freq[freq!=0]
+        self._freq_mask = freq != 0
+        freq = freq[self._freq_mask]
 
         # IR
         if self.regex['s_IR'] not in self.fl:
@@ -206,6 +207,8 @@ State  Energy     Wavelength     R         MX        MY        MZ
             for mode_idx in range(n_modes):
                 vec = matrix[:n_total, mode_idx]
                 all_modes[mode_idx] = vec.reshape(n_atoms, 3)
+            if hasattr(self, '_freq_mask') and self._freq_mask is not None and len(self._freq_mask) == len(all_modes):
+                all_modes = all_modes[self._freq_mask]
             return all_modes
         except Exception:
             return np.empty((0, n_atoms, 3))

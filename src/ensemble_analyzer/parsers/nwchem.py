@@ -57,6 +57,7 @@ class NWChemParser(BaseParser):
             freq = np.array([float(m[1]) for m in matches])
             ir_arr = np.array([float(m[2]) for m in matches])
             mask = np.abs(freq) > 1.0
+            self._freq_mask = mask.copy()
             freq = freq[mask]
             ir_arr = ir_arr[mask]
             ir = np.column_stack((freq, ir_arr)) if len(freq) > 0 else np.zeros(shape=(1, 2))
@@ -118,6 +119,8 @@ class NWChemParser(BaseParser):
             for mode_idx in range(n_modes):
                 vec = matrix[:n_total, mode_idx]
                 all_modes[mode_idx] = vec.reshape(n_atoms, 3)
+            if hasattr(self, '_freq_mask') and self._freq_mask is not None and len(self._freq_mask) == len(all_modes):
+                all_modes = all_modes[self._freq_mask]
             return all_modes
         except Exception:
             return np.empty((0, n_atoms, 3))
