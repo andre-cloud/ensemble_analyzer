@@ -37,7 +37,13 @@ class EnergyRecord:
         """Convert record to dictionary, handling numpy arrays."""
 
         data = asdict(self)
-        for key in ['B_vec', 'm_vec', 'Freq', 'NormalModes']:
+
+        if data['Freq'] is not None:
+            neg_mask = data['Freq'] < 0
+            data['Freq'] = data['Freq'].tolist()
+            data['NormalModes'] = data['NormalModes'][neg_mask].tolist()
+
+        for key in ['B_vec', 'm_vec']:
             if data[key] is not None:
                 data[key] = data[key].tolist()
         return data

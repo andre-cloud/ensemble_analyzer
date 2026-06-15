@@ -77,7 +77,6 @@ class BaseMlCalc(BaseCalc):
         for i in range(len(freqs)):
             mode_cart = ir.get_mode(i)
             normal_modes[i] = mode_cart * np.sqrt(masses[:, None])
-
         ir.clean()
 
         return freqs, ir_intensities, normal_modes

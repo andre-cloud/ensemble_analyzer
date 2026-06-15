@@ -15,16 +15,20 @@ class TestEnergyRecord:
         rec = EnergyRecord(
             E=-100.0, G=-99.5, Pop=25.0,
             B_vec=np.array([1.0, 2.0, 3.0]),
-            Freq=np.array([100.0, 200.0])
+            Freq=np.array([100.0, 200.0]),
+            NormalModes=np.ones((2, 5, 3)),
         )
         d = rec.as_dict()
         assert d["E"] == -100.0
         assert d["Pop"] == 25.0
         assert d["B_vec"] == [1.0, 2.0, 3.0]
+        assert d["Freq"] == [100.0, 200.0]
+        assert d["NormalModes"] == []  # no negative freqs → no modes saved
         restored = EnergyRecord.from_dict(d)
         assert restored.E == -100.0
         assert np.allclose(restored.B_vec, [1.0, 2.0, 3.0])
         assert np.allclose(restored.Freq, [100.0, 200.0])
+        assert restored.NormalModes.shape == (0,)
 
     def test_from_dict_with_none_arrays(self):
         d = {"E": -50.0, "G": np.nan, "H": np.nan, "S": np.nan, "G_E": np.nan,
@@ -40,7 +44,9 @@ class TestEnergyStore:
     @pytest.fixture
     def store(self):
         s = EnergyStore()
-        s.add(1, EnergyRecord(E=-100.0, G=-99.0, Pop=50.0, B=1.5, time=5.0, Freq=np.array([100.0, 200.0])))
+        s.add(1, EnergyRecord(E=-100.0, G=-99.0, Pop=50.0, B=1.5, time=5.0,
+                              Freq=np.array([100.0, 200.0]),
+                              NormalModes=np.ones((2, 5, 3))))
         s.add(2, EnergyRecord(E=-200.0, G=-198.5, Pop=50.0, B=1.5, time=5.0))
         return s
 
