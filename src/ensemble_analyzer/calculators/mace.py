@@ -27,7 +27,7 @@ class MACEMlCalc(BaseMlCalc):
     def _get_ml_calculator(self, **kwargs: Any) -> Any:
         if MACECalculator is None:
             raise ImportError(
-                "mace module missing. Install via: pip install mace"
+                "mace module missing. Install via: pip install mace-torch"
             )
 
         method = kwargs.pop("method", self.protocol.functional or "MACE_model.pt")

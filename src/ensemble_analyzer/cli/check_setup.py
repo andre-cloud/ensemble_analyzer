@@ -6,11 +6,6 @@ import importlib.util
 from pathlib import Path
 
 # Colors for output
-try:
-    import aimnet
-except ImportError:
-    aimnet = None
-
 GREEN = '\033[92m'
 RED = '\033[91m'
 YELLOW = '\033[93m'
@@ -37,7 +32,7 @@ def check_python_dependencies() -> bool:
     """
 
     print(f"\n{'-'*20} 1. Checking Python Dependencies {'-'*20}")
-    required = ['numpy', 'scipy', 'matplotlib', 'ase', 'numba', 'sklearn']
+    required = ['numpy', 'scipy', 'matplotlib', 'ase', 'numba', 'sklearn', 'tabulate', 'InquirerPy', 'sella']
     all_pass = True
     
     for lib in required:
@@ -96,10 +91,10 @@ def check_gaussian() -> None:
     """
 
     print(f"\n{'-'*20} 3. Checking Gaussian Configuration {'-'*20}")
-    
+
     g16_path = shutil.which("g16")
     g09_path = shutil.which("g09")
-    
+
     if g16_path:
         log_pass(f"Gaussian 16 found at: {g16_path}")
     elif g09_path:
@@ -107,12 +102,26 @@ def check_gaussian() -> None:
     else:
         log_warn("Gaussian executable (g16/g09) NOT found. (Optional if using ORCA)")
 
-def check_ml_potentials() -> None:
+def check_nwchem() -> None:
     """
-    Check optional ML potential dependencies (TBLite, AIMNet).
+    Check for NWChem availability (Optional).
+    Looks for 'nwchem' or 'nwchem_openmpi' in PATH.
     """
 
-    print(f"\n{'-'*20} 4. Checking ML Potentials {'-'*20}")
+    print(f"\n{'-'*20} 4. Checking NWChem Configuration {'-'*20}")
+
+    nwchem_path = shutil.which("nwchem") or shutil.which("nwchem_openmpi")
+    if nwchem_path:
+        log_pass(f"NWChem executable found at: {nwchem_path}")
+    else:
+        log_warn("NWChem executable NOT found. (Optional if using ORCA)")
+
+def check_ml_potentials() -> None:
+    """
+    Check optional ML potential dependencies (TBLite, AIMNet, UMA, MACE).
+    """
+
+    print(f"\n{'-'*20} 5. Checking ML Potentials {'-'*20}")
 
     # TBLite
     if importlib.util.find_spec("tblite") is not None:
@@ -120,11 +129,29 @@ def check_ml_potentials() -> None:
     else:
         log_warn("TBLite NOT installed. Install: pip install \"ensemble-analyzer[tblite]\"")
 
-    # AIMNet
-    if aimnet is not None:
-        log_pass("aimnet found.")
+    # AIMNet (requires torch + aimnet)
+    aimnet_ok = importlib.util.find_spec("aimnet") is not None
+    torch_ok = importlib.util.find_spec("torch") is not None
+    if aimnet_ok:
+        log_pass("aimnet library found.")
     else:
         log_warn("aimnet NOT installed. Install: pip install \"ensemble-analyzer[aimnet]\"")
+    if torch_ok:
+        log_pass("PyTorch found.")
+    else:
+        log_warn("PyTorch NOT installed. Required by aimnet/uma/mace.")
+
+    # UMA (requires torch + fairchem-core)
+    if importlib.util.find_spec("fairchem") is not None:
+        log_pass("UMA (fairchem-core) library found.")
+    else:
+        log_warn("UMA (fairchem-core) NOT installed. Install: pip install \"ensemble-analyzer[uma]\"")
+
+    # MACE (requires torch + mace-torch)
+    if importlib.util.find_spec("mace") is not None:
+        log_pass("MACE library found.")
+    else:
+        log_warn("MACE NOT installed. Install: pip install \"ensemble-analyzer[mace]\"")
 
 def check_models_dir() -> None:
     """Check ENAN_MODELS_DIR environment variable."""
@@ -147,6 +174,7 @@ def main() -> None:
     deps_ok = check_python_dependencies()
     orca_ok = check_orca()
     check_gaussian()
+    check_nwchem()
     check_ml_potentials()
     check_models_dir()
     
