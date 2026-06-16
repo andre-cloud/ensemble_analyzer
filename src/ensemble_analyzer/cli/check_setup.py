@@ -116,18 +116,24 @@ def check_nwchem() -> None:
     else:
         log_warn("NWChem executable NOT found. (Optional if using ORCA)")
 
-def check_ml_potentials() -> None:
+def check_tblite() -> None:
     """
-    Check optional ML potential dependencies (TBLite, AIMNet, UMA, MACE).
+    Check for TBLite (semi-empirical tight-binding) availability.
     """
 
-    print(f"\n{'-'*20} 5. Checking ML Potentials {'-'*20}")
+    print(f"\n{'-'*20} 5. Checking TBLite (Tight Binding) {'-'*20}")
 
-    # TBLite
     if importlib.util.find_spec("tblite") is not None:
         log_pass("TBLite library found.")
     else:
         log_warn("TBLite NOT installed. Install: pip install \"ensemble-analyzer[tblite]\"")
+
+def check_mlip() -> None:
+    """
+    Check optional MLIP dependencies (AIMNet, UMA, MACE).
+    """
+
+    print(f"\n{'-'*20} 6. Checking MLIPs {'-'*20}")
 
     # AIMNet (requires torch + aimnet)
     aimnet_ok = importlib.util.find_spec("aimnet") is not None
@@ -175,7 +181,8 @@ def main() -> None:
     orca_ok = check_orca()
     check_gaussian()
     check_nwchem()
-    check_ml_potentials()
+    check_tblite()
+    check_mlip()
     check_models_dir()
     
     print(f"\n{'-'*50}")

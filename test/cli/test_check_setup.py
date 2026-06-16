@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from ensemble_analyzer.cli.check_setup import (
     check_python_dependencies, check_orca, check_gaussian,
-    check_nwchem, check_ml_potentials, check_models_dir, main
+    check_nwchem, check_tblite, check_mlip, check_models_dir, main
 )
 
 
@@ -66,17 +66,19 @@ class TestCheckSetup:
         check_nwchem()
 
     @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
-    def test_ml_all_missing(self, mock_find_spec):
-        mock_find_spec.return_value = None
-        check_ml_potentials()
+    def test_tblite_found(self, mock_find_spec):
+        mock_find_spec.return_value = MagicMock()
+        check_tblite()
 
     @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
-    def test_ml_tblite_only(self, mock_find_spec):
-        def side_effect(name):
-            found = {"tblite": MagicMock()}
-            return found.get(name)
-        mock_find_spec.side_effect = side_effect
-        check_ml_potentials()
+    def test_tblite_not_found(self, mock_find_spec):
+        mock_find_spec.return_value = None
+        check_tblite()
+
+    @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
+    def test_ml_all_missing(self, mock_find_spec):
+        mock_find_spec.return_value = None
+        check_mlip()
 
     @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
     def test_ml_aimnet_torch(self, mock_find_spec):
@@ -84,7 +86,7 @@ class TestCheckSetup:
             found = {"aimnet": MagicMock(), "torch": MagicMock()}
             return found.get(name)
         mock_find_spec.side_effect = side_effect
-        check_ml_potentials()
+        check_mlip()
 
     @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
     def test_ml_torch_without_aimnet(self, mock_find_spec):
@@ -92,7 +94,7 @@ class TestCheckSetup:
             found = {"torch": MagicMock()}
             return found.get(name)
         mock_find_spec.side_effect = side_effect
-        check_ml_potentials()
+        check_mlip()
 
     @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
     def test_ml_aimnet_without_torch(self, mock_find_spec):
@@ -100,7 +102,7 @@ class TestCheckSetup:
             found = {"aimnet": MagicMock()}
             return found.get(name)
         mock_find_spec.side_effect = side_effect
-        check_ml_potentials()
+        check_mlip()
 
     @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
     def test_ml_uma_found(self, mock_find_spec):
@@ -108,7 +110,7 @@ class TestCheckSetup:
             found = {"fairchem": MagicMock()}
             return found.get(name)
         mock_find_spec.side_effect = side_effect
-        check_ml_potentials()
+        check_mlip()
 
     @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
     def test_ml_mace_found(self, mock_find_spec):
@@ -116,12 +118,12 @@ class TestCheckSetup:
             found = {"mace": MagicMock()}
             return found.get(name)
         mock_find_spec.side_effect = side_effect
-        check_ml_potentials()
+        check_mlip()
 
     @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
     def test_ml_all_found(self, mock_find_spec):
         mock_find_spec.return_value = MagicMock()
-        check_ml_potentials()
+        check_mlip()
 
     def test_models_dir_set_and_exists(self):
         with patch("ensemble_analyzer.cli.check_setup.os.environ.get", return_value="/tmp/models"):
@@ -141,9 +143,10 @@ class TestCheckSetup:
     @patch("ensemble_analyzer.cli.check_setup.check_orca")
     @patch("ensemble_analyzer.cli.check_setup.check_gaussian")
     @patch("ensemble_analyzer.cli.check_setup.check_nwchem")
-    @patch("ensemble_analyzer.cli.check_setup.check_ml_potentials")
+    @patch("ensemble_analyzer.cli.check_setup.check_tblite")
+    @patch("ensemble_analyzer.cli.check_setup.check_mlip")
     @patch("ensemble_analyzer.cli.check_setup.check_models_dir")
-    def test_main_success(self, mock_models, mock_ml, mock_nwchem, mock_gauss, mock_orca, mock_deps):
+    def test_main_success(self, mock_models, mock_ml, mock_tblite, mock_nwchem, mock_gauss, mock_orca, mock_deps):
         mock_deps.return_value = True
         mock_orca.return_value = True
         with pytest.raises(SystemExit) as exc:
@@ -154,9 +157,10 @@ class TestCheckSetup:
     @patch("ensemble_analyzer.cli.check_setup.check_orca")
     @patch("ensemble_analyzer.cli.check_setup.check_gaussian")
     @patch("ensemble_analyzer.cli.check_setup.check_nwchem")
-    @patch("ensemble_analyzer.cli.check_setup.check_ml_potentials")
+    @patch("ensemble_analyzer.cli.check_setup.check_tblite")
+    @patch("ensemble_analyzer.cli.check_setup.check_mlip")
     @patch("ensemble_analyzer.cli.check_setup.check_models_dir")
-    def test_main_failure(self, mock_models, mock_ml, mock_nwchem, mock_gauss, mock_orca, mock_deps):
+    def test_main_failure(self, mock_models, mock_ml, mock_tblite, mock_nwchem, mock_gauss, mock_orca, mock_deps):
         mock_deps.return_value = False
         mock_orca.return_value = False
         with pytest.raises(SystemExit) as exc:
