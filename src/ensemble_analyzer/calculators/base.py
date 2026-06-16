@@ -89,7 +89,7 @@ def register_calculator(name: str) -> Callable:
     return decorator
 
 
-ML_CALCULATORS: set[str] = {"tblite", "aimnet", "uma"}
+ML_CALCULATORS: set[str] = {"tblite", "aimnet", "uma", "mace"}
 
 
 class BaseCalc(ABC):
