@@ -36,7 +36,7 @@ class TestCheckpointManager:
                     mock_write_json.assert_called()
                     args, _ = mock_write_json.call_args
                     data_arg = args[0]
-                    assert 1 in data_arg # Key should be conformer number
+                    assert '1' in data_arg # Key should be conformer number
                     
                     # Verify move
                     mock_move.assert_called_with("temp_checkpoint.tmp", "checkpoint.json")

@@ -42,7 +42,7 @@ class CheckpointManager:
         
         data = {}
         for conf in ensemble:
-            data[conf.number] = {
+            data[str(conf.number)] = {
                 "number": conf.number,
                 "last_geometry": conf.last_geometry,
                 "atoms": list(conf.atoms),
