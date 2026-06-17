@@ -122,7 +122,7 @@ def _serialise(obj: Any) -> Any:
     if isinstance(obj, np.bool_):
         return bool(obj)
     if isinstance(obj, dict):
-        return {k: _serialise(v) for k, v in obj.items()}
+        return {str(k) if isinstance(k, (int, np.integer)) else k: _serialise(v) for k, v in obj.items()}
     if isinstance(obj, (list, tuple)):
         return [_serialise(item) for item in obj]
     if is_dataclass(obj) and not isinstance(obj, type):

@@ -70,12 +70,12 @@ class EnergyStore:
     Dictionary-like store for EnergyRecords indexed by protocol number.
     """
     
-    data: Dict[int, EnergyRecord] = field(default_factory=dict)
+    data: Dict[str, EnergyRecord] = field(default_factory=dict)
 
-    def add(self, protocol_number: int, record: EnergyRecord) -> None:
+    def add(self, protocol_number: str, record: EnergyRecord) -> None:
         """Add a record for a specific protocol step."""
 
-        self.data[int(protocol_number)] = record
+        self.data[str(protocol_number)] = record
 
     def last(self) -> EnergyRecord:
         """Retrieve the record from the most recent protocol step."""
@@ -85,29 +85,29 @@ class EnergyStore:
         last_key = list(self.data.keys())[-1]
         return self.data[last_key]
 
-    def __getitem__(self, protocol_number: int) -> 'EnergyRecord':
+    def __getitem__(self, protocol_number: str) -> 'EnergyRecord':
         """Retrieve the record for a given protocol number, or an empty record."""
         if self.__contains__(protocol_number=protocol_number):
-            return self.data.get(int(protocol_number))
+            return self.data.get(str(protocol_number))
         
         return EnergyRecord()
 
-    def __contains__(self, protocol_number: int) -> bool:
+    def __contains__(self, protocol_number: str) -> bool:
         """Check if a record exists for the given protocol number."""
-        return int(protocol_number) in self.data
+        return str(protocol_number) in self.data
 
     def as_dict(self) -> dict:
         """Serialize to a dictionary for checkpoint storage."""
         return {k: v.as_dict() for k, v in self.data.items()}
     
-    def get_energy(self, protocol_number: int = None) -> float:
+    def get_energy(self, protocol_number: str = None) -> float:
         """Return Gibbs free energy from a protocol, else electronic energy."""
         data = self[protocol_number] if protocol_number is not None else self.last()
         if not np.isnan(data.G):
             return data.G
         return data.E
     
-    def set(self, protocol_number: int, property: str, value: Union[float, np.ndarray]) -> None:
+    def set(self, protocol_number: str, property: str, value: Union[float, np.ndarray]) -> None:
         """Set a specific property on an existing EnergyRecord.
 
         Args:
@@ -119,7 +119,7 @@ class EnergyStore:
             KeyError: If no record exists for the given protocol.
             AttributeError: If the property does not exist on EnergyRecord.
         """
-        protocol_number = int(protocol_number)
+        protocol_number = str(protocol_number)
         if not self.__contains__(protocol_number):
             raise KeyError(f"Protocol {protocol_number} not found in EnergyStore")
         
@@ -131,9 +131,9 @@ class EnergyStore:
         
         setattr(self.data[protocol_number], property, value)
     
-    def log_info(self, protocol_number: int) -> Tuple[float]:
+    def log_info(self, protocol_number: str) -> Tuple[float]:
         """Format energy data for log output."""
-        data = self.__getitem__(int(protocol_number))
+        data = self.__getitem__(str(protocol_number))
         erel = f'{data.Erel:.2f}' if not np.isnan(data.Erel) else np.nan
         pop = f'{data.Pop:.2f}' if not np.isnan(data.Pop) else np.nan
 
@@ -145,11 +145,11 @@ class EnergyStore:
         """Restore the store from a serialized dictionary."""
         self.data = dict()
         for proto_str, vals in input_dict.get('data', {}).items():
-            proto = int(proto_str)
+            proto = str(proto_str)
                         
             self.data[proto] = EnergyRecord.from_dict(data=vals)
 
-    def get_last_freq(self, protocol_number: int) -> np.ndarray:
+    def get_last_freq(self, protocol_number: str) -> np.ndarray:
         """Retrieve frequencies from the given protocol, falling back to earlier ones."""
         if protocol_number in self.data:
             freq = self.data[protocol_number].Freq
@@ -164,7 +164,7 @@ class EnergyStore:
 
         return np.array([])
 
-    def get_last_bvec(self, protocol_number: int) -> Optional[np.ndarray]:
+    def get_last_bvec(self, protocol_number: str) -> Optional[np.ndarray]:
         """Retrieve B_vec from the given protocol, falling back to earlier ones."""
         for i in range(protocol_number, -1, -1):
             if i in self.data:
@@ -174,7 +174,7 @@ class EnergyStore:
         return None
 
 
-def compute_rotational_constants(conf: 'Conformer', protocol_number: int) -> None:
+def compute_rotational_constants(conf: 'Conformer', protocol_number: str) -> None:
     """Compute and store principal rotational constants from conformer geometry.
 
     Calculates the three principal rotational constants (B_a, B_b, B_c) from
@@ -194,7 +194,7 @@ def compute_rotational_constants(conf: 'Conformer', protocol_number: int) -> Non
     Raises:
         KeyError: If no EnergyRecord exists for the given protocol number.
     """
-    protocol_number = int(protocol_number)
+    protocol_number = str(protocol_number)
     if protocol_number not in conf.energies:
         raise KeyError(
             f"No EnergyRecord for protocol {protocol_number} in conformer "
@@ -241,7 +241,7 @@ def compute_thermochemistry(
             pass
 
 
-def copy_thermochemical_corrections(conf: 'Conformer', target_protocol: int) -> None:
+def copy_thermochemical_corrections(conf: 'Conformer', target_protocol: str) -> None:
     for p in range(target_protocol - 1, -1, -1):
         if p in conf.energies:
             prev = conf.energies[p]
