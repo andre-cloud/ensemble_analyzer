@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from ._models import get_models_dir
 from ase.calculators.calculator import Calculator, all_changes
@@ -35,6 +36,8 @@ def create_mace_calc(charge, mult, method, solvent=None):
             "mace module missing. Install via: pip install mace-torch"
         )
 
+    os.environ["TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD"] = "1"
+
     device = "cuda" if torch.cuda.is_available() else "cpu"
     default_dtype = "float64"
 
@@ -51,7 +54,7 @@ def create_mace_calc(charge, mult, method, solvent=None):
                 )
 
         calc = MACECalculator(
-                    model_path=str(model_path),
+                    model_paths=str(model_path),
                     device=device,
                     default_dtype=default_dtype,
                 )

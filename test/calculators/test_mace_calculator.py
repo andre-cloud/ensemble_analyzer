@@ -86,7 +86,7 @@ class TestMACEMlCalc:
                 result = calc._get_ml_calculator()
 
                 mock_mace.assert_called_once_with(
-                    model_path=str(model_file),
+                    model_paths=str(model_file),
                     device="cpu",
                     default_dtype="float64",
                 )
@@ -119,7 +119,7 @@ class TestMACEMlCalc:
                 calc._get_ml_calculator(method="custom_model.pt")
 
                 mock_mace.assert_called_once_with(
-                    model_path=str(custom_model),
+                    model_paths=str(custom_model),
                     device="cpu",
                     default_dtype="float64",
                 )
