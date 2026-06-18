@@ -31,7 +31,7 @@ class NormalModeAnalyzer:
         self.n_modes = self.normal_modes.shape[0]
 
     def localize_mode(self, mode: int) -> np.ndarray:
-        real_displacements = self.normal_modes[mode] / np.sqrt(self.masses[:, None])
+        real_displacements = self.normal_modes[mode]
         distances = np.linalg.norm(real_displacements, axis=1)
         total_distance = np.sum(distances)
         if total_distance == 0:
@@ -53,7 +53,7 @@ class NormalModeAnalyzer:
     def displace_geometry(
         self, mode: int, scale: float = 0.3
     ) -> np.ndarray:
-        real_displacements = self.normal_modes[mode] / np.sqrt(self.masses[:, None])
+        real_displacements = self.normal_modes[mode]
         return self.geom + scale * real_displacements
 
     @staticmethod
