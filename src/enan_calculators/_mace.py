@@ -10,6 +10,8 @@ except ImportError:
     torch = None
     MACECalculator = None
 
+_PREDICTOR_CACHE = {}
+
 
 try:
     from e3nn.util.codegen import _mixin
@@ -60,7 +62,7 @@ def create_mace_calc(charge, mult, method, solvent=None):
     default_dtype = "float64"
 
     if method in _FOUNDATION:
-        calc = _load_foundation(method, device, default_dtype)
+        cache_key = (method, device, default_dtype)
     else:
         model_path = get_models_dir("mace", create=False) / method
         if not model_path.exists():
@@ -70,12 +72,19 @@ def create_mace_calc(charge, mult, method, solvent=None):
                     f"MACE model not found: {model_path}. "
                     f"Please place the downloaded weights in {get_models_dir('mace', create=False)}."
                 )
+        cache_key = (str(model_path), device, default_dtype)
 
-        calc = MACECalculator(
-                    model_paths=str(model_path),
-                    device=device,
-                    default_dtype=default_dtype,
-                )
+    if cache_key not in _PREDICTOR_CACHE:
+        if method in _FOUNDATION:
+            _PREDICTOR_CACHE[cache_key] = _load_foundation(method, device, default_dtype)
+        else:
+            _PREDICTOR_CACHE[cache_key] = MACECalculator(
+                model_paths=str(model_path),
+                device=device,
+                default_dtype=default_dtype,
+            )
+
+    calc = _PREDICTOR_CACHE[cache_key]
 
     return _MACEWrappedCalc(calc, charge, mult)
 
