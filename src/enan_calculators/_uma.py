@@ -32,17 +32,18 @@ def create_uma_calc(charge, mult, method, solvent=None):
         import os
         torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", 1)))
 
-    cache_key = (method, device)
+    model_path = get_models_dir("uma", create=False) / method
+    if not model_path.exists():
+        model_path = Path(method)
+        if not model_path.exists():
+            raise FileNotFoundError(
+                f"Model file not found: {model_path}. "
+                f"Please place the downloaded weights in {get_models_dir('uma', create=False)}."
+            )
+
+    cache_key = (str(model_path.resolve()), device)
 
     if cache_key not in _PREDICTOR_CACHE:
-        model_path = get_models_dir("uma", create=False) / method
-        if not model_path.exists():
-            model_path = Path(method)
-            if not model_path.exists():
-                raise FileNotFoundError(
-                    f"Model file not found: {model_path}. "
-                    f"Please place the downloaded weights in {get_models_dir('uma', create=False)}."
-                )
 
         inference_settings = InferenceSettings(
             tf32=True,
