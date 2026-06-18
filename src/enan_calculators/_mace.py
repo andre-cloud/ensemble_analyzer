@@ -10,6 +10,24 @@ except ImportError:
     torch = None
     MACECalculator = None
 
+
+try:
+    from e3nn.util.codegen import _mixin
+    if hasattr(_mixin.CodeGenMixin, "__setstate__"):
+        _orig_setstate = _mixin.CodeGenMixin.__setstate__
+        def _patched_setstate(self, state):
+            if 'codegen_state' in state and isinstance(state['codegen_state'], dict):
+                for k, v in state['codegen_state'].items():
+                    if isinstance(v, tuple) and len(v) > 2:
+                        # Keep only the first two elements expected by older/newer e3nn
+                        state['codegen_state'][k] = v[:2]
+            _orig_setstate(self, state)
+        _mixin.CodeGenMixin.__setstate__ = _patched_setstate
+except Exception:
+    pass
+
+
+
 _FOUNDATION = {
     "mp": "mace_mp",
     "off": "mace_off",
