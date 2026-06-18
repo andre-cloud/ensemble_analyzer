@@ -22,8 +22,13 @@ def create_uma_calc(charge, mult, method, solvent=None):
 
     if hasattr(torch.serialization, 'add_safe_globals'):
         torch.serialization.add_safe_globals([slice])
-
+    
     device = "cuda" if torch.cuda.is_available() else "cpu"
+    if device == "cuda":
+        torch.set_float32_matmul_precision('high')
+    else:
+        import os
+        torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", 1)))
 
     model_path = get_models_dir("uma", create=False) / method
     if not model_path.exists():
@@ -45,6 +50,7 @@ def create_uma_calc(charge, mult, method, solvent=None):
         path=model_path,
         device=device,
         inference_settings=inference_settings,
+        compile=True
     )
 
     class _UMAWrappedCalc(FAIRChemCalculator):
