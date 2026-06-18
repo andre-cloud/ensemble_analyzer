@@ -27,7 +27,7 @@ def create_logger(
     log = Logger(name=logger_name)
 
     # File handler
-    handler = logging.FileHandler(output_file, mode="w")
+    handler = logging.FileHandler(output_file, mode="a")
     handler.setLevel(logging.DEBUG if debug else logging.INFO)
     formatter = ColoredFormatter(LOG_FORMAT, use_colors=disable_color)
     handler.setFormatter(formatter)

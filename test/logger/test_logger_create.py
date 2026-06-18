@@ -46,7 +46,7 @@ class TestCreateLogger:
         result = create_logger("test.log")
         assert result is mock_instance
         MockLogger.assert_called_with(name="enan")
-        MockFileHandler.assert_called_with("test.log", mode="w")
+        MockFileHandler.assert_called_with("test.log", mode="a")
 
     @patch("ensemble_analyzer._logger.create_log.logging.FileHandler")
     @patch("ensemble_analyzer._logger.create_log.Logger")
