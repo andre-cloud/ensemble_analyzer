@@ -13,6 +13,8 @@ except ImportError:
     InferenceSettings = None
     torch = None
 
+_PREDICTOR_CACHE = {}
+
 
 def create_uma_calc(charge, mult, method, solvent=None):
     if FAIRChemCalculator is None:
@@ -30,27 +32,34 @@ def create_uma_calc(charge, mult, method, solvent=None):
         import os
         torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", 1)))
 
-    model_path = get_models_dir("uma", create=False) / method
-    if not model_path.exists():
-        model_path = Path(method)
-        if not model_path.exists():
-            raise FileNotFoundError(
-                f"Model file not found: {model_path}. "
-                f"Please place the downloaded weights in {get_models_dir('uma', create=False)}."
-            )
+    cache_key = (method, device)
 
-    inference_settings = InferenceSettings(
-        tf32=True,
-        activation_checkpointing=False,
-        merge_mole=True,
-        compile=False,
-        max_atoms=256,
-    )
-    predictor = load_predict_unit(
-        path=model_path,
-        device=device,
-        inference_settings=inference_settings,
-    )
+    if cache_key not in _PREDICTOR_CACHE:
+        model_path = get_models_dir("uma", create=False) / method
+        if not model_path.exists():
+            model_path = Path(method)
+            if not model_path.exists():
+                raise FileNotFoundError(
+                    f"Model file not found: {model_path}. "
+                    f"Please place the downloaded weights in {get_models_dir('uma', create=False)}."
+                )
+
+        inference_settings = InferenceSettings(
+            tf32=True,
+            activation_checkpointing=False,
+            merge_mole=True,
+            compile=True,
+            max_atoms=256,
+        )
+
+        print(f"Loading and compiling UMA predictor ({method}) on {device}...")
+        _PREDICTOR_CACHE[cache_key] = load_predict_unit(
+            path=model_path,
+            device=device,
+            inference_settings=inference_settings,
+        )
+
+    predictor = _PREDICTOR_CACHE[cache_key]
 
     class _UMAWrappedCalc(FAIRChemCalculator):
         def __init__(self, predictor_unit, _charge, _mult):
