@@ -43,14 +43,13 @@ def create_uma_calc(charge, mult, method, solvent=None):
         tf32=True,
         activation_checkpointing=False,
         merge_mole=True,
-        compile=False,
+        compile=True,
         max_atoms=256,
     )
     predictor = load_predict_unit(
         path=model_path,
         device=device,
         inference_settings=inference_settings,
-        compile=True
     )
 
     class _UMAWrappedCalc(FAIRChemCalculator):
