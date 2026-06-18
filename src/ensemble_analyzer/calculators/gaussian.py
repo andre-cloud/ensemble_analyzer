@@ -5,19 +5,8 @@ from typing import Tuple, Any
 
 @register_calculator("gaussian")
 class GaussianCalc(BaseCalc):
-    """
-    ASE-compatible Gaussian calculator wrapper.
-    Encapsulates logic for SP, OPT, and FREQ input generation.
-    """
 
     def common_str(self)-> str:
-        """
-        Build the common Gaussian route section.
-
-        Returns:
-            str: Route string (e.g. '# B3LYP/6-31G* SCRF=...').
-        """
-
         solv = ""
         if self.protocol.solvent:
             if self.protocol.solvent.smd:
@@ -25,10 +14,8 @@ class GaussianCalc(BaseCalc):
             else:
                 solv = f" SCRF=(CPCM,Solvent={self.protocol.solvent.solvent})"
 
-        # Basic route section
         route = f"# {self.protocol.functional}/{self.protocol.basis}{solv}"
 
-        # Add user-specified custom input
         if self.protocol.add_input.strip():
             route += " " + self.protocol.add_input.strip()
 
@@ -38,32 +25,42 @@ class GaussianCalc(BaseCalc):
         return route
 
     def _build_calculator(self) -> Tuple[Any, str]:
-        route = self.common_str()
+        from enan_calculators import get_ase_calculator
+
+        if self.protocol.solvent:
+            if self.protocol.solvent.smd:
+                solv_name = f"SMD({self.protocol.solvent.solvent})"
+            else:
+                solv_name = self.protocol.solvent.solvent
+        else:
+            solv_name = None
 
         ase_label = f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_gaussian"
-        label = "gaussian"
+
+        calculator = get_ase_calculator(
+            "gaussian",
+            charge=self.protocol.charge,
+            mult=self.protocol.mult,
+            method=self.protocol.functional,
+            basis=self.protocol.basis,
+            solvent=solv_name,
+            cpu=self.cpu,
+            add_input=self.protocol.add_input.strip(),
+            label=ase_label,
+        )
 
         chk_path = self._build_path(
             self.conf.folder, f"protocol_{self.protocol.number}", "gaussian.chk"
         )
+        calculator.parameters["chk"] = chk_path
 
-        calc = Gaussian(
-            label=ase_label,
-            output_type='N',
-            mem=f"{self.cpu*2}GB",
-            chk=chk_path,
-            extra=route,
-            charge=self.protocol.charge,
-            mult=self.protocol.mult,
-            nprocshared=self.cpu,
-        )
         if self.protocol.read_orbitals:
             oldchk_path = self._build_path(
                 self.conf.folder, f"protocol_{self.protocol.read_orbitals}", "gaussian.chk"
             )
-            calc.oldchk = oldchk_path
+            calculator.oldchk = oldchk_path
 
-        return calc, label
+        return calculator, "gaussian"
 
     def _add_opt_keywords(self, calc: Gaussian) -> None:
         if self.protocol.ts:
@@ -101,13 +98,13 @@ class GaussianCalc(BaseCalc):
                 tag = tag_map.get(len(c), "X")
                 lines.append(f"{tag} {' '.join(map(str, c))} F")
             redundant = "\n".join(lines)
-            
+
             if calc.parameters.get("addsec"):
                 calc.parameters["addsec"] += redundant
-            else: 
+            else:
                 calc.parameters["addsec"] = redundant
 
-        if self.protocol.freq: 
+        if self.protocol.freq:
             calc.parameters["extra"] += " freq=(HPModes,vcd)"
 
     def _add_freq_keywords(self, calc: Gaussian) -> None:

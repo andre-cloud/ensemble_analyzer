@@ -1,54 +1,18 @@
-import os
-from typing import Tuple, Any
 from ._ml_base import BaseMlCalc
 from .base import register_calculator
-from ensemble_analyzer.constants import get_models_dir
-from pathlib import Path
-try:
-    import torch
-    from aimnet.calculators import AIMNet2ASE
-except ImportError:
-    torch = None
-    AIMNet2ASE = None
 
 
 @register_calculator("aimnet")
 class AIMNetCalc(BaseMlCalc):
-    """
-    Calculator wrapper for the AIMNet2 neural network potential.
-    """
-
     label = "aimnet"
 
-    def _get_ml_calculator(self, **kwargs: Any) -> Any:
-        """
-        Build and return the AIMNet2 ASE calculator.
-
-        Args:
-            **kwargs: Additional keyword arguments forwarded to the AIMNet2ASE
-                constructor.
-
-        Returns:
-            Any: AIMNet2 ASE calculator instance.
-        """
-        if AIMNet2ASE is None:
-            raise ImportError(
-                "aimnet module missing. Install via: pip install aimnet[ase]@git+https://github.com/isayevlab/aimnetcentral.git"
-            )
-
+    def _get_ml_calculator(self, **kwargs):
+        from enan_calculators import get_ase_calculator
         method = kwargs.pop("method", self.protocol.functional or "aimnet2")
-        model_path = get_models_dir("aimnet", create=False) / method
-
-        if not model_path.exists():
-            model_path = Path(method)
-            if not model_path.exists():
-                raise FileNotFoundError(f"AIMNet model not found: {model_path}")
-
-        torch.set_num_threads(int(os.environ.get("OMP_NUM_THREADS", 1)))
-
-        return AIMNet2ASE(
-            str(model_path),
+        return get_ase_calculator(
+            "aimnet",
             charge=self.protocol.charge,
             mult=self.protocol.mult,
-            **kwargs,
+            method=method,
+            solvent=self.protocol.solvent.solvent if self.protocol.solvent else None,
         )

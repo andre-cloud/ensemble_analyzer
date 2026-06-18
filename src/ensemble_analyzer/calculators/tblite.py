@@ -1,43 +1,18 @@
-from typing import Tuple, Any
 from ._ml_base import BaseMlCalc
 from .base import register_calculator
-try:
-    from tblite.ase import TBLite as TB
-except ImportError:
-    TB = None
 
 
 @register_calculator("tblite")
 class TBLiteCalc(BaseMlCalc):
-    """
-    Calculator wrapper for the TBLite semi-empirical method (GFN-xTB family).
-    """
-
     label = "tblite"
 
-    def _get_ml_calculator(self, **kwargs: Any) -> Any:
-        """
-        Build and return the TBLite ASE calculator.
-
-        Args:
-            **kwargs: Additional keyword arguments forwarded to the TBLite
-                constructor.
-
-        Returns:
-            Any: TBLite ASE calculator instance.
-        """
-        if TB is None:
-            raise ImportError("tblite module missing. Install via: pip install tblite")
-
+    def _get_ml_calculator(self, **kwargs):
+        from enan_calculators import get_ase_calculator
         method = kwargs.pop("method", self.protocol.functional or "GFN2-xTB")
-        solv = None
-        if self.protocol.solvent and self.protocol.solvent.solvent:
-            solv = ("alpb", self.protocol.solvent.solvent)
-
-        return TB(
-            method=method,
+        return get_ase_calculator(
+            "tblite",
             charge=self.protocol.charge,
-            multiplicity=self.protocol.mult,
-            solvation=solv,
-            **kwargs,
+            mult=self.protocol.mult,
+            method=method,
+            solvent=self.protocol.solvent.solvent if self.protocol.solvent else None,
         )

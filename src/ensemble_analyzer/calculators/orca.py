@@ -2,7 +2,6 @@ from ase.calculators.orca import ORCA, OrcaProfile
 from ensemble_analyzer.calculators.base import BaseCalc, register_calculator
 import shutil
 import os
-from pathlib import Path
 
 from typing import Tuple, Any
 
@@ -54,24 +53,10 @@ except Exception:
 
 @register_calculator("orca")
 class OrcaCalc(BaseCalc):
-    """
-    Calculator wrapper for ORCA.
-    Handles input generation for SP, OPT, and FREQ jobs.
-    """
 
     VERSION = VERSION if VERSION else 0
 
     def common_str(self) -> Tuple[str, str, str]:
-        """
-        Generate ORCA simple input, pre-coordinate blocks, and post-coordinate blocks.
-
-        Post-coordinate blocks (%frag, %eprnmr, %nmr, %rel, %epr) are automatically
-        extracted from add_input and must appear after the *xyz section in ORCA syntax.
-
-        Returns:
-            Tuple[str, str, str]: (simple_input, pre_blocks, post_blocks)
-        """
-
         if self.protocol.solvent:
             if "xtb" in self.protocol.functional.lower():
                 solv = f"ALPB({self.protocol.solvent.solvent})"
@@ -96,18 +81,31 @@ class OrcaCalc(BaseCalc):
         return si, ob, post
 
     def _build_calculator(self) -> Tuple[Any, str]:
-        si, ob, post = self.common_str()
+        from enan_calculators import get_ase_calculator
 
+        if self.protocol.solvent:
+            if "xtb" in self.protocol.functional.lower():
+                solv_name = f"ALPB({self.protocol.solvent.solvent})"
+            elif self.protocol.solvent.solvent.strip():
+                solv_name = str(self.protocol.solvent)
+            else:
+                solv_name = "CPCM"
+        else:
+            solv_name = None
+
+        raw_input = self.protocol.add_input.replace("CONF", str(self.conf.folder))
         ase_dir = f"{self.conf.folder}/protocol_{self.protocol.number}"
-        label = "orca"
 
-        calculator = ORCA(
-            profile=orca_profile,
-            directory=ase_dir,
-            orcasimpleinput=si,
-            orcablocks=ob,
+        calculator = get_ase_calculator(
+            "orca",
             charge=self.protocol.charge,
             mult=self.protocol.mult,
+            method=self.protocol.functional,
+            basis=self.protocol.basis,
+            solvent=solv_name,
+            cpu=self.cpu,
+            add_input=raw_input,
+            directory=ase_dir,
         )
 
         if self.protocol.read_orbitals:
@@ -117,18 +115,7 @@ class OrcaCalc(BaseCalc):
             )
             calculator.parameters["orcablocks"] += f'\n%moinp "{gbw_path}"\n'
 
-        if post:
-            original = calculator.write_inputfiles
-
-            def patched_write_input(atoms, properties=None, system_changes=None):
-                original(atoms, properties, system_changes)
-                inp = Path(calculator.directory) / calculator.template.inputname
-                with open(inp, "a") as f:
-                    f.write("\n" + post + "\n")
-
-            calculator.write_inputfiles = patched_write_input
-
-        return calculator, label
+        return calculator, "orca"
 
     def _add_opt_keywords(self, calc: ORCA) -> None:
         calc.parameters["orcasimpleinput"] += "\n! OptTS \n" if self.protocol.ts else "\n! opt\n"

@@ -91,6 +91,7 @@ enan_clustering = "ensemble_analyzer.cli.clustering:main"
 
 [tool.setuptools]
 include-package-data = true
+packages.find = { where = ["src"] }
 
 [tool.setuptools.package-data]
 ensemble_analyzer = ["parameters_file/*"]

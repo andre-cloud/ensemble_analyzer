@@ -1,7 +1,6 @@
 import shutil
 import os
 from pathlib import Path
-import warnings
 from typing import Any, Tuple
 
 from ase.calculators.nwchem import NWChem
@@ -17,21 +16,8 @@ NWCHEM_COMMAND = (
 
 @register_calculator("nwchem")
 class NWChemCalc(BaseCalc):
-    """
-    Calculator wrapper for NWChem.
-    Handles input generation for SP, OPT, and FREQ jobs.
-    """
 
     def common_str(self) -> dict:
-        """Build the common NWChem input keyword dictionary.
-
-        Includes theory, functional, basis, memory, and optional solvent,
-        charge, and orbital reading directives. When nroots is set, uses
-        tddft theory and configures excited-state parameters.
-
-        Returns:
-            dict: NWChem input keywords.
-        """
         nroots = self.protocol.nroots
         is_tddft = isinstance(nroots, int) and nroots > 0
         kw = {
@@ -74,14 +60,6 @@ class NWChemCalc(BaseCalc):
         return kw
 
     def _build_constraints(self) -> str:
-        """Build the NWChem constraints block from the protocol constraints.
-
-        Supports freeze-cartesian (list of lists of atoms), bond/angle/dihedral
-        constraints, and raw constraint strings.
-
-        Returns:
-            str: NWChem constraints block, or empty string if no constraints.
-        """
         if not self.constrains:
             return ""
 
@@ -105,9 +83,9 @@ class NWChemCalc(BaseCalc):
         return raw
 
     def _build_calculator(self) -> Tuple[Any, str]:
-        kw = self.common_str()
-        ase_label = f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_nwchem"
+        from enan_calculators import get_ase_calculator
 
+        ase_label = f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_nwchem"
         command = NWCHEM_COMMAND
         if "nwchem_openmpi" in command and not any(
             x in command for x in ("mpirun", "mpiexec")
@@ -115,25 +93,28 @@ class NWChemCalc(BaseCalc):
             command = f"mpirun -np {self.cpu} {command}"
         command = f"{command} {self.conf.number}_p{self.protocol.number}_nwchem.nwi > {self.conf.number}_p{self.protocol.number}_nwchem.nwo"
 
-        calculator = NWChem(label=ase_label, command=command, **kw)
-
-        extra = []
-        if self.protocol.add_input.strip():
-            extra.append(self.protocol.add_input)
+        calculator = get_ase_calculator(
+            "nwchem",
+            charge=self.protocol.charge,
+            mult=self.protocol.mult,
+            method=self.protocol.functional,
+            basis=self.protocol.basis,
+            solvent=self.protocol.solvent.solvent if self.protocol.solvent else None,
+            cpu=self.cpu,
+            add_input=self.protocol.add_input,
+            label=ase_label,
+            command=command,
+        )
 
         constraints_block = self._build_constraints()
         if constraints_block:
-            extra.append(constraints_block)
-
-        if extra:
-            block = "\n\n".join(extra)
             original = calculator.write_input
 
-            def patched_write_input(atoms: Any, properties: Any = None, system_changes: Any = None) -> None:
+            def patched_write_input(atoms, properties=None, system_changes=None) -> None:
                 original(atoms, properties, system_changes)
                 inp = Path(calculator.directory) / calculator.input_filename()
                 with open(inp, "a") as f:
-                    f.write("\n" + block + "\n")
+                    f.write("\n" + constraints_block + "\n")
 
             calculator.write_input = patched_write_input
 

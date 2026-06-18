@@ -151,24 +151,27 @@ class EnergyStore:
 
     def get_last_freq(self, protocol_number: str) -> np.ndarray:
         """Retrieve frequencies from the given protocol, falling back to earlier ones."""
-        if protocol_number in self.data:
-            freq = self.data[protocol_number].Freq
+        p = str(protocol_number)
+        if p in self.data:
+            freq = self.data[p].Freq
             if freq is not None and len(freq) > 0:
                 return freq
     
-        for i in range(protocol_number - 1, -1, -1):
-            if i in self.data:
-                freq = self.data[i].Freq
+        for i in range(int(protocol_number) - 1, -1, -1):
+            key = str(i)
+            if key in self.data:
+                freq = self.data[key].Freq
                 if freq is not None and len(freq) > 0:
                     return freq
-
+    
         return np.array([])
-
+    
     def get_last_bvec(self, protocol_number: str) -> Optional[np.ndarray]:
         """Retrieve B_vec from the given protocol, falling back to earlier ones."""
-        for i in range(protocol_number, -1, -1):
-            if i in self.data:
-                bv = self.data[i].B_vec
+        for i in range(int(protocol_number), -1, -1):
+            key = str(i)
+            if key in self.data:
+                bv = self.data[key].B_vec
                 if bv is not None:
                     return bv
         return None

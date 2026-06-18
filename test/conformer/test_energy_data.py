@@ -99,8 +99,8 @@ class TestEnergyStore:
 
     def test_as_dict_roundtrip(self, store):
         d = store.as_dict()
-        assert 1 in d
-        assert 2 in d
+        assert "1" in d
+        assert "2" in d
         restored = EnergyStore()
         restored.load({"data": d})
         assert 1 in restored

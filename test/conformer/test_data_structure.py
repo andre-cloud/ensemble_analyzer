@@ -46,7 +46,7 @@ class TestDataStructures:
         # Should return G if present, else E
         assert store.get_energy() == -200.0 # G is nan
         
-        store.data[2].G = -100.1
+        store.data["2"].G = -100.1
         assert store.get_energy() == -100.1 # G is set
 
     def test_energy_store_log_info(self):

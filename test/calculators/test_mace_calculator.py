@@ -31,14 +31,14 @@ class TestMACEMlCalc:
     def test_import_error_when_mace_missing(self, setup):
         conf, proto = setup
         with patch(
-            "ensemble_analyzer.calculators.mace.MACECalculator", None
+            "enan_calculators._mace.MACECalculator", None
         ):
             from ensemble_analyzer.calculators.mace import MACEMlCalc
             calc = MACEMlCalc(proto, 4, conf)
             with pytest.raises(ImportError, match="mace"):
                 calc._get_ml_calculator()
 
-    @patch("ensemble_analyzer.calculators.mace.get_models_dir")
+    @patch("enan_calculators._mace.get_models_dir")
     def test_file_not_found_when_model_missing(self, mock_get_models_dir, setup):
         conf, proto = setup
         mock_get_models_dir.return_value = Path("/nonexistent/models/mace")
@@ -47,17 +47,17 @@ class TestMACEMlCalc:
         calc = MACEMlCalc(proto, 4, conf)
 
         with patch(
-            "ensemble_analyzer.calculators.mace.MACECalculator",
+            "enan_calculators._mace.MACECalculator",
             MagicMock(),
         ):
             with patch(
-                "ensemble_analyzer.calculators.mace.torch"
+                "enan_calculators._mace.torch"
             ) as mock_torch:
                 mock_torch.cuda.is_available.return_value = False
                 with pytest.raises(FileNotFoundError, match="MACE model not found"):
                     calc._get_ml_calculator()
 
-    @patch("ensemble_analyzer.calculators.mace.get_models_dir")
+    @patch("enan_calculators._mace.get_models_dir")
     def test_successful_calculator_creation(self, mock_get_models_dir, setup, tmp_path):
         conf, proto = setup
         model_dir = tmp_path / "models" / "mace"
@@ -75,11 +75,11 @@ class TestMACEMlCalc:
         mock_mace_instance.implemented_properties = ["energy", "forces"]
 
         with patch(
-            "ensemble_analyzer.calculators.mace.MACECalculator",
+            "enan_calculators._mace.MACECalculator",
             mock_mace,
         ):
             with patch(
-                "ensemble_analyzer.calculators.mace.torch"
+                "enan_calculators._mace.torch"
             ) as mock_torch:
                 mock_torch.cuda.is_available.return_value = False
 
@@ -91,7 +91,7 @@ class TestMACEMlCalc:
                     default_dtype="float64",
                 )
 
-    @patch("ensemble_analyzer.calculators.mace.get_models_dir")
+    @patch("enan_calculators._mace.get_models_dir")
     def test_calculator_uses_method_from_kwargs(self, mock_get_models_dir, setup, tmp_path):
         conf, proto = setup
         model_dir = tmp_path / "models" / "mace"
@@ -109,11 +109,11 @@ class TestMACEMlCalc:
         mock_mace_instance.implemented_properties = ["energy", "forces"]
 
         with patch(
-            "ensemble_analyzer.calculators.mace.MACECalculator",
+            "enan_calculators._mace.MACECalculator",
             mock_mace,
         ):
             with patch(
-                "ensemble_analyzer.calculators.mace.torch"
+                "enan_calculators._mace.torch"
             ) as mock_torch:
                 mock_torch.cuda.is_available.return_value = False
                 calc._get_ml_calculator(method="custom_model.pt")
@@ -124,26 +124,20 @@ class TestMACEMlCalc:
                     default_dtype="float64",
                 )
 
-    @patch("ensemble_analyzer.calculators.mace.get_models_dir")
+    @patch("enan_calculators._mace.get_models_dir")
     def test_foundation_model(self, mock_get_models_dir, setup):
         conf, proto = setup
 
-        from ensemble_analyzer.calculators.mace import MACEMlCalc
-        calc = MACEMlCalc(proto, 4, conf)
-
-        mock_func = MagicMock()
-        mock_func.return_value = MagicMock(implemented_properties=["energy", "forces"])
+        mock_result = MagicMock(implemented_properties=["energy", "forces"])
 
         with patch(
-            "ensemble_analyzer.calculators.mace.torch"
-        ) as mock_torch:
-            mock_torch.cuda.is_available.return_value = False
-            with patch(
-                "ensemble_analyzer.calculators.mace.MACEMlCalc._load_foundation",
-                return_value=mock_func.return_value,
-            ):
-                result = calc._get_ml_calculator(method="mp")
-                assert result is not None
+            "enan_calculators._mace.create_mace_calc",
+            return_value=mock_result,
+        ):
+            from ensemble_analyzer.calculators.mace import MACEMlCalc
+            calc = MACEMlCalc(proto, 4, conf)
+            result = calc._get_ml_calculator(method="mp")
+            assert result is not None
 
     def test_foundation_mapping(self):
         from ensemble_analyzer.calculators.mace import MACEMlCalc
@@ -157,7 +151,7 @@ class TestMACEMlCalc:
         proto.charge = -1
         proto.mult = 3
 
-        from ensemble_analyzer.calculators.mace import _MACEWrappedCalc
+        from enan_calculators._mace import _MACEWrappedCalc
 
         mock_inner = MagicMock()
         mock_inner.implemented_properties = ["energy", "forces"]
