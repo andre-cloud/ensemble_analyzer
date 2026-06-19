@@ -148,7 +148,6 @@ class BaseParser(ABC):
             self.log.warning("No conformer data for B calculation, returning default")
             return np.array([1.0, 0.0, 0.0])
 
-        self.log.debug(f'{self.conf.last_geometry = }')
         atoms = Atoms(
             symbols="".join(tuple(self.conf.atoms)),
             positions=self.conf.last_geometry,
