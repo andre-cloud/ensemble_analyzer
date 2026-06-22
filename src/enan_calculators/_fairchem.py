@@ -4,7 +4,7 @@ from enan_calculators._ml_inference import create_ml_calc
 def create_fairchem_calc(charge, mult, method, solvent=None):
     return create_ml_calc(
         "fairchem", charge, mult, method,
-        task_name="energy", solvent=solvent,
+        task_name="omol", solvent=solvent,
     )
 
 
