@@ -87,7 +87,7 @@ class Protocol:
 
     # TS mode analysis
     loc_freq                    : Optional[list[list[int]]]     = None
-    min_localization            : Optional[float]               = 50.0
+    min_localization            : Optional[float]               = 40.0
     auto_displace               : Optional[bool]                = False
     displace_scale              : Optional[float]               = 0.3
     neg_freq_threshold          : Optional[float]               = 20.0

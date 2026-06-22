@@ -50,6 +50,25 @@ class NormalModeAnalyzer:
             for i, indices in enumerate(fragments)
         }
 
+    def delta_positions(
+        self, mode: int, scale: float = 0.3
+    ) -> dict:
+        mode_vec = self.normal_modes[mode]
+        delta_mag = 2 * scale * np.linalg.norm(mode_vec, axis=1)
+        total = np.sum(delta_mag)
+        if total == 0:
+            return {
+                "delta_mag": np.zeros(self.n_atoms),
+                "percent": np.zeros(self.n_atoms),
+                "total_delta": 0.0,
+            }
+        percent = (delta_mag / total) * 100.0
+        return {
+            "delta_mag": delta_mag,
+            "percent": percent,
+            "total_delta": float(total),
+        }
+
     def displace_geometry(
         self, mode: int, scale: float = 0.3
     ) -> np.ndarray:

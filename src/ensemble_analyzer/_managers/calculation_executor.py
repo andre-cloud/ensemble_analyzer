@@ -359,10 +359,14 @@ class CalculationExecutor:
         def _on_target(mode_i: int) -> bool:
             if not loc_freq:
                 return True
-            frag = analyzer.localize_mode_fragment(mode_i, loc_freq)
-            details = ", ".join(f"{k}={v:.1f}%" for k, v in frag.items())
-            self.logger.info(f"  Mode {mode_i} ({freqs[mode_i]:.2f}): {details}")
-            return sum(frag.values()) >= min_ov
+            d = analyzer.delta_positions(mode_i, protocol.displace_scale)
+            target_idx = np.unique([a for g in loc_freq for a in g])
+            target_pct = float(np.sum(d["percent"][target_idx]))
+            self.logger.info(
+                f"  Mode {mode_i} ({freqs[mode_i]:.2f}): "
+                f"target Δ={target_pct:.1f}% (total Δ={d['total_delta']:.4f} Å)"
+            )
+            return target_pct >= min_ov
 
         largest = sorted_idx[0]
         rank2 = sorted_idx[1] if len(sorted_idx) > 1 else None
