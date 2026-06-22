@@ -147,11 +147,17 @@ def check_mlip() -> None:
     else:
         log_warn("PyTorch NOT installed. Required by aimnet/uma/mace.")
 
-    # UMA (requires torch + fairchem-core)
+    # UMA (requires torch + fairchem-core, uses pretrained_mlip)
     if importlib.util.find_spec("fairchem") is not None:
         log_pass("UMA (fairchem-core) library found.")
     else:
         log_warn("UMA (fairchem-core) NOT installed. Install: pip install \"ensemble-analyzer[uma]\"")
+
+    # FAIRChem (generic, uses load_predict_unit + InferenceSettings)
+    if importlib.util.find_spec("fairchem") is not None:
+        log_pass("FAIRChem (fairchem-core) library found.")
+    else:
+        log_warn("FAIRChem (fairchem-core) NOT installed. Install: pip install \"ensemble-analyzer[fairchem]\"")
 
     # MACE (requires torch + mace-torch)
     if importlib.util.find_spec("mace") is not None:

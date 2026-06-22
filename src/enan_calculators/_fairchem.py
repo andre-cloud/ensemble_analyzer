@@ -1,28 +1,28 @@
 from enan_calculators._ml_inference import create_ml_calc
 
 
-def create_uma_calc(charge, mult, method, solvent=None):
+def create_fairchem_calc(charge, mult, method, solvent=None):
     return create_ml_calc(
-        "uma", charge, mult, method,
-        task_name="omol", merge_mole=True, solvent=solvent,
+        "fairchem", charge, mult, method,
+        task_name="energy", solvent=solvent,
     )
 
 
-from ensemble_analyzer.calculators._ml_base import BaseMlCalc
+from enan_calculators._uma import UMAMlCalc
 from ensemble_analyzer.calculators.base import register_calculator
 
 
-@register_calculator("uma")
-class UMAMlCalc(BaseMlCalc):
-    label = "uma"
+@register_calculator("fairchem")
+class FAIRChemMlCalc(UMAMlCalc):
+    label = "fairchem"
 
     def _get_ml_calculator(self, **kwargs):
         from enan_calculators import get_ase_calculator
         method = kwargs.pop("method", self.protocol.functional)
         if method is None:
-            raise ValueError("uma calculator requires a model path via protocol.functional or method= kwarg")
+            raise ValueError("fairchem calculator requires a model path via protocol.functional or method= kwarg")
         return get_ase_calculator(
-            "uma",
+            "fairchem",
             charge=self.protocol.charge,
             mult=self.protocol.mult,
             method=method,

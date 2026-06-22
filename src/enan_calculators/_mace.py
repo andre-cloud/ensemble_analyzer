@@ -1,6 +1,6 @@
 import os
 from pathlib import Path
-from ._models import get_models_dir
+from enan_calculators._models import get_models_dir
 from ase.calculators.calculator import Calculator, all_changes
 
 try:

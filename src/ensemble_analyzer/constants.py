@@ -42,6 +42,7 @@ regex_parsing = {
     "tblite": {"ext": None},
     "aimnet": {"ext": None},
     "uma": {"ext": None},
+    "fairchem": {"ext": None},
     "mace": {"ext": None},
 }
 

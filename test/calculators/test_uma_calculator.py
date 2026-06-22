@@ -19,20 +19,26 @@ class TestUMAMlCalc:
     def setup(self, mock_conformer, mock_protocol):
         mock_protocol.charge = 0
         mock_protocol.mult = 1
-        mock_protocol.functional = None
+        mock_protocol.functional = "uma-s-1.pt"
         return mock_conformer, mock_protocol
+
+    def test_requires_method(self, setup):
+        conf, proto = setup
+        proto.functional = None
+        from ensemble_analyzer.calculators.uma import UMAMlCalc
+        calc = UMAMlCalc(proto, 4, conf)
+        with pytest.raises(ValueError, match="requires a model path"):
+            calc._get_ml_calculator()
 
     def test_import_error_when_fairchem_missing(self, setup):
         conf, proto = setup
-        with patch(
-            "enan_calculators._uma.FAIRChemCalculator", None
-        ):
+        with patch("enan_calculators._ml_inference.FAIRChemCalculator", None):
             from ensemble_analyzer.calculators.uma import UMAMlCalc
             calc = UMAMlCalc(proto, 4, conf)
             with pytest.raises(ImportError, match="fairchem-core"):
                 calc._get_ml_calculator()
 
-    @patch("enan_calculators._uma.get_models_dir")
+    @patch("enan_calculators._ml_inference.get_models_dir")
     def test_file_not_found_when_model_missing(self, mock_get_models_dir, setup):
         conf, proto = setup
         mock_get_models_dir.return_value = Path("/nonexistent/models/uma")
@@ -40,22 +46,14 @@ class TestUMAMlCalc:
         from ensemble_analyzer.calculators.uma import UMAMlCalc
         calc = UMAMlCalc(proto, 4, conf)
 
-        with patch(
-            "enan_calculators._uma.FAIRChemCalculator",
-            MagicMock(),
-        ):
-            with patch(
-                "enan_calculators._uma.load_predict_unit",
-                MagicMock(),
-            ):
-                with patch(
-                    "enan_calculators._uma.torch"
-                ) as mock_torch:
+        with patch("enan_calculators._ml_inference.FAIRChemCalculator", MagicMock()):
+            with patch("enan_calculators._ml_inference.load_predict_unit", MagicMock()):
+                with patch("enan_calculators._ml_inference.torch") as mock_torch:
                     mock_torch.cuda.is_available.return_value = False
                     with pytest.raises(FileNotFoundError, match="Model file not found"):
                         calc._get_ml_calculator()
 
-    @patch("enan_calculators._uma.get_models_dir")
+    @patch("enan_calculators._ml_inference.get_models_dir")
     def test_successful_calculator_creation(self, mock_get_models_dir, setup, tmp_path):
         conf, proto = setup
         model_dir = tmp_path / "models" / "uma"
@@ -72,17 +70,9 @@ class TestUMAMlCalc:
         mock_predictor = MagicMock()
         mock_load = MagicMock(return_value=mock_predictor)
 
-        with patch(
-            "enan_calculators._uma.FAIRChemCalculator",
-            mock_fairchem,
-        ):
-            with patch(
-                "enan_calculators._uma.load_predict_unit",
-                mock_load,
-            ):
-                with patch(
-                    "enan_calculators._uma.torch"
-                ) as mock_torch:
+        with patch("enan_calculators._ml_inference.FAIRChemCalculator", mock_fairchem):
+            with patch("enan_calculators._ml_inference.load_predict_unit", mock_load):
+                with patch("enan_calculators._ml_inference.torch") as mock_torch:
                     mock_torch.cuda.is_available.return_value = False
 
                     result = calc._get_ml_calculator()
@@ -93,7 +83,7 @@ class TestUMAMlCalc:
                     assert "inference_settings" in mock_load.call_args[1]
                     assert result is not None
 
-    @patch("enan_calculators._uma.get_models_dir")
+    @patch("enan_calculators._ml_inference.get_models_dir")
     def test_calculator_uses_method_from_kwargs(self, mock_get_models_dir, setup, tmp_path):
         conf, proto = setup
         model_dir = tmp_path / "models" / "uma"
@@ -109,17 +99,9 @@ class TestUMAMlCalc:
         mock_predictor = MagicMock()
         mock_load = MagicMock(return_value=mock_predictor)
 
-        with patch(
-            "enan_calculators._uma.FAIRChemCalculator",
-            MagicMock(),
-        ):
-            with patch(
-                "enan_calculators._uma.load_predict_unit",
-                mock_load,
-            ):
-                with patch(
-                    "enan_calculators._uma.torch"
-                ) as mock_torch:
+        with patch("enan_calculators._ml_inference.FAIRChemCalculator", MagicMock()):
+            with patch("enan_calculators._ml_inference.load_predict_unit", mock_load):
+                with patch("enan_calculators._ml_inference.torch") as mock_torch:
                     mock_torch.cuda.is_available.return_value = False
                     calc._get_ml_calculator(method="custom_model.pt")
 

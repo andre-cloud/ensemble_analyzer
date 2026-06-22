@@ -1,5 +1,6 @@
 from typing import Any
 import time
+from pathlib import Path
 import numpy as np
 
 from .base import BaseCalc
@@ -11,6 +12,20 @@ from ase.optimize import LBFGS
 from ase.vibrations import Infrared, Vibrations
 from ase.constraints import FixAtoms, FixInternals
 from sella import Sella
+
+
+class _CappedSella(Sella):
+    """Sella with a hard maxstep cap, like LBFGS."""
+    def __init__(self, atoms, maxstep=None, **kwargs):
+        super().__init__(atoms, **kwargs)
+        self._mstep = maxstep
+        if self._mstep is not None:
+            self.delta = min(self.delta, self._mstep)
+
+    def step(self):
+        super().step()
+        if self._mstep is not None:
+            self.delta = min(self.delta, self._mstep)
 
 
 class BaseMlCalc(BaseCalc):
@@ -121,13 +136,16 @@ class BaseMlCalc(BaseCalc):
         atoms = self.conf.get_ase_atoms(calc)
         self._apply_ase_constraints(atoms)
         start = time.perf_counter()
+        logdir = Path(self.conf.folder) / f"protocol_{self.protocol.number}"
 
         if self.protocol.ts:
-            with Sella(atoms) as opt:
-                opt.run(fmax=self.protocol.fmax)
+            with _CappedSella(atoms, maxstep=self.protocol.maxstep,
+                              logfile=str(logdir / "sella.log")) as opt:
+                opt.run(fmax=self.protocol.fmax, steps=self.protocol.maxiter)
         else:
-            with LBFGS(atoms, maxstep=self.protocol.maxstep) as opt:
-                opt.run(fmax=self.protocol.fmax)
+            with LBFGS(atoms, maxstep=self.protocol.maxstep,
+                       logfile=str(logdir / "lbfgs.log")) as opt:
+                opt.run(fmax=self.protocol.fmax, steps=self.protocol.maxiter)
 
         self.conf.last_geometry = atoms.get_positions().copy()
         if self.protocol.freq:

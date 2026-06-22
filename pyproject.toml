@@ -69,12 +69,16 @@ uma = [
     "torch",
     "fairchem-core",
 ]
+fairchem = [
+    "torch",
+    "fairchem-core",
+]
 mace = [
     "torch",
     "mace-torch",
 ]
 ml = [
-    "ensemble-analyzer[tblite,aimnet,uma,mace]",
+    "ensemble-analyzer[tblite,aimnet,uma,fairchem,mace]",
 ]
 dev = [
     "pytest>=7.0",
