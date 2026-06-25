@@ -24,7 +24,6 @@ def print_help_protocol() -> None:
                 "freq": "bool: TRUE IF WANT ANALYTICAL FREQUENCY CALCULATION. DEFAULT: False",
                 "ts": "bool: TRUE FOR TRANSITION STATE OPTIMIZATION. REQUIRES opt: true. DEFAULT: False",
                 "freq_fact": "float: FREQUENCY SCALE FACTOR",
-                "graph": "bool : TRUE IF WANT SIMULATION OF ELECTRONIC GRAPH",
                 "mult": "int: DEFINE THE MULTIPLICITY OF THE SYSTEM. DEFAULT: 1",
                 "charge": "int: DEFINE THE CHARGE OF THE SYSTEM. DEFAULT: 0",
                 "solv": {

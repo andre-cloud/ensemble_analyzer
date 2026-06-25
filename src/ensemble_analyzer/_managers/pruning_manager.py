@@ -122,7 +122,7 @@ class PruningManager:
         """
         Determine whether the pruning step should be skipped.
 
-        Pruning is skipped when the protocol is marked as graph-only or no-prune.
+        Pruning is skipped when the protocol is marked as no-prune.
 
         Args:
             protocol (Protocol): The current protocol.
@@ -130,7 +130,7 @@ class PruningManager:
         Returns:
             bool: True if pruning should be skipped, False otherwise.
         """
-        if protocol.graph or protocol.no_prune: 
+        if protocol.no_prune: 
             self.logger.skip_pruning(protocol_number=protocol.number)
             return True
         
