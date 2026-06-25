@@ -85,6 +85,9 @@ class Protocol:
     skip_opt_fail               : Optional[bool]                = False
     block_on_retention_rate     : Optional[bool]                = False
 
+    # Line validators [[pattern, expected, threshold], ...]
+    validators                  : Optional[list]                = field(default_factory=list)
+
     # TS mode analysis
     loc_freq                    : Optional[list[list[int]]]     = None
     min_localization            : Optional[float]               = 40.0

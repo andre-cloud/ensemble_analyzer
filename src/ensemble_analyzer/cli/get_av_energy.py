@@ -81,12 +81,25 @@ def main() -> None:
     parser.add_argument("--add", nargs=2, action='append', metavar=('P1', 'P2'),
                         help="Addition: Avg(P1) + Avg(P2). Example: --add 1 3")
 
+    parser.add_argument("--validate", nargs=4, action='append',
+                        metavar=('Protocollo', 'Pattern', 'Value', 'Thr'),
+                        help="Validate conformer output post-hoc: "
+                             "--validate Protocollo 'regex' expected threshold")
+
     args = parser.parse_args()
 
+    from collections import defaultdict
     from ensemble_analyzer._logger.create_log import create_logger
     from ensemble_analyzer.ensemble_io import load_workflow_data
     from ensemble_analyzer.protocol.protocol import sort_protocols
     from ensemble_analyzer._title import title
+    from ensemble_analyzer.validators import validate_line
+    from ensemble_analyzer.constants import regex_parsing
+
+    validators_by_proto: dict[str, list] = defaultdict(list)
+    if args.validate:
+        for proto, pattern, val_str, thr_str in args.validate:
+            validators_by_proto[proto].append((pattern, float(val_str), float(thr_str)))
 
     work_dir = Path(args.dir)
 
@@ -132,6 +145,27 @@ def main() -> None:
             record = c.energies[p_num]
             if np.isnan(record.Pop):
                 continue
+
+            proto_validators = validators_by_proto.get(str(p_num))
+            if proto_validators:
+                calc_name = record.calculator.lower()
+                ext = regex_parsing.get(calc_name, {}).get("ext")
+                if ext is None:
+                    logger.warning(f"ML calculator {calc_name}: post-hoc validate skipped for conf {c.number}")
+                else:
+                    proto_dir = Path(c.folder) / f"protocol_{p_num}"
+                    matches = list(proto_dir.glob(f"{c.number}_p{p_num}_*.{ext}"))
+                    if not matches:
+                        logger.warning(f"Output not found for conf {c.number}, proto {p_num}: {proto_dir}")
+                        continue
+                    text = matches[0].read_text()
+                    ok = all(
+                        validate_line(text, pattern, expected, threshold)
+                        for pattern, expected, threshold in proto_validators
+                    )
+                    if not ok:
+                        logger.warning(f"Validation failed for conf {c.number}, proto {p_num}")
+                        continue
 
             e_val, ezpve_val, h_val, g_val = get_thermo_data(
                 c, p_num, target_temp, int(proto.mult),

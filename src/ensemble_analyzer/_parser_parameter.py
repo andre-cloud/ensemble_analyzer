@@ -5,6 +5,7 @@ import numpy as np
 from ensemble_analyzer.constants import regex_parsing, GRAPHS
 from ensemble_analyzer.rrho import free_gibbs_energy
 from ensemble_analyzer.parsers.base import PARSER_REGISTRY
+from ensemble_analyzer.validators import validate_line
 
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.conformer.energy_data import EnergyRecord
@@ -70,6 +71,12 @@ def get_conf_parameters(
             conf.active = False
             log.warning(f"Parser detected abnormal termination for Conf {conf.number}. Deactivating.")
             return False
+
+        for pattern, expected, threshold in p.validators:
+            if not validate_line(parser.fl, pattern, expected, threshold):
+                conf.active = False
+                log.warning(f"{log.WARNING} Validation failed for Conf {conf.number}: expected {expected} ± {threshold}")
+                return False
 
         e = parser.parse_energy()
 
