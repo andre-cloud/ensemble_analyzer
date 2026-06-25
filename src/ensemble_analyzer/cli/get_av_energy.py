@@ -137,6 +137,7 @@ def main() -> None:
         p_num = int(proto.number)
 
         data_rows = []
+        failed_validations = []
 
         for c in conformers:
             import numpy as np
@@ -164,7 +165,7 @@ def main() -> None:
                         for pattern, expected, threshold in proto_validators
                     )
                     if not ok:
-                        logger.warning(f"Validation failed for conf {c.number}, proto {p_num}")
+                        failed_validations.append(c.number)
                         continue
 
             e_val, ezpve_val, h_val, g_val = get_thermo_data(
@@ -229,6 +230,10 @@ def main() -> None:
             data=table_rows,
             char="-",
         )
+
+        if failed_validations:
+            for conf_id in failed_validations:
+                logger.warning(f"Validation failed for conf {conf_id}, proto {p_num}")
 
         av_E = calculate_weighted_average(vec_E, pop_E)
         av_EZPVE = calculate_weighted_average(vec_EZPVE, pop_EZPVE)
