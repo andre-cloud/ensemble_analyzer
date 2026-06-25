@@ -67,7 +67,6 @@ class Protocol:
     tda                         : Optional[bool]                = False
     
     # Pruning & Clustering
-    graph                       : Optional[bool]                = False
     no_prune                    : Optional[bool]                = False
     cluster                     : Optional[Union[bool,int]]     = False
 

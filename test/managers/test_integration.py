@@ -53,7 +53,6 @@ def test_full_workflow_simulation(mock_mkdir, mock_logger):
     protocol.thrB = 10.0
     protocol.clustering = False
     protocol.no_prune = False
-    protocol.graph = False
     protocol.read_population = False
     protocol.block_on_retention_rate = False
     protocol.functional = "B3LYP"
