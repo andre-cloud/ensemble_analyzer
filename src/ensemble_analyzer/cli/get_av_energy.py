@@ -21,7 +21,9 @@ def get_thermo_data(conf, protocol_number, temp, mult, cut_off, alpha, pressure,
         return E, np.nan, np.nan, np.nan
 
     mw = conf.weight_mass
-    B_vec = conf.energies.get_last_bvec(int(protocol_number)) or np.array([1.0, 1.0, 1.0])
+    B_vec = conf.energies.get_last_bvec(int(protocol_number))
+    if B_vec is None:
+        B_vec = np.array([1.0, 1.0, 1.0])
 
     try:
         G, zpve, h, S = free_gibbs_energy(
