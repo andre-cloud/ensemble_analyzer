@@ -92,7 +92,7 @@ class SpectralStore:
     def load(self, input_dict: dict) -> None:
         """Restore the store from a serialized dictionary."""
         self.data = defaultdict(lambda: defaultdict(SpectralRecord))
-        for proto_str, graphs in input_dict.get('data', {}).items():
+        for proto_str, graphs in input_dict.items():
             proto = int(proto_str)
             for graph_type, record_dict in graphs.items():
                 self.data[proto][graph_type] = SpectralRecord.from_dict(record_dict)

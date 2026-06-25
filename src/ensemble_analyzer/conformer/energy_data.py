@@ -144,7 +144,7 @@ class EnergyStore:
     def load(self, input_dict: dict) -> None:
         """Restore the store from a serialized dictionary."""
         self.data = dict()
-        for proto_str, vals in input_dict.get('data', {}).items():
+        for proto_str, vals in input_dict.items():
             proto = str(proto_str)
                         
             self.data[proto] = EnergyRecord.from_dict(data=vals)

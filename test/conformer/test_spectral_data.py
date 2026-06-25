@@ -62,7 +62,7 @@ class TestSpectralStore:
         assert 1 in d
         assert "IR" in d[1]
         restored = SpectralStore()
-        restored.load({"data": d})
+        restored.load(d)
         assert "IR" in restored.data[1]
         rec = restored[1, "IR"]
         assert np.allclose(rec.X, [1000.0])

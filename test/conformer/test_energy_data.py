@@ -102,7 +102,7 @@ class TestEnergyStore:
         assert "1" in d
         assert "2" in d
         restored = EnergyStore()
-        restored.load({"data": d})
+        restored.load(d)
         assert 1 in restored
         assert restored[1].E == -100.0
 
