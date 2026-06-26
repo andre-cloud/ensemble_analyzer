@@ -117,7 +117,7 @@ class ClusteringManager:
             return result
             
         except Exception as e:
-            self.logger.error(f"{self.logger.FAIL} PCA failed: {e}")
+            self.logger.error(f"✗ PCA failed: {e}")
             return None
     
     def reduce_by_clusters(
