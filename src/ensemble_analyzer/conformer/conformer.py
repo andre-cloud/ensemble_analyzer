@@ -57,11 +57,11 @@ class Conformer:
 
     def get_energy(self, protocol_number: int) -> float:
         """Return Gibbs free energy if available, else electronic energy."""
-        return self.energies.get_energy(protocol_number)
+        return self.energies.get_energy(str(protocol_number))
     
     def create_log(self, protocol_number: int, monitor_internals: List[List[int]]) -> tuple:
         """Build a log tuple with conformer data and optional internal coordinates."""
-        e, g_e, g, b, erel, pop, time = self.energies.log_info(protocol_number=protocol_number)
+        e, g_e, g, b, erel, pop, time = self.energies.log_info(protocol_number=str(protocol_number))
 
         monitor : List[float] = []
         if len(monitor_internals) > 0:

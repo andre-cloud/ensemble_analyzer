@@ -195,7 +195,7 @@ class PruningManager:
             for ref_idx in range(idx):
                 ref = conformers[ref_idx]
                 
-                if ref.energies[protocol.number].B == 1:
+                if ref.energies[str(protocol.number)].B == 1:
                     continue
 
                 if not ref.active: 

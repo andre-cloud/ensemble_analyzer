@@ -113,8 +113,8 @@ class BaseCalc(ABC):
         if not self.protocol.ts:
             return None
         for i in range(self.protocol.number - 1, -1, -1):
-            if i in self.conf.energies:
-                er = self.conf.energies[i]
+            if str(i) in self.conf.energies:
+                er = self.conf.energies[str(i)]
                 if er.Freq is not None and len(er.Freq) > 0:
                     if not er.calculator or er.calculator == self.protocol.calculator:
                         return i

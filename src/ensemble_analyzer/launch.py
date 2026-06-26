@@ -123,9 +123,9 @@ def _normalize_protocols(protocol: Any) -> list:
         return [protocol]
     if isinstance(protocol, str):
         data = load_protocol(protocol)
-        return [Protocol(number=k, **data[k]) for k in data]
+        return [Protocol(number=int(k), **data[k]) for k in data]
     if isinstance(protocol, dict):
-        return [Protocol(number=k, **protocol[k]) for k in protocol]
+        return [Protocol(number=int(k), **protocol[k]) for k in protocol]
     if isinstance(protocol, list):
         return protocol
     raise TypeError(f"protocol must be str, dict, Protocol, or list[Protocol], got {type(protocol)}")

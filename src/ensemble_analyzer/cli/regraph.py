@@ -42,7 +42,7 @@ def main() -> None:
             if not conf.active:
                 continue
             for p in args.idx:
-                conf.energies.set(p, 'Pop', conf.energies[args.read_boltz].Pop)
+                conf.energies.set(str(p), 'Pop', conf.energies[str(args.read_boltz)].Pop)
     else:
         for protocol_number in args.idx:
             compute_boltzmann_populations(

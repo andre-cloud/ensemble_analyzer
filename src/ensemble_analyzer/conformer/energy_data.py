@@ -223,10 +223,10 @@ def compute_rotational_constants(conf: 'Conformer', protocol_number: str) -> Non
 
 
 def compute_thermochemistry(
-    conf: 'Conformer', protocol_number, energy, freqs,
+    conf: 'Conformer', protocol_number: int, energy, freqs,
     temperature, linear, cut_off, alpha, P, mult,
 ) -> None:
-    rec = conf.energies[protocol_number]
+    rec = conf.energies[str(protocol_number)]
     pos_freq = freqs[freqs > 0]
     if len(pos_freq) > 0 and rec.B_vec is not None:
         try:
@@ -235,21 +235,21 @@ def compute_thermochemistry(
                 mw=conf.weight_mass, B=rec.B_vec, m=mult,
                 linear=linear, cut_off=cut_off, alpha=alpha, P=P,
             )
-            conf.energies.set(protocol_number, "G", g)
-            conf.energies.set(protocol_number, "G_E", g - energy)
-            conf.energies.set(protocol_number, "zpve", zpve)
-            conf.energies.set(protocol_number, "H", h_val)
-            conf.energies.set(protocol_number, "S", s_val)
+            conf.energies.set(str(protocol_number), "G", g)
+            conf.energies.set(str(protocol_number), "G_E", g - energy)
+            conf.energies.set(str(protocol_number), "zpve", zpve)
+            conf.energies.set(str(protocol_number), "H", h_val)
+            conf.energies.set(str(protocol_number), "S", s_val)
         except Exception:
             pass
 
 
-def copy_thermochemical_corrections(conf: 'Conformer', target_protocol: str) -> None:
+def copy_thermochemical_corrections(conf: 'Conformer', target_protocol: int) -> None:
     for p in range(target_protocol - 1, -1, -1):
-        if p in conf.energies:
-            prev = conf.energies[p]
+        if str(p) in conf.energies:
+            prev = conf.energies[str(p)]
             if not np.isnan(prev.G_E):
-                rec = conf.energies[target_protocol]
+                rec = conf.energies[str(target_protocol)]
                 for attr in ("G_E", "zpve", "H", "S"):
                     setattr(rec, attr, getattr(prev, attr))
                 rec.G = rec.E + rec.G_E

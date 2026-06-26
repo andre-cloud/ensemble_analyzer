@@ -10,18 +10,18 @@ def get_thermo_data(conf, protocol_number, temp, mult, cut_off, alpha, pressure,
     import numpy as np
     from ensemble_analyzer.rrho import free_gibbs_energy
 
-    if protocol_number not in conf.energies:
+    if str(protocol_number) not in conf.energies:
         return np.nan, np.nan, np.nan, np.nan
 
-    record_curr = conf.energies[protocol_number]
+    record_curr = conf.energies[str(protocol_number)]
     E = record_curr.E
 
-    freq = conf.energies.get_last_freq(int(protocol_number))
+    freq = conf.energies.get_last_freq(str(protocol_number))
     if len(freq) == 0:
         return E, np.nan, np.nan, np.nan
 
     mw = conf.weight_mass
-    B_vec = conf.energies.get_last_bvec(int(protocol_number))
+    B_vec = conf.energies.get_last_bvec(str(protocol_number))
     if B_vec is None:
         B_vec = np.array([1.0, 1.0, 1.0])
 
@@ -141,9 +141,9 @@ def main() -> None:
 
         for c in conformers:
             import numpy as np
-            if p_num not in c.energies:
+            if str(p_num) not in c.energies:
                 continue
-            record = c.energies[p_num]
+            record = c.energies[str(p_num)]
             if np.isnan(record.Pop):
                 continue
 

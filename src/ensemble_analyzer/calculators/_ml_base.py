@@ -111,13 +111,13 @@ class BaseMlCalc(BaseCalc):
         energy = atoms.get_potential_energy() * EV_TO_EH
         elapsed = time.perf_counter() - start
         self.conf.energies.add(
-            self.protocol.number,
+            str(self.protocol.number),
             EnergyRecord(
                 E=energy, Freq=scaled_freqs, NormalModes=normal_modes,
                 time=elapsed, calculator=self.protocol.calculator,
             ),
         )
-        compute_rotational_constants(self.conf, self.protocol.number)
+        compute_rotational_constants(self.conf, str(self.protocol.number))
         self._compute_thermochemistry(energy, scaled_freqs)
         self.conf.graphs_data.add(
             protocol_number=self.protocol.number,

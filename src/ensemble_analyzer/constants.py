@@ -116,8 +116,8 @@ def compute_boltzmann_populations(conformers, protocol_number: int, temperature:
     energies = np.array([c.get_energy(protocol_number=protocol_number) for c in active])
     rel_en, pops = boltzmann_distribution(energies, temperature)
     for c, rel_e, p in zip(active, rel_en, pops):
-        c.energies.set(protocol_number, 'Pop', p * 100)
-        c.energies.set(protocol_number, 'Erel', rel_e)
+        c.energies.set(str(protocol_number), 'Pop', p * 100)
+        c.energies.set(str(protocol_number), 'Erel', rel_e)
 
 
 def get_models_dir(calculator_name: str, create: bool = True) -> Path:

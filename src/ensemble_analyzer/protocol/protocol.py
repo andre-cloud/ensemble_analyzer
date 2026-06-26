@@ -9,7 +9,7 @@ from pathlib import Path
 
 
 def sort_protocols(protocols: List['Protocol']) -> List['Protocol']:
-    return sorted(protocols, key=lambda x: int(x.number))
+    return sorted(protocols, key=lambda x: x.number)
 
 
 
@@ -286,8 +286,6 @@ class Protocol:
 
     def __post_init__(self) -> None:
         """Post-initialization: validate multiplicity, resolve composite methods, load solvent and thresholds."""
-        self.number = str(self.number)
-
         assert (self.mult > 0 and isinstance(self.mult, int)), \
             f"Multiplicity must be greater than 0, given {self.mult}"
 

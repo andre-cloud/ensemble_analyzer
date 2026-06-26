@@ -40,7 +40,7 @@ class CalculationExecutor:
 
         for attempt in range(2):
             if attempt > 0:
-                conf.energies.data.pop(protocol.number, None)
+                conf.energies.data.pop(str(protocol.number), None)
                 conf.last_geometry = new_geom.copy()
 
             if not self._run_single(
@@ -121,7 +121,7 @@ class CalculationExecutor:
         ):
             try:
                 if is_ml:
-                    if protocol.number not in conf.energies:
+                    if str(protocol.number) not in conf.energies:
                         energy = atoms.get_potential_energy() * EV_TO_EH
                 else:
                     try:
@@ -150,25 +150,25 @@ class CalculationExecutor:
     def _finalize_ml(
         self, conf, protocol, atoms, energy, elapsed, attempt,
     ) -> bool:
-        if protocol.number not in conf.energies:
+        if str(protocol.number) not in conf.energies:
             conf.energies.add(
-                protocol.number,
+                str(protocol.number),
                 EnergyRecord(E=energy, time=elapsed, calculator=protocol.calculator),
             )
-            compute_rotational_constants(conf, protocol.number)
+            compute_rotational_constants(conf, str(protocol.number))
             try:
                 dipole = atoms.get_dipole_moment()
             except Exception:
                 dipole = None
             m_vec = np.asarray(dipole) if dipole is not None else np.array([1, 1, 1])
-            conf.energies.set(protocol.number, "m_vec", m_vec)
-            conf.energies.set(protocol.number, "m",
+            conf.energies.set(str(protocol.number), "m_vec", m_vec)
+            conf.energies.set(str(protocol.number), "m",
                               float(np.linalg.norm(m_vec)))
             copy_thermochemical_corrections(conf, protocol.number)
         else:
-            elapsed = conf.energies[protocol.number].time or 0
+            elapsed = conf.energies[str(protocol.number)].time or 0
 
-        data = conf.energies[protocol.number]
+        data = conf.energies[str(protocol.number)]
         if attempt == 0:
             self.logger.calculation_success(
                 conformer_id=conf.number,
@@ -214,7 +214,7 @@ class CalculationExecutor:
         )
 
         if success:
-            data = conf.energies[protocol.number]
+            data = conf.energies[str(protocol.number)]
             self.logger.calculation_success(
                 conformer_id=conf.number,
                 protocol_number=protocol.number,
@@ -233,7 +233,7 @@ class CalculationExecutor:
         conf: Conformer,
         protocol: Protocol,
     ) -> tuple[bool, np.ndarray | None]:
-        data = conf.energies[protocol.number]
+        data = conf.energies[str(protocol.number)]
         freqs = data.Freq
         modes = data.NormalModes
 
@@ -273,9 +273,9 @@ class CalculationExecutor:
         conf: Conformer,
         protocol: Protocol,
     ) -> None:
-        if protocol.number not in conf.energies:
+        if str(protocol.number) not in conf.energies:
             return
-        data = conf.energies[protocol.number]
+        data = conf.energies[str(protocol.number)]
         freqs = data.Freq
         modes = data.NormalModes
         if not isinstance(freqs, np.ndarray) or freqs.size == 0:

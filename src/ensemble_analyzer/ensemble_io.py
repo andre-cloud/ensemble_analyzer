@@ -73,7 +73,7 @@ def read_ensemble(file: str, log:Logger, raw: bool=False) -> list:
         atoms, geom, e = _parse_xyz_str(fl[old_idx:i], raw=raw)
         confs.append(Conformer(counter, geom=geom, atoms=atoms))
         if raw: 
-            confs[-1].energies.add(protocol_number=0, record=EnergyRecord(E=e))
+            confs[-1].energies.add(protocol_number="0", record=EnergyRecord(E=e))
         old_idx = i
         counter += 1
 

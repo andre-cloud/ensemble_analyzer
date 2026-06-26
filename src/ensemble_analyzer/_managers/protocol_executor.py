@@ -219,11 +219,11 @@ class ProtocolExecutor:
         rel_energies = (energies - min(energies)) * EH_TO_KCAL
 
         for idx, conf in enumerate(active): 
-            conf.energies.set(protocol_number=int(protocol.number), property='Erel', value=rel_energies[idx])
+            conf.energies.set(protocol_number=str(protocol.number), property='Erel', value=rel_energies[idx])
         return
 
 
-    def generate_energy_report(self, conformers: List[Conformer], protocol_number: Union[str,int], T:float) -> None:
+    def generate_energy_report(self, conformers: List[Conformer], protocol_number: int, T:float) -> None:
         """
         Log a tabular summary of the ensemble energetic status.
 
@@ -238,20 +238,21 @@ class ProtocolExecutor:
             self.logger.warning(f"No active conformers for energy report (protocol {protocol_number})")
             return
 
-        dE = np.array([i.energies[protocol_number].E for i in CONFS])
+        protocol_number_str = str(protocol_number)
+        dE = np.array([i.energies[protocol_number_str].E for i in CONFS])
         dE_ZPVE = np.array(
             [
-                i.energies[protocol_number].E + i.energies[protocol_number].zpve
+                i.energies[protocol_number_str].E + i.energies[protocol_number_str].zpve
                 for i in CONFS
             ]
         )
         dH = np.array(
             [
-                i.energies[protocol_number].E + i.energies[protocol_number].H
+                i.energies[protocol_number_str].E + i.energies[protocol_number_str].H
                 for i in CONFS
             ]
         )
-        dG = np.array([i.energies[protocol_number].G for i in CONFS])
+        dG = np.array([i.energies[protocol_number_str].G for i in CONFS])
 
         # Boltzmann populations
         _, dE_boltz = self.pruning_manager._boltzmann_distribution(dE, T)

@@ -126,7 +126,7 @@ def get_conf_parameters(
             except Exception as thermo_err:
                  log.error(f"Error computing RRHO thermodynamics for Conf {conf.number}: {thermo_err}")
         else:
-            prev_energies = conf.energies[int(number) - 1]
+            prev_energies = conf.energies[str(number - 1)]
             g_e = prev_energies.G_E
 
             if not np.isnan(g_e):
@@ -138,7 +138,7 @@ def get_conf_parameters(
                 log.missing_previous_thermo(conformer_id=conf.number)
 
         conf.energies.add(
-            number,
+            str(number),
             EnergyRecord(
                 E=e if e else np.nan,
                 G=g if not np.isnan(g) else np.nan,
