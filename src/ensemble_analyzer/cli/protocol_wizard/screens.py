@@ -100,53 +100,55 @@ def _fmt_solvent(data: dict) -> str:
 # ── Step editor modal ──────────────────────────────────────────────
 
 class StepEditorScreen(ModalScreen[dict | None]):
-    # CSS = """
-    # StepEditorScreen {
-    #     align: center middle;
-    # }
-    # #editor-box {
-    #     width: 80%;
-    #     height: 90%;
-    #     border: solid #3b82f6;
-    #     background: #0f172a;
-    # }
-    # #editor-box > VerticalScroll {
-    #     scrollbar-gutter: stable;
-    #     padding: 1 2;
-    # }
-    # Label.title {
-    #     text-style: bold;
-    #     background: #3b82f6;
-    #     color: #ffffff;
-    #     padding: 0 1;
-    #     width: 100%;
-    # }
-    # Label.field {
-    #     margin-top: 1;
-    #     text-style: bold;
-    # }
-    # Select, Input {
-    #     width: 100%;
-    # }
-    # .row {
-    #     height: 3;
-    # }
-    # #editor-buttons {
-    #     dock: bottom;
-    #     height: 3;
-    #     align: center middle;
-    # }
-    # Collapsible {
-    #     margin-top: 1;
-    # }
-    # .val-row {
-    #     height: 3;
-    # }
-    # .val-remove {
-    #     width: 5;
-    #     margin-left: 1;
-    # }
-    # """
+    CSS = """
+    StepEditorScreen {
+        align: center middle;
+    }
+    #editor-box {
+        width: 80%;
+        height: 90%;
+        border: solid #3b82f6;
+        background: #0f172a;
+    }
+    #editor-box > VerticalScroll {
+        scrollbar-gutter: stable;
+        padding: 1 2;
+    }
+    Label.title {
+        text-style: bold;
+        background: #3b82f6;
+        color: #ffffff;
+        padding: 0 1;
+        width: 100%;
+    }
+    Label.field {
+        margin-top: 1;
+        text-style: bold;
+    }
+    Select, Input {
+        width: 100%;
+    }
+    .row {
+        height: 3;
+    }
+    #editor-buttons {
+        dock: bottom;
+        height: 3;
+        align: center middle;
+    }
+    Collapsible {
+        margin-top: 1;
+    }
+    .val-row {
+        height: 3;
+    }
+    .val-remove {
+        width: 5;
+        margin-left: 1;
+    }
+    """
+
+    BINDINGS = [("escape", "dismiss(None)")]
 
     def __init__(self, step: dict, step_num: int, is_new: bool = True):
         self.step = dict(step)
@@ -629,6 +631,8 @@ class ConfirmScreen(ModalScreen[bool]):
     }
     """
 
+    BINDINGS = [("escape", "dismiss(None)")]
+
     def __init__(self, message: str):
         self.message = message
         super().__init__()
@@ -737,7 +741,7 @@ class MainScreen(Screen):
             )
 
         self.query_one("#footer", Static).update(
-            "[dim]Esc=menu  q=quit[/]"
+            "[dim]Tab/navigate  Enter=select  Esc=back  q=quit[/]"
         )
 
     def _on_step_edited(self, result: dict | None, key: str | None = None):
@@ -1026,6 +1030,8 @@ class _InputScreen(ModalScreen[str | None]):
         margin-top: 1;
     }
     """
+
+    BINDINGS = [("escape", "dismiss(None)")]
 
     def __init__(self, prompt: str, default: str = ""):
         self.prompt = prompt
