@@ -11,6 +11,12 @@ def _load_skala():
     if _Skala is not None:
         return
     try:
+        import torch
+        if hasattr(torch.serialization, "add_safe_globals"):
+            torch.serialization.add_safe_globals([slice])
+    except Exception:
+        pass
+    try:
         from skala.ase import Skala
         _Skala = Skala
     except Exception as e:
