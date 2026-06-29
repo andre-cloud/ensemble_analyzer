@@ -85,6 +85,9 @@ skala = [
 ml = [
     "ensemble-analyzer[tblite,aimnet,uma,fairchem,mace]",
 ]
+all = [
+    "ensemble-analyzer[ml,skala]",
+]
 dev = [
     "pytest>=7.0",
 ]
