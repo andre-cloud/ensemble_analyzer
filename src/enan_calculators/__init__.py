@@ -43,6 +43,11 @@ def get_ase_calculator(engine, charge, mult, method, solvent=None, **kwargs):
             label=kwargs.get("label"),
             command=kwargs.get("command"),
         )
+    elif engine == "skala":
+        from enan_calculators._skala import create_skala_calc
+        return create_skala_calc(
+            charge, mult, method, kwargs.get("basis"), solvent=solvent,
+        )
     raise ValueError(f"Unknown calculator engine: {engine}")
 
 

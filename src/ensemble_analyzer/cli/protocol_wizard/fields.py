@@ -28,7 +28,7 @@ DEFAULTS: dict[str, Any] = {
     "thrGMAX": None,
 }
 
-ML_CALCULATORS = {"tblite", "aimnet", "mace", "uma", "fairchem"}
+ML_CALCULATORS = {"tblite", "aimnet", "mace", "uma", "fairchem", "skala"}
 
 CALCULATOR_CHOICES: list[tuple[str, str]] = [
     ("ORCA", "orca"),
@@ -39,4 +39,5 @@ CALCULATOR_CHOICES: list[tuple[str, str]] = [
     ("MACE-MP", "mace"),
     ("UMA (FairChem)", "uma"),
     ("FairChem (OC-20)", "fairchem"),
+    ("Skala (Microsoft)", "skala"),
 ]

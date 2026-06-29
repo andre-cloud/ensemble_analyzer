@@ -44,6 +44,7 @@ regex_parsing = {
     "uma": {"ext": None},
     "fairchem": {"ext": None},
     "mace": {"ext": None},
+    "skala": {"ext": None},
 }
 
 # --- Lazy — initialised on first access to scipy/numpy-dependent constants ---

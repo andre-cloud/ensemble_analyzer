@@ -78,6 +78,10 @@ mace = [
     "torch",
     "mace-torch",
 ]
+skala = [
+    "torch",
+    "skala",
+]
 ml = [
     "ensemble-analyzer[tblite,aimnet,uma,fairchem,mace]",
 ]
