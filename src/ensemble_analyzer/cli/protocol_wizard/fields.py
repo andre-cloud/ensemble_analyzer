@@ -26,6 +26,7 @@ DEFAULTS: dict[str, Any] = {
     "thrG": None,
     "thrB": None,
     "thrGMAX": None,
+    "add_input": "",
 }
 
 ML_CALCULATORS = {"tblite", "aimnet", "mace", "uma", "fairchem", "skala"}

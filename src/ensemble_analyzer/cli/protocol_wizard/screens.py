@@ -335,6 +335,12 @@ class StepEditorScreen(ModalScreen[dict | None]):
                         placeholder="",
                         id="f_read_population",
                     )
+                    yield Label("Additional input (raw string)", classes="field")
+                    yield Input(
+                        value=_v(self.step.get("add_input")),
+                        placeholder="int=ultrafine",
+                        id="f_add_input",
+                    )
 
                 # ── Validators ──
                 with Collapsible(title="Output Validators", collapsed=True):
@@ -471,6 +477,9 @@ class StepEditorScreen(ModalScreen[dict | None]):
         rp = self.query_one("#f_read_population", Input).value.strip()
         if rp:
             s["read_population"] = rp
+        ai = self.query_one("#f_add_input", Input).value.strip()
+        if ai:
+            s["add_input"] = ai
 
         # validators
         if self._validators:
