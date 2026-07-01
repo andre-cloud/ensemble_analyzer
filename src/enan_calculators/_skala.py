@@ -21,7 +21,7 @@ _PREDICTOR_CACHE = {}
 
 def create_skala_calc(charge, mult, method, basis, solvent=None):
 
-    model_path = get_models_dir("skala", create=False) / method
+    model_path = get_models_dir("", create=False) / method
     if not model_path.exists():
         model_path_fun = Path(str(model_path) + ".fun")
         if model_path_fun.exists():
@@ -34,7 +34,7 @@ def create_skala_calc(charge, mult, method, basis, solvent=None):
                     f"Please place the downloaded weights in {get_models_dir('skala', create=False)}."
                 )
 
-    checkpoint_file = load_functional(model_path)
+    checkpoint_file = load_functional(str(model_path))
 
     cache_key = (method, basis, charge, mult)
     if cache_key not in _PREDICTOR_CACHE:
