@@ -6,7 +6,7 @@ try:
     import torch
     if hasattr(torch.serialization, "add_safe_globals"):
         torch.serialization.add_safe_globals([slice])
-    import skala.ase as Skala
+    import skala.ase as skala_model
     from skala.functional import load_functional
 except ImportError:
     raise ImportError(
@@ -38,7 +38,7 @@ def create_skala_calc(charge, mult, method, basis, solvent=None):
 
     cache_key = (method, basis, charge, mult)
     if cache_key not in _PREDICTOR_CACHE:
-        _PREDICTOR_CACHE[cache_key] = Skala(
+        _PREDICTOR_CACHE[cache_key] = skala_model.Skala(
             xc=checkpoint_file, basis=basis, charge=charge, multiplicity=mult,
         )
 
