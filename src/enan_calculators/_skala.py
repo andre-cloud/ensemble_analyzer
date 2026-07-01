@@ -3,7 +3,6 @@ from pathlib import Path
 from enan_calculators._models import get_models_dir
 
 try:
-    from skala.functional import load_functional
     import skala.ase as skala_module
 except ImportError:
     load_functional = None
@@ -22,6 +21,8 @@ def create_skala_calc(charge, mult, method, basis, solvent=None):
         import torch
         if hasattr(torch.serialization, "add_safe_globals"):
             torch.serialization.add_safe_globals([slice])
+        from skala.functional import load_functional
+        
     except Exception:
         pass
 
