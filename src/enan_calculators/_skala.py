@@ -3,10 +3,17 @@ from pathlib import Path
 from enan_calculators._models import get_models_dir
 
 try:
+    import torch
+    if hasattr(torch.serialization, "add_safe_globals"):
+        torch.serialization.add_safe_globals([slice])
     import skala.ase as skala_module
+    from skala.functional import load_functional
 except ImportError:
     load_functional = None
     skala_module = None
+except Exception:
+    pass
+
 
 _PREDICTOR_CACHE = {}
 
@@ -17,14 +24,6 @@ def create_skala_calc(charge, mult, method, basis, solvent=None):
             "skala module missing. Install via: pip install skala"
         )
 
-    try:
-        import torch
-        if hasattr(torch.serialization, "add_safe_globals"):
-            torch.serialization.add_safe_globals([slice])
-        from skala.functional import load_functional
-        
-    except Exception:
-        pass
 
     model_path = get_models_dir("skala", create=False) / method
     if not model_path.exists():
