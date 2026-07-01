@@ -18,7 +18,7 @@ def _load_skala():
         pass
     try:
         from skala.ase import Skala
-        from skala import load_functional
+        from skala.functional import load_functional
         _Skala = Skala
     except Exception as e:
         raise ImportError(
