@@ -1,5 +1,5 @@
-from ensemble_analyzer.calculators._ml_base import BaseMlCalc
-from ensemble_analyzer.calculators.base import register_calculator
+from ._ml_base import BaseMlCalc
+from .base import register_calculator
 
 
 @register_calculator("skala")
@@ -8,10 +8,12 @@ class SkalaCalc(BaseMlCalc):
 
     def _get_ml_calculator(self, **kwargs):
         from enan_calculators import get_ase_calculator
+        method = kwargs.pop("method", self.protocol.functional)
         return get_ase_calculator(
             "skala",
             charge=self.protocol.charge,
             mult=self.protocol.mult,
-            method=self.protocol.functional,
+            method=method,
             basis=self.protocol.basis,
+            solvent=self.protocol.solvent.solvent if self.protocol.solvent else None,
         )
