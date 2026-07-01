@@ -21,7 +21,7 @@ _PREDICTOR_CACHE = {}
 
 def create_skala_calc(charge, mult, method, basis, solvent=None):
 
-    model_path = get_models_dir("", create=False) / method
+    model_path = get_models_dir("skala", create=False) / method
     if not model_path.exists():
         model_path_fun = Path(str(model_path) + ".fun")
         if model_path_fun.exists():
