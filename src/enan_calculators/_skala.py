@@ -18,6 +18,7 @@ def _load_skala():
         pass
     try:
         from skala.ase import Skala
+        from skala import load_functional
         _Skala = Skala
     except Exception as e:
         raise ImportError(
@@ -38,14 +39,15 @@ def create_skala_calc(charge, mult, method, basis, solvent=None):
             model_path = Path(method)
 
     if model_path.exists():
-        os.environ["SKALA_LOCAL_MODEL_PATH"] = str(model_path)
-    elif "SKALA_LOCAL_MODEL_PATH" in os.environ:
-        del os.environ["SKALA_LOCAL_MODEL_PATH"]
+        skala_file = str(model_path)
+        checkpoint_file = load_functional(model_path)
+    else: 
+        raise FileExistsError(f'{model_path} does not exists.')
 
     cache_key = (method, basis, charge, mult)
     if cache_key not in _PREDICTOR_CACHE:
         _PREDICTOR_CACHE[cache_key] = _Skala(
-            xc=method, basis=basis, charge=charge, multiplicity=mult,
+            xc=checkpoint_file, basis=basis, charge=charge, multiplicity=mult,
         )
 
     return _PREDICTOR_CACHE[cache_key]
