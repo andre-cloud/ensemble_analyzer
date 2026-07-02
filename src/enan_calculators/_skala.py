@@ -8,12 +8,10 @@ if hasattr(torch.serialization, "add_safe_globals"):
 
 try:
     from skala.ase import Skala
-    from skala.functional import load_functional
     skala_model = True
 except ImportError as e:
     print(f"REAL IMPORT ERROR: {e}")
     skala_model = None
-    load_functional = None
     raise
 
 
@@ -39,12 +37,20 @@ def create_skala_calc(charge, mult, method, basis, solvent=None):
                     f"Please place the downloaded weights in {get_models_dir('skala', create=False)}."
                 )
 
-    checkpoint_file = load_functional(str(model_path))
-
     cache_key = (method, basis, charge, mult)
+
     if cache_key not in _PREDICTOR_CACHE:
-        _PREDICTOR_CACHE[cache_key] = Skala(
-            model=checkpoint_file, xc=method.strip('.fun'), basis=basis, charge=charge, multiplicity=mult, _ks=None
+        os.environ["SKALA_LOCAL_MODEL_PATH"] = str(model_path)
+
+        c = Skala(
+            ks_config={"functional_path": model_path}, 
+            xc=method, 
+            basis=basis, 
+            charge=charge, 
+            multiplicity=mult,
+            with_density_fit=True,
         )
+
+        _PREDICTOR_CACHE[cache_key] = c
 
     return _PREDICTOR_CACHE[cache_key]
