@@ -17,22 +17,3 @@ class SkalaCalc(BaseMlCalc):
             basis=self.protocol.basis,
             solvent=self.protocol.solvent.solvent if self.protocol.solvent else None,
         )
-
-
-
-
-if __name__=='__main__':
-    from ase.build import molecule
-    from types import SimpleNamespace
-
-    atoms = molecule("H2O")
-    calc = SkalaCalc(
-        protocol=SimpleNamespace(
-            functional="skala-1.1", charge=0, mult=1, basis="def2-svp",
-            solvent=None, constrains=[]
-        ),
-        cpu=1,
-    )
-    ml_calc, _ = calc.single_point()
-    atoms.calc = ml_calc
-    print(atoms.get_potential_energy())
