@@ -36,7 +36,11 @@ class LazyCalculatorRegistry:
     def _load(self, name: str) -> None:
         name = name.lower()
         if name not in self._loaded:
-            importlib.import_module(f"ensemble_analyzer.calculators.{name}")
+            try:
+                importlib.import_module(f"ensemble_analyzer.calculators.{name}")
+            except ImportError: 
+                importlib.import_module(f"ensemble_analyzer.calculators.{name}_calc")
+
 
     # -- Mapping interface -------------------------------------------------------
 
