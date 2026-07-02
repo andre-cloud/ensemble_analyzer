@@ -44,7 +44,7 @@ def create_skala_calc(charge, mult, method, basis, solvent=None):
 
         c = Skala(
             ks_config={"functional_path": model_path}, 
-            xc=method, 
+            xc=str(method).removesuffix('.fun'), 
             basis=basis, 
             charge=charge, 
             multiplicity=mult,
