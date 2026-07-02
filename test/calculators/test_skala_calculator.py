@@ -44,7 +44,7 @@ class TestSkalaCalc:
         conf, proto = setup
         with patch("enan_calculators._skala._load_skala",
                    side_effect=ImportError("skala module missing")):
-            from ensemble_analyzer.calculators.skala import SkalaCalc
+            from ensemble_analyzer.calculators.skala_calc import SkalaCalc
             calc = SkalaCalc(proto, 4, conf)
             with pytest.raises(ImportError, match="skala"):
                 calc._get_ml_calculator()
@@ -58,7 +58,7 @@ class TestSkalaCalc:
         model_file.touch()
         mock_get_models_dir.return_value = models_dir
 
-        from ensemble_analyzer.calculators.skala import SkalaCalc
+        from ensemble_analyzer.calculators.skala_calc import SkalaCalc
         calc = SkalaCalc(proto, 4, conf)
 
         mock_skala = MagicMock()
@@ -79,7 +79,7 @@ class TestSkalaCalc:
         model_file.touch()
         mock_get_models_dir.return_value = models_dir
 
-        from ensemble_analyzer.calculators.skala import SkalaCalc
+        from ensemble_analyzer.calculators.skala_calc import SkalaCalc
         calc = SkalaCalc(proto, 4, conf)
 
         mock_skala = MagicMock()
@@ -92,7 +92,7 @@ class TestSkalaCalc:
         conf, proto = setup
         mock_get_models_dir.return_value = Path("/nonexistent/models/skala")
 
-        from ensemble_analyzer.calculators.skala import SkalaCalc
+        from ensemble_analyzer.calculators.skala_calc import SkalaCalc
         calc = SkalaCalc(proto, 4, conf)
 
         mock_skala = MagicMock()
@@ -107,7 +107,7 @@ class TestSkalaCalc:
 
         os.environ["SKALA_LOCAL_MODEL_PATH"] = "/stale/path"
 
-        from ensemble_analyzer.calculators.skala import SkalaCalc
+        from ensemble_analyzer.calculators.skala_calc import SkalaCalc
         calc = SkalaCalc(proto, 4, conf)
 
         mock_skala = MagicMock()
@@ -124,7 +124,7 @@ class TestSkalaCalc:
         custom_path.touch()
         proto.functional = str(custom_path)
 
-        from ensemble_analyzer.calculators.skala import SkalaCalc
+        from ensemble_analyzer.calculators.skala_calc import SkalaCalc
         calc = SkalaCalc(proto, 4, conf)
 
         mock_skala = MagicMock()
@@ -137,7 +137,7 @@ class TestSkalaCalc:
         conf, proto = setup
         mock_get_models_dir.return_value = Path("/nonexistent/models/skala")
 
-        from ensemble_analyzer.calculators.skala import SkalaCalc
+        from ensemble_analyzer.calculators.skala_calc import SkalaCalc
         c1 = SkalaCalc(proto, 4, conf)
         c2 = SkalaCalc(proto, 4, conf)
 
