@@ -44,7 +44,7 @@ def create_skala_calc(charge, mult, method, basis, solvent=None):
     cache_key = (method, basis, charge, mult)
     if cache_key not in _PREDICTOR_CACHE:
         _PREDICTOR_CACHE[cache_key] = Skala(
-            model=checkpoint_file, xc=method.strip('.fun'), basis=basis, charge=charge, multiplicity=mult,
+            model=checkpoint_file, xc=method.strip('.fun'), basis=basis, charge=charge, multiplicity=mult, _ks=None
         )
 
     return _PREDICTOR_CACHE[cache_key]
