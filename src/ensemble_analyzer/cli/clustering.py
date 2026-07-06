@@ -180,7 +180,7 @@ def plot_before_after_pca(result: Any, out_dir: str, base_name: str, logger: CLI
     logger.info(f"✓ Before/After comparison saved: {comparison_file}")
 
 
-def plot_clustering_metrics(result: Any, out_dir: str, base_name: str, logger: CLILogger) -> None:
+def plot_clustering_metrics(result: Any, out_dir: str, base_name: str, logger: CLILogger, explicit_k: int | None = None) -> None:
     import numpy as np
     import matplotlib
     matplotlib.use('Agg')
@@ -232,9 +232,12 @@ def plot_clustering_metrics(result: Any, out_dir: str, base_name: str, logger: C
     plt.close()
     logger.info(f"✓ Scree plot saved: {scree_file}")
 
-    features = result.scores
-    dummy_mgr = ClusteringManager(logger=logger)
-    opt_k, k_range, scores = dummy_mgr.find_optimal_clusters(features)
+    if explicit_k is None:
+        features = result.scores
+        dummy_mgr = ClusteringManager(logger=logger)
+        opt_k, k_range, scores = dummy_mgr.find_optimal_clusters(features)
+    else:
+        k_range, scores = range(explicit_k, explicit_k + 1), []
 
     if len(k_range) > 1:
         plt.figure(figsize=(8, 5))
@@ -342,7 +345,7 @@ def main() -> None:
     if result:
         out_dir = os.path.dirname(args.output) or "."
         base_name = os.path.splitext(os.path.basename(args.output))[0]
-        plot_clustering_metrics(result, out_dir, base_name, logger)
+        plot_clustering_metrics(result, out_dir, base_name, logger, explicit_k=args.ncluster)
         plot_component_analysis(result, out_dir, base_name, logger)
         plot_before_after_pca(result, out_dir, base_name, logger)
 
