@@ -3,7 +3,6 @@ import logging
 import warnings
 from pathlib import Path
 from typing import Dict, Optional
-import copy
 
 try:
     import matplotlib as mpl
@@ -58,115 +57,185 @@ class MatplotlibPickleEditor:
                 raise PickleSecurityError(
                     f"Object is not matplotlib.figure.Figure, but {type(obj)}"
                 )
-            else:
-                logger.warning(f"WARNING: unexpected type {type(obj)}")
+            logger.warning(f"WARNING: unexpected type {type(obj)}")
 
-        self.figure = obj
-
-        self._patch_stale_pickle_state()
-
-        if self.figure.axes:
-            self.axes = self.figure.axes[0]
-        else:
+        old_fig = obj
+        if not old_fig.axes:
             raise PickleSecurityError("No axes found in figure")
+        old_ax = old_fig.axes[0]
 
-    def _patch_stale_pickle_state(self):
-        from matplotlib.artist import Artist
-        from matplotlib.font_manager import FontProperties
-        from matplotlib.patches import FancyBboxPatch
-        from matplotlib.text import Text
-        from collections.abc import Iterable
+        lines_data = self._extract_lines(old_ax)
+        legend_texts = self._extract_legend_texts(old_ax)
 
-        def _walk_artists(obj, seen):
-            if id(obj) in seen:
-                return
-            seen.add(id(obj))
-            yield obj
-            for attr in ('axes', 'children', '_children', 'child_axes', 'lines',
-                         'patches', 'texts', 'images', 'legends',
-                         'tables'):
-                children = getattr(obj, attr, [])
-                if not isinstance(children, Iterable):
-                    continue
-                for child in children:
-                    if isinstance(child, Artist):
-                        yield from _walk_artists(child, seen)
-            for attr in ('xaxis', 'yaxis'):
-                child = getattr(obj, attr, None)
-                if child is not None and isinstance(child, Artist):
-                    yield from _walk_artists(child, seen)
+        new_fig = Figure(figsize=old_fig.get_size_inches(), dpi=old_fig.get_dpi())
+        new_ax = new_fig.add_subplot(111)
 
-        seen = set()
-        artists = list(_walk_artists(self.figure, seen))
+        self._copy_axes_props(old_ax, new_ax)
 
-        for a in artists:
-            if hasattr(a, 'xaxis') and hasattr(a, 'yaxis') and not hasattr(a, '_axis_map'):
-                a._axis_map = {'x': a.xaxis, 'y': a.yaxis}
+        new_lines = self._replot_lines(new_ax, lines_data)
+        if legend_texts:
+            new_ax.legend(new_lines, legend_texts)
 
-        self._fix_pickle_state()
+        self.figure = new_fig
+        self.axes = new_ax
+
+    def _extract_lines(self, ax: Axes) -> list:
+        data = []
+        for line in ax.get_lines():
+            ld = {
+                'xdata': line.get_xdata(),
+                'ydata': line.get_ydata(),
+                'color': line.get_color(),
+                'linestyle': line.get_linestyle(),
+                'linewidth': line.get_linewidth(),
+                'alpha': line.get_alpha(),
+                'visible': line.get_visible(),
+                'label': line.get_label(),
+                'marker': line.get_marker(),
+                'markersize': line.get_markersize(),
+                'markerfacecolor': line.get_markerfacecolor(),
+                'markeredgecolor': line.get_markeredgecolor(),
+                'markevery': line.get_markevery(),
+                'zorder': line.get_zorder(),
+                'drawstyle': line.get_drawstyle(),
+                'dash_capstyle': line.get_dash_capstyle(),
+                'dash_joinstyle': line.get_dash_joinstyle(),
+                'solid_capstyle': line.get_solid_capstyle(),
+                'solid_joinstyle': line.get_solid_joinstyle(),
+            }
+            data.append(ld)
+        return data
+
+    def _extract_legend_texts(self, ax: Axes) -> list:
+        legend = ax.get_legend()
+        if not legend:
+            return []
+        return [t.get_text() for t in legend.get_texts()]
+
+    def _copy_axes_props(self, old: Axes, new: Axes):
+        xl = old.get_xlabel()
+        if xl:
+            new.set_xlabel(xl)
+        yl = old.get_ylabel()
+        if yl:
+            new.set_ylabel(yl)
+        t = old.get_title()
+        if t:
+            new.set_title(t)
+        new.set_xscale(old.get_xscale())
+        new.set_yscale(old.get_yscale())
+        new.xaxis.set_ticks(old.get_xticks())
+        new.yaxis.set_ticks(old.get_yticks())
+        new.set_xlim(old.get_xlim())
+        new.set_ylim(old.get_ylim())
+        new.xaxis.set_ticklabels([t.get_text() for t in old.get_xticklabels()])
+        new.yaxis.set_ticklabels([t.get_text() for t in old.get_yticklabels()])
+        self._copy_grid(old, new)
+        self._add_secondary_xaxis(old, new)
+
+    def _copy_grid(self, old: Axes, new: Axes):
+        x_lines = old.get_xgridlines()
+        y_lines = old.get_ygridlines()
+        x_on = any(l.get_visible() for l in x_lines) if x_lines else False
+        y_on = any(l.get_visible() for l in y_lines) if y_lines else False
+        if not x_on and not y_on:
+            return
+        kw = {}
+        for line in x_lines + y_lines:
+            if line.get_visible():
+                kw['linestyle'] = line.get_linestyle()
+                kw['linewidth'] = line.get_linewidth()
+                kw['alpha'] = line.get_alpha()
+                c = line.get_color()
+                if c:
+                    kw['color'] = c
+                break
+        new.grid(x_on or y_on, **kw)
+        if not y_on:
+            new.yaxis.grid(False)
+        if not x_on:
+            new.xaxis.grid(False)
+
+    def _add_secondary_xaxis(self, old: Axes, new: Axes):
+        from ensemble_analyzer.constants import eV_to_nm
+        xl = old.get_xlabel().lower()
+        has_nm = 'nm' in xl or 'wavelength' in xl
+        has_ev = 'ev' in xl or 'energy' in xl
+        if has_nm:
+            secax = new.secondary_xaxis("top", functions=(eV_to_nm, eV_to_nm))
+            secax.set_xlabel("Energy [eV]")
+        elif has_ev:
+            secax = new.secondary_xaxis("top", functions=(eV_to_nm, eV_to_nm))
+            secax.set_xlabel(r"Wavelength $\lambda$ [nm]")
+
+    def _replot_lines(self, ax: Axes, lines_data: list) -> list:
+        new_lines = []
+        for ld in lines_data:
+            kwargs = {}
+            for k in ('color', 'linestyle', 'linewidth', 'visible',
+                      'marker', 'markersize', 'markerfacecolor', 'markeredgecolor',
+                      'zorder', 'drawstyle', 'dash_capstyle', 'dash_joinstyle',
+                      'solid_capstyle', 'solid_joinstyle', 'label'):
+                v = ld.get(k)
+                if v is not None and v != 'None':
+                    kwargs[k] = v
+            alpha = ld.get('alpha')
+            if alpha is not None:
+                kwargs['alpha'] = alpha
+            markevery = ld.get('markevery')
+            if markevery is not None:
+                kwargs['markevery'] = markevery
+            line, = ax.plot(ld['xdata'], ld['ydata'], **kwargs)
+            new_lines.append(line)
+        return new_lines
 
     def get_legend_labels(self) -> Dict[int, str]:
         if not self.axes:
             raise RuntimeError("You must call load() first")
-
         legend = self.axes.get_legend()
         if not legend:
             return {}
-
         labels = {}
         for idx, text in enumerate(legend.get_texts()):
             labels[idx] = text.get_text()
-
         return labels
 
     def get_line_colors(self) -> Dict[str, str]:
         if not self.axes:
             raise RuntimeError("You must call load() first")
-
         legend = self.axes.get_legend()
         if not legend:
             return {}
-
         lines = self.axes.get_lines()
         colors = {}
-
         for line, text in zip(lines, legend.get_texts()):
-            label = text.get_text()
-            color = mpl.colors.to_hex(line.get_color())
-            colors[label] = color
-
+            colors[text.get_text()] = mpl.colors.to_hex(line.get_color())
         return colors
 
     def rename_legend_labels(self, mapping: Dict[str, str]) -> int:
         if not self.axes:
             raise RuntimeError("You must call load() first")
-
         legend = self.axes.get_legend()
         if not legend:
             return 0
-
         changed = 0
         for text in legend.get_texts():
-            current_label = text.get_text()
-            if current_label in mapping:
-                text.set_text(mapping[current_label])
+            current = text.get_text()
+            if current in mapping:
+                text.set_text(mapping[current])
                 changed += 1
                 self._modifications_made = True
-
         return changed
 
     def change_line_colors(self, label_color_map: Dict[str, str]) -> int:
         if not self.axes:
             raise RuntimeError("You must call load() first")
-
         legend = self.axes.get_legend()
         if not legend:
             return 0
-
         lines = self.axes.get_lines()
         legend_texts = legend.get_texts()
         legend_lines = legend.get_lines()
-
         changed = 0
         for line, leg_line, text in zip(lines, legend_lines, legend_texts):
             label = text.get_text()
@@ -179,21 +248,17 @@ class MatplotlibPickleEditor:
                     self._modifications_made = True
                 except ValueError as e:
                     logger.warning(f"Invalid color '{color}' for '{label}': {e}")
-
         return changed
 
     def change_line_linestyle(self, style_map: Dict[str, str]) -> int:
         if not self.axes:
             raise RuntimeError("You must call load() first")
-
         legend = self.axes.get_legend()
         if not legend:
             return 0
-
         lines = self.axes.get_lines()
         legend_texts = legend.get_texts()
         legend_lines = legend.get_lines()
-
         changed = 0
         for line, leg_line, text in zip(lines, legend_lines, legend_texts):
             label = text.get_text()
@@ -206,21 +271,17 @@ class MatplotlibPickleEditor:
                     self._modifications_made = True
                 except Exception as e:
                     logger.warning(f"Invalid style '{style}' for '{label}': {e}")
-
         return changed
 
     def change_line_linewidth(self, width_map: Dict[str, float]) -> int:
         if not self.axes:
             raise RuntimeError("You must call load() first")
-
         legend = self.axes.get_legend()
         if not legend:
             return 0
-
         lines = self.axes.get_lines()
         legend_texts = legend.get_texts()
         legend_lines = legend.get_lines()
-
         changed = 0
         for line, leg_line, text in zip(lines, legend_lines, legend_texts):
             label = text.get_text()
@@ -233,21 +294,17 @@ class MatplotlibPickleEditor:
                     self._modifications_made = True
                 except Exception as e:
                     logger.warning(f"Invalid width '{width}' for '{label}': {e}")
-
         return changed
 
     def change_line_alpha(self, alpha_map: Dict[str, float]) -> int:
         if not self.axes:
             raise RuntimeError("You must call load() first")
-
         legend = self.axes.get_legend()
         if not legend:
             return 0
-
         lines = self.axes.get_lines()
         legend_texts = legend.get_texts()
         legend_lines = legend.get_lines()
-
         changed = 0
         for line, leg_line, text in zip(lines, legend_lines, legend_texts):
             label = text.get_text()
@@ -263,21 +320,17 @@ class MatplotlibPickleEditor:
                     self._modifications_made = True
                 except Exception as e:
                     logger.warning(f"Invalid alpha '{alpha}' for '{label}': {e}")
-
         return changed
 
     def change_line_visibility(self, visibility_map: Dict[str, bool]) -> int:
         if not self.axes:
             raise RuntimeError("You must call load() first")
-
         legend = self.axes.get_legend()
         if not legend:
             return 0
-
         lines = self.axes.get_lines()
         legend_texts = legend.get_texts()
         legend_lines = legend.get_lines()
-
         changed = 0
         for line, leg_line, text in zip(lines, legend_lines, legend_texts):
             label = text.get_text()
@@ -291,42 +344,12 @@ class MatplotlibPickleEditor:
                     self._modifications_made = True
                 except Exception as e:
                     logger.warning(f"Invalid visibility '{visible}' for '{label}': {e}")
-
         return changed
-
-    @staticmethod
-    def _fix_pickle_state():
-        import gc
-        from matplotlib.font_manager import FontProperties
-        from matplotlib.patches import Patch, FancyBboxPatch, Rectangle
-        from matplotlib.lines import Line2D
-        from matplotlib.figure import Figure
-        refs = {
-            FancyBboxPatch: FancyBboxPatch((0, 0), 1, 1),
-            Rectangle: Rectangle((0, 0), 1, 1),
-            Line2D: Line2D([0, 1], [0, 1]),
-            Figure: Figure(),
-        }
-        _patch_ref = Patch()
-        for obj in gc.get_objects():
-            if isinstance(obj, FontProperties):
-                for key, val in list(obj.__dict__.items()):
-                    if isinstance(val, list):
-                        obj.__dict__[key] = tuple(val)
-            ref = refs.get(type(obj))
-            if ref is None and isinstance(obj, Patch):
-                ref = _patch_ref
-            if ref is not None:
-                for attr in ref.__dict__:
-                    if attr.startswith('_') and attr not in obj.__dict__:
-                        obj.__dict__[attr] = ref.__dict__[attr]
 
     def save(self, output_path: Optional[Path] = None,
              format: str = 'pickle') -> Path:
         if not self.figure:
             raise RuntimeError("You must call load() first")
-
-        self._fix_pickle_state()
 
         if output_path is None:
             if format == 'pickle':
@@ -347,7 +370,6 @@ class MatplotlibPickleEditor:
     def preview(self) -> None:
         if not self.figure:
             raise RuntimeError("You must call load() first")
-
         plt.show()
 
     def has_modifications(self) -> bool:
