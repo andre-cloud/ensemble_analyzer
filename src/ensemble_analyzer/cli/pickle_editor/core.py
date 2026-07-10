@@ -100,6 +100,7 @@ class MatplotlibPickleEditor:
         from matplotlib.artist import Artist
         from matplotlib.font_manager import FontProperties
         from matplotlib.patches import FancyBboxPatch
+        from collections.abc import Iterable
 
         def _walk_artists(obj, seen):
             if id(obj) in seen:
@@ -109,7 +110,10 @@ class MatplotlibPickleEditor:
             for attr in ('axes', 'children', '_children', 'child_axes', 'lines',
                          'patches', 'texts', 'images', 'legends',
                          'tables'):
-                for child in getattr(obj, attr, []):
+                children = getattr(obj, attr, [])
+                if not isinstance(children, Iterable):
+                    continue
+                for child in children:
                     if isinstance(child, Artist):
                         yield from _walk_artists(child, seen)
             for attr in ('xaxis', 'yaxis'):
