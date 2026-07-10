@@ -100,6 +100,7 @@ class MatplotlibPickleEditor:
         from matplotlib.artist import Artist
         from matplotlib.font_manager import FontProperties
         from matplotlib.patches import FancyBboxPatch
+        from matplotlib.text import Text
         from collections.abc import Iterable
 
         def _walk_artists(obj, seen):
@@ -128,11 +129,16 @@ class MatplotlibPickleEditor:
             if hasattr(a, 'xaxis') and hasattr(a, 'yaxis') and not hasattr(a, '_axis_map'):
                 a._axis_map = {'x': a.xaxis, 'y': a.yaxis}
 
-            if isinstance(a, FontProperties) and isinstance(getattr(a, '_family', None), list):
-                a._family = tuple(a._family)
-
             if isinstance(a, FancyBboxPatch) and not hasattr(a, '_original_hatchcolor'):
                 a._original_hatchcolor = getattr(a, '_hatch_color', None)
+
+        # FontProperties aren't Artist subclasses, so the walker misses them.
+        # Find them via Text and Legend artists and fix list → tuple.
+        for a in artists:
+            for attr in ('_fontproperties', '_fontprops'):
+                fp = getattr(a, attr, None)
+                if isinstance(fp, FontProperties) and isinstance(fp._family, list):
+                    fp._family = tuple(fp._family)
 
     def get_legend_labels(self) -> Dict[int, str]:
         """
