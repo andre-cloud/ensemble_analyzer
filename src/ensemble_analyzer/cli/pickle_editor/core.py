@@ -103,10 +103,7 @@ class MatplotlibPickleEditor:
             if hasattr(a, 'xaxis') and hasattr(a, 'yaxis') and not hasattr(a, '_axis_map'):
                 a._axis_map = {'x': a.xaxis, 'y': a.yaxis}
 
-            if isinstance(a, FancyBboxPatch) and not hasattr(a, '_original_hatchcolor'):
-                a._original_hatchcolor = getattr(a, '_hatch_color', None)
-
-        self._fix_fontproperties()
+        self._fix_pickle_state()
 
     def get_legend_labels(self) -> Dict[int, str]:
         if not self.axes:
@@ -298,21 +295,24 @@ class MatplotlibPickleEditor:
         return changed
 
     @staticmethod
-    def _fix_fontproperties():
+    def _fix_pickle_state():
         import gc
         from matplotlib.font_manager import FontProperties
+        from matplotlib.patches import FancyBboxPatch
         for obj in gc.get_objects():
             if isinstance(obj, FontProperties):
                 for key, val in list(obj.__dict__.items()):
                     if isinstance(val, list):
                         obj.__dict__[key] = tuple(val)
+            if isinstance(obj, FancyBboxPatch) and not hasattr(obj, '_original_hatchcolor'):
+                obj._original_hatchcolor = getattr(obj, '_hatch_color', None)
 
     def save(self, output_path: Optional[Path] = None,
              format: str = 'pickle') -> Path:
         if not self.figure:
             raise RuntimeError("You must call load() first")
 
-        self._fix_fontproperties()
+        self._fix_pickle_state()
 
         if output_path is None:
             if format == 'pickle':
