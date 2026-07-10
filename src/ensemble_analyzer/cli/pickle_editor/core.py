@@ -393,11 +393,12 @@ class MatplotlibPickleEditor:
             else:
                 output_path = self.pickle_path.with_suffix(f'.{format}')
 
+        # ponytail: stale _axis_map from old matplotlib pickles
+        for ax in self.figure.axes:
+            if not hasattr(ax, '_axis_map'):
+                ax._axis_map = {}
+
         if format == 'pickle':
-            # ponytail: stale _axis_map from old matplotlib pickles
-            for ax in self.figure.axes:
-                if not hasattr(ax, '_axis_map'):
-                    ax._axis_map = {}
             with open(output_path, 'wb') as f:
                 pickle.dump(self.figure, f, protocol=pickle.HIGHEST_PROTOCOL)
         else:
