@@ -89,11 +89,47 @@ class MatplotlibPickleEditor:
 
         self.figure = obj
 
+        self._patch_stale_pickle_state()
+
         if self.figure.axes:
             self.axes = self.figure.axes[0]
         else:
             raise PickleSecurityError("No axes found in figure")
-    
+
+    def _patch_stale_pickle_state(self):
+        from matplotlib.artist import Artist
+        from matplotlib.font_manager import FontProperties
+        from matplotlib.patches import FancyBboxPatch
+
+        def _walk_artists(obj, seen):
+            if id(obj) in seen:
+                return
+            seen.add(id(obj))
+            yield obj
+            for attr in ('axes', 'children', '_children', 'child_axes', 'lines',
+                         'patches', 'texts', 'images', 'legends',
+                         'tables'):
+                for child in getattr(obj, attr, []):
+                    if isinstance(child, Artist):
+                        yield from _walk_artists(child, seen)
+            for attr in ('xaxis', 'yaxis'):
+                child = getattr(obj, attr, None)
+                if child is not None and isinstance(child, Artist):
+                    yield from _walk_artists(child, seen)
+
+        seen = set()
+        artists = list(_walk_artists(self.figure, seen))
+
+        for a in artists:
+            if hasattr(a, 'xaxis') and hasattr(a, 'yaxis') and not hasattr(a, '_axis_map'):
+                a._axis_map = {'x': a.xaxis, 'y': a.yaxis}
+
+            if isinstance(a, FontProperties) and isinstance(getattr(a, '_family', None), list):
+                a._family = tuple(a._family)
+
+            if isinstance(a, FancyBboxPatch) and not hasattr(a, '_original_hatchcolor'):
+                a._original_hatchcolor = getattr(a, '_hatch_color', None)
+
     def get_legend_labels(self) -> Dict[int, str]:
         """
         Retrieve current legend labels mapped by index.
@@ -392,10 +428,6 @@ class MatplotlibPickleEditor:
                 output_path = self.pickle_path
             else:
                 output_path = self.pickle_path.with_suffix(f'.{format}')
-
-        from matplotlib.axes._base import _AxesBase
-        if not hasattr(_AxesBase, '_axis_map'):
-            _AxesBase._axis_map = {}
 
         if format == 'pickle':
             with open(output_path, 'wb') as f:
