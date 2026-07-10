@@ -298,14 +298,28 @@ class MatplotlibPickleEditor:
     def _fix_pickle_state():
         import gc
         from matplotlib.font_manager import FontProperties
-        from matplotlib.patches import FancyBboxPatch
+        from matplotlib.patches import Patch, FancyBboxPatch, Rectangle
+        from matplotlib.lines import Line2D
+        from matplotlib.figure import Figure
+        refs = {
+            FancyBboxPatch: FancyBboxPatch((0, 0), 1, 1),
+            Rectangle: Rectangle((0, 0), 1, 1),
+            Line2D: Line2D([0, 1], [0, 1]),
+            Figure: Figure(),
+        }
+        _patch_ref = Patch()
         for obj in gc.get_objects():
             if isinstance(obj, FontProperties):
                 for key, val in list(obj.__dict__.items()):
                     if isinstance(val, list):
                         obj.__dict__[key] = tuple(val)
-            if isinstance(obj, FancyBboxPatch) and not hasattr(obj, '_original_hatchcolor'):
-                obj._original_hatchcolor = getattr(obj, '_hatch_color', None)
+            ref = refs.get(type(obj))
+            if ref is None and isinstance(obj, Patch):
+                ref = _patch_ref
+            if ref is not None:
+                for attr in ref.__dict__:
+                    if attr.startswith('_') and attr not in obj.__dict__:
+                        obj.__dict__[attr] = ref.__dict__[attr]
 
     def save(self, output_path: Optional[Path] = None,
              format: str = 'pickle') -> Path:
