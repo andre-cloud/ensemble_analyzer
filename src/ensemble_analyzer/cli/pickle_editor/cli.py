@@ -124,7 +124,14 @@ def batch_mode(args: argparse.Namespace) -> int:
             count = editor.change_line_visibility(visibility_map)
             logger.info(f"Changed visibility for {count} lines")
 
-        if rename_map or color_map or linestyle_map or linewidth_map or alpha_map or visibility_map:
+        if args.xlim:
+            editor.set_xlim(args.xlim[0], args.xlim[1])
+            logger.info(f"Set x-limits: {args.xlim[0]} – {args.xlim[1]}")
+        if args.ylim:
+            editor.set_ylim(args.ylim[0], args.ylim[1])
+            logger.info(f"Set y-limits: {args.ylim[0]} – {args.ylim[1]}")
+
+        if rename_map or color_map or linestyle_map or linewidth_map or alpha_map or visibility_map or args.xlim or args.ylim:
             output_path = editor.save(args.output, args.format)
             print(f"✓ Saved: {output_path}")
         else:
@@ -189,7 +196,14 @@ BATCH MODE (examples):
                             help='Change line transparency (0-1)')
     batch_group.add_argument('--visibility', '-vis', nargs=2,
                             metavar=('LABEL', 'bool'), action='append',
-                            help='Change line transparency (0-1)')
+                            help='Change line visibility (true/false)')
+
+    batch_group.add_argument('--xlim', nargs=2, type=float,
+                             metavar=('XMIN', 'XMAX'),
+                             help='Set x-axis limits (e.g. --xlim 150 500)')
+    batch_group.add_argument('--ylim', nargs=2, type=float,
+                             metavar=('YMIN', 'YMAX'),
+                             help='Set y-axis limits (e.g. --ylim -1 1)')
 
     batch_group.add_argument('--output', '-o', type=Path,
                             help='Output file')

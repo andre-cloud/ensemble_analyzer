@@ -73,8 +73,22 @@ class MatplotlibPickleEditor:
         self._copy_axes_props(old_ax, new_ax)
 
         new_lines = self._replot_lines(new_ax, lines_data)
-        if legend_texts:
-            new_ax.legend(new_lines, legend_texts)
+
+        # Restore legend labels — prefer saved per-line labels, fall back to extracted
+        saved = getattr(old_ax, '_ea_labels', None)
+        if saved is None:
+            saved = list(legend_texts)
+        if saved:
+            if len(saved) == len(new_lines):
+                texts = [
+                    saved[i] if saved[i] is not None else l.get_label()
+                    for i, l in enumerate(new_lines)
+                ]
+            else:
+                texts = list(saved) + [
+                    l.get_label() for l in new_lines[len(saved):]
+                ]
+            new_ax.legend(new_lines, texts)
 
         self.figure = new_fig
         self.axes = new_ax
@@ -225,6 +239,13 @@ class MatplotlibPickleEditor:
                 text.set_text(mapping[current])
                 changed += 1
                 self._modifications_made = True
+        if changed:
+            texts = [t.get_text() for t in legend.get_texts()]
+            txt_iter = iter(texts)
+            self.axes._ea_labels = [
+                next(txt_iter) if l.get_visible() else None
+                for l in self.axes.get_lines()
+            ]
         return changed
 
     def change_line_colors(self, label_color_map: Dict[str, str]) -> int:
@@ -330,21 +351,55 @@ class MatplotlibPickleEditor:
             return 0
         lines = self.axes.get_lines()
         legend_texts = legend.get_texts()
-        legend_lines = legend.get_lines()
         changed = 0
-        for line, leg_line, text in zip(lines, legend_lines, legend_texts):
+        for line, text in zip(lines, legend_texts):
             label = text.get_text()
             if label in visibility_map:
                 visible = visibility_map[label]
                 try:
                     line.set_visible(visible)
-                    leg_line.set_visible(visible)
-                    text.set_alpha(1.0 if visible else 0.5)
                     changed += 1
                     self._modifications_made = True
                 except Exception as e:
                     logger.warning(f"Invalid visibility '{visible}' for '{label}': {e}")
+        if changed:
+            self._rebuild_legend()
         return changed
+
+    def _rebuild_legend(self):
+        legend = self.axes.get_legend()
+        if not legend:
+            return
+        lines = self.axes.get_lines()
+        labels = [t.get_text() for t in legend.get_texts()]
+        visible = [(l, lb) for l, lb in zip(lines, labels) if l.get_visible()]
+        if visible:
+            self.axes.legend([v[0] for v in visible], [v[1] for v in visible])
+            new_leg = self.axes.get_legend()
+            new_texts = iter(t.get_text() for t in new_leg.get_texts())
+            self.axes._ea_labels = [
+                next(new_texts) if l.get_visible() else None
+                for l in lines
+            ]
+        else:
+            legend.remove()
+            self.axes._ea_labels = [None] * len(lines)
+
+    def set_xlim(self, xmin: Optional[float] = None, xmax: Optional[float] = None) -> None:
+        if not self.axes:
+            raise RuntimeError("You must call load() first")
+        cur = self.axes.get_xlim()
+        self.axes.set_xlim(xmin if xmin is not None else cur[0],
+                           xmax if xmax is not None else cur[1])
+        self._modifications_made = True
+
+    def set_ylim(self, ymin: Optional[float] = None, ymax: Optional[float] = None) -> None:
+        if not self.axes:
+            raise RuntimeError("You must call load() first")
+        cur = self.axes.get_ylim()
+        self.axes.set_ylim(ymin if ymin is not None else cur[0],
+                           ymax if ymax is not None else cur[1])
+        self._modifications_made = True
 
     def save(self, output_path: Optional[Path] = None,
              format: str = 'pickle') -> Path:
