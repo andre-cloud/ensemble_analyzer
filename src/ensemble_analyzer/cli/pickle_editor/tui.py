@@ -300,6 +300,53 @@ class InteractiveTUI:
         except ValueError:
             self.print_panel("Invalid alpha value", "Error", "red")
 
+    def set_limits_flow(self) -> None:
+        if not self.editor.axes:
+            self.print_panel("No axes found", "Error", "red")
+            return
+        cur_x = self.editor.axes.get_xlim()
+        cur_y = self.editor.axes.get_ylim()
+        self.print_panel(
+            f"Current X: [{cur_x[0]:.1f}, {cur_x[1]:.1f}]\n"
+            f"Current Y: [{cur_y[0]:.3f}, {cur_y[1]:.3f}]",
+            "Current Limits", "cyan"
+        )
+        axis_choice = inquirer.select(
+            message="Which axis?",
+            choices=[
+                Choice(value="x", name="X axis"),
+                Choice(value="y", name="Y axis"),
+                Choice(value="xy", name="Both"),
+                Choice(value=None, name="← Cancel"),
+            ],
+            default="x"
+        ).execute()
+        if axis_choice is None:
+            return
+        axes_to_set = ["x", "y"] if axis_choice == "xy" else [axis_choice]
+        for a in axes_to_set:
+            cur = cur_x if a == "x" else cur_y
+            lo = inquirer.text(
+                message=f"{a.upper()} min (current: {cur[0]:.3f}):",
+                default=str(cur[0])
+            ).execute()
+            hi = inquirer.text(
+                message=f"{a.upper()} max (current: {cur[1]:.3f}):",
+                default=str(cur[1])
+            ).execute()
+            try:
+                lo_f, hi_f = float(lo), float(hi)
+                if a == "x":
+                    self.editor.set_xlim(lo_f, hi_f)
+                else:
+                    self.editor.set_ylim(lo_f, hi_f)
+                self.print_panel(
+                    f"{a.upper()} set to [{lo_f:.3f}, {hi_f:.3f}]",
+                    "Success", "green"
+                )
+            except ValueError:
+                self.print_panel(f"Invalid number for {a.upper()} limits", "Error", "red")
+
     def change_visibility_flow(self) -> None:
         labels = self.editor.get_legend_labels()
         if not labels:
@@ -403,6 +450,7 @@ class InteractiveTUI:
                     Choice(value="linewidth", name="➖ Change line width"),
                     Choice(value="alpha", name="☰ Change transparency"),
                     Choice(value="visibility", name="👁️  Change line visibility"),
+                    Choice(value="limits", name="⟷  Set axis limits"),
                     Separator(),
                     Choice(value="save", name="💾 Save changes"),
                     Separator(),
@@ -429,6 +477,8 @@ class InteractiveTUI:
                 )
             elif action == 'visibility':
                 self.change_visibility_flow()
+            elif action == "limits":
+                self.set_limits_flow()
             elif action == "save":
                 self.save_flow()
             elif action == "reload":
