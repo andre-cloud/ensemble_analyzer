@@ -1,9 +1,3 @@
-"""
-Core module for MatplotlibPickleEditor.
-
-Handles loading, modifying and saving serialized matplotlib figures.
-"""
-
 import pickle
 import logging
 import warnings
@@ -26,49 +20,29 @@ logger = logging.getLogger(__name__)
 
 
 class PickleSecurityError(Exception):
-    """Exception for security issues in pickle loading."""
     pass
 
 
 class MatplotlibPickleEditor:
-    """
-    Core editor to modify colors, labels, and styles in serialized matplotlib figures.
-    
-    Attributes:
-        COMMON_COLORS (List[str]): List of common predefined colors for quick selection.
-    """
-    
+
     COMMON_COLORS = [
         'red', 'blue', 'green', 'black', 'orange', 'purple', 'brown',
         'pink', 'gray', 'cyan', 'magenta', 'yellow',
         '#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#6A994E',
         '#BC4B51', '#5B8E7D', '#8B5A3C', '#264653', '#E76F51'
     ]
-    
-    def __init__(self, pickle_path: Path, strict_validation: bool = True):
-        """
-        Initialize the editor.
 
-        Args:
-            pickle_path (Path): Path to the pickle file.
-            strict_validation (bool): If True, ensures the loaded object is a Figure.
-        """
+    def __init__(self, pickle_path: Path, strict_validation: bool = True):
         self.pickle_path = pickle_path
         self.strict_validation = strict_validation
         self.figure: Optional[Figure] = None
         self.axes: Optional[Axes] = None
         self._modifications_made = False
-        
+
         if not self.pickle_path.exists():
             raise FileNotFoundError(f"File not found: {self.pickle_path}")
-    
-    def load(self) -> None:
-        """
-        Load and deserialize the pickle file.
 
-        Raises:
-            PickleSecurityError: If the file is corrupted or not a valid Figure.
-        """
+    def load(self) -> None:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             try:
@@ -132,21 +106,9 @@ class MatplotlibPickleEditor:
             if isinstance(a, FancyBboxPatch) and not hasattr(a, '_original_hatchcolor'):
                 a._original_hatchcolor = getattr(a, '_hatch_color', None)
 
-        # FontProperties aren't Artist subclasses, so the walker misses them.
-        # Find them via Text and Legend artists and fix list → tuple.
-        for a in artists:
-            for attr in ('_fontproperties', '_fontprops'):
-                fp = getattr(a, attr, None)
-                if isinstance(fp, FontProperties) and isinstance(fp._family, list):
-                    fp._family = tuple(fp._family)
+        self._fix_fontproperties()
 
     def get_legend_labels(self) -> Dict[int, str]:
-        """
-        Retrieve current legend labels mapped by index.
-
-        Returns:
-            Dict[int, str]: Dictionary {index: label_text}.
-        """
         if not self.axes:
             raise RuntimeError("You must call load() first")
 
@@ -159,17 +121,8 @@ class MatplotlibPickleEditor:
             labels[idx] = text.get_text()
 
         return labels
-    
+
     def get_line_colors(self) -> Dict[str, str]:
-        """
-        Get current line colors.
-        
-        Returns:
-            Dictionary {label: hex_color}
-        
-        Raises:
-            RuntimeError: If load() has not been called
-        """
         if not self.axes:
             raise RuntimeError("You must call load() first")
 
@@ -186,18 +139,8 @@ class MatplotlibPickleEditor:
             colors[label] = color
 
         return colors
-    
+
     def rename_legend_labels(self, mapping: Dict[str, str]) -> int:
-        """
-        Rename specific legend labels.
-
-        Args:
-            mapping (Dict[str, str]): Map of {old_name: new_name}.
-
-        Returns:
-            int: Number of labels successfully renamed.
-        """
-
         if not self.axes:
             raise RuntimeError("You must call load() first")
 
@@ -214,17 +157,8 @@ class MatplotlibPickleEditor:
                 self._modifications_made = True
 
         return changed
-    
+
     def change_line_colors(self, label_color_map: Dict[str, str]) -> int:
-        """
-        Update the color of lines associated with specific legend labels.
-
-        Args:
-            label_color_map (Dict[str, str]): Map of {label: hex_color/name}.
-
-        Returns:
-            int: Number of lines updated.
-        """
         if not self.axes:
             raise RuntimeError("You must call load() first")
 
@@ -242,7 +176,6 @@ class MatplotlibPickleEditor:
             if label in label_color_map:
                 color = label_color_map[label]
                 try:
-                    # Update both the plot line and legend line
                     line.set_color(color)
                     leg_line.set_color(color)
                     changed += 1
@@ -253,15 +186,6 @@ class MatplotlibPickleEditor:
         return changed
 
     def change_line_linestyle(self, style_map: Dict[str, str]) -> int:
-        """
-        Update the line style (e.g., solid, dashed) for specific labels.
-
-        Args:
-            style_map (Dict[str, str]): Map of {label: style_string} (e.g. '--').
-
-        Returns:
-            int: Number of lines updated.
-        """
         if not self.axes:
             raise RuntimeError("You must call load() first")
 
@@ -279,7 +203,6 @@ class MatplotlibPickleEditor:
             if label in style_map:
                 style = style_map[label]
                 try:
-                    # Update both the plot line and legend line
                     line.set_linestyle(style)
                     leg_line.set_linestyle(style)
                     changed += 1
@@ -290,18 +213,6 @@ class MatplotlibPickleEditor:
         return changed
 
     def change_line_linewidth(self, width_map: Dict[str, float]) -> int:
-        """
-        Change line widths and legend widths.
-        
-        Args:
-            width_map: Dictionary {label: width}
-        
-        Returns:
-            Number of widths changed
-        
-        Raises:
-            RuntimeError: If load() has not been called
-        """
         if not self.axes:
             raise RuntimeError("You must call load() first")
 
@@ -319,7 +230,6 @@ class MatplotlibPickleEditor:
             if label in width_map:
                 width = width_map[label]
                 try:
-                    # Update both the plot line and legend line
                     line.set_linewidth(width)
                     leg_line.set_linewidth(width)
                     changed += 1
@@ -330,18 +240,6 @@ class MatplotlibPickleEditor:
         return changed
 
     def change_line_alpha(self, alpha_map: Dict[str, float]) -> int:
-        """
-        Change line transparency and legend transparency.
-        
-        Args:
-            alpha_map: Dictionary {label: alpha} (0-1)
-        
-        Returns:
-            Number of alpha values changed
-        
-        Raises:
-            RuntimeError: If load() has not been called
-        """
         if not self.axes:
             raise RuntimeError("You must call load() first")
 
@@ -362,7 +260,6 @@ class MatplotlibPickleEditor:
                     if not 0 <= alpha <= 1:
                         logger.warning(f"Alpha must be between 0 and 1, received {alpha}")
                         continue
-                    # Update both the plot line and legend line
                     line.set_alpha(alpha)
                     leg_line.set_alpha(alpha)
                     changed += 1
@@ -371,20 +268,8 @@ class MatplotlibPickleEditor:
                     logger.warning(f"Invalid alpha '{alpha}' for '{label}': {e}")
 
         return changed
-    
+
     def change_line_visibility(self, visibility_map: Dict[str, bool]) -> int:
-        """
-        Change line visibility (show/hide).
-        
-        Args:
-            visibility_map: Dictionary {label: bool} (True=visible, False=hidden)
-        
-        Returns:
-            Number of lines changed
-        
-        Raises:
-            RuntimeError: If load() has not been called
-        """
         if not self.axes:
             raise RuntimeError("You must call load() first")
 
@@ -402,36 +287,32 @@ class MatplotlibPickleEditor:
             if label in visibility_map:
                 visible = visibility_map[label]
                 try:
-                    # Update plot line visibility
                     line.set_visible(visible)
-                    
-                    # Update legend handle visibility
                     leg_line.set_visible(visible)
-                    
-                    # Dim the legend text if hidden, restore if visible
                     text.set_alpha(1.0 if visible else 0.5)
-                    
                     changed += 1
                     self._modifications_made = True
                 except Exception as e:
                     logger.warning(f"Invalid visibility '{visible}' for '{label}': {e}")
 
         return changed
-    
+
+    @staticmethod
+    def _fix_fontproperties():
+        import gc
+        from matplotlib.font_manager import FontProperties
+        for obj in gc.get_objects():
+            if isinstance(obj, FontProperties):
+                for key, val in list(obj.__dict__.items()):
+                    if isinstance(val, list):
+                        obj.__dict__[key] = tuple(val)
+
     def save(self, output_path: Optional[Path] = None,
              format: str = 'pickle') -> Path:
-        """
-        Serialize the modified figure to disk.
-
-        Args:
-            output_path (Optional[Path]): Destination file. If None, overwrites original.
-            format (str): Output format ('pickle', 'png', 'pdf', 'svg').
-
-        Returns:
-            Path: The actual path of the saved file.
-        """
         if not self.figure:
             raise RuntimeError("You must call load() first")
+
+        self._fix_fontproperties()
 
         if output_path is None:
             if format == 'pickle':
@@ -448,25 +329,12 @@ class MatplotlibPickleEditor:
 
         self._modifications_made = False
         return output_path
-    
+
     def preview(self) -> None:
-        """
-        Display a copy of the current figure for preview.
-        
-        Raises:
-            RuntimeError: If load() has not been called
-        """
         if not self.figure:
             raise RuntimeError("You must call load() first")
 
         plt.show()
 
-    
     def has_modifications(self) -> bool:
-        """
-        Check if there are unsaved modifications.
-        
-        Returns:
-            True if there are unsaved modifications
-        """
         return self._modifications_made

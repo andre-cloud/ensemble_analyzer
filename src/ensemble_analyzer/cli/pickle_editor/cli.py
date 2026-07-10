@@ -1,10 +1,3 @@
-#!/usr/bin/env python3
-"""
-CLI entry point for Matplotlib Pickle Editor.
-
-Supports interactive (TUI) and batch modes.
-"""
-
 import argparse
 import sys
 import logging
@@ -15,7 +8,6 @@ from .core import MatplotlibPickleEditor, PickleSecurityError
 from .tui import InteractiveTUI, INQUIRER_AVAILABLE
 
 
-# Setup logging
 logging.basicConfig(
     level=logging.WARNING,
     format='%(levelname)s: %(message)s'
@@ -24,15 +16,6 @@ logger = logging.getLogger(__name__)
 
 
 def parse_mapping_file(filepath: Path) -> Dict[str, str]:
-    """
-    Parse a text file containing 'OLD=NEW' mappings.
-
-    Args:
-        filepath (Path): Path to the mapping file.
-
-    Returns:
-        Dict[str, str]: Dictionary of mappings.
-    """
     mapping = {}
     with open(filepath, 'r', encoding='utf-8') as f:
         for line_num, line in enumerate(f, 1):
@@ -48,20 +31,11 @@ def parse_mapping_file(filepath: Path) -> Dict[str, str]:
 
 
 def batch_mode(args: argparse.Namespace) -> int:
-    """Execute edits in non-interactive (batch) mode.
-
-    Args:
-        args: Parsed command-line arguments.
-
-    Returns:
-        int: Exit code (0 for success, 1 for error).
-    """
     try:
         editor = MatplotlibPickleEditor(args.pickle_file,
                                        strict_validation=not args.no_strict)
         editor.load()
 
-        # Query mode: list and exit
         if args.list:
             labels = editor.get_legend_labels()
             if not labels:
@@ -77,7 +51,6 @@ def batch_mode(args: argparse.Namespace) -> int:
             print()
             return 0
 
-        # Rename
         rename_map = {}
         if args.rename:
             for old, new in args.rename:
@@ -91,7 +64,6 @@ def batch_mode(args: argparse.Namespace) -> int:
             count = editor.rename_legend_labels(rename_map)
             logger.info(f"Renamed {count} labels")
 
-        # Colors
         color_map = {}
         if args.color:
             for label, color in args.color:
@@ -101,7 +73,6 @@ def batch_mode(args: argparse.Namespace) -> int:
             count = editor.change_line_colors(color_map)
             logger.info(f"Changed {count} colors")
 
-        # Linestyle
         linestyle_map = {}
         if args.linestyle:
             for label, style in args.linestyle:
@@ -111,7 +82,6 @@ def batch_mode(args: argparse.Namespace) -> int:
             count = editor.change_line_linestyle(linestyle_map)
             logger.info(f"Changed {count} linestyles")
 
-        # Linewidth
         linewidth_map = {}
         if args.linewidth:
             for label, width in args.linewidth:
@@ -124,7 +94,6 @@ def batch_mode(args: argparse.Namespace) -> int:
             count = editor.change_line_linewidth(linewidth_map)
             logger.info(f"Changed {count} line widths")
 
-        # Alpha channel
         alpha_map = {}
         if args.alpha:
             for label, alpha in args.alpha:
@@ -141,7 +110,6 @@ def batch_mode(args: argparse.Namespace) -> int:
         visibility_map = {}
         if args.visibility:
             for label, val in args.visibility:
-                # Convert string argument to boolean
                 v_lower = val.lower()
                 if v_lower in ('true', '1', 't', 'yes', 'on'):
                     v_bool = True
@@ -156,11 +124,6 @@ def batch_mode(args: argparse.Namespace) -> int:
             count = editor.change_line_visibility(visibility_map)
             logger.info(f"Changed visibility for {count} lines")
 
-        # # Preview
-        # if args.preview:
-        #     editor.preview()
-
-        # Save
         if rename_map or color_map or linestyle_map or linewidth_map or alpha_map or visibility_map:
             output_path = editor.save(args.output, args.format)
             print(f"✓ Saved: {output_path}")
@@ -183,13 +146,6 @@ def batch_mode(args: argparse.Namespace) -> int:
 
 
 def main() -> int:
-    """Main entry point for the Graph Editor CLI.
-
-    Dispatches control to either the TUI or Batch mode.
-
-    Returns:
-        int: Exit code.
-    """
     parser = argparse.ArgumentParser(
         description='Interactive/batch editor for matplotlib pickle files',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -210,7 +166,6 @@ BATCH MODE (examples):
     parser.add_argument('--batch', '-b', action='store_true',
                        help='Batch mode (non-interactive)')
 
-    # Batch mode options
     batch_group = parser.add_argument_group('batch mode options')
     batch_group.add_argument('--list', '-l', action='store_true',
                             help='List labels and exit')
@@ -222,7 +177,7 @@ BATCH MODE (examples):
     batch_group.add_argument('--color', '-c', nargs=2,
                             metavar=('LABEL', 'COLOR'), action='append',
                             help='Change color')
-    
+
     batch_group.add_argument('--linestyle', '-ls', nargs=2,
                         metavar=('LABEL', 'STYLE'), action='append',
                         help='Change line style (e.g. -, --, :, -.)')
@@ -235,14 +190,12 @@ BATCH MODE (examples):
     batch_group.add_argument('--visibility', '-vis', nargs=2,
                             metavar=('LABEL', 'bool'), action='append',
                             help='Change line transparency (0-1)')
-    
+
     batch_group.add_argument('--output', '-o', type=Path,
                             help='Output file')
     batch_group.add_argument('--format', '-f', default='pickle',
                             choices=['pickle', 'png', 'pdf', 'svg'],
                             help='Output format')
-    # batch_group.add_argument('--preview', '-p', action='store_true',
-    #                         help='Preview before saving')
 
     parser.add_argument('--no-strict', action='store_true',
                        help='Disable strict validation')
@@ -254,13 +207,11 @@ BATCH MODE (examples):
     if args.verbose:
         logger.setLevel(logging.DEBUG)
 
-    # Batch mode
     if args.batch:
         return batch_mode(args)
 
-    # Interactive TUI mode (default)
     if not INQUIRER_AVAILABLE:
-        print("ERROR: Interactive mode requires InquirerPy", 
+        print("ERROR: Interactive mode requires InquirerPy",
               file=sys.stderr)
         print("Install: pip install InquirerPy rich", file=sys.stderr)
         print("\nUse --batch for non-interactive mode", file=sys.stderr)

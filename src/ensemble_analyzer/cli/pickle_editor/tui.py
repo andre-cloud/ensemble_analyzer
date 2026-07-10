@@ -1,9 +1,3 @@
-"""
-Interactive Terminal User Interface for MatplotlibPickleEditor.
-
-Interactive interface based on InquirerPy and Rich.
-"""
-
 import sys
 from pathlib import Path
 from typing import TYPE_CHECKING
@@ -11,7 +5,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from .core import MatplotlibPickleEditor
 
-# InquirerPy (required for TUI)
 try:
     from InquirerPy import inquirer
     from InquirerPy.base.control import Choice
@@ -20,7 +13,6 @@ try:
 except ImportError:
     INQUIRER_AVAILABLE = False
 
-# Rich (required for colored output)
 try:
     from rich.console import Console
     from rich.table import Table
@@ -33,17 +25,8 @@ except ImportError:
 
 
 class InteractiveTUI:
-    """
-    Terminal User Interface for the graph editor using InquirerPy.
-    """
 
     def __init__(self, editor: 'MatplotlibPickleEditor'):
-        """
-        Initialize the TUI with a loaded editor instance.
-
-        Args:
-            editor (MatplotlibPickleEditor): The backend editor instance.
-        """
         if not INQUIRER_AVAILABLE:
             raise RuntimeError(
                 "InquirerPy not installed. Run: pip install InquirerPy"
@@ -52,26 +35,15 @@ class InteractiveTUI:
         self.editor = editor
         self.console = console if RICH_AVAILABLE else None
 
-    def print_panel(self, message: str, title: str = "Info", 
+    def print_panel(self, message: str, title: str = "Info",
                     style: str = "cyan") -> None:
-        """
-        Print a formatted panel.
-        
-        Args:
-            message: Message to display
-            title: Panel title
-            style: Border color style
-        """
         if self.console:
             self.console.print(Panel(message, title=title, border_style=style))
         else:
             print(f"\n{title}: {message}\n")
 
     def show_current_state(self) -> None:
-        """
-        Display a formatted table of the current figure state (Labels, Colors).
-        """
-        
+
         labels = self.editor.get_legend_labels()
         colors = self.editor.get_line_colors()
 
@@ -99,14 +71,12 @@ class InteractiveTUI:
             print()
 
     def rename_labels_flow(self) -> None:
-        """Interactive flow to rename labels."""
         labels = self.editor.get_legend_labels()
 
         if not labels:
             self.print_panel("No labels to rename", "Error", "red")
             return
 
-        # Select label to rename
         choices = [
             Choice(value=label, name=f"{label} [{idx}]")
             for idx, label in labels.items()
@@ -123,7 +93,6 @@ class InteractiveTUI:
         if selected is None:
             return
 
-        # Enter new name
         new_name = inquirer.text(
             message=f"New name for '{selected}':",
             default=selected
@@ -134,7 +103,6 @@ class InteractiveTUI:
             self.print_panel(f"'{selected}' → '{new_name}'", "Success", "green")
 
     def change_colors_flow(self) -> None:
-        """Interactive flow to change colors."""
         labels = self.editor.get_legend_labels()
         colors = self.editor.get_line_colors()
 
@@ -142,7 +110,6 @@ class InteractiveTUI:
             self.print_panel("No label found", "Error", "red")
             return
 
-        # Select label
         choices = [
             Choice(value=label,
                    name=f"{label} (current: {colors.get(label, 'N/A')})")
@@ -160,7 +127,6 @@ class InteractiveTUI:
         if selected is None:
             return
 
-        # Choose color input method
         color_method = inquirer.select(
             message="How do you want to specify the color?",
             choices=[
@@ -175,7 +141,6 @@ class InteractiveTUI:
             return
 
         if color_method == "preset":
-            # Predefined palette with preview
             color_choices = [
                 Choice(value=c, name=f"{c}")
                 for c in self.editor.COMMON_COLORS
@@ -189,7 +154,6 @@ class InteractiveTUI:
                 default=None
             ).execute()
         else:
-            # Manual input
             new_color = inquirer.text(
                 message="Color (name or hex #RRGGBB):",
                 validate=lambda x: len(x) > 0
@@ -209,7 +173,6 @@ class InteractiveTUI:
                 )
 
     def change_linestyle_flow(self) -> None:
-        """Interactive flow to change line style."""
         labels = self.editor.get_legend_labels()
         if not labels:
             self.print_panel("No label found", "Error", "red")
@@ -228,7 +191,6 @@ class InteractiveTUI:
         if selected is None:
             return
 
-        # Common styles
         style_choices = [
             Choice(value='-', name="Solid (-)"),
             Choice(value='--', name="Dashed (--)"),
@@ -258,14 +220,13 @@ class InteractiveTUI:
         changed = self.editor.change_line_linestyle({selected: new_ls})
         if changed > 0:
             self.print_panel(
-                f"Line style of '{selected}' changed to {new_ls}", 
+                f"Line style of '{selected}' changed to {new_ls}",
                 "Success", "green"
             )
         else:
             self.print_panel("Unable to change style", "Error", "red")
 
     def change_linewidth_flow(self) -> None:
-        """Interactive flow to change line width."""
         labels = self.editor.get_legend_labels()
         if not labels:
             self.print_panel("No label found", "Error", "red")
@@ -294,7 +255,7 @@ class InteractiveTUI:
             changed = self.editor.change_line_linewidth({selected: width_val})
             if changed > 0:
                 self.print_panel(
-                    f"Width of '{selected}' changed to {width_val}", 
+                    f"Width of '{selected}' changed to {width_val}",
                     "Success", "green"
                 )
             else:
@@ -303,7 +264,6 @@ class InteractiveTUI:
             self.print_panel("Invalid width value", "Error", "red")
 
     def change_alpha_flow(self) -> None:
-        """Interactive flow to change transparency (alpha)."""
         labels = self.editor.get_legend_labels()
         if not labels:
             self.print_panel("No label found", "Error", "red")
@@ -332,7 +292,7 @@ class InteractiveTUI:
             changed = self.editor.change_line_alpha({selected: alpha_val})
             if changed > 0:
                 self.print_panel(
-                    f"Alpha of '{selected}' changed to {alpha_val}", 
+                    f"Alpha of '{selected}' changed to {alpha_val}",
                     "Success", "green"
                 )
             else:
@@ -341,7 +301,6 @@ class InteractiveTUI:
             self.print_panel("Invalid alpha value", "Error", "red")
 
     def change_visibility_flow(self) -> None:
-        """Interactive flow to change visibility."""
         labels = self.editor.get_legend_labels()
         if not labels:
             self.print_panel("No label found", "Error", "red")
@@ -375,16 +334,14 @@ class InteractiveTUI:
             status = "Visible" if visible else "Hidden"
             if changed > 0:
                 self.print_panel(
-                    f"'{selected}' is now {status}", 
+                    f"'{selected}' is now {status}",
                     "Success", "green"
                 )
             else:
                 self.print_panel("Unable to change visibility", "Error", "red")
 
     def save_flow(self) -> None:
-        """Interactive flow to save."""
-        
-        # Output format
+
         format_choice = inquirer.select(
             message="Save format:",
             choices=[
@@ -400,7 +357,6 @@ class InteractiveTUI:
         if format_choice is None:
             return
 
-        # Output path
         default_name = self.editor.pickle_path.stem
         if format_choice != "pickle":
             default_name = f"{default_name}_modified"
@@ -425,10 +381,6 @@ class InteractiveTUI:
             self.print_panel(f"Error saving: {e}", "Error", "red")
 
     def run(self) -> None:
-        """
-        Start the main interactive event loop.
-        Displays menus and handles user input until exit.
-        """
         if self.console:
             self.console.clear()
             self.console.print(
@@ -440,10 +392,8 @@ class InteractiveTUI:
             )
 
         while True:
-            # Show state
             self.show_current_state()
 
-            # Main menu
             action = inquirer.select(
                 message="What do you want to do?",
                 choices=[
@@ -454,7 +404,6 @@ class InteractiveTUI:
                     Choice(value="alpha", name="☰ Change transparency"),
                     Choice(value="visibility", name="👁️  Change line visibility"),
                     Separator(),
-                    # Choice(value="preview", name="👁️  Preview figure"),
                     Choice(value="save", name="💾 Save changes"),
                     Separator(),
                     Choice(value="reload", name="🔄 Reload original file"),
@@ -475,11 +424,10 @@ class InteractiveTUI:
                 self.change_alpha_flow()
             elif action == "preview":
                 self.print_panel(
-                    "Not implemented yet, without having a freeze of the TUI", 
+                    "Not implemented yet, without having a freeze of the TUI",
                     "Error", "red"
                 )
-                # self.editor.preview()
-            elif action == 'visibility': 
+            elif action == 'visibility':
                 self.change_visibility_flow()
             elif action == "save":
                 self.save_flow()
