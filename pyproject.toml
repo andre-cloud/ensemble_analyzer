@@ -60,6 +60,7 @@ dependencies = [
     "sella>=2.4.0",
 ]
 
+# Flattened optional dependencies to prevent pip self-referencing errors
 [project.optional-dependencies]
 tblite = ["tblite"]
 aimnet = [
@@ -82,15 +83,28 @@ skala = [
     "torch",
     "skala",
 ]
+
 ml = [
-    "ensemble-analyzer[tblite,aimnet,uma,fairchem,mace]",
+    "tblite",
+    "torch",
+    "aimnet",
+    "fairchem-core",
+    "mace-torch",
 ]
+
 all = [
-    "ensemble-analyzer[ml,skala]",
+    "tblite",
+    "torch",
+    "aimnet",
+    "fairchem-core",
+    "mace-torch",
+    "skala",
 ]
+
 dev = [
     "pytest>=7.0",
 ]
+
 
 [project.scripts]
 enan_check = "ensemble_analyzer.cli.check_setup:main"

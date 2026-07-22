@@ -13,7 +13,7 @@
 ### Core Capabilities
 - ⚡ **Multi-Protocol Workflows**: Sequential optimization/frequency calculations with automatic pruning
 - 🔬 **Quantum Chemistry Integration**: Support for ORCA, Gaussian, NWChem, semi-empirical (TBLite), and ML potentials (AIMNet)
-- 🧪 **Transition State Optimization**: TS mode validation with fragment localization, automatic displacement and re-optimization of spurious imaginary frequencies (B.1–B.6 logic)
+- 🧪 **Transition State Optimization**: TS mode validation with fragment localization, automatic displacement and re-optimization of spurious imaginary frequencies
 - 📊 **Advanced Clustering**: PCA-based conformer clustering with multiple feature extraction methods
 - 🎨 **Spectral Analysis**: Generate weighted IR, VCD, UV-vis, and ECD spectra
 - 🔄 **Checkpoint System**: Automatic restart capability with atomic file operations
