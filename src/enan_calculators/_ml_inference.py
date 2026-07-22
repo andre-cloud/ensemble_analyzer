@@ -25,10 +25,6 @@ def _get_cpu_threads():
 
 
 def create_ml_calc(calc_name, charge, mult, method, task_name, merge_mole=False, solvent=None):
-    if FAIRChemCalculator is None:
-        raise ImportError(
-            "fairchem-core module missing. Install via: pip install fairchem-core"
-        )
 
     if hasattr(torch.serialization, "add_safe_globals"):
         torch.serialization.add_safe_globals([slice])

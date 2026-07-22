@@ -38,8 +38,8 @@
 # Base install (ORCA/Gaussian only)
 pip install ensemble-analyzer
 
-# With ML potentials (TBLite, AIMNet)
-pip install "ensemble-analyzer[aimnet]"
+# With ML potentials (TBLite, AIMNet, UMA, FairChem, MACE)
+pip install "ensemble-analyzer[ml]"
 ```
 
 ### External QM Programs (optional)
@@ -56,6 +56,9 @@ pip install "ensemble-analyzer[aimnet]"
 |------------|------|-------|---------------|
 | **TBLite** | Semi-empirical (GFN-xTB) | `[tblite]` | Built-in |
 | **AIMNet** | ML potential | `[aimnet]` | `ENAN_MODELS_DIR/aimnet/` |
+| **UMA** | ML potential | `[uma]` | `ENAN_MODELS_DIR/uma/` |
+| **FairChem** | ML potential | `[fairchem]` | `ENAN_MODELS_DIR/fairchem/` |
+| **Mace** | ML potential | `[mace]` | `ENAN_MODELS_DIR/mace/` |
 
 
 Point to your model weights directory:
@@ -85,7 +88,7 @@ ensemble_analyzer --ensemble conformers.xyz --protocol protocol.json --output ca
 ```json
 {
     "0": {"calculator": "tblite", "functional": "GFN2-xTB", "opt": true, "freq": true},
-    "1": {"calculator": "aimnet", "functional": ****"<aimnet_weights.pt", "cluster": 10},
+    "1": {"calculator": "aimnet", "functional": "<aimnet_weights.pt", "cluster": 10},
 }
 ```
 
@@ -99,7 +102,7 @@ ML calculators skip file I/O and parsing — energies are read directly from ASE
           "comment": "TS optimization with fragment-based imag mode validation"}
 }
 ```
-`ts: true` enables Sella optimizer for ML calculators and `OptTS`/`opt=(ts,…)` for QM programs. When `loc_freq` is set, the B.1–B.6 logic validates whether the imaginary frequency localizes on the listed atom groups (`Frag1`, `Frag2`, …), displaces and re-optimizes when a spurious mode is detected.
+`ts: true` enables Sella optimizer for ML calculators and `OptTS`/`opt=(ts,…)` for QM programs. When `loc_freq` is set, the localization logic validates whether the imaginary frequency is mainly on the listed atom groups (`Frag1`, `Frag2`, …), displaces and re-optimizes when a spurious mode is detected.
 
 ### 5. Restart from Checkpoint
 ```bash
@@ -221,6 +224,26 @@ BATCH MODE (examples):
   enan_graph_editor plot.pkl --batch --rename "Protocol 1" "Proto A"
   enan_graph_editor plot.pkl --batch --color "Experimental" red --output new.pkl
 ```
+---
+
+## Cite
+
+```BibLaTex
+@article{
+  title = {Ensemble Analyzer: An Open-Source Python Framework for Automated Conformer Ensemble Refinement},
+  shorttitle = {Ensemble Analyzer},
+  author = {Pellegrini, Andrea and Righi, Paolo and Mazzanti, Andrea and Mancinelli, Michele},
+  date = {2026-05-11},
+  journaltitle = {Journal of Chemical Information and Modeling},
+  shortjournal = {J. Chem. Inf. Model.},
+  volume = {66},
+  number = {9},
+  pages = {5018--5025},
+  doi = {10.1021/acs.jcim.6c00273},
+  url = {https://pubs.acs.org/doi/10.1021/acs.jcim.6c00273},
+}
+```
+
 
 ---
 ## 🤝 Contributing

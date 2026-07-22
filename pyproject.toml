@@ -64,7 +64,7 @@ dependencies = [
 tblite = ["tblite"]
 aimnet = [
     "torch",
-    "aimnet[ase] @ git+https://github.com/isayevlab/aimnetcentral.git",
+    "aimnet",
 ]
 uma = [
     "torch",
