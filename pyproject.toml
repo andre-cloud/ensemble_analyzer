@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ensemble-analyzer"
-version = '1.1'
+version = '1.1post1'
 description = "Automatic Refinement of Conformational Ensemble"
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 
 authors = [
     { name = "Andrea Pellegrini", email = "andrea.pellegrini15@unibo.it" },
