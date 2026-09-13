@@ -39,7 +39,7 @@ def _parse_xyz_str(fl: List[str], raw: bool =False) -> Tuple[np.ndarray, np.ndar
     return np.array(atoms), np.array(geom, dtype=float), e
 
 
-def read_ensemble(file: str, log:Logger, raw: bool=False) -> list:
+def read_ensemble(file: str, log: Optional[Logger] = None, raw: bool=False) -> list:
     """
     Read the initial ensemble and return the ensemble list.
     Not only XYZ file is supported. OBABEL is required.
@@ -80,19 +80,20 @@ def read_ensemble(file: str, log:Logger, raw: bool=False) -> list:
     return confs
 
 
-def save_snapshot(output: str, confs: List[Conformer], log: Logger):
+def save_snapshot(output: str, confs: List[Conformer], log: Optional[Logger] = None):
     """
     Save an XYZ file to store a bunch of geometries.
 
     Args:
         output (str): Output filename.
         confs (List[Conformer]): List of all active conformers.
-        log (Logger): Logger instance.
+        log (Optional[Logger]): Logger instance.
 
     Returns:
         None
     """
-    log.debug("Saving snapshot of the ensemble")
+    if log:
+        log.debug("Saving snapshot of the ensemble")
     xyzs = []
     for conf in confs:
         xyz_data = conf.write_xyz()

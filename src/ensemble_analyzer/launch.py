@@ -12,7 +12,7 @@ def main(
     output: str = "output.out",
     disable_color: bool = False,
     **config: Any,
-) -> None:
+) -> Any:
     """Run the ensemble analysis workflow.
 
     Two modes
@@ -105,9 +105,20 @@ def main(
         config=cfg.create_log(protocols=protocols_out, conformers=len(conformers)),
     )
 
-    CalculationOrchestrator(
+    orchestrator = CalculationOrchestrator(
         conformers=conformers, protocols=protocols_out, config=cfg, logger=log,
-    ).run()
+    )
+    orchestrator.run()
+
+    if not from_cli:
+        from ensemble_analyzer.api import EnsembleResult
+        return EnsembleResult(
+            conformers=orchestrator.conformers,
+            protocols=protocols_out,
+            config=cfg,
+            logger=log,
+            orchestrator=orchestrator
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -119,16 +130,19 @@ def _normalize_protocols(protocol: Any) -> list:
     """Accept str | dict | Protocol | list[Protocol] → list[Protocol]."""
     from ensemble_analyzer.protocol.protocol import Protocol, load_protocol
 
+    if protocol is None:
+        data = load_protocol(None)
+        return [Protocol(number=int(k), **data[k]) for k in data]
     if isinstance(protocol, Protocol):
         return [protocol]
-    if isinstance(protocol, str):
-        data = load_protocol(protocol)
+    if isinstance(protocol, (str, Path)):
+        data = load_protocol(str(protocol))
         return [Protocol(number=int(k), **data[k]) for k in data]
     if isinstance(protocol, dict):
         return [Protocol(number=int(k), **protocol[k]) for k in protocol]
     if isinstance(protocol, list):
         return protocol
-    raise TypeError(f"protocol must be str, dict, Protocol, or list[Protocol], got {type(protocol)}")
+    raise TypeError(f"protocol must be str, Path, dict, Protocol, or list[Protocol], got {type(protocol)}")
 
 
 def _normalize_ensemble(ensemble: Any, log) -> list:
@@ -138,8 +152,12 @@ def _normalize_ensemble(ensemble: Any, log) -> list:
 
     if isinstance(ensemble, Conformer):
         return [ensemble]
-    if isinstance(ensemble, str):
-        return read_ensemble(ensemble, log)
+    if isinstance(ensemble, (str, Path)):
+        return read_ensemble(str(ensemble), log)
+    if type(ensemble).__name__ == "Atoms":
+        return [Conformer.from_ase(ensemble, number=1, raw=True)]
     if isinstance(ensemble, list):
+        if ensemble and type(ensemble[0]).__name__ == "Atoms":
+            return [Conformer.from_ase(a, number=i+1, raw=True) for i, a in enumerate(ensemble)]
         return ensemble
-    raise TypeError(f"ensemble must be str, Conformer, or list[Conformer], got {type(ensemble)}")
+    raise TypeError(f"ensemble must be str, Path, Atoms, Conformer, or list of them, got {type(ensemble)}")
