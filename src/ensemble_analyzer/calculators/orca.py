@@ -7,39 +7,36 @@ from typing import Tuple, Any
 
 _POST_COORDS_KEYWORDS = frozenset({'%frag', '%eprnmr', '%nmr', '%rel', '%epr'})
 
-def _is_end_line(line: str) -> bool:
-    s = line.split('#')[0].strip()
-    return s == 'end'
+import re
 
 def _split_post_blocks(text: str) -> tuple[str, str]:
     if not text.strip():
         return text, ""
+    
+    # 1. Remove comments
     lines = text.split('\n')
+    clean_lines = [line.split('#')[0] for line in lines]
+    clean_text = '\n'.join(clean_lines)
+    
     pre = []
     post = []
-    i = 0
-    while i < len(lines):
-        line = lines[i]
-        stripped = line.strip()
-        kw_match = next((kw for kw in _POST_COORDS_KEYWORDS if stripped.startswith(kw)), None)
-        if kw_match:
-            block_end = len(lines)
-            for j in range(i + 1, len(lines)):
-                if any(lines[j].strip().startswith(kw) for kw in _POST_COORDS_KEYWORDS):
-                    block_end = j
-                    break
-            last_end = None
-            for j in range(block_end - 1, i, -1):
-                if _is_end_line(lines[j]):
-                    last_end = j
-                    break
-            if last_end is not None:
-                post.extend(lines[i:last_end + 1])
-                i = last_end + 1
-                continue
-        pre.append(line)
-        i += 1
-    return '\n'.join(pre), '\n'.join(post)
+    
+    # 2. Split right before every %, ! or *
+    parts = re.split(r'(?=[%!*])', clean_text)
+    
+    for part in parts:
+        stripped = part.strip()
+        if not stripped:
+            continue
+            
+        first_token = stripped.split()[0].lower()
+        
+        if first_token in _POST_COORDS_KEYWORDS:
+            post.append(stripped)
+        else:
+            pre.append(stripped)
+            
+    return "\n".join(pre), "\n".join(post)
 
 VERSION = None
 

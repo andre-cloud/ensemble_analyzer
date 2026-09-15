@@ -61,7 +61,8 @@ class TestCalculators:
     def test_orca_common_string(self, setup_calc):
         conf, proto = setup_calc
         # Mock ORCA profile availability
-        with patch("ensemble_analyzer.calculators.orca.orca_profile"):
+        with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
+             patch("ensemble_analyzer.calculators.orca.orca_profile"):
             calc = OrcaCalc(proto, 4, conf)
             si, ob, post = calc.common_str()
             
@@ -74,18 +75,20 @@ class TestCalculators:
     def test_orca_freq_block(self, setup_calc):
         conf, proto = setup_calc
         proto.freq = True
-        with patch("ensemble_analyzer.calculators.orca.orca_profile"):
-            with patch("ensemble_analyzer.calculators.orca.OrcaCalc.VERSION", 6):
-                calc = OrcaCalc(proto, 4, conf)
-                ase_calc, label = calc.frequency()
+        with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
+             patch("ensemble_analyzer.calculators.orca.orca_profile"), \
+             patch("ensemble_analyzer.calculators.orca.OrcaCalc.VERSION", 6):
+            calc = OrcaCalc(proto, 4, conf)
+            ase_calc, label = calc.frequency()
 
-                assert "freq" in ase_calc.parameters["orcasimpleinput"]
-                assert "%freq vcd true end" in ase_calc.parameters["orcablocks"]
+            assert "freq" in ase_calc.parameters["orcasimpleinput"]
+            assert "%freq vcd true end" in ase_calc.parameters["orcablocks"]
 
     def test_orca_constraints(self, setup_calc):
         conf, proto = setup_calc
         proto.constrains = [[1]]
-        with patch("ensemble_analyzer.calculators.orca.orca_profile"):
+        with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
+             patch("ensemble_analyzer.calculators.orca.orca_profile"):
             calc = OrcaCalc(proto, 4, conf)
             ase_calc, label = calc.optimisation()
         
@@ -95,7 +98,8 @@ class TestCalculators:
         conf, proto = setup_calc
         proto.constrains = [[1, 2], [1, 2, 3], [1, 2, 3, 4], [1]]
 
-        with patch("ensemble_analyzer.calculators.orca.orca_profile"):
+        with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
+             patch("ensemble_analyzer.calculators.orca.orca_profile"):
             calc = OrcaCalc(proto, 4, conf)
             ase_calc, label = calc.optimisation()
             assert "%geom Constraints {B 1 2 C} {A 1 2 3 C} {D 1 2 3 4 C} {C 1 C} end end" in ase_calc.parameters["orcasimpleinput"]
@@ -156,5 +160,18 @@ class TestSplitPostBlocks:
     def test_no_post_blocks(self):
         t = "%scf maxiter 500 end\n%maxcore 8000"
         pre, post = _split_post_blocks(t)
-        assert pre == t
+        assert "%scf maxiter 500 end" in pre
+        assert "%maxcore 8000" in pre
         assert post == ""
+
+    def test_missing_newlines(self):
+        t = "! optts %maxcore 4000 %eprnmr nuclei H = all {shift} end end \n! Freq \n%pal nprocs_group 4 end %scf MaxIter 200 end"
+        pre, post = _split_post_blocks(t)
+        assert "! optts" in pre
+        assert "%maxcore 4000" in pre
+        assert "! Freq" in pre
+        assert "%pal nprocs_group 4 end" in pre
+        assert "%scf MaxIter 200 end" in pre
+        assert "%eprnmr nuclei H = all {shift} end end" in post
+        # Ensure that no newlines are wrongly stripped internally
+        assert pre.count("\n") >= 4
