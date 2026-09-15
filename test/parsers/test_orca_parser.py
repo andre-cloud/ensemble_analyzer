@@ -315,3 +315,67 @@ class TestOrcaParser:
         parser_v6.fl = "no normal modes"
         modes = parser_v6.parse_normal_modes(n_atoms=2)
         assert modes.shape == (0, 2, 3)
+
+from ensemble_analyzer.calculators.orca import _split_post_blocks
+
+class TestSplitPostBlocks:
+    """Tests for _split_post_blocks edge cases (indented vs compact)."""
+
+    def test_indented_frag(self):
+        t = "%frag\n Definition\n  1 {18:27} end\n  2 {0:17} end\n end\nend"
+        pre, post = _split_post_blocks(t)
+        assert pre == ""
+        assert post == "%frag\n Definition\n  1 {18:27} end\n  2 {0:17} end\n end\nend"
+
+    def test_compact_frag(self):
+        t = "%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend"
+        pre, post = _split_post_blocks(t)
+        assert pre == ""
+        assert post == "%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend"
+
+    def test_newline_prefix_frag(self):
+        t = "\n%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend"
+        pre, post = _split_post_blocks(t)
+        assert post == "%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend"
+
+    def test_mixed_pre_and_post(self):
+        t = "%scf maxiter 500 end\n%frag\nDefinition\n1 {18:27} end\nend\nend"
+        pre, post = _split_post_blocks(t)
+        assert pre == "%scf maxiter 500 end"
+        assert post == "%frag\nDefinition\n1 {18:27} end\nend\nend"
+
+    def test_multiple_post_blocks(self):
+        t = "%frag\n1 {0:5} end\nend\n%eprnmr\ngtensor 1\nend"
+        pre, post = _split_post_blocks(t)
+        assert pre == ""
+        assert post == "%frag\n1 {0:5} end\nend\n%eprnmr\ngtensor 1\nend"
+
+    def test_pre_non_post_block_and_post(self):
+        t = "%output\n print[ P_Mulliken 1 ] end\n%frag\n1 {0:5} end\nend"
+        pre, post = _split_post_blocks(t)
+        assert pre == "%output\n print[ P_Mulliken 1 ] end"
+        assert post == "%frag\n1 {0:5} end\nend"
+
+    def test_empty(self):
+        pre, post = _split_post_blocks("")
+        assert pre == ""
+        assert post == ""
+
+    def test_no_post_blocks(self):
+        t = "%scf maxiter 500 end\n%maxcore 8000"
+        pre, post = _split_post_blocks(t)
+        assert "%scf maxiter 500 end" in pre
+        assert "%maxcore 8000" in pre
+        assert post == ""
+
+    def test_missing_newlines(self):
+        t = "! optts %maxcore 4000 %eprnmr nuclei H = all {shift} end end \n! Freq \n%pal nprocs_group 4 end %scf MaxIter 200 end"
+        pre, post = _split_post_blocks(t)
+        assert "! optts" in pre
+        assert "%maxcore 4000" in pre
+        assert "! Freq" in pre
+        assert "%pal nprocs_group 4 end" in pre
+        assert "%scf MaxIter 200 end" in pre
+        assert "%eprnmr nuclei H = all {shift} end end" in post
+        # Ensure that no newlines are wrongly stripped internally
+        assert pre.count("\n") >= 4
