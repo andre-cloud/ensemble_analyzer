@@ -39,7 +39,11 @@ def _split_post_blocks(text: str) -> tuple[str, str]:
         else:
             pre.append(stripped)
             
-    return "\n".join(pre), "\n".join(post)
+    # Unisci i blocchi forzando un a capo dopo ognuno per evitare accavallamenti
+    pre_str = "\n".join(pre)
+    post_str = "\n".join(post)
+    
+    return pre_str + "\n" if pre_str else "", post_str + "\n" if post_str else ""
 
 
 def create_orca_calc(charge, mult, method, basis, solvent=None, cpu=1, add_input="", directory=None):
@@ -56,9 +60,9 @@ def create_orca_calc(charge, mult, method, basis, solvent=None, cpu=1, add_input
     pre, post = _split_post_blocks(raw_input)
 
     ob = (
-        f"%pal nprocs {cpu} end "
+        f"%pal nprocs {cpu} end\n"
         + pre
-        + (" %maxcore 5000" if "maxcore" not in raw_input else "")
+        + ("\n%maxcore 5000\n" if "maxcore" not in raw_input else "")
     )
 
     calculator = ORCA(
