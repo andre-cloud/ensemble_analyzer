@@ -248,9 +248,9 @@ class StepEditorScreen(ModalScreen[dict | None]):
                 with Collapsible(title="Constraints & Monitoring", collapsed=True):
                     yield Label("Constraints (semicolon-separated groups)", classes="field")
                     yield Input(
-                        value=_fmt_constraints(self.step.get("constrains", [])),
+                        value=_fmt_constraints(self.step.get("constraints", [])),
                         placeholder="1,2; 3,4,5",
-                        id="f_constrains",
+                        id="f_constraints",
                     )
                     yield Label("Monitor internals (semicolon-separated groups)", classes="field")
                     yield Input(
@@ -412,9 +412,9 @@ class StepEditorScreen(ModalScreen[dict | None]):
         s["tda"] = _parse_bool(self.query_one("#f_tda", Select).value)
 
         # constraints
-        c = _parse_coord_list(self.query_one("#f_constrains", Input).value)
+        c = _parse_coord_list(self.query_one("#f_constraints", Input).value)
         if c:
-            s["constrains"] = c
+            s["constraints"] = c
         m = _parse_coord_list(self.query_one("#f_monitor_internals", Input).value)
         if m:
             s["monitor_internals"] = m
@@ -605,7 +605,7 @@ class SummaryScreen(ModalScreen[None]):
                     for k, v in s.items():
                         if k == "solvent" and isinstance(v, dict):
                             yield Label(f"  solvent: {_fmt_solvent(v)}")
-                        elif k in ("constrains", "monitor_internals", "loc_freq") and isinstance(v, list):
+                        elif k in ("constraints", "monitor_internals", "loc_freq") and isinstance(v, list):
                             yield Label(f"  {k}: {_fmt_constraints(v)}")
                         elif k == "validators" and isinstance(v, list):
                             yield Label(f"  validators: {_fmt_validators(v)}")

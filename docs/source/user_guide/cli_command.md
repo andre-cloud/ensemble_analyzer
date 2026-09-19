@@ -37,8 +37,8 @@ The main driver `ensemble_analyzer` accepts various command-line arguments to co
 * **`-cpu`** (int)
     Number of CPU cores to allocate for each QM calculation step (default: `1`).
 
-* **`-calc`**, **`--calculator`** (str)
-    Selects the external QM engine driver. Options: `"orca"` (default), `"gaussian"`.
+* **`-alpha`**, **`--alpha`** (float)
+    Define alpha value for qRRHO dumping (default: `4`).
 
 ## Spectral Analysis (Graphing)
 

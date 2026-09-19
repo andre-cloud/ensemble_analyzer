@@ -138,7 +138,7 @@ ensemble_analyzer --restart
 | `thrGMAX` | float | Energy window cutoff [kcal/mol] | `10.0` |
 | `cluster` | bool/int | Enable clustering | `true` (auto), `5` (fixed) |
 | `no_prune` | bool | Disable pruning | `false` (default) |
-| **TD-DFT Settings** ||||
+| **TD-DFT Settings** (Note: Not supported for MLIPs or tblite) ||||
 | `nroots` | int | Number of excited states for TD-DFT calculation | `10`, `30` |
 | `tda` | bool | Use Tamm-Dancoff approximation (ORCA defaults to `true`, set `false` for full TD-DFT) | `true`, `false` |
 | **Advanced** ||||

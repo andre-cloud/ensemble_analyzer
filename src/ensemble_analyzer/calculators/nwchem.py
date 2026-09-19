@@ -60,23 +60,23 @@ class NWChemCalc(BaseCalc):
         return kw
 
     def _build_constraints(self) -> str:
-        if not self.constrains:
+        if not self.constraints:
             return ""
 
-        if isinstance(self.constrains, str):
-            raw = self.constrains
-        elif isinstance(self.constrains, list):
-            if all(isinstance(c, list) for c in self.constrains):
+        if isinstance(self.constraints, str):
+            raw = self.constraints
+        elif isinstance(self.constraints, list):
+            if all(isinstance(c, list) for c in self.constraints):
                 atoms = []
-                for constraint in self.constrains:
+                for constraint in self.constraints:
                     atoms.extend(str(idx + 1) for idx in constraint)
                 raw = f"fix atom {' '.join(atoms)}"
-            elif all(isinstance(c, str) for c in self.constrains):
-                raw = "\n".join(self.constrains)
+            elif all(isinstance(c, str) for c in self.constraints):
+                raw = "\n".join(self.constraints)
             else:
-                raw = str(self.constrains)
+                raw = str(self.constraints)
         else:
-            raw = str(self.constrains)
+            raw = str(self.constraints)
 
         if "constraints" not in raw.lower():
             return f"constraints\n  {raw}\nend"

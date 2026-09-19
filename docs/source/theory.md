@@ -178,3 +178,4 @@ The final intensity $I_{total}(\nu)$ is the weighted sum:
 $$
 I_\text{total}(\nu) = \sum_i^{N_{conf}} p_i \sum_k^{N_{modes}} I_{i,k} \cdot f(\nu, \nu_{i,k}, \text{FWHM})
 $$
+

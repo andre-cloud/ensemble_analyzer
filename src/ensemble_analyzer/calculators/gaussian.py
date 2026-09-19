@@ -85,7 +85,7 @@ class GaussianCalc(BaseCalc):
         else:
             opt_str = " opt"
 
-        if not self.protocol.constrains:
+        if not self.protocol.constraints:
             calc.parameters["extra"] += opt_str
         else:
             if self.protocol.ts:
@@ -94,7 +94,7 @@ class GaussianCalc(BaseCalc):
                 calc.parameters["extra"] += " opt=(modredudant)"
             tag_map = {1: "X", 2: "B", 3: "A", 4: "D"}
             lines = []
-            for c in self.protocol.constrains:
+            for c in self.protocol.constraints:
                 tag = tag_map.get(len(c), "X")
                 lines.append(f"{tag} {' '.join(map(str, c))} F")
             redundant = "\n".join(lines)

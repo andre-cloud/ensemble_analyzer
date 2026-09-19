@@ -102,7 +102,7 @@ class BaseCalc(ABC):
         self.protocol = protocol
         self.cpu = cpu
         self.conf = conf
-        self.constrains = protocol.constrains
+        self.constraints = protocol.constraints
         self.temperature = temperature
         self.linear = linear
         self.cut_off = cut_off

@@ -133,10 +133,10 @@ class OrcaCalc(BaseCalc):
                 else:
                     calc.parameters["orcablocks"] += '\n%geom calc_hess true end\n'
 
-        if self.constrains:
+        if self.constraints:
             tag_map = {1: "C", 2: "B", 3: "A", 4: "D"}
             parts = []
-            for c in self.constrains:
+            for c in self.constraints:
                 tag = tag_map.get(len(c), "C")
                 parts.append(f"{{{tag} {' '.join(map(str, c))} C}}")
             text = "\n%geom Constraints " + " ".join(parts) + " end end\n"

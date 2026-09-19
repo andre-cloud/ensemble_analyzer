@@ -37,13 +37,13 @@ class BaseMlCalc(BaseCalc):
         raise NotImplementedError
 
     def _apply_ase_constraints(self, atoms):
-        if not self.constrains:
+        if not self.constraints:
             return
         fix_atoms = []
         bonds = []
         angles = []
         dihedrals = []
-        for c in self.constrains:
+        for c in self.constraints:
             if not isinstance(c, (list, tuple)):
                 continue
             idx = [i - 1 for i in c]

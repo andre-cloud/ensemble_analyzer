@@ -104,14 +104,6 @@ def parser_arguments()-> argparse.Namespace:
             os.path.dirname(__file__), "parameters_file", "default_protocol.json"
         ),
     )
-    input_group.add_argument(
-        "-t",
-        "--threshold",
-        help="JSON file contains the threshold divided by calculation type. Default: %(default)s",
-        default=os.path.join(
-            os.path.dirname(__file__), "parameters_file", "default_threshold.json"
-        ),
-    )
 
     molecule_group = parser.add_argument_group("Molecule information")
     molecule_group.add_argument(

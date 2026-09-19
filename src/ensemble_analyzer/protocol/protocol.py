@@ -58,7 +58,7 @@ class Protocol:
     fmax                        : Optional[float]               = 0.01
     maxstep                     : Optional[float]               = 0.2
     maxiter                     : int                           = 100000000
-    constrains                  : Optional[list]                = field(default_factory=list)
+    constraints                  : Optional[list]                = field(default_factory=list)
     read_orbitals               : Optional[str]                 = ""
     add_input                   : Optional[str]                 = ""
 
