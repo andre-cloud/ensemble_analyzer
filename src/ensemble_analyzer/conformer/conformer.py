@@ -51,6 +51,38 @@ class Conformer:
         """Build an ASE Atoms object with the given calculator."""
         return Atoms(symbols="".join(tuple(self.atoms)), positions=self.last_geometry, calculator=calc)
     
+    def to_ase(self, calc: Optional[BaseCalc] = None) -> Atoms:
+        """Export Conformer to an ASE Atoms object.
+        
+        Args:
+            calc: Optional ASE calculator to attach.
+        """
+        atoms = Atoms(symbols="".join(tuple(self.atoms)), positions=self.last_geometry)
+        if calc is not None:
+            atoms.calc = calc
+        # optionally we could store energy in info
+        try:
+            atoms.info["energy"] = self._last_energy
+        except Exception:
+            pass
+        return atoms
+
+    @classmethod
+    def from_ase(cls, atoms: Atoms, number: int = 1, raw: bool = True) -> 'Conformer':
+        """Create a Conformer from an ASE Atoms object.
+        
+        Args:
+            atoms: ASE Atoms object.
+            number: Conformer ID number.
+            raw: If True, do not create a folder on disk immediately.
+        """
+        return cls(
+            number=number,
+            geom=atoms.positions.copy(),
+            atoms=tuple(atoms.get_chemical_symbols()),
+            raw=raw
+        )
+    
     # ===
     # Energy helper
     # ===
