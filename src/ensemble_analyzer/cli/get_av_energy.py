@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Tuple
 
 
-def get_thermo_data(conf, protocol_number, temp, mult, cut_off, alpha, pressure, linear) -> Tuple[float, ...]:
+def get_thermo_data(conf, protocol_number, temp, mult, cut_off, alpha, pressure, linear, symno: int = 1, model: str = "grimme") -> Tuple[float, ...]:
     import numpy as np
     from ensemble_analyzer.rrho import free_gibbs_energy
 
@@ -29,6 +29,7 @@ def get_thermo_data(conf, protocol_number, temp, mult, cut_off, alpha, pressure,
         G, zpve, h, S = free_gibbs_energy(
             SCF=E, T=temp, freq=freq, mw=mw, B=B_vec, m=mult,
             cut_off=cut_off, alpha=alpha, P=pressure, linear=linear,
+            symno=symno, model=model,
         )
         return E, E + zpve, E + h, G
     except Exception:
@@ -71,6 +72,10 @@ def main() -> None:
                         help="qRRHO cut-off frequency [cm-1]. Default: 100.0")
     parser.add_argument("--alpha", type=int, default=4,
                         help="qRRHO damping factor alpha. Default: 4")
+    parser.add_argument("-m", "--model", choices=["grimme", "truhlar"], default="grimme",
+                        help="qRRHO model for low frequencies: 'grimme' (quasi-RRHO with rotor interpolation) or 'truhlar' (quasi-harmonic with frequency cutoff). Default: grimme")
+    parser.add_argument("-s", "--sigma", "--symno", type=int, default=1, dest="sigma",
+                        help="Rotational symmetry number (sigma / symno). Default: 1")
     parser.add_argument("--pressure", type=float, default=101.325,
                         help="Pressure [kPa]. Default: 101.325")
     parser.add_argument('--linear', help='Define if molecules are linear',
@@ -172,6 +177,7 @@ def main() -> None:
                 c, p_num, target_temp, int(proto.mult),
                 cut_off=args.cut_off, alpha=args.alpha,
                 pressure=args.pressure, linear=args.linear,
+                symno=args.sigma, model=args.model,
             )
 
             if np.isnan(e_val):

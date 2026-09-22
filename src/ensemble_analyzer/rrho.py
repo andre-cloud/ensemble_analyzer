@@ -2,6 +2,8 @@ import numpy as np
 from typing import Optional
 from ensemble_analyzer.constants import h, c, J_TO_H, Boltzmann, N_A
 
+GRIMME_BAV = 1.00e-44  # kg * m^2 (default average moment of inertia, Grimme 2012)
+
 def calc_damp(frequency: np.ndarray, cut_off: float, alpha: int) -> np.ndarray:
     r"""
     Damping factor proportionate to frequency.
@@ -95,28 +97,31 @@ def calc_qRRHO_energy(freq: np.ndarray, T: float) -> np.ndarray:
 
 
 def calc_vibrational_energy(
-    freq: np.ndarray, T: float, cut_off: float, alpha: int
+    freq: np.ndarray, T: float, cut_off: float = 100, alpha: int = 4
 ) -> float:
     r"""
-    Vibrational energy calculated with qRRHO.
+    Harmonic vibrational thermal energy contribution (Grimme mRRHO style).
 
     .. math::
-        \sum_{\nu}^{freq} \left( d H_{qRRHO}(freq, T) + (1 - d)k_bT\frac 12 \right)
+        U_{\text{vib}} = \sum_{\nu}^{\text{freq}} \frac{h\nu c}{e^{\frac{h\nu c}{k_bT}} - 1}
+
+    In Grimme's 2012 mRRHO approach, the vibrational internal energy and enthalpy
+    are computed with the standard harmonic oscillator partition function.
 
     Args:
-        freq (np.ndarray): Frequency array.
-        T (float): Temperature.
-        cut_off (float): Damping frequency, default 100 cm-1.
-        alpha (int): Damping factor, default and unchangeable value is 4.
+        freq (np.ndarray): Vibrational frequencies [cm-1].
+        T (float): Temperature [K].
+        cut_off (float, optional): Frequency cutoff (retained for compatibility).
+        alpha (int, optional): Damping factor (retained for compatibility).
 
     Returns:
-        float: Vibrational energy in Eh.
+        float: Vibrational thermal energy in Eh.
     """
-    h_damp = calc_damp(freq, cut_off=cut_off, alpha=alpha)
-    return (
-        np.sum(h_damp * calc_qRRHO_energy(freq, T) + (1 - h_damp) * Boltzmann * T * 0.5)
-        * J_TO_H
-    )
+    freq = np.asarray(freq, dtype=float)
+    freq = freq[freq > 0]
+    if len(freq) == 0:
+        return 0.0
+    return float(np.sum(calc_qRRHO_energy(freq, T)) * J_TO_H)
 
 
 def calc_translational_entropy(MW: float, T: float, P: float) -> float:
@@ -129,7 +134,7 @@ def calc_translational_entropy(MW: float, T: float, P: float) -> float:
     Args:
         MW (float): Molecular weight.
         T (float): Temperature.
-        P (float): Pressure [Pa].
+        P (float): Pressure [kPa]. Defaults to 101.325.
 
     Returns:
         float: Translational entropy in Eh.
@@ -148,7 +153,7 @@ def calc_rotational_entropy(B, T, symno: int = 1, linear: bool = False) -> float
     .. math::
         θ_R &=& \frac {hcB}{k_b}\\
         q_{rot} &=& \sqrt{\frac {πT^3}{θ_{Rx}θ_{Ry}θ_{Rz}}}\\
-        S_R &=& k_b \left(\frac {\ln(q_{rot}}{σ} + 1.5\right)
+        S_R &=& k_b \left(\ln\left(\frac{q_{rot}}{σ}\right) + 1.5\right)
 
     Args:
         B (np.array): Rotational constant [cm-1].
@@ -159,13 +164,19 @@ def calc_rotational_entropy(B, T, symno: int = 1, linear: bool = False) -> float
     Returns:
         float: Rotational entropy in Eh.
     """
-    rot_temperature = h * c * B / Boltzmann
+    B_arr = np.asarray(B, dtype=float)
+    pos_B = B_arr[B_arr > 0]
+    if len(pos_B) == 0:
+        return 0.0
+
+    rot_temperature = h * c * pos_B / Boltzmann
 
     if linear:
         qrot = T / rot_temperature[0]
     else:
         qrot = np.sqrt(np.pi * T**3 / np.prod(rot_temperature))
 
+    symno = max(1, int(symno))
     return Boltzmann * (np.log(qrot / symno) + 1 + (0 if linear else 0.5)) * J_TO_H
 
 
@@ -187,57 +198,102 @@ def calc_S_V_grimme(freq: np.ndarray, T: float) -> np.ndarray:
     return (f * Boltzmann) / (np.exp(f) - 1) - Boltzmann * np.log(1 - np.exp(-f))
 
 
-def calc_S_R_grimme(freq: np.array, T: float, B: np.array) -> np.array:
+def calc_S_R_grimme(freq: np.ndarray, T: float, B: np.ndarray | float | None = None) -> np.ndarray:
     r"""
-    R factor used for the damping of the frequency.
+    Free rotor entropy factor used for the quasi-RRHO interpolation (Grimme 2012).
 
     .. math::
-        R = \frac 12 \left( 1+ \ln\left( \frac {8π^3 \frac {h}{8π^2\nu c} B k_bT} {\left(\frac {h}{8π^2\nu c}+B\right)h^2} \right)\right) k_b
+        \mu &= \frac{h}{8\pi^2 \nu c}\\
+        \mu' &= \frac{\mu B_{\text{av}}}{\mu + B_{\text{av}}}\\
+        S_{\text{rot}} &= k_b \left( \frac{1}{2} + \ln\sqrt{\frac{8\pi^3 \mu' k_b T}{h^2}} \right)
 
     Args:
-        freq (np.array): Frequencies [cm-1].
+        freq (np.ndarray): Frequencies [cm-1].
         T (float): Temperature [K].
-        B (np.array): Rotatory constant [cm-1].
+        B (np.ndarray, float, optional): Rotational constants [cm-1] or average moment of inertia [kg*m^2].
+                                         If None or empty, GRIMME_BAV (1.00e-44 kg*m^2) is used.
 
     Returns:
-        np.array: R factor in J.
+        np.ndarray: Free rotor entropy in J/K.
     """
+    freq = np.asarray(freq, dtype=float)
+    if B is None:
+        bav = GRIMME_BAV
+    elif isinstance(B, (int, float, np.floating, np.integer)):
+        bav = float(B) if B > 0 else GRIMME_BAV
+    else:
+        B_arr = np.asarray(B, dtype=float)
+        pos_B = B_arr[B_arr > 0]
+        if len(pos_B) > 0:
+            # B_i in cm^-1; moment of inertia I_i = h / (8 * pi^2 * c * B_i) in kg * m^2
+            moments = h / (8 * np.pi**2 * pos_B * c)
+            bav = float(np.mean(moments))
+        else:
+            bav = GRIMME_BAV
 
-    B = (np.sum(B * c) / len(B)) ** -1 * h
     mu = h / (8 * np.pi**2 * freq * c)
-    f = 8 * np.pi**3 * (mu * B / (mu + B)) * Boltzmann * T / h**2
+    mu_prime = mu * bav / (mu + bav)
+    f = 8 * np.pi**3 * mu_prime * Boltzmann * T / h**2
 
     return (0.5 + np.log(f**0.5)) * Boltzmann
 
 
-def calc_vibrational_entropy(freq: np.ndarray, T: float, B: np.ndarray, cut_off=100, alpha=4) -> float:
+def calc_vibrational_entropy(freq: np.ndarray, T: float, B: np.ndarray | float | None = None, cut_off=100, alpha=4) -> float:
     r"""
-    Vibrational entropy.
+    Vibrational entropy using Grimme's quasi-RRHO interpolation model (2012).
 
     .. math::
-        \sum_{\nu}^{freq} \left(dV(\nu) + (1-d)R(\nu, T, B)\right)
-
-    In formula :math:`d` is the dumping function.
+        \sum_{\nu}^{freq} \left(w(\nu) S_{\text{vib,HO}}(\nu) + (1-w(\nu)) S_{\text{rot}}(\nu, T, B)\right)
 
     Args:
-        freq (list): Frequencies [cm-1].
+        freq (np.ndarray): Frequencies [cm-1].
         T (float): Temperature [K].
-        B (np.array): Rotational constant [cm-1].
+        B (np.ndarray, float, optional): Rotational constants [cm-1] or moment of inertia. Defaults to GRIMME_BAV.
         cut_off (float, optional): Cut off for the damping of the frequency. Defaults to 100.
         alpha (float, optional): Damping factor. Defaults to 4.
 
     Returns:
-        float: Vibrational entropy [Eh].
+        float: Vibrational entropy [Eh/K].
     """
+    freq = np.asarray(freq, dtype=float)
+    freq = freq[freq > 0]
+    if len(freq) == 0:
+        return 0.0
 
     s_damp = calc_damp(freq, cut_off, alpha)
-    return (
+    return float(
         np.sum(
             calc_S_V_grimme(freq, T) * s_damp
             + (1 - s_damp) * calc_S_R_grimme(freq, T, B)
         )
         * J_TO_H
     )
+
+
+def calc_vibrational_entropy_truhlar(
+    freq: np.ndarray, T: float, cut_off: float = 100.0
+) -> float:
+    r"""
+    Vibrational entropy calculated with Truhlar's quasi-harmonic cutoff model (2011).
+
+    All frequencies below cut_off are raised to cut_off:
+    .. math::
+        \tilde{\omega}_i = \max(\omega_i, \omega_{\text{cut}})
+
+    Args:
+        freq (np.ndarray): Vibrational frequencies [cm-1].
+        T (float): Temperature [K].
+        cut_off (float, optional): Frequency cutoff in cm-1. Defaults to 100.0.
+
+    Returns:
+        float: Vibrational entropy in Eh/K.
+    """
+    freq = np.asarray(freq, dtype=float)
+    freq = freq[freq > 0]
+    if len(freq) == 0:
+        return 0.0
+    shifted_freq = np.maximum(freq, cut_off)
+    return float(np.sum(calc_S_V_grimme(shifted_freq, T)) * J_TO_H)
 
 
 def calc_electronic_entropy(m: int) -> float:
@@ -265,10 +321,12 @@ def free_gibbs_energy(
     m: int,
     # defaults
     linear: bool = False,
-    cut_off=100,
-    alpha=4,
+    cut_off: float = 100,
+    alpha: int = 4,
     P: float = 101.325,
-) -> float:
+    symno: int = 1,
+    model: str = "grimme",
+) -> tuple[float, float, float, float]:
     r"""
     Calculate Gibbs energy.
 
@@ -288,9 +346,11 @@ def free_gibbs_energy(
         cut_off (float, optional): Frequency cut_off. Defaults to 100.
         alpha (int, optional): Frequency damping factor. Defaults to 4.
         P (float, optional): Pressure [kPa]. Defaults to 101.325.
+        symno (int, optional): Rotational symmetry number (sigma). Defaults to 1.
+        model (str, optional): Quasi-RRHO model ('grimme' or 'truhlar'). Defaults to 'grimme'.
 
     Returns:
-        float: Gibbs energy.
+        tuple[float, float, float, float]: (G [Eh], zpve [Eh], h_corr [Eh], S [Eh/K])
     """
     freq = freq[freq > 0]
 
@@ -300,54 +360,20 @@ def free_gibbs_energy(
     U_rot = calc_rotational_energy(T, linear) if zpve > 0 else 0
     U_vib = calc_vibrational_energy(freq, T, cut_off, alpha)
 
-    h = zpve + U_trans + U_rot + U_vib + Boltzmann * T * J_TO_H
-    H = SCF + h
+    h_corr = zpve + U_trans + U_rot + U_vib + Boltzmann * T * J_TO_H
+    H = SCF + h_corr
 
     S_elec = calc_electronic_entropy(m)
-    S_vib = calc_vibrational_entropy(freq, T, B, cut_off, alpha)
-    S_rot = calc_rotational_entropy(B, T, linear=linear)
+    if model.lower() == "truhlar":
+        S_vib = calc_vibrational_entropy_truhlar(freq, T, cut_off=cut_off)
+    elif model.lower() == "grimme":
+        S_vib = calc_vibrational_entropy(freq, T, B, cut_off, alpha)
+    else:
+        raise ValueError(f"Unknown quasi-RRHO model '{model}'. Choose 'grimme' or 'truhlar'.")
+
+    S_rot = calc_rotational_entropy(B, T, symno=symno, linear=linear)
     S_trans = calc_translational_entropy(mw, T, P)
 
     S = S_trans + S_rot + S_vib + S_elec
 
-    return H - T * S, zpve, h, S
-
-
-if __name__ == "__main__":
-    from ensemble_analyzer._parser_parameter import get_param, get_freq
-    import sys
-
-    args = sys.argv[1:]
-    *output, calc, T = args
-
-    for i in output:
-        with open(i) as f:
-            fl = f.readlines()
-
-        e = float(
-            list(filter(lambda x: get_param(x, calc, "E"), fl))[-1].strip().split()[-1]
-        )
-
-        B = np.array(
-            list(filter(lambda x: get_param(x, calc, "B"), fl))[-1]
-            .strip()
-            .split(":")[-1]
-            .split(),
-            dtype=float,
-        )
-
-        mw = float(
-            [i for i in fl if "Total Mass" in i][0]
-            .strip()
-            .split("...")[1]
-            .split()[0]
-            .strip()
-        )
-
-        freq = get_freq(fl, calc)
-        im_freq = freq[freq < 0]
-
-        g = free_gibbs_energy(SCF=e, T=float(T), freq=freq[freq > 0], mw=mw, B=B, m=1)
-        print(
-            f'{i} --- G with mRRHO @ T={T}: {g} Eh     Calculation ended with {len(im_freq)} imaginary frequencies {" ".join(list(map(str, im_freq))) if len(im_freq) > 0 else ""}'
-        )
+    return H - T * S, zpve, h_corr, S
