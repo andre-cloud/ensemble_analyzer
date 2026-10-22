@@ -29,6 +29,8 @@ from ensemble_analyzer.cli.protocol_wizard.templates import (
     SYSTEM_TEMPLATES,
     apply,
     load_user_templates,
+    save_user_template,
+    user_template_path,
     user_templates_dir,
 )
 
@@ -572,19 +574,25 @@ class TemplateScreen(ModalScreen[list | None]):
             items.append(ListItem(Static(text), disabled=True))
             self._entries.append(None)
 
-        def add_templates(templates: dict[str, list]):
-            for name, steps in templates.items():
-                items.append(ListItem(Static(f"  {name}")))
-                self._entries.append(steps)
+        def add_template(label: str, steps: list):
+            items.append(ListItem(Static(label)))
+            self._entries.append(steps)
 
         add_note("[bold]System Templates[/]")
-        add_templates(SYSTEM_TEMPLATES)
+        for name, steps in SYSTEM_TEMPLATES.items():
+            add_template(f"  {name}", steps)
 
         user_templates, errors = load_user_templates()
-        add_note("[bold]User Templates[/]")
-        add_templates(user_templates)
+        add_note(f"[bold]User Templates[/]  [dim]{user_templates_dir()}[/]")
+        folder = ""
+        for key, steps in user_templates.items():
+            parent, _, name = key.rpartition("/")
+            if parent != folder:
+                folder = parent
+                add_note(f"  [bold]{parent}/[/]")
+            add_template(f"    {name}" if parent else f"  {name}", steps)
         if not user_templates:
-            add_note(f"  [dim](none — add .json files to {user_templates_dir()})[/]")
+            add_note("  [dim](none — add .json files there or use 'Save as template')[/]")
         for err in errors:
             add_note(f"  [yellow]⚠ {err}[/]")
 
@@ -746,7 +754,7 @@ class MainScreen(Screen):
                 with Vertical(id="step-list-box"):
                     yield ListView(id="step_list")
 
-                with Vertical(id="actions-box"):
+                with VerticalScroll(id="actions-box"):
                     yield Button("New from template", id="new")
                     yield Button("Load protocol", id="load")
                     yield Button("Add step", id="add")
@@ -754,6 +762,7 @@ class MainScreen(Screen):
                     yield Button("Remove step", id="remove")
                     yield Button("View summary", id="summary")
                     yield Button("Save", id="save")
+                    yield Button("Save as template", id="save_template")
                     yield Button("Exit", id="exit")
 
             yield Static(id="footer", classes="footer")
@@ -850,6 +859,18 @@ class MainScreen(Screen):
 
         elif btn == "save":
             self._do_save_maybe_ask()
+
+        elif btn == "save_template":
+            if not state.protocol:
+                self.app.push_screen(ConfirmScreen("No steps to save as template."))
+                return
+            self.app.push_screen(
+                _InputScreen(
+                    f"Template name, sub-folders allowed (e.g. my_opt, group/my_opt)\nSaved in {user_templates_dir()}",
+                    "",
+                ),
+                self._on_template_name,
+            )
 
         elif btn == "exit":
             if state.dirty:
@@ -1009,6 +1030,32 @@ class MainScreen(Screen):
             self._refresh()
         except Exception as e:
             self.app.push_screen(ConfirmScreen(f"Save error: {e}"))
+
+    # ── Save as user template ──
+
+    def _on_template_name(self, name: str | None):
+        if not name:
+            return
+        try:
+            path = user_template_path(name)
+        except ValueError as e:
+            self.app.push_screen(ConfirmScreen(f"Template save error: {e}"))
+            return
+        if path.exists():
+            self.app.push_screen(
+                ConfirmScreen(f"Template '{name}' already exists. Overwrite?"),
+                lambda ok: self._do_save_template(name, overwrite=True) if ok else None,
+            )
+        else:
+            self._do_save_template(name)
+
+    def _do_save_template(self, name: str, overwrite: bool = False):
+        state = self.app.state  # type: ignore
+        try:
+            path = save_user_template(name, state.protocol, overwrite=overwrite)
+            self.notify(f"Template saved: {path}")
+        except Exception as e:
+            self.app.push_screen(ConfirmScreen(f"Template save error: {e}"))
 
 
 # ── Minimal input screen ──────────────────────────────────────────

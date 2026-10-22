@@ -71,6 +71,7 @@ Optionally, point the Protocol Wizard (`enan_protocol_wizard`) to your own proto
 ```bash
 export ENAN_TEMPLATES_DIR="/path/to/templates"
 # Default: ~/.ensemble_analyzer/template/
+# Free layout: sub-folders (also symlinks to shared group folders) become sub-sections
 ```
 
 ## 🚀 Quick Start

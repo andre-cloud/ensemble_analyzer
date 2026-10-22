@@ -50,14 +50,27 @@ The basic and Intermediate levels allow to less-expert users to create from scra
 - **System Templates**: built-in quick-start protocols (SP, OPT, OPT+FREQ, TS search, TD-DFT, …).
 - **User Templates**: your own protocols, read from `~/.ensemble_analyzer/template/` (override with the `ENAN_TEMPLATES_DIR` environment variable).
 
-Each user template is a `.json` file in that folder and is listed under its file name (without extension). The file uses the same format as a `protocol.json` written by the wizard, so the easiest way to create one is to build a protocol, save it, and copy it there:
+Each user template is a `.json` file in that folder and is listed under its file name (without extension). The file uses the same format as a `protocol.json` written by the wizard; a plain JSON list of steps (`[{...}, {...}]`) is also accepted. Files that cannot be read are skipped and shown with a warning in the selector.
+
+The layout of the folder is free: sub-folders, at any depth, are scanned and shown as sub-sections of *User Templates*. Symlinked folders are followed, so a group can share its templates by linking a common folder maintained by an administrator; hidden files and folders (starting with `.`) are ignored.
+
+```text
+~/.ensemble_analyzer/template/
+├── my_opt.json              → my_opt
+├── lab -> /shared/enan/lab  → lab/ (group templates)
+│   ├── opt_freq.json
+│   └── dft/
+│       └── dlpno.json       → lab/dft/
+└── benchmark/
+    └── sp.json              → benchmark/
+```
+
+To create a user template, build a protocol and press **Save as template**: the name may include sub-folders (`my_opt`, `benchmark/sp`), which are created if missing; an existing template is overwritten only after confirmation. Alternatively, copy a saved `protocol.json` into the folder:
 
 ```bash
 mkdir -p ~/.ensemble_analyzer/template
 cp protocol.json ~/.ensemble_analyzer/template/my_opt_freq.json
 ```
-
-A plain JSON list of steps (`[{...}, {...}]`) is also accepted. Files that cannot be read are skipped and shown with a warning in the selector.
 
 ---
 

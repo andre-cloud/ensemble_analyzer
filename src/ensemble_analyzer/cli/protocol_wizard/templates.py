@@ -3,9 +3,12 @@ Quick-start protocol templates.
 
 System templates live in SYSTEM_TEMPLATES (name → list of step dicts).
 User templates are JSON files in ~/.ensemble_analyzer/template/ (or the
-directory set by ENAN_TEMPLATES_DIR), one file per template, named after the
-file stem. Each file uses the protocol file format ({"0": {...}, "1": {...}})
-or a plain list of steps.
+directory set by ENAN_TEMPLATES_DIR), one file per template. The directory
+layout is free: sub-folders (also symlinked ones, e.g. a shared group folder)
+are scanned recursively and each template is keyed by its path relative to the
+templates directory, without extension ("my_opt", "lab/dft/opt_freq").
+Each file uses the protocol file format ({"0": {...}, "1": {...}}) or a plain
+list of steps.
 """
 
 from __future__ import annotations
@@ -90,22 +93,69 @@ def _parse_steps(data: Any) -> list[dict[str, Any]]:
     return steps
 
 
+def _walk_json(root: Path):
+    """Yield .json files under root (top folder first), following symlinks and skipping hidden entries."""
+    seen: set[str] = set()
+    for dirpath, dirnames, filenames in os.walk(root, followlinks=True):
+        real = os.path.realpath(dirpath)
+        if real in seen:  # symlink loop
+            dirnames[:] = []
+            continue
+        seen.add(real)
+        dirnames[:] = sorted(d for d in dirnames if not d.startswith("."))
+        for name in sorted(filenames):
+            if name.endswith(".json") and not name.startswith("."):
+                yield Path(dirpath) / name
+
+
 def load_user_templates(
     directory: Path | None = None,
 ) -> tuple[dict[str, list[dict[str, Any]]], list[str]]:
-    """Return (templates, errors); invalid files are skipped and reported in errors."""
+    """Return (templates, errors); invalid files are skipped and reported in errors.
+
+    Keys are paths relative to the directory without extension; templates in the
+    top folder come first, then each sub-folder in alphabetical order.
+    """
     directory = directory or user_templates_dir()
     templates: dict[str, list[dict[str, Any]]] = {}
     errors: list[str] = []
     if not directory.is_dir():
         return templates, errors
-    for path in sorted(directory.glob("*.json")):
+    for path in _walk_json(directory):
+        rel = path.relative_to(directory)
         try:
             with open(path, encoding="utf-8") as f:
-                templates[path.stem] = _parse_steps(json.load(f))
+                templates[rel.with_suffix("").as_posix()] = _parse_steps(json.load(f))
         except Exception as e:
-            errors.append(f"{path.name}: {e}")
+            errors.append(f"{rel.as_posix()}: {e}")
     return templates, errors
+
+
+def user_template_path(name: str, directory: Path | None = None) -> Path:
+    """Path of the user template `name` ("my_opt" or "group/my_opt"), validated to stay inside the directory."""
+    directory = directory or user_templates_dir()
+    rel = Path(name.strip())
+    if not rel.parts or rel.is_absolute() or any(p == ".." or p.startswith(".") for p in rel.parts):
+        raise ValueError(f"'{name}' is not a valid template name")
+    if rel.suffix != ".json":
+        rel = rel.with_name(rel.name + ".json")
+    return directory / rel
+
+
+def save_user_template(
+    name: str,
+    protocol: dict[str, dict[str, Any]],
+    directory: Path | None = None,
+    overwrite: bool = False,
+) -> Path:
+    """Write protocol as a user template, creating sub-folders as needed."""
+    path = user_template_path(name, directory)
+    if path.exists() and not overwrite:
+        raise FileExistsError(f"{path} already exists")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(protocol, f, indent=4, ensure_ascii=False)
+    return path
 
 
 def apply(steps: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
