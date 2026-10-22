@@ -4,7 +4,7 @@ In addition to the main `ensemble_analyzer` driver, the package provides a suite
 
 ## 1. Installation Check (`enan_check`)
 
-A diagnostic tool to verify the installation of python dependencies and the linkage to external QM software (ORCA/Gaussian).
+A diagnostic tool to verify the installation of python dependencies, the linkage to external QM software (ORCA/Gaussian/NWChem), the optional semi-empirical and ML backends, and the user directories of EnAn.
 
 **Usage:**
 ```bash
@@ -14,9 +14,15 @@ enan_check
 Checks performed:
 
 - Presence of core Python libraries (`numpy`, `ase`, `scipy`, etc.).
-- Availability of the orca executable in the system `PATH.
+- Availability of the orca executable in the system `PATH`.
 - Correct configuration of the `ORCAVERSION` environment variable.
 - Availability of Gaussian executables (`g16` or `g09`).
+- Availability of the NWChem executable.
+- Optional backends: TBLite and the ML potentials (AIMNet, UMA, FairChem, MACE).
+- `ENAN_MODELS_DIR`: directory of the ML model weights (default `~/.ensemble_analyzer/models/`).
+- `ENAN_TEMPLATES_DIR`: directory of the Protocol Wizard user templates (default `~/.ensemble_analyzer/template/`).
+
+Only missing Python dependencies and ORCA issues make the check fail; everything else is reported as a warning.
 
 ---
 

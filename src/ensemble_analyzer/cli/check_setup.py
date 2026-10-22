@@ -178,6 +178,20 @@ def check_models_dir() -> None:
     else:
         log_warn("ENAN_MODELS_DIR not set. ML models default to ~/.ensemble_analyzer/models/")
 
+def check_templates_dir() -> None:
+    """Check ENAN_TEMPLATES_DIR environment variable."""
+
+    print(f"\n{'-'*20} 7. Checking Protocol Wizard Templates {'-'*20}")
+    templates_dir = os.environ.get("ENAN_TEMPLATES_DIR")
+    if templates_dir:
+        p = Path(templates_dir)
+        if p.is_dir():
+            log_pass(f"ENAN_TEMPLATES_DIR = {templates_dir}")
+        else:
+            log_warn(f"ENAN_TEMPLATES_DIR = {templates_dir} (directory does not exist yet)")
+    else:
+        log_warn("ENAN_TEMPLATES_DIR not set. Protocol Wizard user templates default to ~/.ensemble_analyzer/template/")
+
 def main() -> None:
     """Run the complete installation check suite."""
     
@@ -190,7 +204,8 @@ def main() -> None:
     check_tblite()
     check_mlip()
     check_models_dir()
-    
+    check_templates_dir()
+
     print(f"\n{'-'*50}")
     if deps_ok and orca_ok:
         print(f"{GREEN}SUCCESS: Installation looks correct! You are ready to run EnAn.{RESET}")

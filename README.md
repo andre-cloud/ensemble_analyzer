@@ -67,6 +67,12 @@ export ENAN_MODELS_DIR="/path/to/ml_weights"
 # Default: ~/.ensemble_analyzer/models/<calculator>/
 ```
 
+Optionally, point the Protocol Wizard (`enan_protocol_wizard`) to your own protocol templates:
+```bash
+export ENAN_TEMPLATES_DIR="/path/to/templates"
+# Default: ~/.ensemble_analyzer/template/
+```
+
 ## 🚀 Quick Start
 
 ### 1. Define your protocol file

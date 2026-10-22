@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from ensemble_analyzer.cli.check_setup import (
     check_python_dependencies, check_orca, check_gaussian,
-    check_nwchem, check_tblite, check_mlip, check_models_dir, main
+    check_nwchem, check_tblite, check_mlip, check_models_dir, check_templates_dir, main
 )
 
 
@@ -138,6 +138,23 @@ class TestCheckSetup:
     def test_models_dir_not_set(self):
         with patch("ensemble_analyzer.cli.check_setup.os.environ.get", return_value=None):
             check_models_dir()
+
+    def test_templates_dir_set_and_exists(self, capsys):
+        with patch("ensemble_analyzer.cli.check_setup.os.environ.get", return_value="/tmp/templates"):
+            with patch("ensemble_analyzer.cli.check_setup.Path.is_dir", return_value=True):
+                check_templates_dir()
+        assert "ENAN_TEMPLATES_DIR = /tmp/templates" in capsys.readouterr().out
+
+    def test_templates_dir_set_not_exists(self, capsys):
+        with patch("ensemble_analyzer.cli.check_setup.os.environ.get", return_value="/tmp/templates"):
+            with patch("ensemble_analyzer.cli.check_setup.Path.is_dir", return_value=False):
+                check_templates_dir()
+        assert "does not exist yet" in capsys.readouterr().out
+
+    def test_templates_dir_not_set(self, capsys):
+        with patch("ensemble_analyzer.cli.check_setup.os.environ.get", return_value=None):
+            check_templates_dir()
+        assert "~/.ensemble_analyzer/template/" in capsys.readouterr().out
 
     @patch("ensemble_analyzer.cli.check_setup.check_python_dependencies")
     @patch("ensemble_analyzer.cli.check_setup.check_orca")
