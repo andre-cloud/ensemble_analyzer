@@ -37,6 +37,22 @@ Features:
 
 The basic and Intermediate levels allow to less-expert users to create from scratch a protocol file, using the default values of some configuration. 
 
+**Templates**
+
+*New from template* opens a selector with two sections:
+
+- **System Templates**: built-in quick-start protocols (SP, OPT, OPT+FREQ, TS search, TD-DFT, …).
+- **User Templates**: your own protocols, read from `~/.ensemble_analyzer/template/` (override with the `ENAN_TEMPLATES_DIR` environment variable).
+
+Each user template is a `.json` file in that folder and is listed under its file name (without extension). The file uses the same format as a `protocol.json` written by the wizard, so the easiest way to create one is to build a protocol, save it, and copy it there:
+
+```bash
+mkdir -p ~/.ensemble_analyzer/template
+cp protocol.json ~/.ensemble_analyzer/template/my_opt_freq.json
+```
+
+A plain JSON list of steps (`[{...}, {...}]`) is also accepted. Files that cannot be read are skipped and shown with a warning in the selector.
+
 ---
 
 ## 3. Spectra Regrapher (`enan_regraph`)

@@ -25,7 +25,12 @@ from ensemble_analyzer.cli.protocol_wizard.fields import (
     ML_CALCULATORS,
     CALCULATOR_CHOICES,
 )
-from ensemble_analyzer.cli.protocol_wizard.templates import list_names, apply
+from ensemble_analyzer.cli.protocol_wizard.templates import (
+    SYSTEM_TEMPLATES,
+    apply,
+    load_user_templates,
+    user_templates_dir,
+)
 
 # ── helpers ────────────────────────────────────────────────────────
 
@@ -538,7 +543,7 @@ class StepEditorScreen(ModalScreen[dict | None]):
 
 # ── Template selector modal ───────────────────────────────────────
 
-class TemplateScreen(ModalScreen[str | None]):
+class TemplateScreen(ModalScreen[list | None]):
     CSS = """
     TemplateScreen {
         align: center middle;
@@ -551,22 +556,46 @@ class TemplateScreen(ModalScreen[str | None]):
         padding: 1;
     }
     ListView {
-        height: 12;
+        height: auto;
+        max-height: 20;
     }
     """
 
     BINDINGS = [("escape", "dismiss(None)")]
 
     def compose(self):
+        # _entries runs parallel to the ListView items: steps, or None for headers/notes
+        self._entries: list[list | None] = []
+        items: list[ListItem] = []
+
+        def add_note(text: str):
+            items.append(ListItem(Static(text), disabled=True))
+            self._entries.append(None)
+
+        def add_templates(templates: dict[str, list]):
+            for name, steps in templates.items():
+                items.append(ListItem(Static(f"  {name}")))
+                self._entries.append(steps)
+
+        add_note("[bold]System Templates[/]")
+        add_templates(SYSTEM_TEMPLATES)
+
+        user_templates, errors = load_user_templates()
+        add_note("[bold]User Templates[/]")
+        add_templates(user_templates)
+        if not user_templates:
+            add_note(f"  [dim](none — add .json files to {user_templates_dir()})[/]")
+        for err in errors:
+            add_note(f"  [yellow]⚠ {err}[/]")
+
         with Vertical(id="template-box"):
             yield Label("Select a template:", classes="title")
-            yield ListView(*[ListItem(Static(name)) for name in list_names()], id="template_list")
+            yield ListView(*items, id="template_list")
 
     def on_list_view_selected(self, event: ListView.Selected):
-        if event.list_view.index is not None:
-            names = list_names()
-            if event.list_view.index < len(names):
-                self.dismiss(names[event.list_view.index])
+        idx = event.list_view.index
+        if idx is not None and idx < len(self._entries) and self._entries[idx] is not None:
+            self.dismiss(self._entries[idx])
 
 
 # ── Summary modal ─────────────────────────────────────────────────
@@ -765,11 +794,11 @@ class MainScreen(Screen):
         state.dirty = True
         self._refresh()
 
-    def _on_template_selected(self, name: str | None):
-        if name is None:
+    def _on_template_selected(self, steps: list | None):
+        if steps is None:
             return
         state = self.app.state  # type: ignore
-        state.protocol = apply(name)
+        state.protocol = apply(steps)
         state.filename = None
         state.dirty = True
         self._refresh()

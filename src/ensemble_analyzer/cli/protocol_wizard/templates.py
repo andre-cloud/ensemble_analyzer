@@ -1,13 +1,22 @@
 """
 Quick-start protocol templates.
-Add your own by inserting a new entry in TEMPLATES: name → list of step dicts.
+
+System templates live in SYSTEM_TEMPLATES (name → list of step dicts).
+User templates are JSON files in ~/.ensemble_analyzer/template/ (or the
+directory set by ENAN_TEMPLATES_DIR), one file per template, named after the
+file stem. Each file uses the protocol file format ({"0": {...}, "1": {...}})
+or a plain list of steps.
 """
 
 from __future__ import annotations
 
+import copy
+import json
+import os
+from pathlib import Path
 from typing import Any
 
-TEMPLATES: dict[str, list[dict[str, Any]]] = {
+SYSTEM_TEMPLATES: dict[str, list[dict[str, Any]]] = {
     "Empty — start from scratch": [],
     "SP (Single Point)": [
         {"calculator": "orca", "functional": "B3LYP", "basis": "def2-SVP"},
@@ -58,10 +67,46 @@ TEMPLATES: dict[str, list[dict[str, Any]]] = {
 }
 
 
-def list_names() -> list[str]:
-    return list(TEMPLATES.keys())
+def user_templates_dir() -> Path:
+    env_path = os.getenv("ENAN_TEMPLATES_DIR")
+    if env_path:
+        return Path(env_path).expanduser()
+    return Path.home() / ".ensemble_analyzer" / "template"
 
 
-def apply(name: str) -> dict[str, dict[str, Any]]:
-    steps = TEMPLATES.get(name, [])
-    return {str(i): step for i, step in enumerate(steps)}
+def _parse_steps(data: Any) -> list[dict[str, Any]]:
+    if isinstance(data, dict):
+        try:
+            items = sorted(data.items(), key=lambda x: int(x[0]))
+        except ValueError:
+            raise ValueError("step keys must be integers") from None
+        steps = [step for _, step in items]
+    elif isinstance(data, list):
+        steps = data
+    else:
+        raise ValueError("root must be a JSON object or list")
+    if not all(isinstance(step, dict) for step in steps):
+        raise ValueError("each step must be a JSON object")
+    return steps
+
+
+def load_user_templates(
+    directory: Path | None = None,
+) -> tuple[dict[str, list[dict[str, Any]]], list[str]]:
+    """Return (templates, errors); invalid files are skipped and reported in errors."""
+    directory = directory or user_templates_dir()
+    templates: dict[str, list[dict[str, Any]]] = {}
+    errors: list[str] = []
+    if not directory.is_dir():
+        return templates, errors
+    for path in sorted(directory.glob("*.json")):
+        try:
+            with open(path, encoding="utf-8") as f:
+                templates[path.stem] = _parse_steps(json.load(f))
+        except Exception as e:
+            errors.append(f"{path.name}: {e}")
+    return templates, errors
+
+
+def apply(steps: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    return {str(i): copy.deepcopy(step) for i, step in enumerate(steps)}
