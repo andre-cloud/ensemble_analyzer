@@ -15,12 +15,18 @@ class TestCheckSetup:
 
     @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
     def test_python_deps_missing(self, mock_find_spec):
-        mock_find_spec.side_effect = [None] + [MagicMock()] * 8 + [MagicMock()]
+        # name-based (not positional) so adding a dependency does not break the test
+        mock_find_spec.side_effect = lambda name: None if name == "numpy" else MagicMock()
+        assert check_python_dependencies() is False
+
+    @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
+    def test_python_deps_missing_prism(self, mock_find_spec):
+        mock_find_spec.side_effect = lambda name: None if name == "prism_pruner" else MagicMock()
         assert check_python_dependencies() is False
 
     @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
     def test_python_deps_missing_package(self, mock_find_spec):
-        mock_find_spec.side_effect = [MagicMock()] * 9 + [None]
+        mock_find_spec.side_effect = lambda name: None if name == "ensemble_analyzer" else MagicMock()
         assert check_python_dependencies() is False
 
     @patch("ensemble_analyzer.cli.check_setup.shutil.which")

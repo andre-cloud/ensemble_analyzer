@@ -4,11 +4,11 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ensemble-analyzer"
-version = '1.1post1'
+version = '1.2'
 description = "Automatic Refinement of Conformational Ensemble"
 readme = "README.md"
 license = { text = "MIT" }
-requires-python = ">=3.11,<3.14"
+requires-python = ">=3.12,<3.15"
 
 authors = [
     { name = "Andrea Pellegrini", email = "andrea.pellegrini15@unibo.it" },
@@ -39,9 +39,9 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Physics",
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Programming Language :: Python :: 3 :: Only",
     "Operating System :: OS Independent",
     "Typing :: Typed",
@@ -58,6 +58,7 @@ dependencies = [
     "InquirerPy>=0.3.4",
     "textual>=2.0.0",
     "sella>=2.4.0",
+    "prism_pruner>=0.1.2",
 ]
 
 # Flattened optional dependencies to prevent pip self-referencing errors

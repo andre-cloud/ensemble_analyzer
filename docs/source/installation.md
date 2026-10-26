@@ -7,7 +7,7 @@
 Before installing the package, ensure your system meets the following requirements:
 
 * **Operating System**: Linux (recommended), macOS, or Windows.
-* **Python**: Version 3.11 or higher.
+* **Python**: 3.12, 3.13 or 3.14 (3.15 is not yet supported: PyTorch and TBLite publish no 3.15 wheels).
 * **QM Engine**: A valid installation of ORCA (recommended) and/or Gaussian.
 
 ---
@@ -20,7 +20,7 @@ We strongly recommend using **Conda** (via Anaconda or Miniconda) to manage depe
 
 ```bash
 # Create a new environment named 'enan'
-conda create -n enan python>=3.11
+conda create -n enan "python>=3.12,<3.15"
 
 # Activate the environment
 conda activate enan

@@ -15,4 +15,5 @@ class AIMNetCalc(BaseMlCalc):
             mult=self.protocol.mult,
             method=method,
             solvent=self.protocol.solvent.solvent if self.protocol.solvent else None,
+            task=self.protocol.task,
         )

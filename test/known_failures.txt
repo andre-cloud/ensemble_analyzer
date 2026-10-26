@@ -1,0 +1,31 @@
+# Pre-existing test failures (measured on Python 3.14, core dependencies only).
+# conftest.py marks these node IDs as xfail(strict=False): they still run and are
+# reported, but do not block CI/releases. A test that starts passing shows as XPASS.
+# Remove a line once the corresponding bug is fixed.
+# Run them as normal tests with:  ENAN_STRICT_TESTS=1 pytest test
+#
+# Groups:
+#  - ORCA/Gaussian constraint input generation (empty %geom Constraints block)
+#  - FAIRChem/UMA/Skala/NWChem calculator mocks
+#  - ORCA parser: post-blocks (%frag, ...) trailing newline mismatch
+test/calculators/test_calculator.py::TestCalculators::test_constraints_all_types
+test/calculators/test_calculator.py::TestCalculators::test_gaussian_opt_constraints
+test/calculators/test_calculator.py::TestCalculators::test_orca_constraints
+test/calculators/test_fairchem_calculator.py::TestFAIRChemMlCalc::test_successful_calculator_creation
+test/calculators/test_nwchem_calculator.py::TestNWChemCalc::test_frequency
+test/calculators/test_skala_calculator.py::TestSkalaCalc::test_cache_reuses_same_config
+test/calculators/test_skala_calculator.py::TestSkalaCalc::test_clears_stale_env_var
+test/calculators/test_skala_calculator.py::TestSkalaCalc::test_direct_path_fallback
+test/calculators/test_skala_calculator.py::TestSkalaCalc::test_import_error_when_skala_missing
+test/calculators/test_skala_calculator.py::TestSkalaCalc::test_local_model_discovered
+test/calculators/test_skala_calculator.py::TestSkalaCalc::test_local_model_with_fun_extension
+test/calculators/test_skala_calculator.py::TestSkalaCalc::test_no_local_model_skips_env_var
+test/calculators/test_uma_calculator.py::TestUMAMlCalc::test_calculator_uses_method_from_kwargs
+test/calculators/test_uma_calculator.py::TestUMAMlCalc::test_import_error_when_fairchem_missing
+test/calculators/test_uma_calculator.py::TestUMAMlCalc::test_successful_calculator_creation
+test/parsers/test_orca_parser.py::TestSplitPostBlocks::test_compact_frag
+test/parsers/test_orca_parser.py::TestSplitPostBlocks::test_indented_frag
+test/parsers/test_orca_parser.py::TestSplitPostBlocks::test_mixed_pre_and_post
+test/parsers/test_orca_parser.py::TestSplitPostBlocks::test_multiple_post_blocks
+test/parsers/test_orca_parser.py::TestSplitPostBlocks::test_newline_prefix_frag
+test/parsers/test_orca_parser.py::TestSplitPostBlocks::test_pre_non_post_block_and_post

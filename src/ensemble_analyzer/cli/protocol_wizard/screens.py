@@ -191,6 +191,13 @@ class StepEditorScreen(ModalScreen[dict | None]):
                     id="f_basis",
                 )
 
+                yield Label("ML task / head (uma, fairchem, mace)", classes="field")
+                yield Input(
+                    value=_v(self.step.get("task")),
+                    placeholder="empty = model default (omol for UMA)",
+                    id="f_task",
+                )
+
                 yield Label("Optimization", classes="field")
                 yield Select(
                     [("No", "no"), ("Yes", "yes")],
@@ -279,6 +286,37 @@ class StepEditorScreen(ModalScreen[dict | None]):
                         [("No", "no"), ("Yes", "yes")],
                         value="yes" if self.step.get("no_prune") else "no",
                         id="f_no_prune",
+                    )
+                    yield Label("Duplicate-removal method", classes="field")
+                    yield Select(
+                        [
+                            ("Energy + rotational constants (default)", "rotconst"),
+                            ("PRISM: heavy-atom RMSD", "prism"),
+                            ("PRISM: RMSD + rotamer-corrected RMSD", "prism_rotcorr"),
+                        ],
+                        value=self.step.get("prune_method", "rotconst") or "rotconst",
+                        id="f_prune_method",
+                    )
+                    yield Label("PRISM: use moment-of-inertia stage? (opt-in)", classes="field")
+                    yield Select(
+                        [("No", "no"), ("Yes", "yes")],
+                        value="yes" if self.step.get("prism_moi") else "no",
+                        id="f_prism_moi",
+                    )
+                    yield Label("PRISM: max RMSD (Å)", classes="field")
+                    yield Input(
+                        value=str(self.step.get("prism_max_rmsd", 0.25)),
+                        id="f_prism_max_rmsd",
+                    )
+                    yield Label("PRISM: max atomic deviation (Å, blank = 2×RMSD)", classes="field")
+                    yield Input(
+                        value=_v(self.step.get("prism_max_dev")),
+                        id="f_prism_max_dev",
+                    )
+                    yield Label("PRISM: MOI relative deviation (0.01 = 1 %)", classes="field")
+                    yield Input(
+                        value=str(self.step.get("prism_moi_dev", 0.01)),
+                        id="f_prism_moi_dev",
                     )
 
                 # ── TS Settings ──
@@ -387,6 +425,10 @@ class StepEditorScreen(ModalScreen[dict | None]):
         if basis or s.get("calculator") not in ML_CALCULATORS:
             s["basis"] = basis
 
+        task = self.query_one("#f_task", Input).value.strip()
+        if task:
+            s["task"] = task
+
         s["opt"] = _parse_bool(self.query_one("#f_opt", Select).value)
         s["freq"] = _parse_bool(self.query_one("#f_freq", Select).value)
         s["ts"] = _parse_bool(self.query_one("#f_ts", Select).value)
@@ -434,6 +476,16 @@ class StepEditorScreen(ModalScreen[dict | None]):
             except ValueError:
                 pass
         s["no_prune"] = _parse_bool(self.query_one("#f_no_prune", Select).value)
+        s["prune_method"] = self.query_one("#f_prune_method", Select).value or "rotconst"
+        if s["prune_method"] != "rotconst":
+            s["prism_moi"] = _parse_bool(self.query_one("#f_prism_moi", Select).value)
+            for field in ("prism_max_rmsd", "prism_max_dev", "prism_moi_dev"):
+                raw = self.query_one(f"#f_{field}", Input).value.strip()
+                if raw:
+                    try:
+                        s[field] = float(raw)
+                    except ValueError:
+                        pass
 
         # TS
         lf = _parse_coord_list(self.query_one("#f_loc_freq", Input).value)

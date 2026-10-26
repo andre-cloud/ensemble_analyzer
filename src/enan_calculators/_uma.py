@@ -1,10 +1,12 @@
 from enan_calculators._ml_inference import create_ml_calc
 
+DEFAULT_TASK = "omol"
 
-def create_uma_calc(charge, mult, method, solvent=None):
+
+def create_uma_calc(charge, mult, method, solvent=None, task=None):
     return create_ml_calc(
         "uma", charge, mult, method,
-        task_name="omol", merge_mole=True, solvent=solvent,
+        task_name=task or DEFAULT_TASK, merge_mole=True, solvent=solvent,
     )
 
 
@@ -27,4 +29,5 @@ class UMAMlCalc(BaseMlCalc):
             mult=self.protocol.mult,
             method=method,
             solvent=self.protocol.solvent.solvent if self.protocol.solvent else None,
+            task=self.protocol.task,
         )

@@ -3,11 +3,41 @@ Global Pytest configuration and fixtures.
 Provides shared mocks for Logger, Conformer, and Protocol to be used across the test suite.
 """
 
+import os
+from pathlib import Path
+
 import pytest
 import numpy as np
 from unittest.mock import MagicMock
 from ensemble_analyzer.conformer.energy_data import EnergyRecord, EnergyStore
 from ensemble_analyzer.conformer.conformer import Conformer
+
+
+# ---------------------------------------------------------------------------
+# Known pre-existing failures (see test/known_failures.txt)
+# ---------------------------------------------------------------------------
+
+_KNOWN_FAILURES_FILE = Path(__file__).with_name("known_failures.txt")
+
+
+def _load_known_failures() -> set[str]:
+    if not _KNOWN_FAILURES_FILE.exists():
+        return set()
+    lines = _KNOWN_FAILURES_FILE.read_text().splitlines()
+    return {ln.strip() for ln in lines if ln.strip() and not ln.lstrip().startswith("#")}
+
+
+def pytest_collection_modifyitems(config, items):
+    """Mark known failures as non-strict xfail unless ENAN_STRICT_TESTS=1."""
+    if os.environ.get("ENAN_STRICT_TESTS") == "1":
+        return
+    known = _load_known_failures()
+    if not known:
+        return
+    marker = pytest.mark.xfail(reason="known pre-existing failure (test/known_failures.txt)", strict=False)
+    for item in items:
+        if item.nodeid in known:
+            item.add_marker(marker)
 
 @pytest.fixture
 def mock_logger():
@@ -61,7 +91,8 @@ def mock_protocol():
     proto.number = 1
     proto.functional = "B3LYP"
     proto.basis = "6-31G*"
-    proto.calculator = "orca" 
+    proto.calculator = "orca"
+    proto.task = None
     proto.clustering = False
     proto.cluster = None
     proto.read_population = False

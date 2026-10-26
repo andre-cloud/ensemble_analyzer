@@ -38,7 +38,7 @@ _FOUNDATION = {
 }
 
 
-def _load_foundation(name: str, device: str, default_dtype: str) -> Calculator:
+def _load_foundation(name: str, device: str, default_dtype: str, **kwargs) -> Calculator:
     func_name = _FOUNDATION[name]
     try:
         from mace.calculators import foundations_models
@@ -47,10 +47,10 @@ def _load_foundation(name: str, device: str, default_dtype: str) -> Calculator:
         import importlib
         mod = importlib.import_module("mace.calculators")
         func = getattr(mod, func_name)
-    return func(device=device, default_dtype=default_dtype)
+    return func(device=device, default_dtype=default_dtype, **kwargs)
 
 
-def create_mace_calc(charge, mult, method, solvent=None):
+def create_mace_calc(charge, mult, method, solvent=None, task=None):
     if MACECalculator is None:
         raise ImportError(
             "mace module missing. Install via: pip install mace-torch"
@@ -60,9 +60,11 @@ def create_mace_calc(charge, mult, method, solvent=None):
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     default_dtype = "float64"
+    # task selects the head of a multi-head model; None keeps the model default
+    head_kwargs = {"head": task} if task else {}
 
     if method in _FOUNDATION:
-        cache_key = (method, device, default_dtype)
+        cache_key = (method, device, default_dtype, task)
     else:
         model_path = get_models_dir("mace", create=False) / method
         if not model_path.exists():
@@ -72,16 +74,17 @@ def create_mace_calc(charge, mult, method, solvent=None):
                     f"MACE model not found: {model_path}. "
                     f"Please place the downloaded weights in {get_models_dir('mace', create=False)}."
                 )
-        cache_key = (str(model_path), device, default_dtype)
+        cache_key = (str(model_path), device, default_dtype, task)
 
     if cache_key not in _PREDICTOR_CACHE:
         if method in _FOUNDATION:
-            _PREDICTOR_CACHE[cache_key] = _load_foundation(method, device, default_dtype)
+            _PREDICTOR_CACHE[cache_key] = _load_foundation(method, device, default_dtype, **head_kwargs)
         else:
             _PREDICTOR_CACHE[cache_key] = MACECalculator(
                 model_paths=str(model_path),
                 device=device,
                 default_dtype=default_dtype,
+                **head_kwargs,
             )
 
     calc = _PREDICTOR_CACHE[cache_key]

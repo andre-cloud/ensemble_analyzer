@@ -22,7 +22,7 @@ from matplotlib import rcParams
 import matplotlib.gridspec as gridspec
 
 from scipy.interpolate import griddata
-from scipy.spatial import distance_matrix
+from scipy.spatial.distance import cdist  # scipy.spatial.distance_matrix is deprecated since SciPy 1.18
 
 class ClusteringManager:
     """
@@ -284,11 +284,14 @@ class ClusteringManager:
                 coords = geom[mask]
             
             # Calculate distance matrix
-            dist_mat = distance_matrix(coords, coords)
+            dist_mat = cdist(coords, coords)
             
             # Compute eigenvalues
-            eigenvals, _ = np.linalg.eig(dist_mat)
-            eigenvalues_list.append(eigenvals.real)  # Take real part
+            # Real-symmetric matrix: eigvalsh gives real, ascending-sorted
+            # eigenvalues, so feature columns correspond across conformers.
+            # (np.linalg.eig returns them in arbitrary order.)
+            eigenvals = np.linalg.eigvalsh(dist_mat)
+            eigenvalues_list.append(eigenvals)
         
         return np.array(eigenvalues_list)
     

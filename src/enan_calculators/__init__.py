@@ -1,23 +1,23 @@
 from enan_calculators._models import get_models_dir
 
 
-def get_ase_calculator(engine, charge, mult, method, solvent=None, **kwargs):
+def get_ase_calculator(engine, charge, mult, method, solvent=None, task=None, **kwargs):
     engine = engine.lower()
     if engine == "aimnet":
         from enan_calculators._aimnet import create_aimnet_calc
-        return create_aimnet_calc(charge, mult, method, solvent=solvent)
+        return create_aimnet_calc(charge, mult, method, solvent=solvent, task=task)
     elif engine == "tblite":
         from enan_calculators._tblite import create_tblite_calc
         return create_tblite_calc(charge, mult, method, solvent=solvent)
     elif engine == "uma":
         from enan_calculators._uma import create_uma_calc
-        return create_uma_calc(charge, mult, method, solvent=solvent)
+        return create_uma_calc(charge, mult, method, solvent=solvent, task=task)
     elif engine == "fairchem":
         from enan_calculators._fairchem import create_fairchem_calc
-        return create_fairchem_calc(charge, mult, method, solvent=solvent)
+        return create_fairchem_calc(charge, mult, method, solvent=solvent, task=task)
     elif engine == "mace":
         from enan_calculators._mace import create_mace_calc
-        return create_mace_calc(charge, mult, method, solvent=solvent)
+        return create_mace_calc(charge, mult, method, solvent=solvent, task=task)
     elif engine == "orca":
         from enan_calculators._orca import create_orca_calc
         return create_orca_calc(

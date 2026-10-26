@@ -8,6 +8,7 @@ from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.protocol.protocol import Protocol
 from ensemble_analyzer._logger.logger import Logger
 from ensemble_analyzer.constants import R, EH_TO_KCAL, CAL_TO_J, boltzmann_distribution
+from ensemble_analyzer._managers.prism_backend import PRISM_METHODS, run_prism_pruning
 
 
 # ===
@@ -24,6 +25,7 @@ class ComparisonResult:
     delta_moment: float  # Debye
     should_deactivate: bool
     rmsd: Optional[float] = 0
+    criterion: str = "E+B"  # 'E+B' (rotconst) or 'prism:<stage> (<metric>)'
     
     def to_dict(self) -> dict:
         """
@@ -38,7 +40,8 @@ class ComparisonResult:
             "∆E [kcal/mol]": f'{self.delta_energy:.2f}',
             "∆B [cm⁻¹]": f'{self.delta_rotatory:.2f}',
             "∆m [Debye]": f'{self.delta_moment:.2f}',
-            "λi RMSD": f'{self.rmsd:.2f}',
+            "λ(D) RMSD [Å]": f'{self.rmsd:.2f}',
+            "Criterion": self.criterion,
             "Deactivate": self.should_deactivate,
         }
     
@@ -174,7 +177,89 @@ class PruningManager:
             self.logger.info(f"{self.logger.TICK} No conformers above threshold\n")
 
 
-    def _remove_duplicates(self, conformers: List[Conformer], protocol: Protocol) -> None: 
+    def _remove_duplicates(self, conformers: List[Conformer], protocol: Protocol) -> None:
+        """
+        Identify and deactivate duplicate conformers.
+
+        Dispatches on ``protocol.prune_method``:
+        ``'rotconst'`` (default, energy + rotational constants) or
+        ``'prism'`` / ``'prism_rotcorr'`` (PRISM Pruner backend).
+        """
+        method = getattr(protocol, "prune_method", "rotconst")
+        if not isinstance(method, str):  # e.g. mocks or legacy objects
+            method = "rotconst"
+        if method.lower() in PRISM_METHODS:
+            return self._remove_duplicates_prism(conformers, protocol, method.lower())
+        return self._remove_duplicates_rotconst(conformers, protocol)
+
+    def _remove_duplicates_prism(self, conformers: List[Conformer], protocol: Protocol, method: str) -> None:
+        """
+        Identify and deactivate duplicates with PRISM Pruner.
+
+        Active conformers are sorted by effective energy, passed to
+        :func:`run_prism_pruning`, and the returned mask is applied in place.
+        The lowest-energy member of each duplicate pair is always retained.
+
+        Args:
+            conformers (List[Conformer]): The ensemble (modified in place).
+            protocol (Protocol): Protocol with thrG and prism_* parameters.
+            method (str): 'prism' or 'prism_rotcorr'.
+        """
+        active = [c for c in conformers if c.active]
+        if len(active) < 2:
+            return
+
+        e_kcal = np.array([self._get_effective_energy(c) for c in active]) * EH_TO_KCAL
+        order = np.argsort(e_kcal, kind="stable")
+        active = [active[i] for i in order]
+        e_kcal = e_kcal[order] - e_kcal[order].min()
+
+        atoms = tuple(active[0].atoms)
+        if any(tuple(c.atoms) != atoms for c in active):
+            raise ValueError("PRISM pruning requires all conformers to share the same atom ordering")
+
+        coords = np.array([np.asarray(c.last_geometry, dtype=float) for c in active])
+
+        self.logger.info(f"Similarity pruning with PRISM ({method}) on {len(active)} conformers")
+        keep, records = run_prism_pruning(
+            coords, atoms, e_kcal,
+            max_dE=float(protocol.thrG),
+            method=method,
+            use_moi=bool(getattr(protocol, "prism_moi", False)),
+            moi_dev=float(getattr(protocol, "prism_moi_dev", 1e-2)),
+            max_rmsd=float(getattr(protocol, "prism_max_rmsd", 0.25)),
+            max_dev=getattr(protocol, "prism_max_dev", None),
+            heavy_atoms_only=not self.include_H,
+            timeout_s=int(getattr(protocol, "prism_timeout", 60)),
+            debugfunction=self.logger.debug,
+        )
+
+        for rec in records:
+            check = active[rec.removed]
+            ref = active[rec.reference] if rec.reference >= 0 else None
+            check.active = False
+            check.diactivated_by = ref.number if ref is not None else None
+            if ref is None:
+                continue
+            d_b = (abs(check.rotatory - ref.rotatory)
+                   if check.rotatory is not None and ref.rotatory is not None else np.nan)
+            d_m = abs(check.moment - ref.moment) if check.moment and ref.moment else np.nan
+            self._deactivation_records.append(ComparisonResult(
+                check_id=check.number,
+                reference_id=ref.number,
+                delta_energy=float(abs(e_kcal[rec.removed] - e_kcal[rec.reference])),
+                delta_rotatory=d_b,
+                delta_moment=d_m,
+                should_deactivate=True,
+                rmsd=self._calculate_rmsd(conf1=check, conf2=ref, include_H=self.include_H),
+                criterion=f"prism:{rec.stage} ({rec.metric:.3f})",
+            ))
+
+        # The mask is authoritative (records may have been re-pointed by swaps).
+        for conf, k in zip(active, keep):
+            conf.active = bool(k)
+
+    def _remove_duplicates_rotconst(self, conformers: List[Conformer], protocol: Protocol) -> None: 
         """
         Identify and deactivate duplicate conformers.
 
@@ -275,8 +360,11 @@ class PruningManager:
         dm1 = conf1.distance_matrix(include_H=include_H)
         dm2 = conf2.distance_matrix(include_H=include_H)
 
-        evals1, _ = np.linalg.eig(dm1)
-        evals2, _ = np.linalg.eig(dm2)
+        # Distance matrices are real-symmetric: eigvalsh returns real eigenvalues
+        # sorted in ascending order, so the two spectra are compared component-wise.
+        # (np.linalg.eig returns them in arbitrary order.)
+        evals1 = np.linalg.eigvalsh(dm1)
+        evals2 = np.linalg.eigvalsh(dm2)
 
         return float(np.sqrt(np.mean((evals1 - evals2) ** 2)))
     

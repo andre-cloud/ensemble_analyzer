@@ -34,6 +34,17 @@ These parameters define the level of theory and the type of calculation to be pe
 * **`calculator`** (str)
     Selects the external QM engine driver or ML potential. Options: `"orca"` (default), `"gaussian"`, `"nwchem"`, `"tblite"`, `"aimnet"`, `"uma"`, `"fairchem"`, `"mace"`.
 
+* **`task`** (str)
+    Selects the level of theory inside a multi-task ML model. Leave it out to use the model default. Its meaning depends on the `calculator`:
+    * `"uma"`, `"fairchem"`: the FAIRChem `task_name` (e.g. `"omol"`, `"omat"`, `"oc20"`, `"odac"`, `"omc"`). Default: `"omol"`, the only task meant for isolated molecules (it uses `charge` and `mult`). The other tasks are trained on periodic systems with different DFT references, so their energies are not comparable with `"omol"`. Single-task checkpoints must be paired with their own task (e.g. `uma-s-1p2p1-ft-r2scan.pt` only supports `"omat"`); an unsupported task raises an error.
+    * `"mace"`: the `head` of a multi-head MACE model. Default: the model's default head. Single-head models (e.g. MACE-MP, MACE-OFF) need no `task`.
+    * `"aimnet"`: not supported. AIMNet2 models have a single level of theory, so setting `task` raises an error when the protocol is loaded; pick the model via `functional` instead.
+    * QM engines (`"orca"`, `"gaussian"`, `"nwchem"`, ...): ignored.
+
+    ```json
+    "1": {"calculator": "uma", "functional": "uma-s-1p2p1.pt", "task": "omol", "opt": true}
+    ```
+
 * **`add_input`** (str)
     Additional keywords or blocks passed directly to the external QM engine (ORCA/Gaussian) input file. **No sanity check performed**. 
 
@@ -165,3 +176,35 @@ This step optimizes a transition state using Sella (if using an ML calculator) o
 
 * **`thrGMAX`** (float)
     Overrides the maximum energy window cut-off. Conformers with $\Delta E > \text{thrGMAX}$ (relative to the global minimum) are discarded.
+
+* **`prune_method`** (str, default `"rotconst"`)
+    Selects the duplicate-removal backend (the `thrGMAX` energy window is always applied first):
+    * `"rotconst"`: energy + rotational-constant norm (`thrG`, `thrB`). Fast, no extra dependency.
+    * `"prism"`: [PRISM Pruner](https://github.com/ntampellini/prism_pruner) — heavy-atom Kabsch RMSD + maximum-deviation filter (optionally preceded by a moment-of-inertia filter, see `prism_moi`).
+    * `"prism_rotcorr"`: as `"prism"`, plus an RMSD corrected for degenerate rotamers (e.g. methyl / *t*-Bu rotations). Slowest.
+
+    > **Note on `rotconst` for large molecules.** `thrB` is an absolute threshold, while rotational constants shrink with molecular size. In a test on raw CREST ensembles with the default `opt` thresholds (`thrG` 0.5 kcal/mol, `thrB` 5·10⁻⁵ cm⁻¹), `rotconst` removed 541/673 conformers of a 71-atom system and 651/675 of a 220-atom system; most removed conformers differed from their reference by > 0.5 Å heavy-atom RMSD, also after rotamer correction. For large or flexible systems prefer `prism` or tighten `thrB`.
+
+    With PRISM, only pairs with $|\Delta E| <$ `thrG` are compared; `thrB` is not used. The lowest-energy member of each duplicate pair is always retained. `prism_pruner` is installed with EnAn as a core dependency.
+
+* **`prism_moi`** (bool, default `false`)
+    Run PRISM's moment-of-inertia stage before the RMSD stage. It is fast and reflection-invariant (mirror-image conformers are merged, as with `rotconst`), but with the PRISM default `prism_moi_dev = 0.01` it merged clearly distinct conformers of large molecules in our tests (71- and 220-atom ensembles), whereas the RMSD stage alone produced no such merges. If enabled, a tighter `prism_moi_dev` (e.g. `0.001`) is recommended.
+
+* **`prism_moi_dev`** (float, default `0.01`)
+    Relative deviation threshold on all three principal moments (0.01 = 1 %).
+
+* **`prism_max_rmsd`** / **`prism_max_dev`** (float, defaults `0.25` / `2 × prism_max_rmsd`) [Å]
+    Two conformers are duplicates if heavy-atom RMSD < `prism_max_rmsd` **and** the maximum atomic deviation < `prism_max_dev`. Hydrogens are included only if the run uses `include_H`.
+
+* **`prism_timeout`** (int, default `60`) [s]
+    Timeout of each PRISM stage; on timeout the stage returns what it has pruned so far.
+
+```json
+{
+    "0": {"calculator": "tblite", "functional": "GFN2-xTB", "opt": true,
+          "prune_method": "prism", "comment": "xTB pre-optimisation, PRISM de-duplication"},
+    "1": {"functional": "r2SCAN-3c", "opt": true, "freq": true,
+          "prune_method": "prism_rotcorr", "prism_max_rmsd": 0.2,
+          "prism_moi": true, "prism_moi_dev": 0.001}
+}
+```

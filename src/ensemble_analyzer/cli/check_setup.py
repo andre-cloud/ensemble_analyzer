@@ -32,7 +32,8 @@ def check_python_dependencies() -> bool:
     """
 
     print(f"\n{'-'*20} 1. Checking Python Dependencies {'-'*20}")
-    required = ['numpy', 'scipy', 'matplotlib', 'ase', 'numba', 'sklearn', 'tabulate', 'InquirerPy', 'sella']
+    required = ['numpy', 'scipy', 'matplotlib', 'ase', 'numba', 'sklearn', 'tabulate', 'InquirerPy', 'sella',
+                'prism_pruner']
     all_pass = True
     
     for lib in required:

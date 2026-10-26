@@ -12,7 +12,12 @@ except ImportError:
 _PREDICTOR_CACHE = {}
 
 
-def create_aimnet_calc(charge, mult, method, solvent=None):
+def create_aimnet_calc(charge, mult, method, solvent=None, task=None):
+    if task:
+        raise ValueError(
+            f"AIMNet2 models have a single level of theory and no task/head (got task={task!r}). "
+            "Remove 'task' from the protocol and select the model via 'functional'."
+        )
     if AIMNet2ASE is None:
         raise ImportError(
             "aimnet module missing. Install via: pip install aimnet[ase]@git+https://github.com/isayevlab/aimnetcentral.git"

@@ -5,6 +5,7 @@ import json
 from importlib.resources import files
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.protocol.solvent import Solvent
+from ensemble_analyzer._managers.prism_backend import ALL_PRUNE_METHODS
 from pathlib import Path
 
 
@@ -31,6 +32,9 @@ COMPOSITE_METHODS = {
 
 INTERNALS = {2: 'B', 3: 'A', 4: 'D'}
 
+# ML calculators whose models have a single level of theory: `task` is an error here
+TASKLESS_CALCULATORS = {"aimnet"}
+
 @dataclass
 class Protocol:
     """
@@ -47,7 +51,8 @@ class Protocol:
     basis                       : Optional[str]                 = ""
     solvent                     : Optional[Dict]                = None
     calculator                  : str                           = "orca"
-    
+    task                        : Optional[str]                 = None
+
     # Calculation settings
     mult                        : int                           = 1
     charge                      : int                           = 0
@@ -69,6 +74,14 @@ class Protocol:
     # Pruning & Clustering
     no_prune                    : Optional[bool]                = False
     cluster                     : Optional[Union[bool,int]]     = False
+    prune_method                : str                           = "rotconst"   # 'rotconst' | 'prism' | 'prism_rotcorr'
+
+    # PRISM Pruner settings (used only when prune_method starts with 'prism')
+    prism_moi                   : bool                          = False   # moment-of-inertia stage (opt-in: 1 % merges distinct conformers of large molecules)
+    prism_moi_dev               : float                         = 1e-2    # relative MOI deviation (0.01 = 1 %)
+    prism_max_rmsd              : float                         = 0.25    # [Å]
+    prism_max_dev               : Optional[float]               = None    # [Å], default 2*prism_max_rmsd
+    prism_timeout               : int                           = 60      # [s] per stage
 
     # Thresholds
     thrG                        : Optional[float]               = None
@@ -172,11 +185,19 @@ class Protocol:
         Returns:
             str: Multi-line string with thrG, thrB, and thrGMAX values.
         """
-        return (
+        out = (
             f"\tthrG    : {self.thrG} kcal/mol\n"
             f"\tthrB    : {self.thrB} cm-1\n"
             f"\tthrGMAX : {self.thrGMAX} kcal/mol\n"
         )
+        if self.prune_method != "rotconst":
+            max_dev = self.prism_max_dev if self.prism_max_dev is not None else 2 * self.prism_max_rmsd
+            out += (
+                f"\tmethod  : {self.prune_method} "
+                f"(MOI {'on, ' + str(self.prism_moi_dev) if self.prism_moi else 'off'}; "
+                f"RMSD < {self.prism_max_rmsd} Å, max dev < {max_dev} Å; thrB unused)\n"
+            )
+        return out
     
     @property
     def clustering(self) -> bool:
@@ -302,6 +323,29 @@ class Protocol:
             self.solvent = Solvent(**self.solvent)
         else: 
             self.solvent = None
+
+        # ML task/head: empty string means "engine default"
+        if isinstance(self.task, str):
+            self.task = self.task.strip() or None
+        if self.task and self.calculator.lower() in TASKLESS_CALCULATORS:
+            raise ValueError(
+                f"Protocol {self.number}: calculator '{self.calculator}' has no task/head, "
+                f"but task={self.task!r} was given. Remove 'task' from this step."
+            )
+
+        # Similarity-pruning backend
+        self.prune_method = (self.prune_method or "rotconst").strip().lower()
+        if self.prune_method not in ALL_PRUNE_METHODS:
+            raise ValueError(
+                f"Protocol {self.number}: prune_method={self.prune_method!r} not valid. "
+                f"Choose one of {ALL_PRUNE_METHODS}."
+            )
+        if self.prism_max_rmsd <= 0 or self.prism_moi_dev <= 0 or self.prism_timeout <= 0:
+            raise ValueError(
+                f"Protocol {self.number}: prism_max_rmsd, prism_moi_dev and prism_timeout must be > 0."
+            )
+        if self.prism_max_dev is not None and self.prism_max_dev <= 0:
+            raise ValueError(f"Protocol {self.number}: prism_max_dev must be > 0 (or null).")
 
         # Clean additional input: quote compat + old-format double-brace unescape
         self.add_input = self.add_input.replace("'", "\"").replace("{{", "{").replace("}}", "}")

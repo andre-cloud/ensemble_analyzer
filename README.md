@@ -1,5 +1,5 @@
 # Ensemble Analyzer <img src="logo.png" align="right" width="150">
-[![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13%20%7C%203.14-blue.svg)](https://www.python.org/downloads/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## Conformer Ensemble Pruning Software
@@ -29,9 +29,10 @@
 ## 📦 Installation
 
 ### Requirements
-- **Python** ≥ 3.11
+- **Python** 3.12 – 3.14
 - **Core**: NumPy, SciPy, Matplotlib, ASE
 - **Clustering**: scikit-learn
+- **Pruning**: [PRISM Pruner](https://github.com/ntampellini/prism_pruner)
 - **Acceleration**: Numba
 
 ```bash
@@ -145,6 +146,8 @@ ensemble_analyzer --restart
 | `thrGMAX` | float | Energy window cutoff [kcal/mol] | `10.0` |
 | `cluster` | bool/int | Enable clustering | `true` (auto), `5` (fixed) |
 | `no_prune` | bool | Disable pruning | `false` (default) |
+| `prune_method` | str | Duplicate-removal backend: `rotconst` (E + rotational constants) or [PRISM Pruner](https://github.com/ntampellini/prism_pruner) `prism` / `prism_rotcorr` | `"rotconst"` (default) |
+| `prism_max_rmsd` | float | PRISM heavy-atom RMSD threshold [Å] (also `prism_max_dev`, `prism_moi`, `prism_moi_dev`, `prism_timeout`) | `0.25` |
 | **TD-DFT Settings** (Note: Not supported for MLIPs or tblite) ||||
 | `nroots` | int | Number of excited states for TD-DFT calculation | `10`, `30` |
 | `tda` | bool | Use Tamm-Dancoff approximation (ORCA defaults to `true`, set `false` for full TD-DFT) | `true`, `false` |
