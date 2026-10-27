@@ -1,6 +1,7 @@
 
 from ensemble_analyzer.parsers.base import BaseParser, register_parser
 from ensemble_analyzer.constants import FACTOR_EV_CM_1
+from ensemble_analyzer.parsers.vibrations import orca_get_freq, orca_get_normal_modes, to_displacements
 
 import re
 import numpy as np
@@ -50,6 +51,9 @@ class OrcaParser(BaseParser):
         "s_freq": "VIBRATIONAL FREQUENCIES",
         "e_freq": "------------",
         "idx_freq": 1,  # index for frequency in frequency table
+        # frequency / normal-mode blocks (same keys as frogchem regex_ORCA)
+        "frequency": r'VIBRATIONAL FREQUENCIES([\S\s]*?)\n\n\n',
+        "normal_modes": r'NORMAL MODES([\S\s]*?)\n\n\n',
         "opt_done": "THE OPTIMIZATION HAS CONVERGED",
         "geom_start": """CARTESIAN COORDINATES (ANGSTROEM)
 ---------------------------------""",
@@ -88,6 +92,9 @@ State  Energy     Wavelength     R         MX        MY        MZ
         "s_freq": "VIBRATIONAL FREQUENCIES",
         "e_freq": "------------",
         "idx_freq": 1,  # index for frequency in frequency table
+        # frequency / normal-mode blocks (same keys as frogchem regex_ORCA)
+        "frequency": r'VIBRATIONAL FREQUENCIES([\S\s]*?)\n\n\n',
+        "normal_modes": r'NORMAL MODES([\S\s]*?)\n\n\n',
         "opt_done": "THE OPTIMIZATION HAS CONVERGED",
         "geom_start": """CARTESIAN COORDINATES (ANGSTROEM)
 ---------------------------------""",
@@ -136,13 +143,9 @@ State  Energy     Wavelength     R         MX        MY        MZ
         if not self.regex['s_freq'] in self.fl: 
             return np.array([]), np.zeros(shape=(1,2)), np.zeros(shape=(1,2))
 
-        fl = self.get_filtered_text(self.regex['s_freq'], end='\n\n\n')
-    
-        pattern = r'(?:\d+:)\s*(-?\d+.\d*)'
-        # freq
-        freq = np.array(re.findall(pattern, fl, flags=re.MULTILINE), dtype=float)
-        self._freq_mask = freq != 0
-        freq = freq[self._freq_mask]
+        # freq (FROGChem parser): translations/rotations are printed as zeros and dropped here
+        freq = self._all_freq()
+        freq = freq[freq != 0]
 
         # IR
         if self.regex['s_IR'] not in self.fl:
@@ -160,58 +163,33 @@ State  Energy     Wavelength     R         MX        MY        MZ
 
         return freq, ir, vcd
 
+    def _all_freq(self) -> np.ndarray:
+        """All ORCA frequencies (cm-1), translations/rotations included as zeros."""
+        if not re.search(self.regex['frequency'], self.fl):
+            return np.array([])
+        return orca_get_freq(self.fl, self.regex)[1]
+
     def parse_normal_modes(self, n_atoms: int) -> np.ndarray:
-        if "NORMAL MODES" not in self.fl:
-            return np.empty((0, n_atoms, 3))
+        """Cartesian displacement vectors of the vibrational modes (FROGChem parser).
+
+        Returns:
+            np.ndarray: (n_modes, n_atoms, 3), same order as the frequencies of parse_freq
+            (translation/rotation modes, i.e. zero frequencies, are dropped). Empty
+            (0, n_atoms, 3) array when the NORMAL MODES block is missing.
+        """
+        empty = np.empty((0, n_atoms, 3))
         try:
-            block = self.fl.split("NORMAL MODES")[-1].split("\n\n\n")[0]
-            lines = block.split("\n")
-            n_total = 3 * n_atoms
-            max_col = -1
-            for line in lines:
-                stripped = line.strip()
-                if not stripped or stripped.startswith("-"):
-                    continue
-                header_match = re.match(r'^\s*(\d+(?:\s+\d+)*)\s*$', stripped)
-                if header_match:
-                    cols = [int(x) for x in header_match.group(1).split()]
-                    if cols and cols[-1] > max_col:
-                        max_col = cols[-1]
-            if max_col < 0:
-                return np.empty((0, n_atoms, 3))
-            matrix = np.zeros((n_total, max_col + 1))
-            current_columns = []
-            for line in lines:
-                stripped = line.strip()
-                if not stripped or stripped.startswith("-"):
-                    continue
-                header_match = re.match(r'^\s*(\d+(?:\s+\d+)*)\s*$', stripped)
-                if header_match:
-                    current_columns = [int(x) for x in header_match.group(1).split()]
-                    continue
-                data_match = re.match(
-                    r'^\s*(\d+)\s+((?:[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?\s*)+)', stripped
-                )
-                if data_match and current_columns:
-                    row_idx = int(data_match.group(1))
-                    coeff_str = data_match.group(2)
-                    coeffs = [float(c) for c in re.findall(
-                        r'[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?', coeff_str
-                    )]
-                    for i, c in enumerate(coeffs):
-                        if i < len(current_columns) and row_idx < n_total:
-                            col = current_columns[i]
-                            matrix[row_idx, col] = c
-            n_modes = matrix.shape[1]
-            all_modes = np.zeros((n_modes, n_atoms, 3))
-            for mode_idx in range(n_modes):
-                vec = matrix[:n_total, mode_idx]
-                all_modes[mode_idx] = vec.reshape(n_atoms, 3)
-            if hasattr(self, '_freq_mask') and self._freq_mask is not None and len(self._freq_mask) == len(all_modes):
-                all_modes = all_modes[self._freq_mask]
-            return all_modes
-        except Exception:
-            return np.empty((0, n_atoms, 3))
+            matrix = orca_get_normal_modes(self.fl, self.regex, N=3 * n_atoms)
+        except ValueError:
+            return empty
+        except Exception as err:
+            self.log.warning(f"Normal modes could not be parsed: {err}")
+            return empty
+        modes = to_displacements(matrix, n_atoms)
+        freq = self._all_freq()
+        if len(freq) == len(modes):
+            modes = modes[freq != 0]
+        return modes
 
     def parse_tddft(self) -> Tuple[np.ndarray, np.ndarray]:
         """

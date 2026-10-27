@@ -1,6 +1,10 @@
 
 
 from ensemble_analyzer.parsers.base import BaseParser, register_parser
+from ensemble_analyzer.parsers.vibrations import (
+    gaussian_get_freq, gaussian_get_ir_intensities, gaussian_get_normal_modes,
+    gaussian_align_normal_modes, to_displacements,
+)
 
 import re
 import numpy as np
@@ -29,6 +33,12 @@ class GaussianParser(BaseParser):
         "start_spec": "Excited states from",
         "e_freq": "\n\n\n",
         "idx_freq": 1,  # index for frequency in frequency table
+        # frequency section (same keys as frogchem regex_gaussian)
+        "freq_section": "Harmonic frequencies (cm**-1), IR intensities (KM/Mole), Raman scattering",
+        "freq_end": "\n\n\n",
+        "freq_pattern": r'Frequencies\s*--\s*((?:[+-]?\d+\.\d+\s*)+)',
+        "ir_pattern": r'IR Inten\s*--\s*((?:[+-]?\d+\.\d+\s*)+)',
+        "rot_pattern": r'Rot\. str\.\s*--\s*((?:[+-]?\d+\.\d+\s*)+)',
         "opt_done": "Optimization completed",
         "geom_start": """Input orientation:                          
  ---------------------------------------------------------------------
@@ -59,68 +69,50 @@ class GaussianParser(BaseParser):
     
     def parse_freq(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
-        Parse vibrational frequencies, IR and VCD intensities.
+        Parse vibrational frequencies, IR and VCD intensities (FROGChem parser).
 
         Returns:
             Tuple: (Frequencies array, IR spectrum array, VCD spectrum array).
         """
 
-        if not self.regex['s_freq'] in self.fl: 
+        if not self.regex['freq_section'] in self.fl:
             return np.array([]), np.zeros(shape=(1,2)), np.zeros(shape=(1,2))
-        
-        fl = self.get_filtered_text(start=self.regex['s_freq'], end=self.regex['e_freq'])
-        freq_pattern = re.compile(r'Frequencies\s*--\s*((?:[+-]?\d+\.\d+\s*)+)')
-        ir_pattern   = re.compile(r'IR Inten\s*--\s*((?:[+-]?\d+\.\d+\s*)+)')
-        rot_pattern  = re.compile(r'Rot\. str\.\s*--\s*((?:[+-]?\d+\.\d+\s*)+)')
 
-        # extract and flatten into a single list of floats
-        frequencies = np.array([float(x) for m in freq_pattern.findall(fl) for x in m.split()])
-        ir_inten    = np.array([float(x) for m in ir_pattern.findall(fl) for x in m.split()])
-        rot_str     = np.array([float(x) for m in rot_pattern.findall(fl) for x in m.split()])
+        frequencies = gaussian_get_freq(self.fl, self.regex)
+        ir = gaussian_get_ir_intensities(self.fl, self.regex)
 
-        return frequencies, np.column_stack((frequencies,ir_inten)), np.column_stack((frequencies,rot_str))
+        # VCD: rotational strengths, only printed with freq=VCD
+        fl = self.get_filtered_text(start=self.regex['freq_section'], end=self.regex['freq_end'])
+        rot_str = np.array([float(x) for m in re.findall(self.regex['rot_pattern'], fl) for x in m.split()])
+        if len(rot_str) == len(frequencies) and len(rot_str) > 0:
+            vcd = np.column_stack((frequencies, rot_str))
+        else:
+            vcd = np.zeros(shape=(1, 2))
+
+        return frequencies, ir, vcd
 
     def parse_normal_modes(self, n_atoms: int) -> np.ndarray:
-        if self.regex['s_freq'] not in self.fl:
-            return np.empty((0, n_atoms, 3))
-        fl = self.get_filtered_text(start=self.regex['s_freq'], end=self.regex['e_freq'])
-        parts = fl.split('Frequencies --')
-        if len(parts) < 2:
-            return np.empty((0, n_atoms, 3))
-        all_modes = []
-        for chunk in parts[1:]:
-            lines = chunk.split('\n')
-            freq_vals = re.findall(r'[-+]?\d+\.\d+(?:[eE][+-]?\d+)?', lines[0])
-            n_freq = min(len(freq_vals), 3)
-            if n_freq == 0:
-                continue
-            idx = 1
-            while idx < len(lines):
-                line = lines[idx].strip()
-                if not line:
-                    idx += 1
-                    continue
-                if re.match(r'^\s*\d+\s+\d+', line):
-                    break
-                idx += 1
-            mode_disps = np.zeros((n_freq, n_atoms, 3))
-            for i in range(idx, min(idx + n_atoms, len(lines))):
-                line = lines[i].strip()
-                if not line or not re.match(r'^\d+\s+\d+', line):
-                    break
-                parts_line = line.split()
-                if len(parts_line) < 2 + 3 * n_freq:
-                    continue
-                atom_idx = int(parts_line[0]) - 1
-                vals = [float(x) for x in parts_line[2:]]
-                for k in range(n_freq):
-                    mode_disps[k, atom_idx, 0] = vals[3 * k]
-                    mode_disps[k, atom_idx, 1] = vals[3 * k + 1]
-                    mode_disps[k, atom_idx, 2] = vals[3 * k + 2]
-            all_modes.append(mode_disps)
-        if not all_modes:
-            return np.empty((0, n_atoms, 3))
-        return np.vstack(all_modes)
+        """Cartesian displacement vectors of the vibrational modes (FROGChem parser).
+
+        Gaussian prints them in the standard orientation; they are rotated onto the input
+        orientation, i.e. the frame of parse_geom.
+
+        Returns:
+            np.ndarray: (n_modes, n_atoms, 3), same order as the frequencies of parse_freq.
+            Empty (0, n_atoms, 3) array when the frequency section is missing.
+        """
+        empty = np.empty((0, n_atoms, 3))
+        try:
+            matrix = gaussian_get_normal_modes(self.fl, self.regex, N=3 * n_atoms)
+        except ValueError:
+            return empty
+        except Exception as err:
+            self.log.warning(f"Normal modes could not be parsed: {err}")
+            return empty
+        if matrix.shape[1] == 0:
+            return empty
+        matrix = gaussian_align_normal_modes(self.fl, matrix)
+        return to_displacements(matrix, n_atoms)
 
     def parse_tddft(self) -> Tuple[np.ndarray, np.ndarray]:
         """

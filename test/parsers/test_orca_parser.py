@@ -51,9 +51,9 @@ Program Version 6
 
 VIBRATIONAL FREQUENCIES
 ------------
-   0:      500.00
-   1:     1000.00
-   2:       -50.00
+   0:      500.00 cm**-1
+   1:     1000.00 cm**-1
+   2:       -50.00 cm**-1
 
 
 
@@ -81,8 +81,8 @@ Program Version 5
 
 VIBRATIONAL FREQUENCIES
 ------------
-   0:      500.00
-   1:     1000.00
+   0:      500.00 cm**-1
+   1:     1000.00 cm**-1
 
 Mode   freq       eps      Int      T**2         TX        TY        TZ
        cm**-1   L/(mol*cm) km/mol    a.u.
@@ -171,6 +171,11 @@ Thus, these vectors are normalized but *not* orthogonal
       3       0.040000
       4       0.050000
       5       0.060000
+
+
+-----------
+IR SPECTRUM
+-----------
 
 ORCA TERMINATED NORMALLY
 """
