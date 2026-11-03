@@ -153,7 +153,7 @@ def parser_arguments()-> argparse.Namespace:
     system_group.add_argument(
         "-cpu",
         type=int,
-        help="Total CPU budget (auto-split across parallel single-point jobs). Default: %(default)s",
+        help="Total number of CPUs (shared between jobs when a protocol sets cpu_per_job). Default: %(default)s",
         default=8,
     )
     

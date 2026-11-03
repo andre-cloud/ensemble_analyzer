@@ -98,6 +98,7 @@ def mock_protocol():
     proto.cluster = None
     proto.read_population = False
     proto.block_on_retention_rate = True
+    proto.cpu_per_job = None
     proto.verbal_internals.return_value = []
     
     # Return tuple (calculator_object, label_string)
