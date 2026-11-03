@@ -159,6 +159,11 @@ This step optimizes a transition state using Sella (if using an ML calculator) o
 }
 ```
 
+## Parallel Execution
+
+* **`cpu_per_job`** (int)
+    Number of CPUs for each QM job. If it is lower than `--cpu`, several conformers are calculated at the same time: with `--cpu 32` and `"cpu_per_job": 8`, four 8-core jobs run together. If not set, conformers are calculated one at a time using all `--cpu` cores. ML calculators always run one at a time.
+
 ## Refinement & Pruning Settings
 
 * **`cluster`** (int | bool)

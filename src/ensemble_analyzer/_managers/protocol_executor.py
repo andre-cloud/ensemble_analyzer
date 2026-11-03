@@ -1,5 +1,6 @@
 
 from typing import List, Union
+import copy
 import time
 import datetime
 import os
@@ -178,8 +179,8 @@ class ProtocolExecutor:
         """
         Run QM jobs for pending conformers.
 
-        Single-point calculations are parallelised with ThreadPoolExecutor.
-        Opt/freq jobs run sequentially with all CPUs allocated to each job.
+        Jobs run one at a time on all CPUs. If the protocol sets cpu_per_job,
+        cpu // cpu_per_job QM jobs run at the same time instead.
 
         Args:
             conformers (List[Conformer]): List of conformers.
@@ -189,6 +190,12 @@ class ProtocolExecutor:
         pending = [c for c in conformers
                    if c.active and str(protocol.number) not in c.energies]
         if not pending:
+            return
+
+        cpu_per_job = protocol.cpu_per_job
+        is_ml = protocol.calculator.lower() in ML_CALCULATORS
+        if cpu_per_job and cpu_per_job < self.config.cpu and not is_ml:
+            self._run_parallel(conformers, pending, protocol, cpu_per_job)
             return
 
         for i, c in enumerate(pending, 1):
@@ -201,6 +208,51 @@ class ProtocolExecutor:
                 #     )
                 c.active = False
             self.checkpoint_manager.save(conformers, self.logger)
+
+        self.checkpoint_manager.save(conformers, self.logger, log=True)
+
+    def _run_parallel(
+        self,
+        conformers: List[Conformer],
+        pending: List[Conformer],
+        protocol: Protocol,
+        cpu_per_job: int
+    ) -> None:
+        """
+        Run QM jobs for pending conformers, several at a time.
+
+        Each job works on a copy of its conformer. The result is copied back
+        and checkpointed here, in the main thread, once the job finishes.
+
+        Args:
+            conformers (List[Conformer]): Full ensemble, for the checkpoint.
+            pending (List[Conformer]): Conformers still to calculate.
+            protocol (Protocol): Current protocol.
+            cpu_per_job (int): CPUs given to each job.
+        """
+        workers = self.config.cpu // cpu_per_job
+        self.logger.info(
+            f"Running {len(pending)} jobs, {workers} at a time with {cpu_per_job} CPU each"
+        )
+
+        def run(i, conf):
+            copy_conf = copy.deepcopy(conf)
+            ok = self.calculator.execute(i, copy_conf, protocol, cpu_per_job)
+            return ok, copy_conf
+
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            jobs = {pool.submit(run, i, c): c for i, c in enumerate(pending, 1)}
+            for job in as_completed(jobs):
+                c = jobs[job]
+                try:
+                    success, done = job.result()
+                    c.__dict__.update(done.__dict__)
+                except Exception as e:
+                    self.logger.error(f"Conf {c.number} failed: {e}")
+                    success = False
+                if not success:
+                    c.active = False
+                self.checkpoint_manager.save(conformers, self.logger)
 
         self.checkpoint_manager.save(conformers, self.logger, log=True)
 
