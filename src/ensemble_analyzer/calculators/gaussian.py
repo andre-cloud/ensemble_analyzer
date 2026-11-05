@@ -1,5 +1,6 @@
 from ase.calculators.gaussian import Gaussian
 from ensemble_analyzer.calculators.base import BaseCalc, register_calculator
+from ensemble_analyzer.protocol.dispersion import dispersion_keyword
 
 from typing import Tuple, Any
 
@@ -15,6 +16,10 @@ class GaussianCalc(BaseCalc):
                 solv = f" SCRF=(CPCM,Solvent={self.protocol.solvent.solvent})"
 
         route = f"# {self.protocol.functional}/{self.protocol.basis}{solv}"
+
+        disp = dispersion_keyword(self.protocol.dispersion, "gaussian")
+        if disp:
+            route += f" EmpiricalDispersion={disp}"
 
         if self.protocol.add_input.strip():
             route += " " + self.protocol.add_input.strip()
@@ -48,6 +53,10 @@ class GaussianCalc(BaseCalc):
             add_input=self.protocol.add_input.strip(),
             label=ase_label,
         )
+
+        disp = dispersion_keyword(self.protocol.dispersion, "gaussian")
+        if disp:
+            calculator.parameters["extra"] += f" EmpiricalDispersion={disp}"
 
         chk_path = self._build_path(
             self.conf.folder, f"protocol_{self.protocol.number}", "gaussian.chk"

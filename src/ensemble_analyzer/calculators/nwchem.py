@@ -5,6 +5,7 @@ from typing import Any, Tuple
 
 from ase.calculators.nwchem import NWChem
 from ensemble_analyzer.calculators.base import BaseCalc, register_calculator
+from ensemble_analyzer.protocol.dispersion import dispersion_keyword
 
 
 NWCHEM_COMMAND = (
@@ -26,6 +27,9 @@ class NWChemCalc(BaseCalc):
             "basis": self.protocol.basis,
             "dft": {"mult": self.protocol.mult},
         }
+        disp = dispersion_keyword(self.protocol.dispersion, "nwchem")
+        if disp:
+            kw["dft"]["disp"] = {"vdw": disp}
         if is_tddft:
             kw["nroots"] = nroots
             tda = self.protocol.tda
@@ -105,6 +109,11 @@ class NWChemCalc(BaseCalc):
             label=ase_label,
             command=command,
         )
+
+        # `disp vdw N` must sit inside the DFT block, not in the appended add_input
+        disp = dispersion_keyword(self.protocol.dispersion, "nwchem")
+        if disp:
+            calculator.parameters.setdefault("dft", {})["disp"] = {"vdw": disp}
 
         constraints_block = self._build_constraints()
         if constraints_block:

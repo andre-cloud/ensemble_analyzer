@@ -5,6 +5,7 @@ import json
 from importlib.resources import files
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.protocol.solvent import Solvent
+from ensemble_analyzer.protocol.dispersion import normalize_dispersion, validate_dispersion
 from ensemble_analyzer._managers.prism_backend import ALL_PRUNE_METHODS
 from pathlib import Path
 
@@ -49,6 +50,7 @@ class Protocol:
     # Method definition
     functional                  : str
     basis                       : Optional[str]                 = ""
+    dispersion                  : Optional[str]                 = None   # 'D2' | 'D3ZERO' | 'D3BJ' | 'D4' | 'PFD'
     solvent                     : Optional[Dict]                = None
     calculator                  : str                           = "orca"
     task                        : Optional[str]                 = None
@@ -294,11 +296,12 @@ class Protocol:
         """String representation of the protocol step.
 
         Returns:
-            str: e.g. "wB97X-D4rev/def2-QZVPPD" or "r2SCAN-3c/def2-mTZVPP [water]".
+            str: e.g. "wB97X-D4rev/def2-QZVPPD", "B3LYP-D3BJ/def2-SVP" or "r2SCAN-3c/def2-mTZVPP [water]".
         """
+        method = f"{self.functional}-{self.dispersion}" if self.dispersion else self.functional
         if self.solvent:
-            return f"{self.functional}/{self.basis} [{self.solvent}]"
-        return f"{self.functional}/{self.basis}"
+            return f"{method}/{self.basis} [{self.solvent}]"
+        return f"{method}/{self.basis}"
 
 
     # === 
@@ -349,6 +352,16 @@ class Protocol:
 
         # Clean additional input: quote compat + old-format double-brace unescape
         self.add_input = self.add_input.replace("'", "\"").replace("{{", "{").replace("}}", "}")
+
+        # Empirical dispersion: engine-agnostic name, translated by each calculator
+        try:
+            self.dispersion = normalize_dispersion(self.dispersion)
+            validate_dispersion(
+                self.dispersion, self.calculator, self.functional, self.add_input,
+                builtin=(self.functional.lower() in COMPOSITE_METHODS or 'xtb' in self.functional.lower()),
+            )
+        except ValueError as e:
+            raise ValueError(f"Protocol {self.number}: {e}") from None
 
         # Load eventual more Thresholds
         self.get_thrs(self.load_threshold())

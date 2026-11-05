@@ -72,7 +72,8 @@ class CalculationOrchestrator:
                 "PCA analysis of Conf Search",
                 self.logger,
                 set_=False,
-                include_H=self.config.include_H
+                include_H=self.config.include_H,
+                n_jobs=self.config.cpu,
             )
         
         # Protocol loop

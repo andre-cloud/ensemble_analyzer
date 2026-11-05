@@ -62,7 +62,8 @@ The workflow utilizes **invariant features** to avoid coordinate alignment issue
 2.  **PCA (Principal Component Analysis)**: Dimensionality reduction is applied to the EDM eigenvalues.
 3.  **K-Means Clustering**:
     * If a specific number of clusters is provided, K-Means is run directly.
-    * If set to `auto`, the optimal number of clusters ($k$) is determined via **Silhouette Score** analysis (scanning $k=2$ to $k=N_{conf} \times 0.8$).
+    * If set to `auto`, the optimal number of clusters ($k$) is determined via **Silhouette Score** analysis, scanning $k=2$ to $k=N_{conf} \times 0.8$ (at most $N_{conf}-1$). The distance matrix is computed once and for ensembles of 1000 or more conformers the $k$ values are evaluated in parallel on `-cpu` workers; wide ranges are scanned on an adaptive grid (every $k$ up to 50, then a coarse step refined around the best value).
+    * When the clusters are used for pruning (`cluster: true`), at least $\lceil 0.1 \, N_{conf} \rceil$ clusters are kept, so that a very small optimal $k$ does not reduce the ensemble to a handful of structures. The log reports both the optimal $k$ and the number actually used.
 4.  **Ensemble Reduction**: The ensemble is reduced by retaining only the representative conformer (lowest energy) from each cluster.
 
 ### 2.4 Spectral Generation

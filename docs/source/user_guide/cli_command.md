@@ -36,6 +36,7 @@ The main driver `ensemble_analyzer` accepts various command-line arguments to co
 
 * **`-cpu`** (int)
     Number of CPU cores to allocate for each QM calculation step (default: `1`).
+    For ORCA (≥ 5, or when `ORCAVERSION` is unset) the `%pal` block also gets `nprocs_group` set to the largest proper divisor of `-cpu` (8 → 4, 12 → 6), so that independent sub-tasks such as numerical frequencies run in groups. It is omitted when that divisor is 1 (one core or a prime number of cores) and when `add_input` already sets `nprocs_group`.
 
 * **`-alpha`**, **`--alpha`** (float)
     Define alpha value for qRRHO dumping (default: `4`).

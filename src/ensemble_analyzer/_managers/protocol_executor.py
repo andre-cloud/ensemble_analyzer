@@ -127,7 +127,8 @@ class ProtocolExecutor:
                 title=f"PCA after pruning protocol {protocol.number}",
                 log=self.logger,
                 include_H=self.config.include_H,
-                set_=True
+                set_=True,
+                n_jobs=self.config.cpu,
             ):
                 conformers = get_ensemble(conformers, self.logger)
         

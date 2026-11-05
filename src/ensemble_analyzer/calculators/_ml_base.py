@@ -9,6 +9,7 @@ from .base import BaseCalc
 from ensemble_analyzer.constants import EV_TO_EH
 from ensemble_analyzer.conformer.energy_data import EnergyRecord, compute_rotational_constants, compute_thermochemistry
 from ensemble_analyzer.conformer.spectral_data import SpectralRecord
+from ensemble_analyzer.mode_analysis import project_hessian
 from ase.optimize import LBFGS
 from ase.vibrations import Infrared, Vibrations
 from ase.constraints import FixAtoms, FixInternals
@@ -71,30 +72,40 @@ class BaseMlCalc(BaseCalc):
         return calc, self.label
 
     def _run_vibrations(self, atoms):
-        try:
-            ir = Infrared(atoms, name=f"{self.conf.folder}/protocol_{self.protocol.number}")
-            ir.run()
-            freqs = ir.get_frequencies()
-            ir_intensities = ir.intensities.copy()
-        except (AttributeError, NotImplementedError):
-            ir = Vibrations(atoms, name=f"{self.conf.folder}/protocol_{self.protocol.number}")
-            ir.run()
-            freqs = ir.get_frequencies()
-            ir_intensities = np.zeros(len(freqs))
+        """Finite-difference vibrations with translations/rotations projected out.
 
-        freqs = np.where(
-            np.abs(freqs.imag) > 1e-8,
-            -freqs.imag,
-            freqs.real,
-        )
+        Returns 3N-6 (3N-5 if linear) frequencies in cm⁻¹ (imaginary as
+        negative), the matching IR intensities and mass-weighted normal modes.
+        """
+        name = f"{self.conf.folder}/protocol_{self.protocol.number}"
+        try:
+            ir = Infrared(atoms, name=name)
+            ir.run()
+            has_ir = True
+        except (AttributeError, NotImplementedError):
+            ir = Vibrations(atoms, name=name)
+            ir.run()
+            has_ir = False
 
         masses = atoms.get_masses()
-        normal_modes = np.zeros((len(freqs), len(atoms), 3))
-        for i in range(len(freqs)):
-            mode_cart = ir.get_mode(i)
-            normal_modes[i] = mode_cart * np.sqrt(masses[:, None])
-        ir.clean()
+        hessian = ir.get_vibrations().get_hessian_2d()
+        freqs, normal_modes = project_hessian(hessian, masses, atoms.get_positions())
 
+        if has_ir:
+            # ASE gives intensities for the unprojected 3N modes: distribute them
+            # onto the projected modes through the squared overlaps (cross terms
+            # between raw modes are neglected).
+            raw = ir.get_frequencies()  # also fills ir.intensities
+            sqm = np.sqrt(masses[:, None])
+            raw_modes = np.array([ir.get_mode(i) * sqm for i in range(len(raw))])
+            norms = np.linalg.norm(raw_modes.reshape(len(raw), -1), axis=1)
+            raw_modes /= np.where(norms > 0, norms, 1.0)[:, None, None]
+            overlap2 = np.einsum("ikl,jkl->ij", normal_modes, raw_modes) ** 2
+            ir_intensities = overlap2 @ np.asarray(ir.intensities, dtype=float)
+        else:
+            ir_intensities = np.zeros(len(freqs))
+
+        ir.clean()
         return freqs, ir_intensities, normal_modes
 
     def _compute_thermochemistry(self, energy, scaled_freqs):

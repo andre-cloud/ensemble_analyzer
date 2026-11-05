@@ -69,7 +69,7 @@ class TestCalculators:
             assert "B3LYP 6-31G*" in si
             assert "CPCM" in si 
             assert "nopop" in si
-            assert "%pal nprocs 4 end" in ob
+            assert "%pal nprocs 4 " in ob
             assert post == ""
 
     def test_orca_freq_block(self, setup_calc):

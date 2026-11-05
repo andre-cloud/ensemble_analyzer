@@ -5,7 +5,7 @@ from ensemble_analyzer._logger.logger import Logger
 from ensemble_analyzer._clustering.cluster_config import ClusteringConfig
 from ensemble_analyzer._clustering.cluster_manager import ClusteringManager
 
-from ensemble_analyzer.constants import MIN_CONFORMERS_FOR_PCA
+from ensemble_analyzer.constants import MIN_CONFORMERS_FOR_PCA, CLUSTER_PRUNING_MIN_KEEP_FRACTION
 
 from typing import List, Optional, Union
 
@@ -19,7 +19,8 @@ def execute_PCA(
     log: Logger,
     set_: bool = True,
     include_H: bool = False,
-    legend: bool = True
+    legend: bool = True,
+    n_jobs: int = 1,
 ) -> bool:
     """Execute PCA-based clustering on the conformer ensemble.
 
@@ -29,32 +30,37 @@ def execute_PCA(
         fname (str): Output filename for the plot.
         title (str): Plot title.
         log (Logger): Logger instance.
-        set_ (bool): Set cluster attribute on conformers.
+        set_ (bool): Set cluster attribute on conformers (used for pruning).
+            With auto-detection, the pruning floor
+            ``CLUSTER_PRUNING_MIN_KEEP_FRACTION`` then applies.
         include_H (bool): Include hydrogen in distance matrix.
         legend (bool): Include legend in plot.
+        n_jobs (int): Parallel workers for the automatic k search.
 
     Returns:
         bool: True if PCA was performed successfully, False otherwise.
     """
-    
+
     config = ClusteringConfig(
         n_clusters=ncluster,
         include_H=include_H,
-        set_cluster_attribute=set_
+        set_cluster_attribute=set_,
+        min_keep_fraction=CLUSTER_PRUNING_MIN_KEEP_FRACTION if set_ else 0.0,
+        n_jobs=max(1, int(n_jobs or 1)),
     )
-    
+
     manager = ClusteringManager(logger=log, config=config)
-    
+
 
     if validate_possible_PCA(ensemble=confs, logger=log, n_clusters=ncluster):
-        manager.perform_pca(
+        result = manager.perform_pca(
             conformers=confs,
             n_clusters=ncluster,
             output_file=fname,
             title=title,
             include_legend=legend,
         )
-        return True
+        return result is not None
     return False
 
 def validate_possible_PCA(ensemble: List[Conformer], logger: Logger, n_clusters: Optional[Union[int, bool]]) -> bool:

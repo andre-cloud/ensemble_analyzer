@@ -12,6 +12,23 @@ These parameters define the level of theory and the type of calculation to be pe
 * **`basis`** (str)
     The basis set definition. If using composite methods (like `r2SCAN-3c`), this is automatically handled or can be omitted.
 
+* **`dispersion`** (str)
+    Empirical dispersion correction, kept separate from the functional so the same name works for every QM engine (default: `null`, no correction). Each driver writes it in its own syntax:
+
+    | `dispersion` | ORCA      | Gaussian                    | NWChem (inside `dft ... end`) |
+    |--------------|-----------|-----------------------------|-------------------------------|
+    | `"D2"`       | `! D2`    | `EmpiricalDispersion=GD2`   | `disp vdw 2`                  |
+    | `"D3ZERO"`   | `! D3ZERO`| `EmpiricalDispersion=GD3`   | `disp vdw 3`                  |
+    | `"D3BJ"`     | `! D3BJ`  | `EmpiricalDispersion=GD3BJ` | `disp vdw 4`                  |
+    | `"D4"`       | `! D4`    | —                           | —                             |
+    | `"PFD"`      | —         | `EmpiricalDispersion=PFD`   | —                             |
+
+    Aliases such as `"GD3BJ"` or `"D3(BJ)"` are accepted. `"D3"` alone is rejected because it is ambiguous (ORCA reads it as D3BJ, Gaussian's `GD3` is zero damping). The protocol fails to load if the engine does not support the requested correction, if the calculator is an ML potential or `tblite`, if the functional already contains one (e.g. `"wB97X-D4"`, `"B3LYP-D3BJ"`, `"wB97XD"`, `"B97D3"`, composite `-3c` methods, xTB), or if `add_input` also requests it.
+
+    ```json
+    "0": {"calculator": "gaussian", "functional": "B3LYP", "basis": "def2-SVP", "dispersion": "D3BJ", "opt": true}
+    ```
+
 * **`opt`** (bool)
     If `true`, performs a geometry optimization for the current step.
 
@@ -164,7 +181,8 @@ This step optimizes a transition state using Sella (if using an ML calculator) o
 * **`cluster`** (int | bool)
     Controls the unsupervised clustering of conformers.
     * If an **integer > 1**: Performs K-Means clustering to reduce the ensemble to that exact number of structures.
-    * If **`true`**: Performs clustering with automatic detection of the optimal number of clusters ($k$).
+    * If **`true`**: Performs clustering with automatic detection of the optimal number of clusters ($k$, silhouette search over $2 \ldots 0.8\,N$). For pruning, at least 10% of the ensemble is kept ($k_{\text{used}} = \max(k_{\text{opt}}, \lceil 0.1\,N \rceil)$); set an integer to prune more aggressively.
+    * Clustering needs at least 30 active conformers.
 
 * **`no_prune`** (bool)
     If `true`, completely disables energy and geometric pruning for this specific step.

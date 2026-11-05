@@ -23,6 +23,49 @@ import matplotlib.gridspec as gridspec
 
 from scipy.interpolate import griddata
 from scipy.spatial.distance import cdist  # scipy.spatial.distance_matrix is deprecated since SciPy 1.18
+from joblib import Parallel, delayed
+from threadpoolctl import threadpool_limits
+
+
+# Silhouette search grid: every k up to _DENSE_K, then ~_COARSE_POINTS coarse values
+_DENSE_K = 50
+_MAX_DENSE_RANGE = 150
+_COARSE_POINTS = 100
+# Below this ensemble size starting the worker processes costs more than it saves
+_PARALLEL_MIN_SAMPLES = 1000
+
+
+def _candidate_ks(lo: int, hi: int) -> tuple[list[int], int]:
+    """k values for the first pass of the silhouette search, and the coarse step.
+
+    Narrow ranges are scanned completely (step 1). Wide ranges are scanned
+    densely up to _DENSE_K and then with a step chosen to give about
+    _COARSE_POINTS values; the caller refines around the best coarse k.
+    """
+    if hi - lo + 1 <= _MAX_DENSE_RANGE:
+        return list(range(lo, hi + 1)), 1
+    dense_hi = max(lo, min(_DENSE_K, hi))
+    step = max(2, int(np.ceil((hi - dense_hi) / _COARSE_POINTS)))
+    ks = list(range(lo, dense_hi + 1)) + list(range(dense_hi + step, hi + 1, step))
+    if ks[-1] != hi:
+        ks.append(hi)
+    return ks, step
+
+
+def _score_k(features, dist, k, random_state, single_thread):
+    """KMeans with k clusters and its silhouette score on a precomputed distance matrix."""
+    def run():
+        labels = KMeans(n_clusters=k, n_init='auto', random_state=random_state).fit_predict(features)
+        if len(np.unique(labels)) < 2:
+            return k, -1.0, labels
+        return k, float(silhouette_score(dist, labels, metric="precomputed")), labels
+
+    if single_thread:
+        # parallel workers: avoid oversubscription by OpenMP/BLAS threads
+        with threadpool_limits(1):
+            return run()
+    return run()
+
 
 class ClusteringManager:
     """
@@ -222,20 +265,33 @@ class ClusteringManager:
         pca_scores = pca.fit_transform(eigenvalues)
         
         # Step 4: Determine cluster number
+        optimal_k = k_range = scores = None
+        cluster_labels = None
         if n_clusters is None:
             self.logger.debug("Auto-detecting optimal cluster number...")
-            n_clusters, _, _ = self.find_optimal_clusters(pca_scores)
-            self.logger.info(f"  Optimal clusters detected: {n_clusters}")
-        
-        # Step 5: K-Means clustering
-        self.logger.debug(f"Performing K-Means with {n_clusters} clusters...")
-        kmeans = KMeans(
-            n_clusters=n_clusters,
-            n_init='auto',
-            random_state=self.config.random_state
-        )
-        cluster_labels = kmeans.fit_predict(pca_scores)
-        
+            optimal_k, k_range, scores, cluster_labels = self._silhouette_search(pca_scores)
+            self.logger.info(f"  Optimal clusters detected: {optimal_k}")
+            n_clusters = optimal_k
+
+            floor = self._pruning_floor(len(pca_scores))
+            if floor > optimal_k:
+                n_clusters = floor
+                cluster_labels = None
+                self.logger.info(
+                    f"  Pruning floor ({self.config.min_keep_fraction:.0%} of "
+                    f"{len(pca_scores)} conformers) → using {n_clusters} clusters"
+                )
+
+        # Step 5: K-Means clustering (the search already gives the labels of its best k)
+        if cluster_labels is None:
+            self.logger.debug(f"Performing K-Means with {n_clusters} clusters...")
+            kmeans = KMeans(
+                n_clusters=n_clusters,
+                n_init='auto',
+                random_state=self.config.random_state
+            )
+            cluster_labels = kmeans.fit_predict(pca_scores)
+
         # Step 6: Set cluster attribute
         if self.config.set_cluster_attribute:
             for conf, cluster_id in zip(conformers, cluster_labels):
@@ -249,8 +305,11 @@ class ClusteringManager:
             energies=energies,
             explained_variance=pca.explained_variance_ratio_,
             n_clusters=n_clusters,
-            original_features=eigenvalues, 
-            components=pca.components_     
+            original_features=eigenvalues,
+            components=pca.components_,
+            optimal_k=optimal_k,
+            k_range=list(k_range) if k_range is not None else None,
+            silhouette_scores=list(scores) if scores is not None else None,
         )
     
     def _calculate_distance_matrix_eigenvalues(
@@ -263,6 +322,7 @@ class ClusteringManager:
         Calculate eigenvalues of distance matrices.
         
         This provides rotation/translation invariant features for PCA.
+        Vectorised over conformers, in chunks to bound memory.
         
         Args:
             geometries: (n_conformers, n_atoms, 3) array
@@ -272,29 +332,102 @@ class ClusteringManager:
         Returns:
             (n_conformers, n_eigenvalues) array
         """
-        
-        eigenvalues_list = []
-        
-        for geom in geometries:
-            # Filter atoms if needed
-            if include_H:
-                coords = geom
-            else:
-                mask = atoms != "H"
-                coords = geom[mask]
-            
-            # Calculate distance matrix
-            dist_mat = cdist(coords, coords)
-            
-            # Compute eigenvalues
+        coords = np.asarray(geometries, dtype=float)
+        if not include_H:
+            coords = coords[:, np.asarray(atoms) != "H"]
+
+        n_conf, n_at = coords.shape[:2]
+        # ~64 MB of (chunk, n, n, 3) differences per chunk
+        chunk = max(1, int(8e6 // max(1, n_at * n_at * 3)))
+        out = np.empty((n_conf, n_at))
+        for i in range(0, n_conf, chunk):
+            c = coords[i:i + chunk]
+            dist = np.linalg.norm(c[:, :, None, :] - c[:, None, :, :], axis=-1)
             # Real-symmetric matrix: eigvalsh gives real, ascending-sorted
             # eigenvalues, so feature columns correspond across conformers.
             # (np.linalg.eig returns them in arbitrary order.)
-            eigenvals = np.linalg.eigvalsh(dist_mat)
-            eigenvalues_list.append(eigenvals)
-        
-        return np.array(eigenvalues_list)
-    
+            out[i:i + chunk] = np.linalg.eigvalsh(dist)
+        return out
+
+    def _k_bounds(self, n_samples: int) -> tuple[int, int]:
+        """Silhouette search bounds: [max(min_k, 2), min(frac*N, max_k, N-1)]."""
+        lo = max(int(self.config.min_k), 2)
+        hi = int(n_samples * self.config.max_k_fraction)
+        if self.config.max_k is not None:
+            hi = min(hi, int(self.config.max_k))
+        hi = min(hi, n_samples - 1)
+        return lo, hi
+
+    def _pruning_floor(self, n_samples: int) -> int:
+        """Minimum number of clusters in auto mode (0 if no floor)."""
+        frac = self.config.min_keep_fraction or 0.0
+        if frac <= 0:
+            return 0
+        return min(int(np.ceil(frac * n_samples)), n_samples)
+
+    def _silhouette_search(self, features: np.ndarray) -> tuple:
+        """
+        Silhouette search over k, returning also the labels of the best k.
+
+        The pairwise distance matrix is computed once and shared by every
+        silhouette evaluation; the k values are evaluated in parallel when
+        ``config.n_jobs != 1`` and the ensemble has at least
+        ``_PARALLEL_MIN_SAMPLES`` conformers. Wide ranges are scanned on an adaptive grid
+        (every k up to ``_DENSE_K``, then a coarse step refined around the
+        best coarse k).
+
+        Returns:
+            tuple: (optimal_k, k_range, scores, labels)
+        """
+        n = len(features)
+        lo, hi = self._k_bounds(n)
+
+        if hi < lo:
+            self.logger.warning(
+                f"Cannot optimize clusters: max_k ({hi}) < min_k ({lo}). "
+                f"Using k={lo}"
+            )
+            labels = KMeans(
+                n_clusters=min(lo, n), n_init='auto', random_state=self.config.random_state
+            ).fit_predict(features)
+            return lo, [lo], [0.0], labels
+
+        dist = cdist(features, features)
+        np.fill_diagonal(dist, 0.0)
+
+        results: Dict[int, tuple] = {}
+        coarse, step = _candidate_ks(lo, hi)
+        self._evaluate_ks(features, dist, coarse, results)
+        if step > 1:
+            best = max(results, key=lambda k: results[k][0])
+            fine = [k for k in range(max(lo, best - step + 1), min(hi, best + step - 1) + 1)
+                    if k not in results]
+            self._evaluate_ks(features, dist, fine, results)
+
+        k_range = sorted(results)
+        scores = [results[k][0] for k in k_range]
+        optimal_k = k_range[int(np.argmax(scores))]
+
+        self.logger.debug(
+            f"  Silhouette search: {len(k_range)} k values in [{lo}, {hi}], "
+            f"best k={optimal_k} (score={results[optimal_k][0]:.3f})"
+        )
+        return optimal_k, k_range, scores, results[optimal_k][1]
+
+    def _evaluate_ks(self, features, dist, ks, results) -> None:
+        if not ks:
+            return
+        n_jobs = self.config.n_jobs or 1
+        seed = self.config.random_state
+        if n_jobs == 1 or len(features) < _PARALLEL_MIN_SAMPLES:
+            out = [_score_k(features, dist, k, seed, False) for k in ks]
+        else:
+            out = Parallel(n_jobs=n_jobs, backend="loky")(
+                delayed(_score_k)(features, dist, k, seed, True) for k in ks
+            )
+        for k, score, labels in out:
+            results[k] = (score, labels)
+
     def find_optimal_clusters(self, features: np.ndarray) -> tuple:
         """
         Find optimal number of clusters using silhouette score.
@@ -305,38 +438,7 @@ class ClusteringManager:
         Returns:
             tuple: (optimal_k, k_range, silhouette_scores)
         """
-        
-        min_k = max(int(len(features)*.1), 2)
-        max_k = int(len(features)*.8)
-        
-        if max_k < min_k:
-            self.logger.warning(
-                f"Cannot optimize clusters: max_k ({max_k}) < min_k ({min_k}). "
-                f"Using min_k={min_k}"
-            )
-            k_range = range(min_k, min_k + 1)
-            return min_k, k_range, [0.0]
-        
-        k_range = range(min_k, max_k + 1)
-        scores = []
-        
-        for k in k_range:
-            kmeans = KMeans(
-                n_clusters=k,
-                n_init='auto',
-                random_state=self.config.random_state
-            )
-            labels = kmeans.fit_predict(features)
-            score = silhouette_score(features, labels)
-            scores.append(score)
-        
-        optimal_k = k_range[np.argmax(scores)]
-        best_score = max(scores)
-        
-        self.logger.debug(
-            f"  Silhouette scores: k={optimal_k} (score={best_score:.3f})"
-        )
-        
+        optimal_k, k_range, scores, _ = self._silhouette_search(features)
         return optimal_k, k_range, scores
     
     # ===

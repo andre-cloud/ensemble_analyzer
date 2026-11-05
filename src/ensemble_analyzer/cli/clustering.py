@@ -36,6 +36,8 @@ python clustering.py ensemble.xyz -o my_pca.png --title "Drug Conformers"
                         help='Save cluster-reduced ensemble to clustered.xyz')
     parser.add_argument('--dpi', type=int, default=300,
                         help='Output image DPI (default: 300)')
+    parser.add_argument('-cpu', '--cpu', type=int, default=1, dest='cpu',
+                        help='Parallel workers for the automatic cluster search (default: 1)')
     parser.add_argument('-v', '--verbose', action='store_true',
                         help='Enable verbose output')
 
@@ -232,19 +234,22 @@ def plot_clustering_metrics(result: Any, out_dir: str, base_name: str, logger: C
     plt.close()
     logger.info(f"✓ Scree plot saved: {scree_file}")
 
-    if explicit_k is None:
-        features = result.scores
+    if explicit_k is None and getattr(result, 'k_range', None):
+        # reuse the search already run by perform_pca
+        k_range, scores = result.k_range, result.silhouette_scores
+    elif explicit_k is None:
         dummy_mgr = ClusteringManager(logger=logger)
-        opt_k, k_range, scores = dummy_mgr.find_optimal_clusters(features)
+        _, k_range, scores = dummy_mgr.find_optimal_clusters(result.scores)
     else:
         k_range, scores = range(explicit_k, explicit_k + 1), []
 
     if len(k_range) > 1:
         plt.figure(figsize=(8, 5))
         plt.plot(k_range, scores, marker='s', color='orange')
+        selected_k = getattr(result, 'optimal_k', None) or result.n_clusters
         plt.axvline(
-            x=result.n_clusters, color='red', linestyle='--',
-            label=f'Selected k={result.n_clusters}',
+            x=selected_k, color='red', linestyle='--',
+            label=f'Selected k={selected_k}',
         )
         plt.title('Silhouette Score vs Number of Clusters')
         plt.xlabel('Number of Clusters (k)')
@@ -330,6 +335,7 @@ def main() -> None:
         n_clusters=args.ncluster,
         include_H=args.include_H,
         set_cluster_attribute=True,
+        n_jobs=max(1, args.cpu),
     )
 
     manager = ClusteringManager(logger=logger, config=config)

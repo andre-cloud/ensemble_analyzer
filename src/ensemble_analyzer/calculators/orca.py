@@ -1,5 +1,7 @@
 from ase.calculators.orca import ORCA, OrcaProfile
 from ensemble_analyzer.calculators.base import BaseCalc, register_calculator
+from enan_calculators._orca import orca_pal_block
+from ensemble_analyzer.protocol.dispersion import dispersion_keyword
 import shutil
 import os
 
@@ -68,13 +70,16 @@ class OrcaCalc(BaseCalc):
         else:
             solv = ""
 
+        disp = dispersion_keyword(self.protocol.dispersion, "orca")
         si = f"{self.protocol.functional} {self.protocol.basis} {solv} nopop"
+        if disp:
+            si += f" {disp}"
 
         raw_input = self.protocol.add_input.replace("CONF", str(self.conf.folder))
         pre, post = _split_post_blocks(raw_input)
 
         ob = (
-            f"%pal nprocs {self.cpu} end\n"
+            orca_pal_block(self.cpu, raw_input, self.VERSION or None)
             + pre
             + ("\n%maxcore 5000\n" if "maxcore" not in raw_input else "")
         )
@@ -108,6 +113,10 @@ class OrcaCalc(BaseCalc):
             add_input=raw_input,
             directory=ase_dir,
         )
+
+        disp = dispersion_keyword(self.protocol.dispersion, "orca")
+        if disp:
+            calculator.parameters["orcasimpleinput"] += f" {disp}"
 
         if self.protocol.read_orbitals:
             calculator.parameters["orcasimpleinput"] += "\n! moread\n"

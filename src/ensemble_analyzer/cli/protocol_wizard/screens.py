@@ -96,6 +96,26 @@ def _fmt_constraints(data: list[list[int]]) -> str:
     return ";".join(",".join(str(a) for a in g) for g in data)
 
 
+def _fmt_cluster(value: Any) -> str:
+    """Protocol ``cluster`` value -> wizard text ('auto' for True, '' for off)."""
+    if value is True:
+        return "auto"
+    if isinstance(value, int) and not isinstance(value, bool) and value > 1:
+        return str(value)
+    return ""
+
+
+def _parse_cluster(raw: str) -> bool | int | None:
+    """Wizard text -> protocol ``cluster`` value (None = leave unset)."""
+    raw = raw.strip().lower()
+    if raw in ("auto", "true", "yes"):
+        return True
+    try:
+        return int(raw)
+    except ValueError:
+        return None
+
+
 def _fmt_validators(data: list[list]) -> str:
     return "\n".join(f"{v[0]} ||| {v[1]} ||| {v[2]}" for v in data)
 
@@ -191,6 +211,13 @@ class StepEditorScreen(ModalScreen[dict | None]):
                     id="f_basis",
                 )
 
+                yield Label("Dispersion (orca, gaussian, nwchem)", classes="field")
+                yield Input(
+                    value=_v(self.step.get("dispersion")),
+                    placeholder="empty = none (D2, D3ZERO, D3BJ, D4, PFD)",
+                    id="f_dispersion",
+                )
+
                 yield Label("ML task / head (uma, fairchem, mace)", classes="field")
                 yield Input(
                     value=_v(self.step.get("task")),
@@ -275,10 +302,10 @@ class StepEditorScreen(ModalScreen[dict | None]):
 
                 # ── Pruning & Clustering ──
                 with Collapsible(title="Pruning & Clustering", collapsed=True):
-                    yield Label("Number of clusters (blank = none)", classes="field")
+                    yield Label("Number of clusters (blank = none, 'auto' = silhouette)", classes="field")
                     yield Input(
-                        value=_v(self.step.get("cluster") if isinstance(self.step.get("cluster"), int) else ""),
-                        placeholder="",
+                        value=_fmt_cluster(self.step.get("cluster")),
+                        placeholder="auto",
                         id="f_cluster",
                     )
                     yield Label("Disable pruning?", classes="field")
@@ -425,6 +452,10 @@ class StepEditorScreen(ModalScreen[dict | None]):
         if basis or s.get("calculator") not in ML_CALCULATORS:
             s["basis"] = basis
 
+        dispersion = self.query_one("#f_dispersion", Input).value.strip()
+        if dispersion:
+            s["dispersion"] = dispersion
+
         task = self.query_one("#f_task", Input).value.strip()
         if task:
             s["task"] = task
@@ -469,12 +500,9 @@ class StepEditorScreen(ModalScreen[dict | None]):
             s["monitor_internals"] = m
 
         # clustering
-        cluster_raw = self.query_one("#f_cluster", Input).value.strip()
-        if cluster_raw:
-            try:
-                s["cluster"] = int(cluster_raw)
-            except ValueError:
-                pass
+        cluster = _parse_cluster(self.query_one("#f_cluster", Input).value)
+        if cluster is not None:
+            s["cluster"] = cluster
         s["no_prune"] = _parse_bool(self.query_one("#f_no_prune", Select).value)
         s["prune_method"] = self.query_one("#f_prune_method", Select).value or "rotconst"
         if s["prune_method"] != "rotconst":

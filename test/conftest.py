@@ -91,6 +91,7 @@ def mock_protocol():
     proto.number = 1
     proto.functional = "B3LYP"
     proto.basis = "6-31G*"
+    proto.dispersion = None
     proto.calculator = "orca"
     proto.task = None
     proto.clustering = False

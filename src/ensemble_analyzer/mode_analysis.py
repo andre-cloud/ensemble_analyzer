@@ -1,8 +1,87 @@
 import numpy as np
 from ase import Atoms as ASE_Atoms
+from ase import units
 
 
 _ATOMIC_MASSES: dict[str, float] = {}
+
+# Converts sqrt(eigenvalue) of a mass-weighted Hessian in eV/(Å² amu) to eV,
+# the same factor ase.vibrations uses.
+_HESSIAN_TO_EV = units._hbar * 1e10 / np.sqrt(units._e * units._amu)
+
+
+def rigid_body_basis(
+    masses: np.ndarray, positions: np.ndarray, tol: float = 1e-6
+) -> np.ndarray:
+    """Orthonormal basis (3N, k) of the mass-weighted rigid-body motions.
+
+    Spans the three translations and the three rotations about the centre of
+    mass. k is 6 for a non-linear molecule, 5 for a linear one and 3 for a
+    single atom: null rotations are dropped through the SVD, so no linearity
+    flag is needed.
+    """
+    m = np.asarray(masses, dtype=float)
+    x = np.asarray(positions, dtype=float)
+    n = len(m)
+    sqm = np.sqrt(m)
+    r = x - (m[:, None] * x).sum(axis=0) / m.sum()
+
+    vecs = []
+    for a in range(3):
+        t = np.zeros((n, 3))
+        t[:, a] = sqm
+        vecs.append(t.ravel())
+    for a in range(3):
+        e = np.zeros(3)
+        e[a] = 1.0
+        vecs.append((sqm[:, None] * np.cross(e, r)).ravel())
+
+    U, s, _ = np.linalg.svd(np.array(vecs).T, full_matrices=False)
+    return U[:, s > tol * s.max()]
+
+
+def project_hessian(
+    hessian: np.ndarray, masses: np.ndarray, positions: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
+    """Vibrational frequencies and modes with translations/rotations removed.
+
+    The mass-weighted Hessian is diagonalised only inside the internal
+    subspace orthogonal to the rigid-body motions, so exactly 3N-6 (3N-5 for
+    linear molecules) modes are returned and no near-zero spurious mode has to
+    be recognised and discarded afterwards.
+
+    Args:
+        hessian: (3N, 3N) Cartesian Hessian in eV/Å² (ASE units).
+        masses: (N,) atomic masses in amu.
+        positions: (N, 3) Cartesian coordinates in Å.
+
+    Returns:
+        freqs: (n_modes,) frequencies in cm⁻¹, imaginary ones as negative values,
+            sorted by ascending eigenvalue.
+        modes: (n_modes, N, 3) mass-weighted, orthonormal normal modes (same
+            convention as ``Vibrations.get_mode(i) * sqrt(m)``).
+    """
+    m = np.asarray(masses, dtype=float)
+    n = len(m)
+    H = np.asarray(hessian, dtype=float)
+    H = 0.5 * (H + H.T)
+    inv_sqm = np.repeat(1.0 / np.sqrt(m), 3)
+    Hmw = H * inv_sqm[:, None] * inv_sqm[None, :]
+
+    D = rigid_body_basis(m, positions)
+    k = D.shape[1]
+    if 3 * n - k <= 0:
+        return np.zeros(0), np.zeros((0, n, 3))
+
+    # Orthonormal complement of D: the internal (vibrational) subspace
+    Q, _ = np.linalg.qr(np.hstack([D, np.eye(3 * n)]))
+    B = Q[:, k:3 * n]
+
+    w2, L = np.linalg.eigh(B.T @ Hmw @ B)
+    energies = _HESSIAN_TO_EV * np.sqrt(np.abs(w2)) * np.sign(w2)
+    freqs = energies / units.invcm
+    modes = (B @ L).T.reshape(-1, n, 3)
+    return freqs, modes
 
 
 def _get_mass(symbol: str) -> float:
