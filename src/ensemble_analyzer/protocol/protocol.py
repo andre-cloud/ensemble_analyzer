@@ -99,6 +99,9 @@ class Protocol:
     skip_opt_fail               : Optional[bool]                = False
     block_on_retention_rate     : Optional[bool]                = False
 
+    # Parallel execution: CPUs per QM job, None = one job at a time on all CPUs
+    cpu_per_job                 : Optional[int]                 = None
+
     # Line validators [[pattern, expected, threshold], ...]
     validators                  : Optional[list]                = field(default_factory=list)
 
@@ -349,6 +352,8 @@ class Protocol:
             )
         if self.prism_max_dev is not None and self.prism_max_dev <= 0:
             raise ValueError(f"Protocol {self.number}: prism_max_dev must be > 0 (or null).")
+        if self.cpu_per_job is not None and self.cpu_per_job < 1:
+            raise ValueError(f"Protocol {self.number}: cpu_per_job must be >= 1 (or null).")
 
         # Clean additional input: quote compat + old-format double-brace unescape
         self.add_input = self.add_input.replace("'", "\"").replace("{{", "{").replace("}}", "}")
