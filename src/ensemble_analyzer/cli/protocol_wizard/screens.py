@@ -46,6 +46,8 @@ def _step_label(key: str, step: dict) -> str:
         parts.append("[FREQ]")
     if step.get("ts"):
         parts.append("[TS]")
+    if step.get("cpu_per_job"):
+        parts.append(f"[{step['cpu_per_job']} CPU/job]")
     return " ".join(parts)
 
 
@@ -96,24 +98,41 @@ def _fmt_constraints(data: list[list[int]]) -> str:
     return ";".join(",".join(str(a) for a in g) for g in data)
 
 
+_CLUSTER_TRUE = ("true", "auto", "yes")
+_CLUSTER_FALSE = ("false", "no", "")
+
+
 def _fmt_cluster(value: Any) -> str:
-    """Protocol ``cluster`` value -> wizard text ('auto' for True, '' for off)."""
+    """Protocol ``cluster`` value -> wizard text: 'true', 'false' or the number of clusters."""
     if value is True:
-        return "auto"
+        return "true"
     if isinstance(value, int) and not isinstance(value, bool) and value > 1:
         return str(value)
-    return ""
+    return "false"
 
 
-def _parse_cluster(raw: str) -> bool | int | None:
-    """Wizard text -> protocol ``cluster`` value (None = leave unset)."""
+def _parse_cluster(raw: str) -> bool | int:
+    """Wizard text -> protocol ``cluster`` value: True (auto k), False (off) or k > 1."""
     raw = raw.strip().lower()
-    if raw in ("auto", "true", "yes"):
+    if raw in _CLUSTER_TRUE:
         return True
+    if raw in _CLUSTER_FALSE:
+        return False
     try:
-        return int(raw)
+        k = int(raw)
+    except ValueError:
+        return False
+    # k < 2 means no clustering (Protocol.clustering requires k > 1)
+    return k if k > 1 else False
+
+
+def _parse_cpu_per_job(raw: str) -> int | None:
+    """Wizard text -> protocol ``cpu_per_job`` (None = one job at a time on all CPUs)."""
+    try:
+        n = int(raw.strip())
     except ValueError:
         return None
+    return n if n >= 1 else None
 
 
 def _fmt_validators(data: list[list]) -> str:
@@ -302,10 +321,10 @@ class StepEditorScreen(ModalScreen[dict | None]):
 
                 # ── Pruning & Clustering ──
                 with Collapsible(title="Pruning & Clustering", collapsed=True):
-                    yield Label("Number of clusters (blank = none, 'auto' = silhouette)", classes="field")
+                    yield Label("Clustering: true (auto k, silhouette), false (off) or number of clusters (needs ≥ 30 conformers)", classes="field")
                     yield Input(
                         value=_fmt_cluster(self.step.get("cluster")),
-                        placeholder="auto",
+                        placeholder="true | false | number of clusters",
                         id="f_cluster",
                     )
                     yield Label("Disable pruning?", classes="field")
@@ -374,6 +393,19 @@ class StepEditorScreen(ModalScreen[dict | None]):
                     yield Input(
                         value=str(self.step.get("neg_freq_threshold", 20.0)),
                         id="f_neg_freq_threshold",
+                    )
+
+                # ── Parallel Execution ──
+                with Collapsible(title="Parallel Execution", collapsed=True):
+                    yield Label(
+                        "CPUs per QM job (default: 1 job at a time on all -cpu cores; "
+                        "e.g. 8 with -cpu 32 → 4 jobs at once; ignored for ML)",
+                        classes="field",
+                    )
+                    yield Input(
+                        value=_v(self.step.get("cpu_per_job")),
+                        placeholder="default: 1 job at a time",
+                        id="f_cpu_per_job",
                     )
 
                 # ── Advanced ──
@@ -500,9 +532,7 @@ class StepEditorScreen(ModalScreen[dict | None]):
             s["monitor_internals"] = m
 
         # clustering
-        cluster = _parse_cluster(self.query_one("#f_cluster", Input).value)
-        if cluster is not None:
-            s["cluster"] = cluster
+        s["cluster"] = _parse_cluster(self.query_one("#f_cluster", Input).value)
         s["no_prune"] = _parse_bool(self.query_one("#f_no_prune", Select).value)
         s["prune_method"] = self.query_one("#f_prune_method", Select).value or "rotconst"
         if s["prune_method"] != "rotconst":
@@ -540,6 +570,11 @@ class StepEditorScreen(ModalScreen[dict | None]):
             )
         except ValueError:
             pass
+
+        # parallel execution
+        cpu_per_job = _parse_cpu_per_job(self.query_one("#f_cpu_per_job", Input).value)
+        if cpu_per_job is not None:
+            s["cpu_per_job"] = cpu_per_job
 
         # advanced
         for field in ("thrG", "thrB", "thrGMAX"):

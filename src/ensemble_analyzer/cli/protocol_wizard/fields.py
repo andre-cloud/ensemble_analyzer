@@ -31,6 +31,7 @@ DEFAULTS: dict[str, Any] = {
     "thrG": None,
     "thrB": None,
     "thrGMAX": None,
+    "cpu_per_job": None,  # unset = 1 job at a time on all -cpu cores
     "add_input": "",
 }
 
