@@ -36,12 +36,20 @@
 - **Acceleration**: Numba
 
 ```bash
-# Base install (ORCA/Gaussian only)
+# Base install (ORCA/Gaussian/NWChem)
 pip install ensemble-analyzer
 
-# With ML potentials (TBLite, AIMNet, UMA, FairChem, MACE)
+# With ML potentials (TBLite, AIMNet, UMA/FAIRChem, Skala) ...
 pip install "ensemble-analyzer[ml]"
+# ... and MACE in the same environment (mace-torch pins an older e3nn in its
+# metadata; EnAn runs MACE models with the e3nn required by UMA/FAIRChem)
+pip install --no-deps mace-torch
+
+# A single backend only
+pip install "ensemble-analyzer[mace]"   # or [tblite], [aimnet], [uma], [skala]
 ```
+
+Python 3.12–3.14. Check the installation with `enan_check`.
 
 ### External QM Programs (optional)
 
@@ -60,6 +68,9 @@ pip install "ensemble-analyzer[ml]"
 | **UMA** | ML potential | `[uma]` | `ENAN_MODELS_DIR/uma/` |
 | **FairChem** | ML potential | `[fairchem]` | `ENAN_MODELS_DIR/fairchem/` |
 | **Mace** | ML potential | `[mace]` | `ENAN_MODELS_DIR/mace/` |
+| **Skala** | ML exchange-correlation functional | `[skala]` | Downloaded by the package |
+
+`[ml]` (alias `[all]`) installs every backend above except `mace-torch` itself: add it with `pip install --no-deps mace-torch`.
 
 
 Point to your model weights directory:
@@ -267,8 +278,10 @@ cd ensemble_analyzer
 # Create feature branch
 git checkout -b feature/awesome-feature
 
-# Install dev dependencies
-pip install -e .
+# Install in editable mode with the test dependencies
+# (the version comes from the git tags: clone the full history)
+pip install -e ".[dev]"
+python -m pytest
 
 # Commit and push
 git commit -m "Add awesome feature"

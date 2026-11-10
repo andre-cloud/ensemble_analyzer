@@ -7,35 +7,66 @@
 Before installing the package, ensure your system meets the following requirements:
 
 * **Operating System**: Linux (recommended), macOS, or Windows.
-* **Python**: 3.12, 3.13 or 3.14 (3.15 is not yet supported: PyTorch and TBLite publish no 3.15 wheels).
-* **QM Engine**: A valid installation of ORCA (recommended) and/or Gaussian.
+* **Python**: 3.12, 3.13 or 3.14 (tested). The ML backends need PyTorch wheels for your Python version.
+* **QM Engine**: A valid installation of ORCA (recommended), Gaussian and/or NWChem.
 
 ---
 
 ## 1. Python Environment Setup
 
-We strongly recommend using **Conda** (via Anaconda or Miniconda) to manage dependencies and avoid conflicts with system libraries.
-
-### Create a Virtual Environment
+We recommend a dedicated environment, created with **Conda** (Anaconda, Miniconda, Miniforge) or with `venv`/`uv`.
 
 ```bash
-# Create a new environment named 'enan'
+# Create and activate a new environment named 'enan'
 conda create -n enan "python>=3.12,<3.15"
-
-# Activate the environment
 conda activate enan
 ```
+
 ### Install the package
-You can install EnAn directly using `pip`. This automatically resolve core dependencies.
+
 ```bash
 pip install ensemble-analyzer
 ```
 
-For developers who want to modify/add some feature
+This installs EnAn with its core dependencies (enough to drive ORCA, Gaussian and NWChem).
+
+### Optional backends (extras)
+
+| Extra | Installs | Backend |
+|-------|----------|---------|
+| `[tblite]` | `tblite` | GFN-xTB (semi-empirical) |
+| `[aimnet]` | `aimnet` | AIMNet2 |
+| `[uma]` / `[fairchem]` | `fairchem-core` | UMA / FAIRChem models |
+| `[mace]` | `mace-torch` | MACE |
+| `[skala]` | `skala` | Skala XC functional |
+| `[ml]` / `[all]` | all of the above, MACE runtime dependencies included | every ML backend |
+
 ```bash
-git clone
+pip install "ensemble-analyzer[ml]"
+pip install --no-deps mace-torch
+```
+
+**MACE next to UMA/FAIRChem.** `mace-torch` declares `e3nn==0.4.4`, while `fairchem-core` requires `e3nn>=0.5`, so pip refuses to install both in one step. MACE models do run with the newer e3nn: EnAn rebuilds them for the installed version (MACE-OFF23 energies agree within 3·10⁻⁵ eV). Hence `[ml]` installs everything except `mace-torch` itself, which is added with `--no-deps`. With [uv](https://docs.astral.sh/uv/) inside a clone of the repository no extra step is needed (`[tool.uv] override-dependencies`). If you only need MACE, `pip install "ensemble-analyzer[mace]"` is enough.
+
+### Developer install
+
+```bash
+git clone https://github.com/andre-cloud/ensemble_analyzer.git
 cd ensemble_analyzer
-pip install -e .
+pip install -e ".[dev]"
+python -m pytest
+```
+
+The package version is derived from the git tags (setuptools-scm): clone the full history, not a shallow copy.
+
+### Conda
+
+All core dependencies are available on conda-forge except `prism_pruner`. A conda-forge package for EnAn is in preparation; until then install the dependencies with conda and EnAn with pip:
+
+```bash
+conda create -n enan -c conda-forge "python>=3.12,<3.15" numpy scipy matplotlib-base scikit-learn ase numba tabulate inquirerpy textual sella
+conda activate enan
+pip install ensemble-analyzer
 ```
 
 ## 2. External QM software

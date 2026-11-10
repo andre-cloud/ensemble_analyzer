@@ -32,8 +32,8 @@ def check_python_dependencies() -> bool:
     """
 
     print(f"\n{'-'*20} 1. Checking Python Dependencies {'-'*20}")
-    required = ['numpy', 'scipy', 'matplotlib', 'ase', 'numba', 'sklearn', 'tabulate', 'InquirerPy', 'sella',
-                'prism_pruner']
+    required = ['numpy', 'scipy', 'matplotlib', 'ase', 'numba', 'sklearn', 'tabulate', 'InquirerPy', 'textual',
+                'sella', 'prism_pruner']
     all_pass = True
     
     for lib in required:
@@ -160,11 +160,30 @@ def check_mlip() -> None:
     else:
         log_warn("FAIRChem (fairchem-core) NOT installed. Install: pip install \"ensemble-analyzer[fairchem]\"")
 
-    # MACE (requires torch + mace-torch)
+    # MACE (requires torch + mace-torch). mace-torch pins e3nn==0.4.4 while
+    # fairchem-core needs e3nn>=0.5: EnAn rebuilds MACE models for the installed
+    # e3nn, so both can share one environment (see enan_calculators._mace).
+    fairchem_ok = importlib.util.find_spec("fairchem") is not None
     if importlib.util.find_spec("mace") is not None:
-        log_pass("MACE library found.")
+        e3nn_version = _package_version("e3nn")
+        note = " (models rebuilt for e3nn >= 0.5)" if e3nn_version and not e3nn_version.startswith("0.4") else ""
+        log_pass(f"MACE library found, e3nn {e3nn_version or '?'}{note}.")
+    elif fairchem_ok:
+        log_warn(
+            "MACE NOT installed. Next to UMA/FAIRChem install it without its e3nn pin: "
+            "pip install \"ensemble-analyzer[ml]\" && pip install --no-deps mace-torch"
+        )
     else:
         log_warn("MACE NOT installed. Install: pip install \"ensemble-analyzer[mace]\"")
+
+
+def _package_version(name: str) -> str | None:
+    """Installed version of a distribution, None if missing."""
+    from importlib.metadata import PackageNotFoundError, version
+    try:
+        return version(name)
+    except PackageNotFoundError:
+        return None
 
 def check_models_dir() -> None:
     """Check ENAN_MODELS_DIR environment variable."""
