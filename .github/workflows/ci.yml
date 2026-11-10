@@ -1,0 +1,97 @@
+# Installability and tests on every PR/push to bleed and main.
+#
+# - tests: pytest on the newest dependencies (Python 3.12 and 3.14) and on the
+#   oldest versions allowed by pyproject.toml (lowest-direct, Python 3.12).
+# - extras: every optional-dependency set must resolve on Python 3.12-3.14
+#   (catches upstream conflicts such as mace-torch vs fairchem-core on e3nn).
+# - package: sdist + wheel build, twine check, install of the wheel in a clean
+#   environment and `enan_check` dependency report.
+
+name: CI
+
+on:
+  pull_request:
+    branches: [main, bleed]
+  push:
+    branches: [main, bleed]
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    name: tests (py${{ matrix.python-version }}, ${{ matrix.resolution }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - python-version: "3.12"
+            resolution: highest
+          - python-version: "3.14"
+            resolution: highest
+          - python-version: "3.12"
+            resolution: lowest-direct
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # setuptools-scm reads the version from the tags
+      - uses: astral-sh/setup-uv@v6
+      - name: Install
+        run: |
+          uv venv --python ${{ matrix.python-version }}
+          uv pip install --resolution ${{ matrix.resolution }} -e ".[dev]"
+      - name: Test
+        run: .venv/bin/python -m pytest -q
+
+  extras:
+    name: optional dependencies resolve
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+      - name: Resolve every extra on Python 3.12-3.14
+        run: |
+          status=0
+          for py in 3.12 3.13 3.14; do
+            for extra in tblite aimnet uma fairchem mace skala ml all docs dev; do
+              if uv pip compile pyproject.toml --extra "$extra" --python-version "$py" --quiet -o "/tmp/req-$py-$extra.txt"; then
+                echo "py$py [$extra] OK"
+              else
+                echo "::error::[$extra] does not resolve on Python $py"
+                status=1
+              fi
+            done
+          done
+          exit $status
+
+  package:
+    name: build and install the wheel
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+      - name: Build and check
+        run: |
+          uv build
+          uvx twine check --strict dist/*
+      - name: Install the wheel in a clean environment
+        run: |
+          uv venv --python 3.12 /tmp/wheel-env
+          uv pip install --python /tmp/wheel-env dist/*.whl
+      - name: Version and dependency report
+        run: |
+          version=$(/tmp/wheel-env/bin/python -c "import ensemble_analyzer; print(ensemble_analyzer.__version__)")
+          echo "installed version: $version"
+          if [ "$version" = "0.0.0" ] || [ "$version" = "unknown" ]; then
+            echo "::error::version not derived from git tags"; exit 1
+          fi
+          # ORCA is not available on the runner: check only the Python dependencies
+          /tmp/wheel-env/bin/enan_check | tee /tmp/enan_check.txt || true
+          if grep -q "Library MISSING" /tmp/enan_check.txt; then
+            echo "::error::core dependency missing after installing the wheel"; exit 1
+          fi
