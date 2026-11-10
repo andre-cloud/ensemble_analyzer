@@ -126,3 +126,6 @@ ensemble_analyzer = ["parameters_file/*"]
 [project.urls]
 Homepage = "https://github.com/andre-cloud/ensemble_analyzer"
 Documentation = "https://enan.readthedocs.io/en/latest/"
+Changelog = "https://github.com/andre-cloud/ensemble_analyzer/blob/main/CHANGELOG.md"
+Releases = "https://github.com/andre-cloud/ensemble_analyzer/releases"
+Issues = "https://github.com/andre-cloud/ensemble_analyzer/issues"
