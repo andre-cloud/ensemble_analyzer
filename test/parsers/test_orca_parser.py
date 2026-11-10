@@ -93,51 +93,190 @@ Mode   freq       eps      Int      T**2         TX        TY        TZ
 ORCA TERMINATED NORMALLY
 """
 
-ORCA6_TDDFT = """
-Program Version 6
-
-SPECTRA
-ABSORPTION SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS    
+# Layout of ORCA 6.1 TD-DFT outputs (tables, energy summary, dispersion, final energy).
+_ORCA6_SPECTRA = """
 ----------------------------------------------------------------------------------------------------
-     Transition      Energy     Energy  Wavelength fosc(D2)      D2        DX        DY        DZ   
-                      (eV)      (cm-1)    (nm)                 (au**2)    (au)      (au)      (au)  
+                     ABSORPTION SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS
 ----------------------------------------------------------------------------------------------------
-          1          3.5000  28233.00   354.24  0.1234    0.5000    0.1000   -0.2000    0.3000
-          2          4.0000  32266.00   309.96  0.5678    0.8000    0.4000    0.5000    0.6000
+     Transition      Energy     Energy  Wavelength fosc(D2)      D2        DX        DY        DZ
+                      (eV)      (cm-1)    (nm)                 (au**2)    (au)      (au)      (au)
+----------------------------------------------------------------------------------------------------
+  0-1A  ->  1-1A    3.500000   28229.4   354.2   0.123400000   0.50000   0.10000  -0.20000   0.30000
+  0-1A  ->  2-1A    4.000000   32262.1   310.0   0.567800000   0.80000   0.40000   0.50000   0.60000
 
-CD SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS    
-------------------------------------------------------------------------------------------
-     Transition      Energy     Energy  Wavelength    R        MX        MY        MZ   
-                      (eV)      (cm-1)    (nm)   (1e40*cgs)   (au)      (au)      (au)  
-------------------------------------------------------------------------------------------
-          1          3.5000  28233.00   354.24  12.3456    0.1000    0.2000    0.3000
-          2          4.0000  32266.00   309.96 -78.9012    0.4000    0.5000    0.6000
+----------------------------------------------------------------------------------------------------
+                     ABSORPTION SPECTRUM VIA TRANSITION VELOCITY DIPOLE MOMENTS
+----------------------------------------------------------------------------------------------------
+     Transition      Energy     Energy  Wavelength fosc(P2)      P2        PX        PY        PZ
+                      (eV)      (cm-1)    (nm)                 (au**2)    (au)      (au)      (au)
+----------------------------------------------------------------------------------------------------
+  0-1A  ->  1-1A    3.500000   28229.4   354.2   0.999900000   0.50000   0.10000  -0.20000   0.30000
+  0-1A  ->  2-1A    4.000000   32262.1   310.0   0.999900000   0.80000   0.40000   0.50000   0.60000
 
-***
-ORCA TERMINATED NORMALLY
+------------------------------------------------------------------------------------------
+                     CD SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS
+------------------------------------------------------------------------------------------
+     Transition      Energy     Energy  Wavelength    R        MX        MY        MZ
+                      (eV)      (cm-1)    (nm)   (1e40*cgs)   (au)      (au)      (au)
+------------------------------------------------------------------------------------------
+  0-1A  ->  1-1A    3.500000   28229.4   354.2   12.34560   0.10000   0.20000   0.30000
+  0-1A  ->  2-1A    4.000000   32262.1   310.0  -78.90120   0.40000   0.50000   0.60000
+
+------------------------------------------------------------------------------------------
+                     CD SPECTRUM VIA TRANSITION VELOCITY DIPOLE MOMENTS
+------------------------------------------------------------------------------------------
+     Transition      Energy     Energy  Wavelength    R        MX        MY        MZ
+                      (eV)      (cm-1)    (nm)   (1e40*cgs)   (au)      (au)      (au)
+------------------------------------------------------------------------------------------
+  0-1A  ->  1-1A    3.500000   28229.4   354.2   99.99990   0.10000   0.20000   0.30000
+  0-1A  ->  2-1A    4.000000   32262.1   310.0   99.99990   0.40000   0.50000   0.60000
+
 """
 
+_ORCA6_SOC_SPECTRA = """
+--------------------------------------------------------------------------------------------------------
+      SOC CORRECTED ABSORPTION SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS
+--------------------------------------------------------------------------------------------------------
+      Transition         Energy     Energy  Wavelength fosc(D2)      D2       |DX|      |DY|      |DZ|
+                          (eV)      (cm-1)    (nm)                 (au**2)    (au)      (au)      (au)
+--------------------------------------------------------------------------------------------------------
+  0-1.0A  ->  1-3.0A    3.100000   25003.2   400.0   0.000000369   0.00000   0.00000   0.00150   0.00000
+  0-1.0A  ->  2-3.0A    3.100000   25003.2   400.0   0.000000000   0.00000   0.00000   0.00000   0.00000
+  0-1.0A  ->  3-3.0A    3.100010   25003.3   400.0   0.000001102   0.00001   0.00000   0.00000   0.00260
+  0-1.0A  ->  4-1.0A    3.499970   28229.2   354.2   0.123390000   0.50000   0.10000   0.20000   0.30000
+
+----------------------------------------------------------------------------------------------
+      SOC CORRECTED CD SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS
+----------------------------------------------------------------------------------------------
+      Transition         Energy     Energy  Wavelength    R       |MX|      |MY|      |MZ|
+                          (eV)      (cm-1)    (nm)    (1e40*cgs)  (au)      (au)      (au)
+----------------------------------------------------------------------------------------------
+  0-1.0A  ->  1-3.0A    3.100000   25003.2   400.0   -0.00000   0.00008   0.00000   0.00000
+  0-1.0A  ->  2-3.0A    3.100000   25003.2   400.0   -0.00000   0.00000   0.00000   0.00005
+  0-1.0A  ->  3-3.0A    3.100010   25003.3   400.0    0.00000   0.00000   0.00000   0.00000
+  0-1.0A  ->  4-1.0A    3.499970   28229.2   354.2   12.34500   0.10000   0.20000   0.30000
+
+"""
+
+_ORCA6_TDDFT_ENERGY = """
+-----------------------
+CIS/TD-DFT TOTAL ENERGY
+-----------------------
+
+    E(SCF)  =   -914.136983097 Eh
+    DE(CIS) =      0.065909138 Eh (Root  1)
+    ----------------------------- ---------
+    E(tot)  =   -914.071073959 Eh
+
+-------------------------   ----------------
+Dispersion correction           -0.061064496
+-------------------------   ----------------
+
+-------------------------   --------------------
+FINAL SINGLE POINT ENERGY      -914.132138455
+-------------------------   --------------------
+"""
+
+_ORCA6_SOC_ENERGY = """
+---------------------------
+SOC CIS/TD-DFT TOTAL ENERGY
+---------------------------
+
+    E(SCF)        =  -3734.600483805 Eh
+    E(SOC CIS)    =      0.092111444 Eh (SOC Root  1)
+    ----------------------------- ---------
+    E(tot)        =  -3734.508372362 Eh
+
+-------------------------   ----------------
+Dispersion correction           -0.086497399
+-------------------------   ----------------
+
+-------------------------   --------------------
+FINAL SINGLE POINT ENERGY     -3734.594869760291
+-------------------------   --------------------
+"""
+
+ORCA6_TDDFT = (
+    "\n                         Program Version 6.1.1  -  RELEASE   -\n"
+    + _ORCA6_SPECTRA + _ORCA6_TDDFT_ENERGY + "\nORCA TERMINATED NORMALLY\n"
+)
+
+# `iroot 0`: no CIS/TD-DFT TOTAL ENERGY block, FINAL is E(SCF) + dispersion
+ORCA6_TDDFT_IROOT0 = (
+    "\n                         Program Version 6.1.1  -  RELEASE   -\n"
+    + _ORCA6_SPECTRA
+    + "\nFINAL SINGLE POINT ENERGY      -914.198047593\n\nORCA TERMINATED NORMALLY\n"
+)
+
+ORCA6_TDDFT_SOC = (
+    "\n                         Program Version 6.1.0  -  RELEASE   -\n"
+    + _ORCA6_SPECTRA + _ORCA6_SOC_SPECTRA + _ORCA6_SOC_ENERGY + "\nORCA TERMINATED NORMALLY\n"
+)
+
+ORCA6_TDDFT_SOC_ROOT0 = (
+    "\n                         Program Version 6.1.0  -  RELEASE   -\n"
+    + _ORCA6_SPECTRA + _ORCA6_SOC_SPECTRA
+    + _ORCA6_SOC_ENERGY.replace("0.092111444 Eh (SOC Root  1)", "-0.000000248 Eh (SOC Root  0)")
+    + "\nORCA TERMINATED NORMALLY\n"
+)
+
+# Layout of ORCA 5.0 TD-DFT outputs: energies in cm-1 only, "CD SPECTRUM" title
 ORCA5_TDDFT = """
-Program Version 5
+                         Program Version 5.0.4 -  RELEASE  -
 
-SPECTRA
-ABSORPTION SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS
 -----------------------------------------------------------------------------
-State   Energy    Wavelength  fosc         T2        TX        TY        TZ  
-        (cm-1)      (nm)                 (au**2)    (au)      (au)      (au) 
+         ABSORPTION SPECTRUM VIA TRANSITION ELECTRIC DIPOLE MOMENTS
 -----------------------------------------------------------------------------
-   1  28233.00     354.24    0.1234    0.5000    0.1000   -0.2000    0.3000
-   2  32266.00     309.96    0.5678    0.8000    0.4000    0.5000    0.6000
+State   Energy    Wavelength  fosc         T2        TX        TY        TZ
+        (cm-1)      (nm)                 (au**2)    (au)      (au)      (au)
+-----------------------------------------------------------------------------
+   1   28233.0    354.2   0.123400000   0.50000   0.10000  -0.20000   0.30000
+   2   32266.0    309.9   0.567800000   0.80000   0.40000   0.50000   0.60000
 
-CD SPECTRUM
--------------------------------------------------------------------
-State  Energy     Wavelength     R         MX        MY        MZ   
-       (cm-1)       (nm)     (1e40*cgs)   (au)      (au)      (au)  
--------------------------------------------------------------------
-   1  28233.00     354.24     12.3456    0.1000    0.2000    0.3000
-   2  32266.00     309.96    -78.9012    0.4000    0.5000    0.6000
+-----------------------------------------------------------------------------
+         ABSORPTION SPECTRUM VIA TRANSITION VELOCITY DIPOLE MOMENTS
+-----------------------------------------------------------------------------
+State   Energy    Wavelength  fosc         P2        PX        PY        PZ
+        (cm-1)      (nm)                 (au**2)    (au)      (au)      (au)
+-----------------------------------------------------------------------------
+   1   28233.0    354.2   0.999900000   0.50000   0.10000  -0.20000   0.30000
+   2   32266.0    309.9   0.999900000   0.80000   0.40000   0.50000   0.60000
 
-***
+-------------------------------------------------------------------
+                             CD SPECTRUM
+-------------------------------------------------------------------
+State   Energy    Wavelength       R         MX        MY        MZ
+        (cm-1)      (nm)       (1e40*cgs)   (au)      (au)      (au)
+-------------------------------------------------------------------
+   1   28233.0    354.2      12.34560   0.10000   0.20000   0.30000
+   2   32266.0    309.9     -78.90120   0.40000   0.50000   0.60000
+
+-------------------------------------------------------------------
+         CD SPECTRUM VIA TRANSITION VELOCITY DIPOLE MOMENTS
+-------------------------------------------------------------------
+State   Energy    Wavelength       R         MX        MY        MZ
+        (cm-1)      (nm)       (1e40*cgs)   (au)      (au)      (au)
+-------------------------------------------------------------------
+   1   28233.0    354.2      99.99990   0.10000   0.20000   0.30000
+   2   32266.0    309.9      99.99990   0.40000   0.50000   0.60000
+
+-----------------------
+CIS/TD-DFT TOTAL ENERGY
+-----------------------
+
+    E(SCF)  =  -3479.038876466 Eh
+    DE(CIS) =      0.197863977 Eh (Root  1)
+    ----------------------------- ---------
+    E(tot)  =  -3478.841012489 Eh
+
+-------------------------   ----------------
+Dispersion correction           -0.061064496
+-------------------------   ----------------
+
+-------------------------   --------------------
+FINAL SINGLE POINT ENERGY     -3478.902076985325
+-------------------------   --------------------
+
 ORCA TERMINATED NORMALLY
 """
 
@@ -274,27 +413,100 @@ class TestOrcaParser:
         assert ir.shape == (1, 2)
         assert vcd.shape == (1, 2)
 
-    def test_parse_tddft_v6(self, mock_logger):
-        with patch("builtins.open", mock_open(read_data=ORCA6_TDDFT)):
-            p = OrcaParser("dummy.out", mock_logger)
-            uv, ecd = p.parse_tddft()
-            assert uv.shape == (2, 2)
-            assert np.isclose(uv[0, 0], 354.24)
-            assert np.isclose(uv[0, 1], 0.1000)
-            assert ecd.shape == (2, 2)
+    @staticmethod
+    def _parser(mock_logger, text):
+        with patch("builtins.open", mock_open(read_data=text)):
+            return OrcaParser("dummy.out", mock_logger)
 
-    def test_parse_tddft_v5(self, mock_logger):
-        with patch("builtins.open", mock_open(read_data=ORCA5_TDDFT)):
-            p = OrcaParser("dummy.out", mock_logger)
-            uv, ecd = p.parse_tddft()
-            assert uv.shape == (2, 2)
-            assert ecd.shape == (2, 2)
+    # --- TD-DFT spectra -------------------------------------------------
+
+    def test_parse_tddft_v6_energy_ev_and_fosc(self, mock_logger):
+        uv, ecd = self._parser(mock_logger, ORCA6_TDDFT).parse_tddft()
+        assert np.allclose(uv, [[3.5, 0.1234], [4.0, 0.5678]])
+        assert np.allclose(ecd, [[3.5, 12.3456], [4.0, -78.9012]])
+
+    def test_parse_tddft_v6_ignores_velocity_tables(self, mock_logger):
+        uv, ecd = self._parser(mock_logger, ORCA6_TDDFT).parse_tddft()
+        assert not np.any(np.isclose(uv[:, 1], 0.9999))
+        assert not np.any(np.isclose(ecd[:, 1], 99.9999))
+
+    def test_parse_tddft_v5_converts_cm1_to_ev(self, mock_logger):
+        uv, ecd = self._parser(mock_logger, ORCA5_TDDFT).parse_tddft()
+        assert uv.shape == (2, 2)
+        assert np.allclose(uv[:, 0], [28233.0 / 8065.544, 32266.0 / 8065.544])
+        assert np.isclose(uv[0, 0], 3.5004, atol=1e-4)
+        assert np.allclose(uv[:, 1], [0.1234, 0.5678])
+        # "CD SPECTRUM" (length gauge), not the velocity table
+        assert np.allclose(ecd[:, 1], [12.3456, -78.9012])
+
+    def test_parse_tddft_soc_corrected_preferred(self, mock_logger):
+        uv, ecd = self._parser(mock_logger, ORCA6_TDDFT_SOC).parse_tddft()
+        assert uv.shape == (4, 2)
+        assert np.isclose(uv[0, 0], 3.1)
+        assert np.isclose(uv[3, 1], 0.12339)
+        assert ecd.shape == (4, 2)
+        assert np.isclose(ecd[3, 1], 12.345)
 
     def test_parse_tddft_not_found(self, parser_v6):
         parser_v6.fl = "no spectra"
         uv, ecd = parser_v6.parse_tddft()
         assert uv.shape == (1, 2)
         assert ecd.shape == (1, 2)
+
+    def test_parse_tddft_missing_table_does_not_parse_whole_file(self, mock_logger):
+        text = "Program Version 6\nSPECTRA\n" + ORCA6_FREQ
+        uv, ecd = self._parser(mock_logger, text).parse_tddft()
+        assert np.allclose(uv, 0.0) and uv.shape == (1, 2)
+        assert np.allclose(ecd, 0.0) and ecd.shape == (1, 2)
+
+    # --- TD-DFT energies ------------------------------------------------
+
+    def test_tddft_energy_is_ground_state(self, mock_logger):
+        p = self._parser(mock_logger, ORCA6_TDDFT)
+        # FINAL (-914.132138455) - DE(CIS, root 1) = E(SCF) + dispersion
+        assert np.isclose(p.parse_energy(), -914.136983097 - 0.061064496)
+
+    def test_tddft_energy_excited_state_kept_on_request(self, mock_logger):
+        p = self._parser(mock_logger, ORCA6_TDDFT)
+        assert np.isclose(p.parse_energy(excited_state=True), -914.132138455)
+
+    def test_tddft_energy_v5(self, mock_logger):
+        p = self._parser(mock_logger, ORCA5_TDDFT)
+        assert np.isclose(p.parse_energy(), -3479.038876466 - 0.061064496)
+
+    def test_tddft_energy_iroot0_unchanged(self, mock_logger):
+        p = self._parser(mock_logger, ORCA6_TDDFT_IROOT0)
+        assert np.isclose(p.parse_energy(), -914.198047593)
+
+    def test_tddft_energy_soc_root1(self, mock_logger):
+        p = self._parser(mock_logger, ORCA6_TDDFT_SOC)
+        assert np.isclose(p.parse_energy(), -3734.600483805 - 0.086497399)
+
+    def test_tddft_energy_soc_root0_unchanged(self, mock_logger):
+        p = self._parser(mock_logger, ORCA6_TDDFT_SOC_ROOT0)
+        assert np.isclose(p.parse_energy(), -3734.594869760291)
+
+    def test_tddft_energy_ignores_excitation_of_previous_job(self, mock_logger):
+        # TD-DFT job followed by a plain SCF: the excitation belongs to the first FINAL
+        text = ORCA6_TDDFT + "\nFINAL SINGLE POINT ENERGY      -914.300000000\n"
+        assert np.isclose(self._parser(mock_logger, text).parse_energy(), -914.3)
+
+    # --- version handling -----------------------------------------------
+
+    def test_version_detection_full_string(self, mock_logger):
+        assert self._parser(mock_logger, ORCA6_TDDFT).version == "6"
+        assert self._parser(mock_logger, ORCA5_TDDFT).version == "5"
+
+    def test_version_4_uses_orca5_layout(self, mock_logger):
+        p = self._parser(mock_logger, "Program Version 4.2.1\nORCA TERMINATED NORMALLY\n")
+        assert p.version == "4"
+        assert p.regex is OrcaParser.REGEX["5"]
+
+    def test_version_missing_does_not_raise(self, mock_logger):
+        p = self._parser(mock_logger, "ORCA TERMINATED NORMALLY\n")
+        assert p.version == "0"
+        assert p.regex is OrcaParser.REGEX["6"]
+        mock_logger.warning.assert_called()
 
     def test_parse_normal_modes(self, mock_logger):
         with patch("builtins.open", mock_open(read_data=ORCA6_NORMAL_MODES)):

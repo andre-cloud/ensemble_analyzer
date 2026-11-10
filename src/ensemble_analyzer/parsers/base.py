@@ -74,7 +74,14 @@ class BaseParser(ABC):
     def _get_dipole_text(self) -> str:
         return self.fl
 
-    def parse_energy(self) -> float:
+    def parse_energy(self, excited_state: bool = False) -> float:
+        """Return the last electronic energy of the output (Eh, 0.0 if not found).
+
+        Args:
+            excited_state (bool): for TD-DFT outputs, keep the energy of the followed
+                excited root instead of the ground state. Only parsers whose engine
+                reports the excited-state energy as final energy (ORCA) use it.
+        """
         match = re.findall(self.regex['E'], self.fl)
         if not match:
             return 0.0
