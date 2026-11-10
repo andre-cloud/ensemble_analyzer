@@ -13,17 +13,36 @@ except ImportError:
 _PREDICTOR_CACHE = {}
 
 
+# mace-torch pins e3nn==0.4.4, FAIRChem/UMA needs e3nn>=0.5. MACE models are
+# pickled with e3nn 0.4.4, whose CodeGenMixin stores each compiled submodule in
+# state["__codegen__"] as raw TorchScript bytes; e3nn>=0.5 expects
+# (buffer_type, buffer) tuples. Normalise the state so MACE models load with
+# any e3nn version (verified: MACE-OFF23 with e3nn 0.6.0 + fairchem-core 2.25).
+def _normalise_codegen_state(codegen_state: dict) -> None:
+    for name, value in codegen_state.items():
+        if isinstance(value, (bytes, bytearray)):
+            codegen_state[name] = ("torchscript", bytes(value))
+        elif isinstance(value, tuple) and len(value) > 2:
+            codegen_state[name] = value[:2]
+
+
+_NEEDS_REBUILD = False
 try:
+    import e3nn
     from e3nn.util.codegen import _mixin
-    if hasattr(_mixin.CodeGenMixin, "__setstate__"):
+    _e3nn_major_minor = tuple(int(x) for x in e3nn.__version__.split(".")[:2])
+    _NEEDS_REBUILD = _e3nn_major_minor >= (0, 5)
+    if _NEEDS_REBUILD and hasattr(_mixin.CodeGenMixin, "__setstate__"):
         _orig_setstate = _mixin.CodeGenMixin.__setstate__
+
         def _patched_setstate(self, state):
-            if 'codegen_state' in state and isinstance(state['codegen_state'], dict):
-                for k, v in state['codegen_state'].items():
-                    if isinstance(v, tuple) and len(v) > 2:
-                        # Keep only the first two elements expected by older/newer e3nn
-                        state['codegen_state'][k] = v[:2]
+            for key in ("__codegen__", "codegen_state"):
+                if isinstance(state.get(key), dict):
+                    state = dict(state)
+                    state[key] = dict(state[key])
+                    _normalise_codegen_state(state[key])
             _orig_setstate(self, state)
+
         _mixin.CodeGenMixin.__setstate__ = _patched_setstate
 except Exception:
     pass
@@ -36,6 +55,41 @@ _FOUNDATION = {
     "anicc": "mace_anicc",
     "mdp": "mace_mdp",
 }
+
+
+def _rebuild_models_for_e3nn(calc: Calculator, default_dtype: str) -> None:
+    """Re-instantiate the loaded MACE models with the installed e3nn.
+
+    Unpickling a model saved with e3nn 0.4.4 under e3nn >= 0.5 restores the
+    weights but not the attributes newer e3nn modules create in ``__init__``
+    (e.g. ``SphericalHarmonics.sph_func``, ``Activation.paths``). The model is
+    rebuilt from its own hyper-parameters (``extract_config_mace_model``, as in
+    MACE's e3nn->cueq converter) and the weights are copied back. Buffers that
+    the constructor recomputes (``*_zeroed`` masks) may be absent from old
+    checkpoints. Validated on MACE-OFF23: |ΔE| = 2e-5 eV vs e3nn 0.4.4.
+    """
+    from mace.tools.scripts_utils import extract_config_mace_model
+
+    dtype = torch.float64 if default_dtype == "float64" else torch.float32
+    rebuilt = []
+    for model in calc.models:
+        tensor = next(iter(model.parameters()), None)
+        if tensor is None:
+            tensor = next(iter(model.buffers()), None)
+        device = tensor.device if tensor is not None else torch.device("cpu")
+        new = model.__class__(**extract_config_mace_model(model))
+        missing, unexpected = new.load_state_dict(model.state_dict(), strict=False)
+        unexplained = [k for k in missing if not k.endswith("_zeroed")]
+        if unexplained or unexpected:
+            raise RuntimeError(
+                "MACE model could not be rebuilt for e3nn "
+                f"{e3nn.__version__}: missing {unexplained}, unexpected {list(unexpected)}"
+            )
+        new = new.to(device=device, dtype=dtype).eval()
+        for param in new.parameters():
+            param.requires_grad = False
+        rebuilt.append(new)
+    calc.models = rebuilt
 
 
 def _load_foundation(name: str, device: str, default_dtype: str, **kwargs) -> Calculator:
@@ -86,6 +140,8 @@ def create_mace_calc(charge, mult, method, solvent=None, task=None):
                 default_dtype=default_dtype,
                 **head_kwargs,
             )
+        if _NEEDS_REBUILD:
+            _rebuild_models_for_e3nn(_PREDICTOR_CACHE[cache_key], default_dtype)
 
     calc = _PREDICTOR_CACHE[cache_key]
 
