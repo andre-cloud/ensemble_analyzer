@@ -45,23 +45,33 @@ class NWChemCalc(BaseCalc):
         memory_mb = self.cpu * 5000
         kw["memory"] = f"{memory_mb} mb"
 
-        current_movecs = self._build_path(
-            self.conf.folder, f"protocol_{self.protocol.number}",
-            f"{self.conf.number}_p{self.protocol.number}_nwchem", "nwchem.movecs"
-        )
-
-        if getattr(self.protocol, "read_orbitals", None):
-            prev_p_num = self.protocol.read_orbitals
-            old_movecs = self._build_path(
-                self.conf.folder, f"protocol_{prev_p_num}",
-                f"{self.conf.number}_p{self.protocol.number}_nwchem", "nwchem.movecs"
-            )
-
-            kw["dft"]["vectors"] = f'input "{old_movecs}" output "{current_movecs}"'
-        else:
-            kw["dft"]["vectors"] = f'output "{current_movecs}"'
+        kw["dft"]["vectors"] = self._vectors_directive()
 
         return kw
+
+    def _movecs_path(self, protocol_number: Any) -> str:
+        """MO vectors written by the NWChem job of a protocol step.
+
+        ASE uses ``<conf>/protocol_<n>/<label>`` as ``permanent_dir`` and NWChem
+        names the vectors after the ``start`` label: ``<label>.movecs``.
+        """
+        label = f"{self.conf.number}_p{protocol_number}_nwchem"
+        return self._build_path(
+            self.conf.folder, f"protocol_{protocol_number}", label, f"{label}.movecs"
+        )
+
+    def _vectors_directive(self) -> str:
+        """``vectors`` line of the dft block (initial guess from ``read_orbitals``).
+
+        The output file is always given explicitly: without it NWChem overwrites
+        the input vectors of the previous step.
+        """
+        current = self._movecs_path(self.protocol.number)
+        previous = getattr(self.protocol, "read_orbitals", None)
+        # step "0" / 0 is a valid reference: test for emptiness, not truthiness
+        if previous is not None and previous is not False and str(previous).strip():
+            return f'input "{self._movecs_path(previous)}" output "{current}"'
+        return f'output "{current}"'
 
     def _build_constraints(self) -> str:
         if not self.constraints:
@@ -115,6 +125,9 @@ class NWChemCalc(BaseCalc):
         if disp:
             calculator.parameters.setdefault("dft", {})["disp"] = {"vdw": disp}
 
+        # Initial guess from a previous step (read_orbitals) + explicit output vectors
+        calculator.parameters.setdefault("dft", {})["vectors"] = self._vectors_directive()
+
         constraints_block = self._build_constraints()
         if constraints_block:
             original = calculator.write_input
@@ -147,3 +160,21 @@ class NWChemCalc(BaseCalc):
 
     def _add_freq_keywords(self, calc: NWChem) -> None:
         calc.parameters["task"] = "freq"
+
+    def _add_tddft_keywords(self, calc: NWChem) -> None:
+        """TD-DFT single points (``task tddft energy``) when ``nroots`` is set.
+
+        Optimisation/frequency steps keep their own task strings (see
+        ``_add_opt_keywords``).
+        """
+        nroots = self.protocol.nroots
+        if not (isinstance(nroots, int) and nroots > 0):
+            return
+        if self.protocol.opt or calc.parameters.get("task") != "energy":
+            return
+        tda = self.protocol.tda
+        calc.parameters["theory"] = "tddft"
+        calc.parameters["tddft"] = {
+            "nroots": nroots,
+            ("cis" if isinstance(tda, bool) and tda else "rpa"): None,
+        }
