@@ -56,7 +56,7 @@ jobs:
         run: |
           status=0
           for py in 3.12 3.13 3.14; do
-            for extra in tblite aimnet uma fairchem mace skala ml all docs dev; do
+            for extra in prism tblite aimnet uma fairchem mace skala ml all docs dev; do
               if uv pip compile pyproject.toml --extra "$extra" --python-version "$py" --quiet -o "/tmp/req-$py-$extra.txt"; then
                 echo "py$py [$extra] OK"
               else

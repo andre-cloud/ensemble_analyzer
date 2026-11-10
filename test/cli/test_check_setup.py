@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import patch, MagicMock
 from ensemble_analyzer.cli.check_setup import (
     check_python_dependencies, check_orca, check_gaussian,
-    check_nwchem, check_tblite, check_mlip, check_models_dir, check_templates_dir, main
+    check_nwchem, check_tblite, check_prism, check_mlip, check_models_dir, check_templates_dir, main
 )
 
 
@@ -20,9 +20,16 @@ class TestCheckSetup:
         assert check_python_dependencies() is False
 
     @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
-    def test_python_deps_missing_prism(self, mock_find_spec):
+    def test_python_deps_prism_is_optional(self, mock_find_spec):
+        # prism_pruner is an optional extra ([prism]): its absence is not a failure
         mock_find_spec.side_effect = lambda name: None if name == "prism_pruner" else MagicMock()
-        assert check_python_dependencies() is False
+        assert check_python_dependencies() is True
+
+    @patch("ensemble_analyzer.cli.check_setup.log_warn")
+    @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec", return_value=None)
+    def test_prism_missing_warns_with_extra(self, _find_spec, mock_warn):
+        check_prism()
+        assert '[prism]' in mock_warn.call_args.args[0]
 
     @patch("ensemble_analyzer.cli.check_setup.importlib.util.find_spec")
     def test_python_deps_missing_package(self, mock_find_spec):

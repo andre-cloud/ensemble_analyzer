@@ -32,7 +32,7 @@
 - **Python** 3.12 – 3.14
 - **Core**: NumPy, SciPy, Matplotlib, ASE
 - **Clustering**: scikit-learn
-- **Pruning**: [PRISM Pruner](https://github.com/ntampellini/prism_pruner)
+- **Pruning**: [PRISM Pruner](https://github.com/ntampellini/prism_pruner) (optional, `[prism]` extra)
 - **Acceleration**: Numba
 
 ```bash
@@ -47,6 +47,9 @@ pip install --no-deps mace-torch
 
 # A single backend only
 pip install "ensemble-analyzer[mace]"   # or [tblite], [aimnet], [uma], [skala]
+
+# PRISM similarity pruning (prune_method "prism" / "prism_rotcorr")
+pip install "ensemble-analyzer[prism]"
 ```
 
 Python 3.12–3.14. Check the installation with `enan_check`.
@@ -70,7 +73,7 @@ Python 3.12–3.14. Check the installation with `enan_check`.
 | **Mace** | ML potential | `[mace]` | `ENAN_MODELS_DIR/mace/` |
 | **Skala** | ML exchange-correlation functional | `[skala]` | Downloaded by the package |
 
-`[ml]` (alias `[all]`) installs every backend above except `mace-torch` itself: add it with `pip install --no-deps mace-torch`.
+`[ml]` installs every backend above except `mace-torch` itself: add it with `pip install --no-deps mace-torch`. `[all]` = `[ml]` + `[prism]`.
 
 
 Point to your model weights directory:

@@ -47,18 +47,34 @@ class PrismRecord:
     metric: float         # MOI max relative deviation, or Kabsch RMSD [Å]
 
 
+_MISSING_PRISM = (
+    "prune_method='prism'/'prism_rotcorr' requires the optional dependency "
+    "'prism_pruner', which is not installed. Install it with "
+    "`pip install \"ensemble-analyzer[prism]\"` (or `pip install prism_pruner`), "
+    "or use prune_method='rotconst'."
+)
+
+
 def import_prism():
     """Import ``prism_pruner.pruner`` or raise an informative ImportError."""
     try:
         from prism_pruner import pruner  # noqa: F401
         return pruner
     except ImportError as exc:  # pragma: no cover - message path tested via mock
-        raise ImportError(
-            "prune_method='prism'/'prism_rotcorr' requires 'prism_pruner', a core "
-            "dependency of ensemble-analyzer that is missing from this environment. "
-            "Reinstall the package (`pip install -U ensemble-analyzer`) or run "
-            "`pip install prism_pruner`."
-        ) from exc
+        raise ImportError(_MISSING_PRISM) from exc
+
+
+def check_prism_available(protocols: Sequence) -> None:
+    """Fail before any calculation when a step prunes with PRISM but
+    ``prism_pruner`` (optional, ``[prism]`` extra) is not installed."""
+    import importlib.util
+
+    steps = [
+        p.number for p in protocols
+        if str(getattr(p, "prune_method", "rotconst")).lower() in PRISM_METHODS
+    ]
+    if steps and importlib.util.find_spec("prism_pruner") is None:
+        raise ImportError(f"Protocol step(s) {steps}: {_MISSING_PRISM}")
 
 
 # ---------------------------------------------------------------------------

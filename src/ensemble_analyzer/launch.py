@@ -82,12 +82,18 @@ def main(
     log = create_logger(output_file=Path(output), debug=DEBUG, disable_color=disable_color)
     log.info(title)
 
+    # Optional dependencies required by the protocol are checked as soon as the
+    # protocol is known: before writing files or running any calculation.
+    from ensemble_analyzer._managers.prism_backend import check_prism_available
+
     # ── Resolve inputs ─────────────────────────────────────────────────
     if restart:
         conformers, protocols_out = load_workflow_data()
+        check_prism_available(protocols_out)
         start_from = ProtocolManager().load_last_completed()
     else:
         protocols_out = _normalize_protocols(protocol)
+        check_prism_available(protocols_out)
         ProtocolManager().save(protocols_out)
         conformers = _normalize_ensemble(ensemble, log)
         start_from = 0

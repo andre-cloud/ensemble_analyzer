@@ -176,6 +176,19 @@ def test_invalid_method_rejected():
         run_prism_pruning(np.zeros((2, 3, 3)), ["C"] * 3, np.zeros(2), max_dE=1.0, method="foo")
 
 
+def test_check_prism_available_raises_when_missing(monkeypatch):
+    monkeypatch.setattr(importlib.util, "find_spec", lambda name: None)
+    steps = [SimpleNamespace(number=0, prune_method="rotconst"),
+             SimpleNamespace(number=2, prune_method="prism_rotcorr")]
+    with pytest.raises(ImportError, match=r"step\(s\) \[2\].*ensemble-analyzer\[prism\]"):
+        prism_backend.check_prism_available(steps)
+
+
+def test_check_prism_available_ignores_rotconst(monkeypatch):
+    monkeypatch.setattr(importlib.util, "find_spec", lambda name: None)
+    prism_backend.check_prism_available([SimpleNamespace(number=0, prune_method="rotconst")])
+
+
 def test_protocol_validates_prune_method():
     from ensemble_analyzer.protocol.protocol import Protocol
     p = Protocol(number=0, functional="GFN2-xTB", calculator="tblite", prune_method=" Prism ")

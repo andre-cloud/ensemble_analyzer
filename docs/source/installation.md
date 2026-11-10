@@ -39,7 +39,9 @@ This installs EnAn with its core dependencies (enough to drive ORCA, Gaussian an
 | `[uma]` / `[fairchem]` | `fairchem-core` | UMA / FAIRChem models |
 | `[mace]` | `mace-torch` | MACE |
 | `[skala]` | `skala` | Skala XC functional |
-| `[ml]` / `[all]` | all of the above, MACE runtime dependencies included | every ML backend |
+| `[ml]` | all of the above, MACE runtime dependencies included | every ML backend |
+| `[prism]` | `prism_pruner` | PRISM similarity pruning (`prune_method: "prism"` / `"prism_rotcorr"`) |
+| `[all]` | `[ml]` + `[prism]` | everything |
 
 ```bash
 pip install "ensemble-analyzer[ml]"
@@ -61,7 +63,7 @@ The package version is derived from the git tags (setuptools-scm): clone the ful
 
 ### Conda
 
-All core dependencies are available on conda-forge except `prism_pruner`. A conda-forge package for EnAn is in preparation; until then install the dependencies with conda and EnAn with pip:
+All core dependencies are available on conda-forge (`prism_pruner`, needed only for PRISM pruning, is not: add it with pip). A conda-forge package for EnAn is in preparation; until then install the dependencies with conda and EnAn with pip:
 
 ```bash
 conda create -n enan -c conda-forge "python>=3.12,<3.15" numpy scipy matplotlib-base scikit-learn ase numba tabulate inquirerpy textual sella

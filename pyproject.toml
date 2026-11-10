@@ -60,7 +60,6 @@ dependencies = [
     "InquirerPy>=0.3.4",
     "textual>=2.0.0",
     "sella>=2.3.5",
-    "prism_pruner>=0.1.2",
 ]
 
 # One extra per backend; `ml` (= `all`) installs every backend that can share an
@@ -71,6 +70,8 @@ dependencies = [
 # (its runtime dependencies are already listed below). uv users get it through
 # [tool.uv] override-dependencies.
 [project.optional-dependencies]
+# PRISM similarity pruning (prune_method = "prism" / "prism_rotcorr")
+prism = ["prism_pruner>=0.1.2"]
 tblite = ["tblite"]
 aimnet = ["aimnet"]
 uma = ["fairchem-core"]
@@ -99,6 +100,7 @@ ml = [
     "pandas",
 ]
 all = [
+    "prism_pruner>=0.1.2",
     "tblite",
     "aimnet",
     "fairchem-core",
@@ -129,6 +131,7 @@ docs = [
 dev = [
     "pytest>=7.0",
     "pytest-cov",
+    "prism_pruner>=0.1.2",
 ]
 
 [project.scripts]

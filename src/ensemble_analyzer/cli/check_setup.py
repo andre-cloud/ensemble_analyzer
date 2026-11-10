@@ -33,7 +33,7 @@ def check_python_dependencies() -> bool:
 
     print(f"\n{'-'*20} 1. Checking Python Dependencies {'-'*20}")
     required = ['numpy', 'scipy', 'matplotlib', 'ase', 'numba', 'sklearn', 'tabulate', 'InquirerPy', 'textual',
-                'sella', 'prism_pruner']
+                'sella']
     all_pass = True
     
     for lib in required:
@@ -117,12 +117,25 @@ def check_nwchem() -> None:
     else:
         log_warn("NWChem executable NOT found. (Optional if using ORCA)")
 
+def check_prism() -> None:
+    """
+    Check for PRISM Pruner (optional: prune_method 'prism' / 'prism_rotcorr').
+    """
+
+    if importlib.util.find_spec("prism_pruner") is not None:
+        log_pass("PRISM Pruner found (prune_method 'prism' / 'prism_rotcorr' available).")
+    else:
+        log_warn(
+            "PRISM Pruner NOT installed (needed only for prune_method 'prism'/'prism_rotcorr'). "
+            "Install: pip install \"ensemble-analyzer[prism]\""
+        )
+
 def check_tblite() -> None:
     """
     Check for TBLite (semi-empirical tight-binding) availability.
     """
 
-    print(f"\n{'-'*20} 5. Checking TBLite (Tight Binding) {'-'*20}")
+    print(f"\n{'-'*20} 5. Checking TBLite (Tight Binding) and PRISM Pruner {'-'*20}")
 
     if importlib.util.find_spec("tblite") is not None:
         log_pass("TBLite library found.")
@@ -222,6 +235,7 @@ def main() -> None:
     check_gaussian()
     check_nwchem()
     check_tblite()
+    check_prism()
     check_mlip()
     check_models_dir()
     check_templates_dir()

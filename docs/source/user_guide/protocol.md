@@ -203,7 +203,7 @@ This step optimizes a transition state using Sella (if using an ML calculator) o
 * **`prune_method`** (str, default `"rotconst"`)
     Selects the duplicate-removal backend (the `thrGMAX` energy window is always applied first):
     * `"rotconst"`: energy + rotational-constant norm (`thrG`, `thrB`). Fast, no extra dependency.
-    * `"prism"`: [PRISM Pruner](https://github.com/ntampellini/prism_pruner) — heavy-atom Kabsch RMSD + maximum-deviation filter (optionally preceded by a moment-of-inertia filter, see `prism_moi`).
+    * `"prism"`: [PRISM Pruner](https://github.com/ntampellini/prism_pruner) (optional dependency: `pip install "ensemble-analyzer[prism]"`; a run using it stops at start-up if it is missing) — heavy-atom Kabsch RMSD + maximum-deviation filter (optionally preceded by a moment-of-inertia filter, see `prism_moi`).
     * `"prism_rotcorr"`: as `"prism"`, plus an RMSD corrected for degenerate rotamers (e.g. methyl / *t*-Bu rotations). Slowest.
 
     > **Note on `rotconst` for large molecules.** `thrB` is an absolute threshold, while rotational constants shrink with molecular size. In a test on raw CREST ensembles with the default `opt` thresholds (`thrG` 0.5 kcal/mol, `thrB` 5·10⁻⁵ cm⁻¹), `rotconst` removed 541/673 conformers of a 71-atom system and 651/675 of a 220-atom system; most removed conformers differed from their reference by > 0.5 Å heavy-atom RMSD, also after rotamer correction. For large or flexible systems prefer `prism` or tighten `thrB`.
