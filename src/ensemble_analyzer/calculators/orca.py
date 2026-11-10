@@ -164,8 +164,18 @@ class OrcaCalc(BaseCalc):
         if isinstance(nroots, int) and nroots > 0:
             tda = self.protocol.tda
             tda_val = "true" if (isinstance(tda, bool) and tda) else "false"
+            # `iroot 0`: FINAL SINGLE POINT ENERGY is the ground state (E(SCF) +
+            # dispersion) instead of the energy of root 1. Not for optimisations
+            # (the followed root is the one optimised) or when the user sets iroot.
+            add_input = (self.protocol.add_input or "").lower()
+            follow_gs = (
+                not self.protocol.opt
+                and "opt" not in add_input
+                and "iroot" not in add_input
+            )
+            iroot = " iroot 0" if follow_gs else ""
             calc.parameters["orcablocks"] += (
-                f"\n%tddft nroots {nroots} tda {tda_val} end\n"
+                f"\n%tddft nroots {nroots} tda {tda_val}{iroot} end\n"
             )
 
     def _maybe_add_vcd(self, calc: ORCA) -> None:

@@ -31,6 +31,24 @@ def tranform_float(freq: float) -> str:
     return f"{freq:.2f}"
 
 
+def _wants_excited_state_energy(p) -> bool:
+    """True when a TD-DFT step must keep the energy of the followed excited root.
+
+    That is the case of excited-state optimisations and of an explicit
+    ``iroot N`` (N >= 1) in ``add_input``; otherwise the ground-state energy is
+    used (spectra steps), consistently across QM engines.
+    """
+    nroots = getattr(p, "nroots", None)
+    if not (isinstance(nroots, int) and nroots > 0):
+        return False
+    add_input = (getattr(p, "add_input", "") or "").lower()
+    return bool(
+        getattr(p, "opt", False)
+        or "opt" in add_input
+        or re.search(r"iroot\s+[1-9]", add_input)
+    )
+
+
 def get_conf_parameters(
     conf: Conformer, number: int, output: str, p, time: datetime, temp: float, log: Logger, linear: bool = False, cut_off: float = 100, alpha: float = 4, P: float = 101.325
 ) -> bool:
@@ -78,7 +96,10 @@ def get_conf_parameters(
                 log.warning(f"{log.WARNING} Validation failed for Conf {conf.number}: expected {expected} ± {threshold}")
                 return False
 
-        e = parser.parse_energy()
+        keep_excited = _wants_excited_state_energy(p)
+        e = parser.parse_energy(excited_state=keep_excited)
+        if keep_excited:
+            log.debug(f"Conf {conf.number}: TD-DFT step, energy of the followed root kept (optimisation or iroot in add_input)")
 
         if p.opt or 'opt' in p.add_input.lower():
             try:
