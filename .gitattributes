@@ -1,0 +1,2 @@
+# setuptools-scm: GitHub "Download ZIP" / git archive fill in the version
+.git_archival.txt  export-subst
