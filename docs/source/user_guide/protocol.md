@@ -138,6 +138,11 @@ This example shows a typical workflow: a ground-state optimization and frequency
 }
 ```
 
+## ΔSCF Excited States (ORCA, NWChem)
+
+* **`deltascf`** (dict)
+    Optimises an excited state as a single non-aufbau determinant on top of a TD-DFT reference step (`read_orbitals`), with automatic convergence ladder, collapse checks and spin purification. Example: `"read_orbitals": "1", "deltascf": {"excitation": "auto", "root": 1}`. See [ΔSCF excited states](deltascf.md) for all options.
+
 ## Transition State Analysis
 
 * **`ts`** (bool)

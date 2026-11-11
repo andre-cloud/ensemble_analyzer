@@ -6,6 +6,18 @@ Versions follow the git release tags.
 
 ## [Unreleased]
 
+### Added
+- **ΔSCF excited states for ORCA and NWChem** (`deltascf` protocol key, see `docs/source/user_guide/deltascf.md`):
+  - excitations written as relative labels (`"HOMO-n->LUMO+m"`) or `"auto"` (dominant transition of a TD-DFT root); no orbital indices to write;
+  - reference ground state + TD-DFT reused from a `read_orbitals` step at the same level, otherwise computed per conformer;
+  - convergence ladder (ORCA: GMF → FreezeAndRelease → cation guess; NWChem: MOM → IMOM → damped → cation guess) with acceptance checks (converged output, gap to the reference, `<S²>`, state identity vs TD-DFT);
+  - automatic spin purification: Yamaguchi AP for open-shell singlets, recoupling of mixed determinants for doublets with three open shells (Hait et al. 2020); high-spin states need none;
+  - works with `opt`/`freq`; triplet (Tn) and doublet (Dn) excited states supported;
+  - Protocol Wizard section and "ΔSCF S1" template.
+
+### Fixed
+- Tutorial 3: the S1 optimisation step read its own orbitals (`read_orbitals: "2"`).
+
 
 ## [1.2.2] - 2026-11-10
 
