@@ -21,7 +21,9 @@ detection of a collapse to the ground state and the spin purification.
 
 | Key | Default | Meaning |
 |-----|---------|---------|
-| `excitation` | `"auto"` | `"auto"`: dominant transition of TD-DFT root `root`; or `"HOMO->LUMO"`, `"HOMO-n->LUMO+m"` |
+| `excitation` | `"auto"` | `"auto"`: dominant transition of TD-DFT root `root`; `"inherit"`: excitation of a previous ΔSCF step (see below); or `"HOMO->LUMO"`, `"HOMO-n->LUMO+m"` |
+| `inherit_from` | `null` | `inherit` only: source ΔSCF step (null = closest previous one with the same multiplicity) |
+| `inherit_gap_tol_ev` | `1.0` | `inherit` only: warn when the gap differs more than this from a single-point source |
 | `root` | `1` | TD-DFT root used by `auto`, relative to the step multiplicity (see below) |
 | `spin` | `"alpha"` | spin of the excited electron for explicit excitations (`auto` reads it from the TD-DFT output) |
 | `spin_purify` | `true` | spin purification, method chosen automatically (see below) |
@@ -35,6 +37,32 @@ Orbital indices are never written by hand: excitations are relative labels,
 translated at run time for each conformer (ORCA `alphaconf`/`betaconf`,
 NWChem `swap` with the occupied orbitals read from the reference output, so
 ECPs are handled).
+
+## ΔSCF optimisation followed by single points (`inherit`)
+
+To benchmark functionals on a ΔSCF geometry, later ΔSCF steps can reuse the
+excitation resolved by an earlier one instead of running a new TD-DFT:
+
+```json
+{
+  "0": {"functional": "PBE", "basis": "def2-SVP", "opt": true, "deltascf": {}},
+  "1": {"functional": "PBE0", "basis": "def2-TZVP", "deltascf": {"excitation": "inherit"}},
+  "2": {"functional": "CAM-B3LYP", "basis": "def2-TZVP", "deltascf": {"excitation": "inherit"}}
+}
+```
+
+* The source is the closest previous ΔSCF step with the same multiplicity
+  (`inherit_from` selects another one). Steps 1 and 2 both use the excitation of step 0.
+* The reference of an `inherit` step is a ground-state SCF at its own level and
+  geometry (guess orbitals, E(GS) for the collapse check, occupied orbitals for the
+  NWChem swaps): one SCF instead of one TD-DFT.
+* The resolved excitation of every ΔSCF step is stored per conformer in
+  `<conf>/protocol_<n>/deltascf/excitation.json`.
+* No TD-DFT identity check: the gap is logged next to the one of the source step,
+  and when the source is a single point a difference larger than
+  `inherit_gap_tol_ev` (default 1 eV) raises a warning, since the same label may
+  point to an orbital of different character with another functional. The gap of
+  an optimisation step is adiabatic and is not compared.
 
 ## Reference (#0)
 

@@ -304,3 +304,37 @@ def test_check_protocols_reference():
 def test_check_protocols_rejects(steps, match):
     with pytest.raises(ValueError, match=match):
         d.check_protocols(steps(), MagicMock())
+
+
+# ---------------------------------------------------------------------------
+# "inherit": ΔSCF opt -> ΔSCF single points (functional benchmark) without TD-DFT
+# ---------------------------------------------------------------------------
+
+def test_inherit_chain_and_explicit_source():
+    a = _p(0, opt=True, deltascf={})
+    b = _p(1, functional="PBE0", deltascf={"excitation": "inherit"})
+    c = _p(2, functional="CAM-B3LYP", deltascf={"excitation": "Inherit"})
+    e = _p(3, functional="B3LYP", deltascf={"excitation": "inherit", "inherit_from": 0})
+    d.check_protocols([a, b, c, e], MagicMock())
+    assert (b.deltascf["inherit_step"], c.deltascf["inherit_step"], e.deltascf["inherit_step"]) == (0, 1, 0)
+    assert b.deltascf["inherit_gap_tol_ev"] == 1.0
+
+
+@pytest.mark.parametrize("steps, match", [
+    (lambda: [_p(1, deltascf={"excitation": "inherit"})], "needs an earlier deltascf step"),
+    (lambda: [_p(0, mult=3, deltascf={}), _p(1, deltascf={"excitation": "inherit"})], "same multiplicity"),
+    (lambda: [_p(0, deltascf={}), _p(1, deltascf={"excitation": "inherit", "inherit_from": 4})], "inherit_from=4"),
+])
+def test_inherit_source_errors(steps, match):
+    with pytest.raises(ValueError, match=match):
+        d.check_protocols(steps(), MagicMock())
+
+
+@pytest.mark.parametrize("kw, match", [
+    ({"excitation": "inherit", "alphaconf": "0,1"}, "cannot be combined"),
+    ({"inherit_from": 0}, "requires excitation 'inherit'"),
+    ({"excitation": "inherit", "inherit_gap_tol_ev": -1}, "inherit_gap_tol_ev"),
+])
+def test_inherit_settings_rejected(kw, match):
+    with pytest.raises(ValueError, match=match):
+        _p(5, deltascf=kw)

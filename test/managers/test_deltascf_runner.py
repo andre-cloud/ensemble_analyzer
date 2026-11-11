@@ -120,3 +120,57 @@ def test_target_auto_and_explicit():
     settings = {**ds.DEFAULTS, "alphaconf": "0,1"}
     target, exc, kind = DeltaSCFRunner._target(settings, _ref([]), 1, SimpleNamespace(index_base=0))
     assert exc is None and target.alphaconf == "0,1" and kind == "singlet_ap"
+
+
+# ---------------------------------------------------------------------------
+# "inherit"
+# ---------------------------------------------------------------------------
+
+def test_excitation_file_roundtrip_and_inherited_target(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    conf = SimpleNamespace(folder="conf_1", number=1)
+    a = Protocol(number=0, functional="PBE", basis="def2-SVP", opt=True, deltascf={})
+    base = Path("conf_1/protocol_0/deltascf")
+    DeltaSCFRunner._save_excitation(base, Excitation("beta", 1, 0, weight=0.9, source="auto"), 3.2, a, -114.1)
+    data = DeltaSCFRunner._load_inherited(conf, 0)
+    assert (data["spin"], data["n"], data["m"], data["opt"], data["step"]) == ("beta", 1, 0, True, 0)
+
+    settings = {**ds.DEFAULTS, "excitation": "inherit"}
+    target, exc, kind = DeltaSCFRunner._target(settings, _ref([], (8, 7)), 2, SimpleNamespace(index_base=0), data)
+    assert exc == Excitation("beta", 1, 0, source="inherit") and target.excitations == [exc]
+    assert kind == "pure"            # beta into the SOMO of the doublet
+
+
+def test_inherit_missing_source_or_raw(tmp_path, monkeypatch):
+    monkeypatch.chdir(tmp_path)
+    conf = SimpleNamespace(folder="conf_1", number=1)
+    with pytest.raises(RuntimeError, match="no accepted ΔSCF state"):
+        DeltaSCFRunner._load_inherited(conf, 3)
+    DeltaSCFRunner._save_excitation(Path("conf_1/protocol_3/deltascf"), None, 3.0,
+                                    SimpleNamespace(opt=False, number=3), -1.0)
+    with pytest.raises(RuntimeError, match="raw alphaconf"):
+        DeltaSCFRunner._load_inherited(conf, 3)
+
+
+def test_inherited_gap_comparison():
+    runner = DeltaSCFRunner(SimpleNamespace(logger=SimpleNamespace(info=lambda m: None, warning=_Collect())))
+    settings = {**ds.DEFAULTS, "inherit_gap_tol_ev": 1.0}
+    runner._compare_inherited_gap(5.0, {"gap_ev": 3.5, "step": 1, "opt": False, "label": "HOMO->LUMO"}, settings, "t")
+    assert len(runner.log.warning.calls) == 1
+    runner._compare_inherited_gap(5.0, {"gap_ev": 3.5, "step": 0, "opt": True, "label": "HOMO->LUMO"}, settings, "t")
+    runner._compare_inherited_gap(3.9, {"gap_ev": 3.5, "step": 1, "opt": False, "label": "HOMO->LUMO"}, settings, "t")
+    assert len(runner.log.warning.calls) == 1
+
+
+class _Collect:
+    def __init__(self):
+        self.calls = []
+
+    def __call__(self, msg):
+        self.calls.append(msg)
+
+
+def test_inherit_reference_has_no_tddft(conf):
+    p = Protocol(number=2, functional="PBE0", basis="def2-SVP", deltascf={"excitation": "inherit"})
+    _, blocks, _ = _orca_build(_orca(p, conf), mode="sp", nroots=None)
+    assert "%tddft" not in blocks

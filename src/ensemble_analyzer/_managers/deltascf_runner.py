@@ -17,6 +17,7 @@ Engine-neutral logic and the validation behind every choice are in
 from __future__ import annotations
 
 import copy
+import json
 import shutil
 import time
 from dataclasses import dataclass, field
@@ -274,9 +275,12 @@ class DeltaSCFRunner:
         tag = f"Conf {conf.number} ΔSCF"
         geometry = np.asarray(conf.last_geometry, dtype=float)
 
+        inherited = None
         try:
+            if settings["excitation"] == "inherit":
+                inherited = self._load_inherited(conf, settings["inherit_step"])
             ref = self._reference(engine, settings, conf, protocol, base, geometry)
-            target, exc, kind = self._target(settings, ref, protocol.mult, engine)
+            target, exc, kind = self._target(settings, ref, protocol.mult, engine, inherited)
         except Exception as err:
             self.log.error(f"{tag}: {err}")
             conf.active = False
@@ -298,6 +302,11 @@ class DeltaSCFRunner:
             conf.active = False
             self.log.warning(f"{tag}: no attempt converged to an accepted excited state – deactivating")
             return False
+
+        gap = (accepted.energy - ref.energy) * ds.EH_TO_EV
+        if inherited is not None:
+            self._compare_inherited_gap(gap, inherited, settings, tag)
+        self._save_excitation(base, exc, gap, protocol, accepted.energy)
 
         energy = accepted.energy
         final_geometry = geometry
@@ -332,7 +341,9 @@ class DeltaSCFRunner:
             self.log.warning(
                 f"Conf {conf.number}: output/orbitals of the reference step {step} not found, computing #0"
             )
-        nroots = max(int(settings.get("root", 1)) + 2, 5)
+        # "inherit": the excitation is known, a ground-state SCF is enough
+        # (guess orbitals, E(GS), occupied orbitals for NWChem swaps)
+        nroots = None if settings["excitation"] == "inherit" else max(int(settings.get("root", 1)) + 2, 5)
         calc = engine.build(base / "reference", mode="sp", nroots=nroots)
         result = engine.run(calc, geometry, opt=False)
         if not result.ok or result.orbitals is None:
@@ -353,8 +364,47 @@ class DeltaSCFRunner:
 
     # -- target determinant --------------------------------------------------
 
+    EXCITATION_FILE = "excitation.json"
+
+    @classmethod
+    def _load_inherited(cls, conf, step) -> Dict:
+        path = Path(conf.folder) / f"protocol_{step}" / "deltascf" / cls.EXCITATION_FILE
+        if not path.exists():
+            raise RuntimeError(f"excitation 'inherit': step {step} has no accepted ΔSCF state for this conformer")
+        data = json.loads(path.read_text())
+        if data.get("n") is None:
+            raise RuntimeError(f"excitation 'inherit': step {step} used a raw alphaconf/betaconf override")
+        return data
+
+    @classmethod
+    def _save_excitation(cls, base: Path, exc: Optional[Excitation], gap: float, protocol, energy: float) -> None:
+        base.mkdir(parents=True, exist_ok=True)
+        data = {
+            "spin": exc.spin if exc else None, "n": exc.n if exc else None, "m": exc.m if exc else None,
+            "label": exc.label if exc else "raw alphaconf/betaconf", "weight": exc.weight if exc else None,
+            "source": exc.source if exc else "raw", "gap_ev": gap, "opt": bool(protocol.opt),
+            "energy": energy, "step": int(protocol.number),
+        }
+        (base / cls.EXCITATION_FILE).write_text(json.dumps(data, indent=2))
+
+    def _compare_inherited_gap(self, gap: float, inherited: Dict, settings, tag: str) -> None:
+        src_gap, step = inherited.get("gap_ev"), inherited.get("step")
+        self.log.info(f"{tag}: gap {gap:.2f} eV (step {step}: {src_gap:.2f} eV)")
+        if inherited.get("opt"):
+            return  # adiabatic gap of an optimisation: not comparable
+        if abs(gap - src_gap) > settings["inherit_gap_tol_ev"]:
+            self.log.warning(
+                f"{tag}: gap differs by {gap - src_gap:+.2f} eV from step {step} "
+                f"(> {settings['inherit_gap_tol_ev']} eV): the inherited {inherited.get('label')} may "
+                "correspond to an orbital of different character at this level"
+            )
+
     @staticmethod
-    def _target(settings, ref: _Reference, mult: int, engine) -> Tuple[_Target, Optional[Excitation], str]:
+    def _target(settings, ref: _Reference, mult: int, engine,
+                inherited: Optional[Dict] = None) -> Tuple[_Target, Optional[Excitation], str]:
+        if inherited is not None:
+            exc = Excitation(inherited["spin"], int(inherited["n"]), int(inherited["m"]), source="inherit")
+            return _Target([exc]), exc, ds.classify(mult, exc)
         if settings.get("alphaconf") or settings.get("betaconf"):
             target = _Target(alphaconf=settings.get("alphaconf"), betaconf=settings.get("betaconf"))
             return target, None, "singlet_ap" if mult == 1 else "raw"

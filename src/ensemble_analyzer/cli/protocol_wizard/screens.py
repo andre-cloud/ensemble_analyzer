@@ -319,7 +319,8 @@ class StepEditorScreen(ModalScreen[dict | None]):
                         "Reference TD-DFT step (number of a step with nroots: GS orbitals, E(GS), "
                         "state composition). Empty = computed at this level", classes="field")
                     yield Input(value=_v(self.step.get("read_orbitals")), placeholder="e.g. 1", id="f_dscf_ref")
-                    yield Label("Excitation: auto (dominant transition of a TD-DFT root), "
+                    yield Label("Excitation: auto (dominant transition of a TD-DFT root), inherit "
+                                "(same excitation as the previous ΔSCF step, GS SCF reference, no TD-DFT), "
                                 "HOMO->LUMO or HOMO-n->LUMO+m", classes="field")
                     yield Input(value=_v(dscf.get("excitation", "auto")), placeholder="auto", id="f_dscf_exc")
                     yield Label("Root (auto), relative to the step multiplicity: mult 1 -> S1; "

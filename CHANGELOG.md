@@ -13,6 +13,7 @@ Versions follow the git release tags.
   - convergence ladder (ORCA: GMF → FreezeAndRelease → cation guess; NWChem: MOM → IMOM → damped → cation guess) with acceptance checks (converged output, gap to the reference, `<S²>`, state identity vs TD-DFT);
   - automatic spin purification: Yamaguchi AP for open-shell singlets, recoupling of mixed determinants for doublets with three open shells (Hait et al. 2020); high-spin states need none;
   - works with `opt`/`freq`; triplet (Tn) and doublet (Dn) excited states supported;
+  - `"excitation": "inherit"`: a ΔSCF step reuses the excitation of a previous ΔSCF step (e.g. ΔSCF optimisation followed by single points with several functionals) with a ground-state SCF reference instead of a TD-DFT one;
   - Protocol Wizard section and "ΔSCF S1" template.
 
 ### Fixed

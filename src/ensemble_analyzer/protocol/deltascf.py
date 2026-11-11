@@ -32,7 +32,7 @@ EH_TO_EV = 27.211386245981
 SUPPORTED_CALCULATORS = ("orca", "nwchem")
 
 DEFAULTS: Dict = {
-    "excitation": "auto",      # "auto" | "HOMO->LUMO" | "HOMO-n->LUMO+m"
+    "excitation": "auto",      # "auto" | "inherit" | "HOMO->LUMO" | "HOMO-n->LUMO+m"
     "root": 1,                 # TD-DFT root used by "auto" (relative to the step multiplicity)
     "spin": "alpha",           # spin of the excited electron (explicit excitations)
     "alphaconf": None,         # ORCA only: raw alphaconf list (overrides excitation)
@@ -42,8 +42,13 @@ DEFAULTS: Dict = {
     "cation_guess": True,      # last attempts start from the cation orbitals
     "spin_purify": True,       # AP (singlets) / recoupling (doublets, 3 open shells)
     "doublet_branch": "lower", # recoupled doublet stored as E: "lower" | "upper"
+    "inherit_from": None,      # "inherit": source ΔSCF step (None = closest previous, same mult)
+    "inherit_gap_tol_ev": 1.0, # "inherit": warn when the gap differs more than this from the source (SP source)
     "reference_step": None,    # filled by check_protocols: reused TD-DFT step, or None (#0 computed)
+    "inherit_step": None,      # filled by check_protocols: resolved source step of "inherit"
 }
+
+_INTERNAL_KEYS = ("reference_step", "inherit_step")
 
 _EXCITATION_RE = re.compile(r"^HOMO(?:-(\d+))?->LUMO(?:\+(\d+))?$", re.IGNORECASE)
 _FORBIDDEN_IN_ADD_INPUT = ("deltascf", "alphaconf", "betaconf", "max_ovl", "imom", "swap")
@@ -306,7 +311,7 @@ def normalize_settings(raw, number: int, calculator: str, add_input: str = "",
     unknown = set(raw) - set(DEFAULTS)
     if unknown:
         raise ValueError(f"Protocol {number}: unknown deltascf option(s) {sorted(unknown)}. "
-                         f"Valid: {sorted(k for k in DEFAULTS if k != 'reference_step')}")
+                         f"Valid: {sorted(k for k in DEFAULTS if k not in _INTERNAL_KEYS)}")
     settings = {**DEFAULTS, **raw}
 
     calc = (calculator or "").lower()
@@ -321,9 +326,20 @@ def normalize_settings(raw, number: int, calculator: str, add_input: str = "",
         raise ValueError(f"Protocol {number}: remove {clash} from add_input, deltascf writes them itself")
 
     exc = str(settings["excitation"]).strip()
-    if exc.lower() != "auto":
+    if exc.lower() in ("auto", "inherit"):
+        settings["excitation"] = exc.lower()
+    else:
         parse_excitation(exc)
-    settings["excitation"] = "auto" if exc.lower() == "auto" else re.sub(r"\s+", "", exc).upper()
+        settings["excitation"] = re.sub(r"\s+", "", exc).upper()
+    if settings["excitation"] == "inherit" and (settings["alphaconf"] or settings["betaconf"]):
+        raise ValueError(f"Protocol {number}: deltascf 'inherit' cannot be combined with alphaconf/betaconf")
+    if settings["inherit_from"] is not None:
+        if settings["excitation"] != "inherit":
+            raise ValueError(f"Protocol {number}: deltascf inherit_from requires excitation 'inherit'")
+        settings["inherit_from"] = int(settings["inherit_from"])
+    if float(settings["inherit_gap_tol_ev"]) < 0:
+        raise ValueError(f"Protocol {number}: deltascf inherit_gap_tol_ev must be >= 0")
+    settings["inherit_gap_tol_ev"] = float(settings["inherit_gap_tol_ev"])
     settings["spin"] = str(settings["spin"]).strip().lower()
     if settings["spin"] not in ("alpha", "beta"):
         raise ValueError(f"Protocol {number}: deltascf spin must be 'alpha' or 'beta'")
@@ -352,6 +368,30 @@ def normalize_settings(raw, number: int, calculator: str, add_input: str = "",
     return settings
 
 
+def _inherit_source(p, settings, by_number) -> int:
+    """Step whose resolved excitation an ``inherit`` step reuses: ``inherit_from``
+    or the closest previous ΔSCF step with the same multiplicity."""
+    wanted = settings.get("inherit_from")
+    candidates = [
+        q for n, q in sorted(by_number.items())
+        if n < int(p.number) and getattr(q, "deltascf", None) and int(q.mult) == int(p.mult)
+    ]
+    if wanted is not None:
+        source = by_number.get(int(wanted))
+        if source is None or source not in candidates:
+            raise ValueError(
+                f"Protocol {p.number}: inherit_from={wanted} must be an earlier deltascf step "
+                f"with the same multiplicity ({p.mult})"
+            )
+        return int(source.number)
+    if not candidates:
+        raise ValueError(
+            f"Protocol {p.number}: excitation 'inherit' needs an earlier deltascf step "
+            f"with the same multiplicity ({p.mult})"
+        )
+    return int(candidates[-1].number)
+
+
 _LEVEL_FIELDS = ("calculator", "functional", "basis", "dispersion", "charge", "mult")
 
 
@@ -374,6 +414,8 @@ def check_protocols(protocols: Sequence, log=None) -> None:
         settings = getattr(p, "deltascf", None)
         if not settings:
             continue
+        settings["inherit_step"] = _inherit_source(p, settings, by_number) \
+            if settings.get("excitation") == "inherit" else None
         ref = str(getattr(p, "read_orbitals", "") or "").strip()
         settings["reference_step"] = None
         if not ref:
