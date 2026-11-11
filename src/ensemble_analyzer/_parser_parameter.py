@@ -50,7 +50,8 @@ def _wants_excited_state_energy(p) -> bool:
 
 
 def get_conf_parameters(
-    conf: Conformer, number: int, output: str, p, time: datetime, temp: float, log: Logger, linear: bool = False, cut_off: float = 100, alpha: float = 4, P: float = 101.325
+    conf: Conformer, number: int, output: str, p, time: datetime, temp: float, log: Logger, linear: bool = False, cut_off: float = 100, alpha: float = 4, P: float = 101.325,
+    energy_override: float | None = None,
 ) -> bool:
     """
     Extract and calculate parameters for a single conformer from the QM output.
@@ -98,6 +99,9 @@ def get_conf_parameters(
 
         keep_excited = _wants_excited_state_energy(p)
         e = parser.parse_energy(excited_state=keep_excited)
+        if energy_override is not None:
+            # e.g. spin-purified ΔSCF energy computed from several outputs
+            e = energy_override
         if keep_excited:
             log.debug(f"Conf {conf.number}: TD-DFT step, energy of the followed root kept (optimisation or iroot in add_input)")
 
