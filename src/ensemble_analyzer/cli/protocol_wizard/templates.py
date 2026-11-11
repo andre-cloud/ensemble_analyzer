@@ -67,6 +67,33 @@ SYSTEM_TEMPLATES: dict[str, list[dict[str, Any]]] = {
             "tda": True,
         },
     ],
+    "ΔSCF S1 (GS opt → TD-DFT reference → ΔSCF)": [
+        {
+            "calculator": "orca",
+            "functional": "r2SCAN-3c",
+            "opt": True,
+            "freq": True,
+            "comment": "S0 opt+freq",
+        },
+        {
+            "calculator": "orca",
+            "functional": "CAM-B3LYP",
+            "basis": "def2-TZVP",
+            "dispersion": "D4",
+            "nroots": 5,
+            "tda": True,
+            "comment": "TD-DFT reference for the ΔSCF step",
+        },
+        {
+            "calculator": "orca",
+            "functional": "CAM-B3LYP",
+            "basis": "def2-TZVP",
+            "dispersion": "D4",
+            "read_orbitals": "1",
+            "deltascf": {"excitation": "auto", "root": 1, "spin_purify": True},
+            "comment": "ΔSCF S1 (vertical), spin-purified",
+        },
+    ],
 }
 
 
