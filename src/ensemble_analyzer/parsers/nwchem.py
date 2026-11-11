@@ -125,6 +125,67 @@ class NWChemParser(BaseParser):
         except Exception:
             return np.empty((0, n_atoms, 3))
 
+    # --- ΔSCF support --------------------------------------------------------
+
+    def parse_s2(self) -> float | None:
+        """Last ground-state <S2> of an unrestricted DFT run, None if not printed."""
+        values = re.findall(r"^\s+<S2> =\s+(-?\d+\.\d+)\s+\(Exact", self.fl, flags=re.MULTILINE)
+        return float(values[-1]) if values else None
+
+    def parse_n_electrons(self) -> tuple[int, int] | None:
+        """(n_alpha, n_beta) of the last DFT run (valence electrons with ECPs)."""
+        alpha = re.findall(r"Alpha electrons :\s+(\d+)", self.fl)
+        beta = re.findall(r"Beta electrons :\s+(\d+)", self.fl)
+        if not alpha or not beta:
+            return None
+        return int(alpha[-1]), int(beta[-1])
+
+    def parse_excited_states(self, mult: int = 1) -> list:
+        """TD-DFT roots with their orbital composition (1-based indices).
+        For a closed-shell reference only the singlet roots are returned."""
+        from ensemble_analyzer.protocol.deltascf import ExcitedState
+
+        header_re = re.compile(
+            r"^\s*Root\s+(\d+)\s+(singlet|triplet)?\s*\S*\s+(-?\d+\.\d+)\s+a\.u\.\s+(-?\d+\.\d+)\s+eV"
+        )
+        trans_re = re.compile(
+            r"^\s*Occ\.\s+(\d+)\s+(?:(alpha|beta)\s+)?\S+\s+---\s+Virt\.\s+(\d+)\s+"
+            r"(?:(?:alpha|beta)\s+)?\S+\s+(-?\d+\.\d+)(?:\s+([XY]))?"
+        )
+        states: dict = {}
+        current = None
+        for line in self.fl.splitlines():
+            header = header_re.match(line)
+            if header:
+                kind = header.group(2)
+                root = int(header.group(1))
+                if (mult == 1 and kind == "triplet") or root in states:
+                    current = None
+                    continue
+                current = ExcitedState(root=root, energy_ev=float(header.group(4)), transitions=[])
+                states[root] = current
+                continue
+            if current is None:
+                continue
+            trans = trans_re.match(line)
+            if trans and trans.group(5) != "Y":
+                spin = trans.group(2) or "alpha"
+                coef = float(trans.group(4))
+                current.transitions.append((int(trans.group(1)), int(trans.group(3)), spin, coef * coef))
+        return [states[k] for k in sorted(states)]
+
+    def deltascf_status(self, opt: bool = False) -> str | None:
+        """None if the run converged, otherwise the reason it failed."""
+        if "Calculation failed to converge" in self.fl:
+            return "SCF not converged"
+        if "dft energy failed" in self.fl or "dft optimize failed" in self.fl:
+            return "NWChem error"
+        if not self.correct_exiting:
+            return "NWChem did not terminate normally"
+        if opt and not self.opt_done():
+            return "geometry optimisation not converged"
+        return None
+
     def parse_tddft(self) -> Tuple[np.ndarray, np.ndarray]:
         """Parse TD-DFT excited states (UV/ECD) from NWChem output.
 
