@@ -158,8 +158,10 @@ packages.find = { where = ["src"] }
 ensemble_analyzer = ["parameters_file/*"]
 
 [tool.setuptools_scm]
-# Tags are plain versions (1.2.2). Without git metadata (e.g. a shallow clone
-# without tags) the build still works and reports this version.
+
+version_scheme = "release-branch-semver"
+local_scheme = "no-local-version"
+
 fallback_version = "0.0.0"
 
 [tool.uv]
