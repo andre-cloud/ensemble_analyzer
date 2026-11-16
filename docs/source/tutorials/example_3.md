@@ -57,7 +57,7 @@ ensemble_analyzer -e ensemble_aminoborane.xyz -p protocol_st_gap.json -cpu 16
         "charge": 0,
         "opt": true,
         "freq": true,
-        "read_orbitals": "2",
+        "read_orbitals": "0",
         "add_input": "\n! DeltaSCF UKS FreezeAndRelease SCFCheckGrad VerySlowConv\n %scf alphaconf 0,1 end",
         "no_prune": true,
         "comment": "Opt Freq S1"

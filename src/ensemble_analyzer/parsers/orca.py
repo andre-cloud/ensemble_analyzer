@@ -159,6 +159,66 @@ class OrcaParser(BaseParser):
         )
         return energy - float(delta)
 
+    # --- ΔSCF support --------------------------------------------------------
+
+    def parse_s2(self) -> float | None:
+        """Last <S**2> of an unrestricted calculation, None if not printed."""
+        values = re.findall(r"Expectation value of <S\*\*2>\s*:\s*(-?\d+\.\d+)", self.fl)
+        return float(values[-1]) if values else None
+
+    def parse_n_electrons(self) -> tuple[int, int] | None:
+        """(n_alpha, n_beta) of the last SCF, None if not printed."""
+        nel = re.findall(r"Number of Electrons\s+NEL\s+\.+\s+(\d+)", self.fl)
+        mult = re.findall(r"Multiplicity\s+Mult\s+\.+\s+(\d+)", self.fl)
+        if not nel or not mult:
+            return None
+        n, m = int(nel[-1]), int(mult[-1])
+        return (n + m - 1) // 2, (n - m + 1) // 2
+
+    def parse_excited_states(self, mult: int = 1) -> list:
+        """TD-DFT roots of the first excited-state block (same multiplicity as
+        the reference) with their orbital composition (0-based indices)."""
+        from ensemble_analyzer.protocol.deltascf import ExcitedState
+
+        states: dict = {}
+        current = None
+        for line in self.fl.splitlines():
+            header = re.match(r"STATE\s+(\d+):\s+E=\s+\S+\s+au\s+(-?\d+\.\d+)\s+eV", line)
+            if header:
+                root = int(header.group(1))
+                if root in states:          # a later block (e.g. triplets): ignore
+                    current = None
+                    continue
+                current = ExcitedState(root=root, energy_ev=float(header.group(2)), transitions=[])
+                states[root] = current
+                continue
+            if current is None:
+                continue
+            trans = re.match(r"\s+(\d+)([ab])\s+->\s+(\d+)([ab])\s+:\s+(-?\d+\.\d+)", line)
+            if trans:
+                spin = "alpha" if trans.group(2) == "a" else "beta"
+                current.transitions.append(
+                    (int(trans.group(1)), int(trans.group(3)), spin, float(trans.group(5)))
+                )
+            elif line.strip() == "" and current.transitions:
+                current = None
+        return [states[k] for k in sorted(states)]
+
+    def deltascf_status(self, opt: bool = False) -> str | None:
+        """None if the run converged, otherwise the reason it failed.
+        ORCA exits with code 0 also on errors: only the text is reliable."""
+        if "SCF NOT CONVERGED" in self.fl:
+            return "SCF not converged"
+        if "This is a bug" in self.fl:
+            return "ORCA internal error"
+        if "error termination" in self.fl:
+            return "error termination"
+        if not self.correct_exiting:
+            return "ORCA did not terminate normally"
+        if opt and not self.opt_done():
+            return "geometry optimisation not converged"
+        return None
+
     def parse_geom(self) -> np.ndarray:
         """
         Parse final geometry coordinates.

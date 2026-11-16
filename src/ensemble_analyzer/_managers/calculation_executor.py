@@ -92,6 +92,15 @@ class CalculationExecutor:
 
         is_ml = protocol.calculator.lower() in ML_CALCULATORS
 
+        if not is_ml and getattr(protocol, "deltascf", None):
+            # ΔSCF: reference, convergence ladder, checks and spin purification
+            from ensemble_analyzer._managers.deltascf_runner import DeltaSCFRunner
+            (Path(conf.folder) / f"protocol_{protocol.number}").mkdir(parents=True, exist_ok=True)
+            os.environ['OMP_NUM_THREADS'] = str(cpu)
+            os.environ['MKL_NUM_THREADS'] = str(cpu)
+            os.environ['OPENBLAS_NUM_THREADS'] = str(cpu)
+            return DeltaSCFRunner(self).run(conf, protocol, cpu)
+
         calc_kwargs = {}
         if is_ml:
             calc_kwargs = dict(

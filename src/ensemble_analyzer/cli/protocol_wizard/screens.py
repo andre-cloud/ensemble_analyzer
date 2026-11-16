@@ -48,6 +48,8 @@ def _step_label(key: str, step: dict) -> str:
         parts.append("[TS]")
     if step.get("cpu_per_job"):
         parts.append(f"[{step['cpu_per_job']} CPU/job]")
+    if step.get("deltascf"):
+        parts.append("[ΔSCF]")
     return " ".join(parts)
 
 
@@ -304,6 +306,47 @@ class StepEditorScreen(ModalScreen[dict | None]):
                         id="f_tda",
                     )
 
+                # ── ΔSCF ──
+                dscf = self.step.get("deltascf") or {}
+                with Collapsible(title="ΔSCF (Excited State, ORCA/NWChem)", collapsed=not dscf):
+                    yield Label("Enable ΔSCF", classes="field")
+                    yield Select(
+                        [("No", "no"), ("Yes", "yes")],
+                        value="yes" if dscf else "no",
+                        id="f_dscf",
+                    )
+                    yield Label(
+                        "Reference TD-DFT step (number of a step with nroots: GS orbitals, E(GS), "
+                        "state composition). Empty = computed at this level", classes="field")
+                    yield Input(value=_v(self.step.get("read_orbitals")), placeholder="e.g. 1", id="f_dscf_ref")
+                    yield Label("Excitation: auto (dominant transition of a TD-DFT root), inherit "
+                                "(same excitation as the previous ΔSCF step, GS SCF reference, no TD-DFT), "
+                                "HOMO->LUMO or HOMO-n->LUMO+m", classes="field")
+                    yield Input(value=_v(dscf.get("excitation", "auto")), placeholder="auto", id="f_dscf_exc")
+                    yield Label("Root (auto), relative to the step multiplicity: mult 1 -> S1; "
+                                "mult 3 -> root 1 = T2 (T1 = plain mult-3 step); mult 2 -> D1", classes="field")
+                    yield Input(value=_v(dscf.get("root", 1)), placeholder="1", id="f_dscf_root")
+                    yield Label("Spin of the excited electron (explicit excitations)", classes="field")
+                    yield Select([("alpha", "alpha"), ("beta", "beta")],
+                                 value=dscf.get("spin", "alpha"), id="f_dscf_spin")
+                    yield Label("Spin purification: open-shell singlet +1 triplet SP (Yamaguchi); "
+                                "doublet with 3 open shells +3 SCF (recoupling); high-spin states: not needed",
+                                classes="field")
+                    yield Select([("Auto (recommended)", "yes"), ("Off", "no")],
+                                 value="yes" if dscf.get("spin_purify", True) else "no", id="f_dscf_purify")
+                    yield Label("Doublet kept after recoupling (mult 2)", classes="field")
+                    yield Select([("lower", "lower"), ("upper", "upper")],
+                                 value=dscf.get("doublet_branch", "lower"), id="f_dscf_branch")
+                    yield Label("Cation-orbital guess as last attempts", classes="field")
+                    yield Select([("Yes", "yes"), ("No", "no")],
+                                 value="yes" if dscf.get("cation_guess", True) else "no", id="f_dscf_cation")
+                    yield Label("Min. gap vs reference [eV] (lowest state of the same multiplicity)",
+                                classes="field")
+                    yield Input(value=_v(dscf.get("min_gap_ev", 0.1)), placeholder="0.1", id="f_dscf_gap")
+                    yield Label("ORCA alphaconf / betaconf override (advanced, ORCA only)", classes="field")
+                    yield Input(value=_v(dscf.get("alphaconf")), placeholder="e.g. 0,1", id="f_dscf_aconf")
+                    yield Input(value=_v(dscf.get("betaconf")), placeholder="", id="f_dscf_bconf")
+
                 # ── Constraints & Monitoring ──
                 with Collapsible(title="Constraints & Monitoring", collapsed=True):
                     yield Label("Constraints (semicolon-separated groups)", classes="field")
@@ -523,6 +566,32 @@ class StepEditorScreen(ModalScreen[dict | None]):
                 pass
         s["tda"] = _parse_bool(self.query_one("#f_tda", Select).value)
 
+        # ΔSCF
+        ref = self.query_one("#f_dscf_ref", Input).value.strip()
+        if _parse_bool(self.query_one("#f_dscf", Select).value):
+            dscf: dict = {
+                "excitation": self.query_one("#f_dscf_exc", Input).value.strip() or "auto",
+                "spin": self.query_one("#f_dscf_spin", Select).value,
+                "spin_purify": _parse_bool(self.query_one("#f_dscf_purify", Select).value),
+                "doublet_branch": self.query_one("#f_dscf_branch", Select).value,
+                "cation_guess": _parse_bool(self.query_one("#f_dscf_cation", Select).value),
+            }
+            try:
+                dscf["root"] = int(self.query_one("#f_dscf_root", Input).value.strip() or "1")
+            except ValueError:
+                dscf["root"] = 1
+            try:
+                dscf["min_gap_ev"] = float(self.query_one("#f_dscf_gap", Input).value.strip() or "0.1")
+            except ValueError:
+                dscf["min_gap_ev"] = 0.1
+            for key, wid in (("alphaconf", "#f_dscf_aconf"), ("betaconf", "#f_dscf_bconf")):
+                raw = self.query_one(wid, Input).value.strip()
+                if raw:
+                    dscf[key] = raw
+            s["deltascf"] = dscf
+        if ref:
+            s["read_orbitals"] = ref
+
         # constraints
         c = _parse_coord_list(self.query_one("#f_constraints", Input).value)
         if c:
@@ -632,7 +701,16 @@ class StepEditorScreen(ModalScreen[dict | None]):
     def on_button_pressed(self, event: Button.Pressed):
         bid = event.button.id or ""
         if bid == "save":
-            self.dismiss(self._read())
+            step = self._read()
+            if step.get("deltascf"):
+                from ensemble_analyzer.protocol.deltascf import normalize_settings
+                try:
+                    normalize_settings(step["deltascf"], "-", step.get("calculator", "orca"),
+                                       step.get("add_input", ""), step.get("nroots"))
+                except ValueError as err:
+                    self.notify(str(err), severity="error", timeout=8)
+                    return
+            self.dismiss(step)
         elif bid == "cancel":
             self.dismiss(None)
         elif bid == "val_add":

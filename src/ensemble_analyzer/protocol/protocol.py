@@ -72,6 +72,9 @@ class Protocol:
     # TD-DFT settings
     nroots                      : Optional[int]                 = None
     tda                         : Optional[bool]                = False
+
+    # ΔSCF excited state (ORCA / NWChem), see protocol/deltascf.py
+    deltascf                    : Optional[Dict]                = None
     
     # Pruning & Clustering
     no_prune                    : Optional[bool]                = False
@@ -367,6 +370,12 @@ class Protocol:
             )
         except ValueError as e:
             raise ValueError(f"Protocol {self.number}: {e}") from None
+
+        # ΔSCF excited state: validated, defaults filled in (plain dict, serialisable)
+        from ensemble_analyzer.protocol.deltascf import normalize_settings
+        self.deltascf = normalize_settings(
+            self.deltascf, self.number, self.calculator, self.add_input, self.nroots
+        )
 
         # Load eventual more Thresholds
         self.get_thrs(self.load_threshold())
