@@ -45,6 +45,7 @@ class TestLogger:
         # Case 1: No imag freq (array present, but none < 0)
         log.calculation_success(1, 1, -100.0, -100.0, 5.0, np.array([10.0, 20.0]))
         call_args = log.info.call_args[0][0]
+        assert "CONF 001" in call_args
         assert "E = -100.00000000" in call_args
         # The logger prints "Imag. Freq 0" if frequencies are present but none are imaginary
         assert "Imag. Freq 0" in call_args 
@@ -61,6 +62,7 @@ class TestLogger:
         
         assert log.debug.call_count >= 2
         assert "Starting Complex Task (param=1)" in log.debug.call_args_list[0][0][0]
+        assert "Completed Complex Task (param=1) in" in log.debug.call_args_list[-1][0][0]
 
     def test_track_operation_failure(self, log):
         """Test exception handling in track_operation."""

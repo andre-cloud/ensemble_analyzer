@@ -142,7 +142,7 @@ class Logger(logging.Logger):
         """
 
         self._stop_timer(f"calc_{conformer_id}_{protocol_number}")
-        text = f"\t{self.TICK} E = {energy:.8f} Eh {self.SPLIT} Time: {elapsed_time:.1f}s"
+        text = f"\t{self.TICK} CONF {conformer_id:03d} {self.SPLIT} E = {energy:.8f} Eh {self.SPLIT} Time: {elapsed_time:.1f}s"
         if frequencies is not None and len(frequencies) > 0: 
             n_im_freq = len(frequencies[frequencies<0])
             im_freq = f'({", ".join([f"{i:.2f}" for i in frequencies[frequencies<0]])})' if n_im_freq > 0 else ""
@@ -340,20 +340,18 @@ class Logger(logging.Logger):
         """Context manager to track operation duration."""
         start = time.perf_counter()
         context_str = ", ".join(f"{k}={v}" for k, v in context.items())
-        self.debug(
-            f"Starting {operation_name}" + 
-            (f" ({context_str})" if context_str else "")
-        )
-        
+        context_suffix = f" ({context_str})" if context_str else ""
+        self.debug(f"Starting {operation_name}{context_suffix}")
+
         try:
             yield
         except Exception as e:
             elapsed = time.perf_counter() - start
             self.error(
-                f"Operation '{operation_name}' failed after {elapsed:.2f}s: {e}"
+                f"Operation '{operation_name}' failed after {elapsed:.2f}s{context_suffix}: {e}"
             )
             raise
         else:
             elapsed = time.perf_counter() - start
-            self.debug(f"Completed {operation_name} in {elapsed:.2f}s")
+            self.debug(f"Completed {operation_name}{context_suffix} in {elapsed:.2f}s")
     

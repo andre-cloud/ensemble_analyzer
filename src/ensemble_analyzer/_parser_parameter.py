@@ -177,7 +177,7 @@ def get_conf_parameters(
                 calculator=p.calculator,
             )
         )
-        log.debug(f'{log.TICK} Energy Data are stored correctly')
+        log.debug(f'{log.TICK} CONF {conf.number:03d} {log.SPLIT} Energy Data are stored correctly')
 
         try:
             _, ir, vcd = parser.parse_freq()
@@ -196,7 +196,7 @@ def get_conf_parameters(
         except Exception as spec_err:
             log.warning(f"Error parsing spectral data for Conf {conf.number}: {spec_err}")
 
-        log.debug(f'{log.TICK} Graphs Data are stored correctly')
+        log.debug(f'{log.TICK} CONF {conf.number:03d} {log.SPLIT} Graphs Data are stored correctly')
 
         return True
 
