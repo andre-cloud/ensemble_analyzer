@@ -6,16 +6,14 @@ from .base import register_calculator
 class MACEMlCalc(BaseMlCalc):
     label = "mace"
 
-    _FOUNDATION = {
-        "mp": "mace_mp",
-        "off": "mace_off",
-        "anicc": "mace_anicc",
-        "mdp": "mace_mdp",
-    }
-
     def _get_ml_calculator(self, **kwargs):
         from enan_calculators import get_ase_calculator
-        method = kwargs.pop("method", self.protocol.functional or "MACE_model.pt")
+        method = kwargs.pop("method", self.protocol.functional)
+        if method is None:
+            raise ValueError(
+                "mace calculator requires a model via protocol.functional or method= kwarg "
+                "(a foundation name: off, omol, mp, anicc, mdp; or a .model file)"
+            )
         return get_ase_calculator(
             "mace",
             charge=self.protocol.charge,

@@ -20,7 +20,13 @@ Versions follow the git release tags.
   - *Insert step* adds a step between existing ones; step references (`read_orbitals`, `read_population`, `deltascf.inherit_from`) are renumbered on insert and remove, and references to a removed step are unset with a warning;
   - general *Read orbitals from step* field (replaces the ΔSCF-only one), by default the previous step of the same QM program (none for the first step, ML potentials and TBLite; the last TD-DFT step for ΔSCF), recomputed while left on the default; steps that read orbitals are marked `[orb←N]`.
 
+### Changed
+- **UMA / FAIRChem**: `"uma"` and `"fairchem"` are the same fairchem-core v2 backend (only UMA-architecture checkpoints load there); both now look for weights in `ENAN_MODELS_DIR/fairchem/` and `ENAN_MODELS_DIR/uma/`. The wizard no longer labels `fairchem` as OC-20.
+- **MACE**: new foundation model `"omol"` (MACE-OMOL, charge and spin aware, mace-torch ≥ 0.3.14). `calculator: "mace"` now requires a model in `functional` instead of falling back to a non-existent `MACE_model.pt`.
+
 ### Fixed
+- UMA: predictors were loaded with merged MoLE experts (`merge_mole=True`) and cached by model path only, so a later system with a different composition reused weights merged for the first one. Merging is now off.
+- MACE: `off`, `mp`, `anicc`, `mdp` ignore `charge`/`mult`; a warning is now emitted for charged or open-shell steps.
 - Tutorial 3: the S1 optimisation step read its own orbitals (`read_orbitals: "2"`).
 
 

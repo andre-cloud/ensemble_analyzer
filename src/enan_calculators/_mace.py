@@ -54,7 +54,12 @@ _FOUNDATION = {
     "off": "mace_off",
     "anicc": "mace_anicc",
     "mdp": "mace_mdp",
+    "omol": "mace_omol",
 }
+
+# Foundation models that read atoms.info["charge"/"spin"]; the others are
+# trained on neutral closed-shell data and silently ignore them.
+_CHARGE_SPIN_AWARE = {"omol"}
 
 
 def _rebuild_models_for_e3nn(calc: Calculator, default_dtype: str) -> None:
@@ -116,6 +121,15 @@ def create_mace_calc(charge, mult, method, solvent=None, task=None):
     default_dtype = "float64"
     # task selects the head of a multi-head model; None keeps the model default
     head_kwargs = {"head": task} if task else {}
+
+    if method in _FOUNDATION and method not in _CHARGE_SPIN_AWARE and (charge != 0 or mult != 1):
+        import warnings
+        warnings.warn(
+            f"MACE foundation model '{method}' ignores charge and spin: "
+            f"charge={charge}, mult={mult} will be treated as a neutral singlet. "
+            "Use method 'omol' (MACE-OMOL) for charged or open-shell species.",
+            stacklevel=2,
+        )
 
     if method in _FOUNDATION:
         cache_key = (method, device, default_dtype, task)

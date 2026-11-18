@@ -161,19 +161,12 @@ def check_mlip() -> None:
     else:
         log_warn("PyTorch NOT installed. Required by aimnet/uma/mace.")
 
-    # UMA (requires torch + fairchem-core, uses pretrained_mlip)
+    # UMA / FAIRChem: one backend (fairchem-core v2, UMA-architecture models)
     if importlib.util.find_spec("fairchem") is not None:
-        log_pass("UMA (fairchem-core) library found.")
+        log_pass("UMA/FAIRChem (fairchem-core) library found.")
     else:
-        log_warn("UMA (fairchem-core) NOT installed. Install: pip install \"ensemble-analyzer[uma]\"")
+        log_warn("UMA/FAIRChem (fairchem-core) NOT installed. Install: pip install \"ensemble-analyzer[uma]\"")
 
-    # FAIRChem (generic, uses load_predict_unit + InferenceSettings)
-    if importlib.util.find_spec("fairchem") is not None:
-        log_pass("FAIRChem (fairchem-core) library found.")
-    else:
-        log_warn("FAIRChem (fairchem-core) NOT installed. Install: pip install \"ensemble-analyzer[fairchem]\"")
-
-    # MACE (requires torch + mace-torch). mace-torch pins e3nn==0.4.4 while
     # fairchem-core needs e3nn>=0.5: EnAn rebuilds MACE models for the installed
     # e3nn, so both can share one environment (see enan_calculators._mace).
     fairchem_ok = importlib.util.find_spec("fairchem") is not None

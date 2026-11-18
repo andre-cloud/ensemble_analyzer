@@ -6,7 +6,7 @@ DEFAULT_TASK = "omol"
 def create_uma_calc(charge, mult, method, solvent=None, task=None):
     return create_ml_calc(
         "uma", charge, mult, method,
-        task_name=task or DEFAULT_TASK, merge_mole=True, solvent=solvent,
+        task_name=task or DEFAULT_TASK, solvent=solvent,
     )
 
 

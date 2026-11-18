@@ -43,8 +43,8 @@ CALCULATOR_CHOICES: list[tuple[str, str]] = [
     ("NWChem", "nwchem"),
     ("tblite (GFN-xTB)", "tblite"),
     ("ANI/aimnet", "aimnet"),
-    ("MACE-MP", "mace"),
-    ("UMA (FairChem)", "uma"),
-    ("FairChem (OC-20)", "fairchem"),
+    ("MACE (OFF / OMOL / MP)", "mace"),
+    ("UMA (fairchem-core)", "uma"),
+    ("FAIRChem (same backend as UMA)", "fairchem"),
     ("Skala (Microsoft)", "skala"),
 ]

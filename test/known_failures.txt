@@ -21,7 +21,6 @@ test/calculators/test_skala_calculator.py::TestSkalaCalc::test_local_model_disco
 test/calculators/test_skala_calculator.py::TestSkalaCalc::test_local_model_with_fun_extension
 test/calculators/test_skala_calculator.py::TestSkalaCalc::test_no_local_model_skips_env_var
 test/calculators/test_uma_calculator.py::TestUMAMlCalc::test_calculator_uses_method_from_kwargs
-test/calculators/test_uma_calculator.py::TestUMAMlCalc::test_import_error_when_fairchem_missing
 test/calculators/test_uma_calculator.py::TestUMAMlCalc::test_successful_calculator_creation
 test/parsers/test_orca_parser.py::TestSplitPostBlocks::test_compact_frag
 test/parsers/test_orca_parser.py::TestSplitPostBlocks::test_indented_frag

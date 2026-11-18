@@ -13,6 +13,7 @@ except ImportError:
     torch = None
 
 _PREDICTOR_CACHE = {}
+_FAIRCHEM_DIRS = ("fairchem", "uma")
 
 
 def _get_cpu_threads():
@@ -25,6 +26,8 @@ def _get_cpu_threads():
 
 
 def create_ml_calc(calc_name, charge, mult, method, task_name, merge_mole=False, solvent=None):
+    if FAIRChemCalculator is None:
+        raise ImportError("fairchem-core missing. Install via: pip install \"ensemble-analyzer[fairchem]\"")
 
     if hasattr(torch.serialization, "add_safe_globals"):
         torch.serialization.add_safe_globals([slice])
@@ -35,16 +38,20 @@ def create_ml_calc(calc_name, charge, mult, method, task_name, merge_mole=False,
     else:
         torch.set_num_threads(_get_cpu_threads())
 
-    model_path = get_models_dir(calc_name, create=False) / method
-    if not model_path.exists():
-        model_path = Path(method)
-        if not model_path.exists():
-            raise FileNotFoundError(
-                f"Model file not found: {model_path}. "
-                f"Please place the downloaded weights in {get_models_dir(calc_name, create=False)}."
-            )
+    # "uma" and "fairchem" are the same fairchem-core (v2) backend: look in
+    # both model folders so weights work whichever engine name is used.
+    search_dirs = [get_models_dir(name, create=False) for name in (calc_name, *_FAIRCHEM_DIRS)]
+    candidates = [d / method for d in dict.fromkeys(search_dirs)] + [Path(method)]
+    model_path = next((c for c in candidates if c.exists()), None)
+    if model_path is None:
+        raise FileNotFoundError(
+            f"Model file not found: {method}. "
+            f"Please place the downloaded weights in {get_models_dir('fairchem', create=False)}."
+        )
 
-    cache_key = (str(model_path.resolve()), device)
+    # Merged MoLE weights are valid for one composition only, so a merged
+    # predictor is never shared between different systems.
+    cache_key = (str(model_path.resolve()), device, merge_mole)
 
     if cache_key not in _PREDICTOR_CACHE:
         inference_settings = InferenceSettings(
@@ -63,6 +70,9 @@ def create_ml_calc(calc_name, charge, mult, method, task_name, merge_mole=False,
         )
 
     predictor = _PREDICTOR_CACHE[cache_key]
+    if merge_mole:
+        # merging is bound to the first system seen: never reuse it
+        _PREDICTOR_CACHE.pop(cache_key)
 
     from ase.calculators.calculator import all_changes
 

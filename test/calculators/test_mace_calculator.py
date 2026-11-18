@@ -25,7 +25,7 @@ class TestMACEMlCalc:
     def setup(self, mock_conformer, mock_protocol):
         mock_protocol.charge = 0
         mock_protocol.mult = 1
-        mock_protocol.functional = None
+        mock_protocol.functional = "MACE_model.pt"
         return mock_conformer, mock_protocol
 
     def test_import_error_when_mace_missing(self, setup):
@@ -140,11 +140,37 @@ class TestMACEMlCalc:
             assert result is not None
 
     def test_foundation_mapping(self):
+        from enan_calculators._mace import _FOUNDATION
+        assert _FOUNDATION["mp"] == "mace_mp"
+        assert _FOUNDATION["off"] == "mace_off"
+        assert _FOUNDATION["anicc"] == "mace_anicc"
+        assert _FOUNDATION["mdp"] == "mace_mdp"
+        assert _FOUNDATION["omol"] == "mace_omol"
+
+    def test_missing_method_raises(self, setup):
+        conf, proto = setup
+        proto.functional = None
         from ensemble_analyzer.calculators.mace import MACEMlCalc
-        assert MACEMlCalc._FOUNDATION["mp"] == "mace_mp"
-        assert MACEMlCalc._FOUNDATION["off"] == "mace_off"
-        assert MACEMlCalc._FOUNDATION["anicc"] == "mace_anicc"
-        assert MACEMlCalc._FOUNDATION["mdp"] == "mace_mdp"
+        calc = MACEMlCalc(proto, 4, conf)
+        with pytest.raises(ValueError, match="requires a model"):
+            calc._get_ml_calculator()
+
+    @pytest.mark.parametrize("method, charge, mult, warns", [
+        ("off", 1, 1, True), ("mp", 0, 2, True), ("off", 0, 1, False), ("omol", 1, 2, False),
+    ])
+    def test_charge_spin_warning(self, method, charge, mult, warns):
+        import warnings
+        import enan_calculators._mace as m
+        with patch.object(m, "MACECalculator", MagicMock()), \
+             patch.object(m, "torch") as mock_torch, \
+             patch.object(m, "_load_foundation", return_value=MagicMock(implemented_properties=["energy"])), \
+             patch.object(m, "_NEEDS_REBUILD", False), \
+             patch.dict(m._PREDICTOR_CACHE, clear=True):
+            mock_torch.cuda.is_available.return_value = False
+            with warnings.catch_warnings(record=True) as rec:
+                warnings.simplefilter("always")
+                m.create_mace_calc(charge, mult, method)
+        assert any("ignores charge and spin" in str(w.message) for w in rec) is warns
 
     def test_wrapped_calc_injects_charge_and_spin(self, setup):
         conf, proto = setup
