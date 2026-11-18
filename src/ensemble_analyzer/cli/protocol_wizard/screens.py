@@ -25,6 +25,18 @@ from ensemble_analyzer.cli.protocol_wizard.fields import (
     ML_CALCULATORS,
     CALCULATOR_CHOICES,
 )
+from ensemble_analyzer.cli.protocol_wizard.steps import (
+    AUTO_KEY,
+    apply_defaults,
+    as_list,
+    default_read_orbitals,
+    export_protocol,
+    infer_auto,
+    insert_step,
+    orbitals_warning,
+    remove_step,
+    replace_step,
+)
 from ensemble_analyzer.cli.protocol_wizard.templates import (
     SYSTEM_TEMPLATES,
     apply,
@@ -50,6 +62,8 @@ def _step_label(key: str, step: dict) -> str:
         parts.append(f"[{step['cpu_per_job']} CPU/job]")
     if step.get("deltascf"):
         parts.append("[ΔSCF]")
+    if str(step.get("read_orbitals") or "").strip():
+        parts.append(f"[orb←{step['read_orbitals']}]")
     return " ".join(parts)
 
 
@@ -198,12 +212,39 @@ class StepEditorScreen(ModalScreen[dict | None]):
 
     BINDINGS = [("escape", "dismiss(None)")]
 
-    def __init__(self, step: dict, step_num: int, is_new: bool = True):
+    def __init__(self, step: dict, step_num: int, is_new: bool = True,
+                 previous: list[dict] | None = None):
+        """``previous``: the steps before this one (for the read_orbitals default)."""
         self.step = dict(step)
         self.step_num = step_num
         self.is_new = is_new
+        self.previous = list(previous or [])
         self._validators = list(step.get("validators", []))
+        self._ro_default = default_read_orbitals(self.previous, self.step)
         super().__init__()
+
+    def _ro_default_label(self) -> str:
+        default = self._ro_default or "none"
+        return (f"Read orbitals from step (default: {default} — previous step of the same QM "
+                "program; none for the first step, MLIP/TBLite or a different program)")
+
+    def _current_ro_default(self) -> str:
+        """read_orbitals default for the calculator / ΔSCF choice now in the form."""
+        probe = {"calculator": self.query_one("#f_calculator", Select).value}
+        if _parse_bool(self.query_one("#f_dscf", Select).value):
+            probe["deltascf"] = {"excitation": "auto"}
+        return default_read_orbitals(self.previous, probe)
+
+    @on(Select.Changed, "#f_calculator")
+    @on(Select.Changed, "#f_dscf")
+    def _update_ro_default(self, event: Select.Changed) -> None:
+        new_default = self._current_ro_default()
+        field = self.query_one("#f_read_orbitals", Input)
+        # a value still equal to the old default follows the new one; a manual value stays
+        if field.value.strip() == self._ro_default:
+            field.value = new_default
+        self._ro_default = new_default
+        self.query_one("#l_read_orbitals", Label).update(self._ro_default_label())
 
     def compose(self):
         kind = "NEW" if self.is_new else "EDIT"
@@ -279,6 +320,14 @@ class StepEditorScreen(ModalScreen[dict | None]):
                     id="f_charge",
                 )
 
+                yield Label(self._ro_default_label(), classes="field", id="l_read_orbitals")
+                ro = self.step.get("read_orbitals")
+                yield Input(
+                    value=self._ro_default if self.is_new and ro is None else _v(ro),
+                    placeholder="empty = no initial guess from a previous step",
+                    id="f_read_orbitals",
+                )
+
                 # ── Solvent ──
                 with Collapsible(title="Solvent", collapsed=True):
                     sol = self.step.get("solvent") or {}
@@ -316,9 +365,9 @@ class StepEditorScreen(ModalScreen[dict | None]):
                         id="f_dscf",
                     )
                     yield Label(
-                        "Reference TD-DFT step (number of a step with nroots: GS orbitals, E(GS), "
-                        "state composition). Empty = computed at this level", classes="field")
-                    yield Input(value=_v(self.step.get("read_orbitals")), placeholder="e.g. 1", id="f_dscf_ref")
+                        "Reference TD-DFT step = 'Read orbitals from step' above: it must be a step "
+                        "with nroots (GS orbitals, E(GS), state composition). Empty = computed at "
+                        "this level", classes="field")
                     yield Label("Excitation: auto (dominant transition of a TD-DFT root), inherit "
                                 "(same excitation as the previous ΔSCF step, GS SCF reference, no TD-DFT), "
                                 "HOMO->LUMO or HOMO-n->LUMO+m", classes="field")
@@ -567,7 +616,7 @@ class StepEditorScreen(ModalScreen[dict | None]):
         s["tda"] = _parse_bool(self.query_one("#f_tda", Select).value)
 
         # ΔSCF
-        ref = self.query_one("#f_dscf_ref", Input).value.strip()
+        ref = self.query_one("#f_read_orbitals", Input).value.strip()
         if _parse_bool(self.query_one("#f_dscf", Select).value):
             dscf: dict = {
                 "excitation": self.query_one("#f_dscf_exc", Input).value.strip() or "auto",
@@ -681,7 +730,9 @@ class StepEditorScreen(ModalScreen[dict | None]):
         if comment:
             s["comment"] = comment
 
-        return _clean(s)
+        s = _clean(s)
+        s[AUTO_KEY] = ref == self._ro_default
+        return s
 
     def on_mount(self):
         self._refresh_validators()
@@ -702,6 +753,16 @@ class StepEditorScreen(ModalScreen[dict | None]):
         bid = event.button.id or ""
         if bid == "save":
             step = self._read()
+            ref = str(step.get("read_orbitals") or "")
+            if ref and (not ref.isdigit() or int(ref) >= self.step_num):
+                self.notify(f"Read orbitals: '{ref}' must be the number of an earlier step "
+                            f"(0..{self.step_num - 1})" if self.step_num else
+                            "Read orbitals: the first step has no earlier step to read from",
+                            severity="error", timeout=8)
+                return
+            warning = orbitals_warning(self.previous, step, ref)
+            if warning:
+                self.notify(f"Read orbitals: {warning}", severity="warning", timeout=8)
             if step.get("deltascf"):
                 from ensemble_analyzer.protocol.deltascf import normalize_settings
                 try:
@@ -951,6 +1012,7 @@ class MainScreen(Screen):
                     yield Button("New from template", id="new")
                     yield Button("Load protocol", id="load")
                     yield Button("Add step", id="add")
+                    yield Button("Insert step", id="insert")
                     yield Button("Edit step", id="edit")
                     yield Button("Remove step", id="remove")
                     yield Button("View summary", id="summary")
@@ -988,19 +1050,31 @@ class MainScreen(Screen):
         if result is None:
             return
         state = self.app.state  # type: ignore
-        if key is not None:
-            state.protocol[key] = result
-        else:
-            k = str(len(state.protocol))
-            state.protocol[k] = result
+        state.protocol = replace_step(state.protocol, int(key), result)
         state.dirty = True
         self._refresh()
+
+    def _on_step_inserted(self, result: dict | None, idx: int):
+        if result is None:
+            return
+        state = self.app.state  # type: ignore
+        state.protocol = insert_step(state.protocol, idx, result)
+        state.dirty = True
+        self._refresh()
+
+    def _open_new_step(self, idx: int):
+        state = self.app.state  # type: ignore
+        self.app.push_screen(
+            StepEditorScreen(step={}, step_num=idx, is_new=True,
+                             previous=as_list(state.protocol)[:idx]),
+            lambda r, i=idx: self._on_step_inserted(r, i),
+        )
 
     def _on_template_selected(self, steps: list | None):
         if steps is None:
             return
         state = self.app.state  # type: ignore
-        state.protocol = apply(steps)
+        state.protocol = apply_defaults(apply(steps))
         state.filename = None
         state.dirty = True
         self._refresh()
@@ -1032,9 +1106,17 @@ class MainScreen(Screen):
             self._do_load()
 
         elif btn == "add":
+            self._open_new_step(len(state.protocol))
+
+        elif btn == "insert":
+            if not state.protocol:
+                self._open_new_step(0)
+                return
+            choices = [(f"Before {_step_label(k, state.protocol[k])}", k)
+                       for k in sorted(state.protocol, key=int)]
             self.app.push_screen(
-                StepEditorScreen(step={}, step_num=len(state.protocol), is_new=True),
-                self._on_step_edited,
+                _PickScreen(choices, "Insert the new step before:"),
+                lambda k: self._open_new_step(int(k)) if k is not None else None,
             )
 
         elif btn == "edit":
@@ -1048,7 +1130,7 @@ class MainScreen(Screen):
             self._start_remove_flow()
 
         elif btn == "summary":
-            self.app.push_screen(SummaryScreen(state.protocol))
+            self.app.push_screen(SummaryScreen(export_protocol(state.protocol)))
 
         elif btn == "save":
             self._do_save_maybe_ask()
@@ -1117,6 +1199,7 @@ class MainScreen(Screen):
                 step=state.protocol[key],
                 step_num=int(key),
                 is_new=False,
+                previous=as_list(state.protocol)[:int(key)],
             ),
             lambda r, k=key: self._on_step_edited(r, k),
         )
@@ -1146,11 +1229,9 @@ class MainScreen(Screen):
         if not confirmed:
             return
         state = self.app.state  # type: ignore
-        del state.protocol[key]
-        state.protocol = {
-            str(i): state.protocol[k]
-            for i, k in enumerate(sorted(state.protocol, key=int))
-        }
+        state.protocol, lost = remove_step(state.protocol, int(key))
+        for msg in lost:
+            self.notify(msg, severity="warning", timeout=8)
         state.dirty = True
         self._refresh()
 
@@ -1188,7 +1269,7 @@ class MainScreen(Screen):
             steps = {}
             for i, (_, step) in enumerate(sorted(data.items(), key=lambda x: int(x[0]))):
                 steps[str(i)] = step
-            state.protocol = steps
+            state.protocol = infer_auto(steps)
             state.filename = fname
             state.dirty = False
             self._refresh()
@@ -1218,7 +1299,7 @@ class MainScreen(Screen):
         state = self.app.state  # type: ignore
         try:
             with open(fname, "w", encoding="utf-8") as f:
-                json.dump(state.protocol, f, indent=4, ensure_ascii=False)
+                json.dump(export_protocol(state.protocol), f, indent=4, ensure_ascii=False)
             state.dirty = False
             self._refresh()
         except Exception as e:
@@ -1245,7 +1326,7 @@ class MainScreen(Screen):
     def _do_save_template(self, name: str, overwrite: bool = False):
         state = self.app.state  # type: ignore
         try:
-            path = save_user_template(name, state.protocol, overwrite=overwrite)
+            path = save_user_template(name, export_protocol(state.protocol), overwrite=overwrite)
             self.notify(f"Template saved: {path}")
         except Exception as e:
             self.app.push_screen(ConfirmScreen(f"Template save error: {e}"))

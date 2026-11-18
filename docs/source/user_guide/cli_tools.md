@@ -43,6 +43,20 @@ Features:
 
 The basic and Intermediate levels allow to less-expert users to create from scratch a protocol file, using the default values of some configuration. 
 
+**Steps and step numbers**
+
+*Add step* appends a step; *Insert step* places it before the step you pick. Steps are always numbered from 0 in order, and every key that points to another step (`read_orbitals`, `read_population`, `deltascf.inherit_from`) follows insertions and removals, so it keeps pointing at the same step. When the step it points to is removed, the key is unset and a warning names it.
+
+**Read orbitals**
+
+*Read orbitals from step* sets `read_orbitals`, the step whose orbitals are the initial guess (ORCA `.gbw`, Gaussian `.chk`, NWChem `.movecs`). New steps get a default:
+
+- the previous step, when it ran the same QM program;
+- none for the first step, for ML potentials and TBLite, and after a step of another program or an ML step (their files cannot be read);
+- for a ΔSCF step, the last earlier TD-DFT (`nroots`) step of the same program, as the ΔSCF reference requires.
+
+A step left on its default keeps following it: insert a step before it, or change its calculator, and the reference is recomputed. A number typed by hand stays on that step. Protocols loaded from file are never changed: only a `read_orbitals` equal to the default is treated as one.
+
 **Templates**
 
 *New from template* opens a selector with two sections:

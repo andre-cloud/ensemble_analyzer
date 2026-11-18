@@ -77,7 +77,8 @@ class TestStepEditorRoundTrip:
                 screen = app.screen
                 for wid, text in (edits or {}).items():
                     screen.query_one(f"#{wid}", Input).value = text
-                out["step"] = screen._read()
+                # private wizard keys (_ro_auto) are stripped on save, as export_protocol does
+                out["step"] = {k: v for k, v in screen._read().items() if not k.startswith("_")}
 
         asyncio.run(go())
         return out["step"]
@@ -111,3 +112,53 @@ class TestStepEditorRoundTrip:
         step = self._read({**BASE_STEP, "cpu_per_job": 8}, {"f_cpu_per_job": ""})
         assert "cpu_per_job" not in step
         Protocol(number=0, **step)
+
+
+class TestReadOrbitalsField:
+
+    def _run(self, step, previous, is_new, actions=None):
+        """Open the editor, run ``actions(screen)`` (async), return (field value, _read())."""
+        from textual.widgets import Select
+        out = {}
+
+        class _App(App):
+            def on_mount(self):
+                self.push_screen(StepEditorScreen(step=step, step_num=len(previous),
+                                                  is_new=is_new, previous=previous))
+
+        async def go():
+            app = _App()
+            async with app.run_test(size=(120, 60)) as pilot:
+                await pilot.pause()
+                screen = app.screen
+                if actions:
+                    actions(screen, Select)
+                    await pilot.pause()
+                out["value"] = screen.query_one("#f_read_orbitals", Input).value
+                out["step"] = screen._read()
+
+        asyncio.run(go())
+        return out["value"], out["step"]
+
+    def test_new_step_prefilled_with_previous(self):
+        value, step = self._run({}, [BASE_STEP, BASE_STEP], is_new=True)
+        assert value == "1"
+        assert step["read_orbitals"] == "1" and step["_ro_auto"] is True
+
+    def test_first_step_empty(self):
+        value, step = self._run({}, [], is_new=True)
+        assert value == "" and "read_orbitals" not in step
+
+    def test_switch_to_tblite_clears_default(self):
+        value, step = self._run(
+            {}, [BASE_STEP], is_new=True,
+            actions=lambda s, Select: setattr(s.query_one("#f_calculator", Select), "value", "tblite"),
+        )
+        assert value == "" and "read_orbitals" not in step
+
+    def test_manual_value_kept_on_calculator_change(self):
+        def act(s, Select):
+            s.query_one("#f_read_orbitals", Input).value = "0"
+            s.query_one("#f_calculator", Select).value = "gaussian"
+        value, step = self._run({}, [BASE_STEP, BASE_STEP], is_new=True, actions=act)
+        assert value == "0" and step["_ro_auto"] is False

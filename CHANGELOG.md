@@ -16,6 +16,10 @@ Versions follow the git release tags.
   - `"excitation": "inherit"`: a ΔSCF step reuses the excitation of a previous ΔSCF step (e.g. ΔSCF optimisation followed by single points with several functionals) with a ground-state SCF reference instead of a TD-DFT one;
   - Protocol Wizard section and "ΔSCF S1" template.
 
+- **Protocol Wizard**:
+  - *Insert step* adds a step between existing ones; step references (`read_orbitals`, `read_population`, `deltascf.inherit_from`) are renumbered on insert and remove, and references to a removed step are unset with a warning;
+  - general *Read orbitals from step* field (replaces the ΔSCF-only one), by default the previous step of the same QM program (none for the first step, ML potentials and TBLite; the last TD-DFT step for ΔSCF), recomputed while left on the default; steps that read orbitals are marked `[orb←N]`.
+
 ### Fixed
 - Tutorial 3: the S1 optimisation step read its own orbitals (`read_orbitals: "2"`).
 
