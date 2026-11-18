@@ -1,48 +1,12 @@
 from ase.calculators.orca import ORCA, OrcaProfile
 from ensemble_analyzer.calculators.base import BaseCalc, register_calculator
-from enan_calculators._orca import orca_pal_block
+from enan_calculators._orca import orca_pal_block, _split_post_blocks
 from ensemble_analyzer.protocol.dispersion import dispersion_keyword
 import shutil
 import os
 
 from typing import Tuple, Any
 
-_POST_COORDS_KEYWORDS = frozenset({'%frag', '%eprnmr', '%nmr', '%rel', '%epr'})
-
-import re
-
-def _split_post_blocks(text: str) -> tuple[str, str]:
-    if not text.strip():
-        return text, ""
-    
-    # 1. Remove comments
-    lines = text.split('\n')
-    clean_lines = [line.split('#')[0] for line in lines]
-    clean_text = '\n'.join(clean_lines)
-    
-    pre = []
-    post = []
-    
-    # 2. Split right before every %, ! or *
-    parts = re.split(r'(?=[%!*])', clean_text)
-    
-    for part in parts:
-        stripped = part.strip()
-        if not stripped:
-            continue
-            
-        first_token = stripped.split()[0].lower()
-        
-        if first_token in _POST_COORDS_KEYWORDS:
-            post.append(stripped)
-        else:
-            pre.append(stripped)
-            
-    # Unisci i blocchi forzando un a capo dopo ognuno per evitare accavallamenti
-    pre_str = "\n".join(pre)
-    post_str = "\n".join(post)
-    
-    return pre_str + "\n" if pre_str else "", post_str + "\n" if post_str else ""
 
 VERSION = None
 
@@ -148,8 +112,9 @@ class OrcaCalc(BaseCalc):
             for c in self.constraints:
                 tag = tag_map.get(len(c), "C")
                 parts.append(f"{{{tag} {' '.join(map(str, c))} C}}")
-            text = "\n%geom Constraints " + " ".join(parts) + " end end\n"
-            calc.parameters["orcasimpleinput"] += text
+            if parts:  # an empty Constraints block is invalid ORCA input
+                text = "\n%geom Constraints " + " ".join(parts) + " end end\n"
+                calc.parameters["orcasimpleinput"] += text
 
         if self.protocol.freq:
             calc.parameters["orcasimpleinput"] += "\n! freq\n"

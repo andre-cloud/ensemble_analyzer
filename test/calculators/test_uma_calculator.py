@@ -1,6 +1,12 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
+from enan_calculators import _ml_inference
+
+# importable, not just present: a broken install leaves FAIRChemCalculator None
+needs_fairchem = pytest.mark.skipif(
+    _ml_inference.FAIRChemCalculator is None, reason="fairchem-core not importable"
+)
 
 
 class TestUMARegistration:
@@ -53,6 +59,7 @@ class TestUMAMlCalc:
                     with pytest.raises(FileNotFoundError, match="Model file not found"):
                         calc._get_ml_calculator()
 
+    @needs_fairchem
     @patch("enan_calculators._ml_inference.get_models_dir")
     def test_successful_calculator_creation(self, mock_get_models_dir, setup, tmp_path):
         conf, proto = setup
@@ -83,6 +90,7 @@ class TestUMAMlCalc:
                     assert "inference_settings" in mock_load.call_args[1]
                     assert result is not None
 
+    @needs_fairchem
     @patch("enan_calculators._ml_inference.get_models_dir")
     def test_calculator_uses_method_from_kwargs(self, mock_get_models_dir, setup, tmp_path):
         conf, proto = setup
@@ -109,3 +117,15 @@ class TestUMAMlCalc:
                     assert mock_load.call_args[1]["path"] == custom_model
                     assert mock_load.call_args[1]["device"] == "cpu"
                     assert "inference_settings" in mock_load.call_args[1]
+
+
+@pytest.mark.parametrize("task, charge, mult, warns", [
+    ("omol", 1, 2, False), ("omat", 1, 1, True), ("oc20", 0, 3, True), ("omat", 0, 1, False),
+])
+def test_charge_spin_warning_for_non_molecular_task(task, charge, mult, warns):
+    import warnings
+    from enan_calculators._ml_inference import _warn_if_charge_spin_ignored
+    with warnings.catch_warnings(record=True) as rec:
+        warnings.simplefilter("always")
+        _warn_if_charge_spin_ignored("uma", task, charge, mult)
+    assert any("ignores charge and spin" in str(w.message) for w in rec) is warns

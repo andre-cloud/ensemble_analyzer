@@ -25,9 +25,27 @@ def _get_cpu_threads():
     )
 
 
+# Only the molecular task reads atoms.info["charge"/"spin"]; the periodic
+# tasks (omat, oc20, odac, omc) compute every system as neutral.
+_CHARGE_SPIN_TASKS = {"omol"}
+
+
+def _warn_if_charge_spin_ignored(calc_name, task_name, charge, mult):
+    if (charge != 0 or mult != 1) and task_name not in _CHARGE_SPIN_TASKS:
+        import warnings
+        warnings.warn(
+            f"{calc_name} task '{task_name}' ignores charge and spin: charge={charge}, "
+            f"mult={mult} will be computed as a neutral system. Use task 'omol' "
+            "for charged or open-shell molecules.",
+            stacklevel=3,
+        )
+
+
 def create_ml_calc(calc_name, charge, mult, method, task_name, merge_mole=False, solvent=None):
     if FAIRChemCalculator is None:
         raise ImportError("fairchem-core missing. Install via: pip install \"ensemble-analyzer[fairchem]\"")
+
+    _warn_if_charge_spin_ignored(calc_name, task_name, charge, mult)
 
     if hasattr(torch.serialization, "add_safe_globals"):
         torch.serialization.add_safe_globals([slice])

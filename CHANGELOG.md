@@ -22,11 +22,11 @@ Versions follow the git release tags.
 
 ### Changed
 - **UMA / FAIRChem**: `"uma"` and `"fairchem"` are the same fairchem-core v2 backend (only UMA-architecture checkpoints load there); both now look for weights in `ENAN_MODELS_DIR/fairchem/` and `ENAN_MODELS_DIR/uma/`. The wizard no longer labels `fairchem` as OC-20.
-- **MACE**: new foundation model `"omol"` (MACE-OMOL, charge and spin aware, mace-torch ≥ 0.3.14). `calculator: "mace"` now requires a model in `functional` instead of falling back to a non-existent `MACE_model.pt`.
+- **MACE**: new foundation model `"omol"` (MACE-OMOL, charge and spin aware, mace-torch ≥ 0.3.14). `calculator: "mace"` now requires a model in `functional` instead of falling back to a non-existent `MACE_model.pt`. Local MACE-POLAR-1 model files (electrostatic, charge and spin aware, mace-torch ≥ 0.3.17 + `graph-longrange`) are recognised and loaded as `PolarMACE`; the e3nn ≥ 0.5 rebuild handles their parameter-free e3nn `Gate` layers and skips compiled (TorchScript) models such as Egret-1.
 
 ### Fixed
 - UMA: predictors were loaded with merged MoLE experts (`merge_mole=True`) and cached by model path only, so a later system with a different composition reused weights merged for the first one. Merging is now off.
-- MACE: `off`, `mp`, `anicc`, `mdp` ignore `charge`/`mult`; a warning is now emitted for charged or open-shell steps.
+- ML potentials that ignore `charge`/`mult` now warn on charged or open-shell steps instead of silently computing a neutral singlet: MACE models without charge/spin embeddings (MACE-OFF, MACE-MP, Egret-1, …; detected from the loaded model, also for local files) and UMA/FAIRChem with a `task` other than `"omol"`.
 - Tutorial 3: the S1 optimisation step read its own orbitals (`read_orbitals: "2"`).
 
 

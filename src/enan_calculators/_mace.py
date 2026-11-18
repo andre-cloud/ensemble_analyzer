@@ -57,9 +57,36 @@ _FOUNDATION = {
     "omol": "mace_omol",
 }
 
-# Foundation models that read atoms.info["charge"/"spin"]; the others are
-# trained on neutral closed-shell data and silently ignore them.
-_CHARGE_SPIN_AWARE = {"omol"}
+
+def _uses_charge_spin(calc) -> bool:
+    """True if the loaded MACE model reads atoms.info["charge"/"spin"].
+
+    MACE-OMOL-style models declare total_charge/total_spin embeddings in
+    ``embedding_specs``; MACE-POLAR models (PolarMACE) take the total charge
+    and spin in their electrostatics. Others (MACE-OFF, MACE-MP, Egret-1, ...)
+    ignore them.
+    """
+    model = calc.models[0]
+    if type(model).__name__ == "PolarMACE":
+        return True
+    specs = getattr(model, "embedding_specs", None)
+    return isinstance(specs, dict) and "total_charge" in specs
+
+
+def _is_parameter_free_gate_key(key: str, state: dict) -> bool:
+    """True for the e3nn ``Gate`` tensors that newer MACE gate blocks drop.
+
+    Models saved with e3nn 0.4.4 (e.g. MACE-POLAR-1) use ``e3nn.nn.Gate``,
+    whose ``mul`` is an ElementwiseTensorProduct with an empty ``weight`` and
+    an all-ones ``output_mask``. mace-torch >= 0.3.16 rebuilds that layer as a
+    parameter-free ``GatedEquivariantBlock`` computing the same function
+    (checked to 1e-15 on MACE-POLAR-1 S/M/L), so nothing learned is lost.
+    """
+    if key.endswith("equivariant_nonlin.mul.weight"):
+        return state[key].numel() == 0
+    if key.endswith("equivariant_nonlin.mul.output_mask"):
+        return bool((state[key] == 1).all())
+    return False
 
 
 def _rebuild_models_for_e3nn(calc: Calculator, default_dtype: str) -> None:
@@ -78,13 +105,20 @@ def _rebuild_models_for_e3nn(calc: Calculator, default_dtype: str) -> None:
     dtype = torch.float64 if default_dtype == "float64" else torch.float32
     rebuilt = []
     for model in calc.models:
+        if isinstance(model, torch.jit.ScriptModule):
+            # compiled (TorchScript) models, e.g. Egret-1, do not unpickle
+            # e3nn modules and need no rebuild
+            rebuilt.append(model)
+            continue
         tensor = next(iter(model.parameters()), None)
         if tensor is None:
             tensor = next(iter(model.buffers()), None)
         device = tensor.device if tensor is not None else torch.device("cpu")
         new = model.__class__(**extract_config_mace_model(model))
-        missing, unexpected = new.load_state_dict(model.state_dict(), strict=False)
+        state = model.state_dict()
+        missing, unexpected = new.load_state_dict(state, strict=False)
         unexplained = [k for k in missing if not k.endswith("_zeroed")]
+        unexpected = [k for k in unexpected if not _is_parameter_free_gate_key(k, state)]
         if unexplained or unexpected:
             raise RuntimeError(
                 "MACE model could not be rebuilt for e3nn "
@@ -109,6 +143,25 @@ def _load_foundation(name: str, device: str, default_dtype: str, **kwargs) -> Ca
     return func(device=device, default_dtype=default_dtype, **kwargs)
 
 
+def _load_model_file(model_path, device, default_dtype, head_kwargs) -> Calculator:
+    """Load a local MACE model file, picking the calculator type from the model.
+
+    Electrostatic MACE-POLAR models (mace-torch >= 0.3.16) need
+    ``model_type="PolarMACE"``; they are recognised from the class of the
+    loaded model, so the protocol only names the file.
+    """
+    calc = MACECalculator(
+        model_paths=str(model_path), device=device,
+        default_dtype=default_dtype, **head_kwargs,
+    )
+    if type(calc.models[0]).__name__ == "PolarMACE":
+        calc = MACECalculator(
+            model_paths=str(model_path), device=device,
+            default_dtype=default_dtype, model_type="PolarMACE", **head_kwargs,
+        )
+    return calc
+
+
 def create_mace_calc(charge, mult, method, solvent=None, task=None):
     if MACECalculator is None:
         raise ImportError(
@@ -121,15 +174,6 @@ def create_mace_calc(charge, mult, method, solvent=None, task=None):
     default_dtype = "float64"
     # task selects the head of a multi-head model; None keeps the model default
     head_kwargs = {"head": task} if task else {}
-
-    if method in _FOUNDATION and method not in _CHARGE_SPIN_AWARE and (charge != 0 or mult != 1):
-        import warnings
-        warnings.warn(
-            f"MACE foundation model '{method}' ignores charge and spin: "
-            f"charge={charge}, mult={mult} will be treated as a neutral singlet. "
-            "Use method 'omol' (MACE-OMOL) for charged or open-shell species.",
-            stacklevel=2,
-        )
 
     if method in _FOUNDATION:
         cache_key = (method, device, default_dtype, task)
@@ -146,18 +190,26 @@ def create_mace_calc(charge, mult, method, solvent=None, task=None):
 
     if cache_key not in _PREDICTOR_CACHE:
         if method in _FOUNDATION:
-            _PREDICTOR_CACHE[cache_key] = _load_foundation(method, device, default_dtype, **head_kwargs)
+            loaded = _load_foundation(method, device, default_dtype, **head_kwargs)
         else:
-            _PREDICTOR_CACHE[cache_key] = MACECalculator(
-                model_paths=str(model_path),
-                device=device,
-                default_dtype=default_dtype,
-                **head_kwargs,
-            )
+            loaded = _load_model_file(model_path, device, default_dtype, head_kwargs)
         if _NEEDS_REBUILD:
-            _rebuild_models_for_e3nn(_PREDICTOR_CACHE[cache_key], default_dtype)
+            _rebuild_models_for_e3nn(loaded, default_dtype)
+        # cache only after a successful rebuild: a failed one must not leave
+        # an unusable model behind for the next call
+        _PREDICTOR_CACHE[cache_key] = loaded
 
     calc = _PREDICTOR_CACHE[cache_key]
+
+    if (charge != 0 or mult != 1) and not _uses_charge_spin(calc):
+        import warnings
+        warnings.warn(
+            f"MACE model '{method}' ignores charge and spin: charge={charge}, "
+            f"mult={mult} will be computed as a neutral closed-shell system. "
+            "Use a charge/spin-aware model (MACE-OMOL, MACE-POLAR) for charged "
+            "or open-shell species.",
+            stacklevel=2,
+        )
 
     return _MACEWrappedCalc(calc, charge, mult)
 

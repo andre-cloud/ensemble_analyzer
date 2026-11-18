@@ -533,7 +533,7 @@ class TestOrcaParser:
         modes = parser_v6.parse_normal_modes(n_atoms=2)
         assert modes.shape == (0, 2, 3)
 
-from ensemble_analyzer.calculators.orca import _split_post_blocks
+from enan_calculators._orca import _split_post_blocks
 
 class TestSplitPostBlocks:
     """Tests for _split_post_blocks edge cases (indented vs compact)."""
@@ -542,36 +542,36 @@ class TestSplitPostBlocks:
         t = "%frag\n Definition\n  1 {18:27} end\n  2 {0:17} end\n end\nend"
         pre, post = _split_post_blocks(t)
         assert pre == ""
-        assert post == "%frag\n Definition\n  1 {18:27} end\n  2 {0:17} end\n end\nend"
+        assert post == "%frag\n Definition\n  1 {18:27} end\n  2 {0:17} end\n end\nend\n"
 
     def test_compact_frag(self):
         t = "%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend"
         pre, post = _split_post_blocks(t)
         assert pre == ""
-        assert post == "%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend"
+        assert post == "%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend\n"
 
     def test_newline_prefix_frag(self):
         t = "\n%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend"
         pre, post = _split_post_blocks(t)
-        assert post == "%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend"
+        assert post == "%frag\nDefinition\n1 {18:27} end\n2 {0:17} end\nend\nend\n"
 
     def test_mixed_pre_and_post(self):
         t = "%scf maxiter 500 end\n%frag\nDefinition\n1 {18:27} end\nend\nend"
         pre, post = _split_post_blocks(t)
-        assert pre == "%scf maxiter 500 end"
-        assert post == "%frag\nDefinition\n1 {18:27} end\nend\nend"
+        assert pre == "%scf maxiter 500 end\n"
+        assert post == "%frag\nDefinition\n1 {18:27} end\nend\nend\n"
 
     def test_multiple_post_blocks(self):
         t = "%frag\n1 {0:5} end\nend\n%eprnmr\ngtensor 1\nend"
         pre, post = _split_post_blocks(t)
         assert pre == ""
-        assert post == "%frag\n1 {0:5} end\nend\n%eprnmr\ngtensor 1\nend"
+        assert post == "%frag\n1 {0:5} end\nend\n%eprnmr\ngtensor 1\nend\n"
 
     def test_pre_non_post_block_and_post(self):
         t = "%output\n print[ P_Mulliken 1 ] end\n%frag\n1 {0:5} end\nend"
         pre, post = _split_post_blocks(t)
-        assert pre == "%output\n print[ P_Mulliken 1 ] end"
-        assert post == "%frag\n1 {0:5} end\nend"
+        assert pre == "%output\n print[ P_Mulliken 1 ] end\n"
+        assert post == "%frag\n1 {0:5} end\nend\n"
 
     def test_empty(self):
         pre, post = _split_post_blocks("")

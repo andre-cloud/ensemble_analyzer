@@ -26,7 +26,7 @@ class TestCalculators:
         
         mock_protocol.add_input = ""
         mock_protocol.read_orbitals = False
-        mock_protocol.constrains = []
+        mock_protocol.constraints = []
         mock_protocol.ts = False
         
         return mock_conformer, mock_protocol
@@ -41,12 +41,12 @@ class TestCalculators:
 
     def test_gaussian_opt_constraints(self, setup_calc):
         conf, proto = setup_calc
-        proto.constrains = [[1], [2]] # Atom indices
+        proto.constraints = [[1], [2]] # Atom indices
         
         calc = GaussianCalc(proto, 4, conf)
         ase_calc, label = calc.optimisation()
         
-        assert "opt=(modredudant)" in ase_calc.parameters["extra"]
+        assert "opt=(modredundant)" in ase_calc.parameters["extra"]
         assert "X 1 F" in ase_calc.parameters["addsec"]
         assert "X 2 F" in ase_calc.parameters["addsec"]
 
@@ -86,7 +86,7 @@ class TestCalculators:
 
     def test_orca_constraints(self, setup_calc):
         conf, proto = setup_calc
-        proto.constrains = [[1]]
+        proto.constraints = [[1]]
         with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
              patch("ensemble_analyzer.calculators.orca.orca_profile"):
             calc = OrcaCalc(proto, 4, conf)
@@ -96,7 +96,7 @@ class TestCalculators:
 
     def test_constraints_all_types(self, setup_calc):
         conf, proto = setup_calc
-        proto.constrains = [[1, 2], [1, 2, 3], [1, 2, 3, 4], [1]]
+        proto.constraints = [[1, 2], [1, 2, 3], [1, 2, 3, 4], [1]]
 
         with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
              patch("ensemble_analyzer.calculators.orca.orca_profile"):

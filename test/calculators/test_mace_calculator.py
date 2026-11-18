@@ -155,21 +155,33 @@ class TestMACEMlCalc:
         with pytest.raises(ValueError, match="requires a model"):
             calc._get_ml_calculator()
 
-    @pytest.mark.parametrize("method, charge, mult, warns", [
-        ("off", 1, 1, True), ("mp", 0, 2, True), ("off", 0, 1, False), ("omol", 1, 2, False),
+    @pytest.mark.parametrize("kind, charge, mult, warns", [
+        ("plain", 1, 1, True), ("plain", 0, 2, True), ("plain", 0, 1, False),
+        ("omol", 1, 2, False), ("polar", -1, 2, False),
     ])
-    def test_charge_spin_warning(self, method, charge, mult, warns):
+    def test_charge_spin_warning(self, kind, charge, mult, warns, tmp_path):
         import warnings
         import enan_calculators._mace as m
-        with patch.object(m, "MACECalculator", MagicMock()), \
+
+        class PolarMACE:
+            pass
+
+        model = MagicMock(spec=[])  # no embedding_specs
+        if kind == "omol":
+            model = MagicMock(embedding_specs={"total_charge": {}, "total_spin": {}})
+        elif kind == "polar":
+            model = PolarMACE()
+        inner = MagicMock(implemented_properties=["energy"], models=[model])
+        model_file = tmp_path / "model.model"
+        model_file.touch()
+        with patch.object(m, "MACECalculator", return_value=inner), \
              patch.object(m, "torch") as mock_torch, \
-             patch.object(m, "_load_foundation", return_value=MagicMock(implemented_properties=["energy"])), \
              patch.object(m, "_NEEDS_REBUILD", False), \
              patch.dict(m._PREDICTOR_CACHE, clear=True):
             mock_torch.cuda.is_available.return_value = False
             with warnings.catch_warnings(record=True) as rec:
                 warnings.simplefilter("always")
-                m.create_mace_calc(charge, mult, method)
+                m.create_mace_calc(charge, mult, str(model_file))
         assert any("ignores charge and spin" in str(w.message) for w in rec) is warns
 
     def test_wrapped_calc_injects_charge_and_spin(self, setup):
@@ -192,3 +204,60 @@ class TestMACEMlCalc:
         assert mock_atoms.info["charge"] == -1
         assert mock_atoms.info["spin"] == 3
         mock_inner.calculate.assert_called_once_with(mock_atoms, None, all_changes)
+
+
+class TestMACEPolar:
+    def test_polar_model_file_uses_polarmace_type(self, tmp_path):
+        import enan_calculators._mace as m
+
+        class PolarMACE:  # stands in for mace.modules.PolarMACE
+            pass
+
+        def fake_calc(**kw):
+            c = MagicMock(implemented_properties=["energy"])
+            c.models = [PolarMACE()]
+            c.model_type = kw.get("model_type", "MACE")
+            return c
+
+        model_file = tmp_path / "MACE-POLAR-1-M.model"
+        model_file.touch()
+        with patch.object(m, "MACECalculator", side_effect=fake_calc) as mock_calc, \
+             patch.object(m, "torch") as mock_torch, \
+             patch.object(m, "_NEEDS_REBUILD", False), \
+             patch.dict(m._PREDICTOR_CACHE, clear=True):
+            mock_torch.cuda.is_available.return_value = False
+            wrapped = m.create_mace_calc(1, 2, str(model_file))
+        assert mock_calc.call_args.kwargs["model_type"] == "PolarMACE"
+        assert wrapped._inner_calc.model_type == "PolarMACE"
+
+    def test_plain_model_file_loaded_once(self, tmp_path):
+        import enan_calculators._mace as m
+        model_file = tmp_path / "plain.model"
+        model_file.touch()
+        inner = MagicMock(implemented_properties=["energy"])
+        inner.models = [MagicMock()]
+        with patch.object(m, "MACECalculator", return_value=inner) as mock_calc, \
+             patch.object(m, "torch") as mock_torch, \
+             patch.object(m, "_NEEDS_REBUILD", False), \
+             patch.dict(m._PREDICTOR_CACHE, clear=True):
+            mock_torch.cuda.is_available.return_value = False
+            m.create_mace_calc(0, 1, str(model_file))
+        mock_calc.assert_called_once()
+
+
+class TestGateKeys:
+    def test_parameter_free_gate_keys_accepted(self):
+        import torch
+        from enan_calculators._mace import _is_parameter_free_gate_key as ok
+        st = {
+            "interactions.0.equivariant_nonlin.mul.weight": torch.zeros(0),
+            "interactions.0.equivariant_nonlin.mul.output_mask": torch.ones(8),
+            "x.equivariant_nonlin.mul.weight": torch.ones(3),
+            "y.equivariant_nonlin.mul.output_mask": torch.tensor([1.0, 0.0]),
+            "interactions.0.linear.weight": torch.zeros(0),
+        }
+        assert ok("interactions.0.equivariant_nonlin.mul.weight", st)
+        assert ok("interactions.0.equivariant_nonlin.mul.output_mask", st)
+        assert not ok("x.equivariant_nonlin.mul.weight", st)
+        assert not ok("y.equivariant_nonlin.mul.output_mask", st)
+        assert not ok("interactions.0.linear.weight", st)

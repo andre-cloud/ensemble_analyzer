@@ -2,24 +2,20 @@ import os
 from pathlib import Path
 from enan_calculators._models import get_models_dir
 
-import torch
-if hasattr(torch.serialization, "add_safe_globals"):
-    torch.serialization.add_safe_globals([slice])
-
 try:
+    import torch
+    if hasattr(torch.serialization, "add_safe_globals"):
+        torch.serialization.add_safe_globals([slice])
     from skala.ase import Skala
-    skala_model = True
-except ImportError as e:
-    print(f"REAL IMPORT ERROR: {e}")
-    skala_model = None
-    raise
+except ImportError:
+    Skala = None
 
 
 _PREDICTOR_CACHE = {}
 
 
 def create_skala_calc(charge, mult, method, basis, solvent=None):
-    if skala_model is None:
+    if Skala is None:
         raise ImportError(
             "skala module missing. Install via: pip install skala"
         )

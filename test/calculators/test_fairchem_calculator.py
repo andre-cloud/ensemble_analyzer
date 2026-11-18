@@ -1,6 +1,12 @@
 import pytest
 from unittest.mock import MagicMock, patch
 from pathlib import Path
+from enan_calculators import _ml_inference
+
+# importable, not just present: a broken install leaves FAIRChemCalculator None
+needs_fairchem = pytest.mark.skipif(
+    _ml_inference.FAIRChemCalculator is None, reason="fairchem-core not importable"
+)
 
 
 class TestFAIRChemRegistration:
@@ -56,6 +62,7 @@ class TestFAIRChemMlCalc:
                     with pytest.raises(FileNotFoundError, match="Model file not found"):
                         calc._get_ml_calculator()
 
+    @needs_fairchem
     @patch("enan_calculators._ml_inference.get_models_dir")
     def test_successful_calculator_creation(self, mock_get_models_dir, setup, tmp_path):
         conf, proto = setup
