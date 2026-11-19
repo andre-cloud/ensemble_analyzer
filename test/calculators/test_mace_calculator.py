@@ -247,7 +247,7 @@ class TestMACEPolar:
 
 class TestGateKeys:
     def test_parameter_free_gate_keys_accepted(self):
-        import torch
+        torch = pytest.importorskip("torch")
         from enan_calculators._mace import _is_parameter_free_gate_key as ok
         st = {
             "interactions.0.equivariant_nonlin.mul.weight": torch.zeros(0),

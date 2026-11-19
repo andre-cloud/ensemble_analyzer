@@ -100,7 +100,9 @@ class NWChemCalc(BaseCalc):
         from enan_calculators import get_ase_calculator
 
         ase_label = f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_nwchem"
-        command = NWCHEM_COMMAND
+        # binary not found at import: keep the plain name so the input can still
+        # be built; the run itself fails with the shell's 'command not found'
+        command = NWCHEM_COMMAND or "nwchem"
         if "nwchem_openmpi" in command and not any(
             x in command for x in ("mpirun", "mpiexec")
         ):

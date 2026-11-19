@@ -1,5 +1,6 @@
 from pathlib import Path
 from enan_calculators._models import get_models_dir
+from enan_calculators._model_tasks import check_model_task
 
 try:
     from fairchem.core import FAIRChemCalculator
@@ -45,6 +46,7 @@ def create_ml_calc(calc_name, charge, mult, method, task_name, merge_mole=False,
     if FAIRChemCalculator is None:
         raise ImportError("fairchem-core missing. Install via: pip install \"ensemble-analyzer[fairchem]\"")
 
+    check_model_task(calc_name, method, task_name)
     _warn_if_charge_spin_ignored(calc_name, task_name, charge, mult)
 
     if hasattr(torch.serialization, "add_safe_globals"):

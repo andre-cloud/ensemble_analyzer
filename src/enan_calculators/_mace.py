@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 from enan_calculators._models import get_models_dir
+from enan_calculators._model_tasks import check_model_task
 from ase.calculators.calculator import Calculator, all_changes
 
 try:
@@ -174,6 +175,9 @@ def create_mace_calc(charge, mult, method, solvent=None, task=None):
     default_dtype = "float64"
     # task selects the head of a multi-head model; None keeps the model default
     head_kwargs = {"head": task} if task else {}
+
+    if method not in _FOUNDATION:
+        check_model_task("mace", method, task)
 
     if method in _FOUNDATION:
         cache_key = (method, device, default_dtype, task)
