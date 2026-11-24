@@ -134,6 +134,20 @@ def check_prism() -> None:
               "Install: pip install \"ensemble-analyzer[prism]\"")
 
 
+def check_rdkit() -> None:
+    """
+    Check for RDKit (optional: NMR references given as SMILES).
+    """
+
+    if importlib.util.find_spec("rdkit") is not None:
+        log_pass("RDKit found (NMR references from SMILES available).")
+    else:
+        log_warn(
+            "RDKit NOT installed (needed only for NMR references given as SMILES; bundled "
+            "references such as TMS and .xyz files work without it). "
+            "Install: conda install -c conda-forge rdkit  or  pip install \"ensemble-analyzer[nmr]\""
+        )
+
 def check_tblite() -> None:
     """
     Check for TBLite (semi-empirical tight-binding) availability.
@@ -213,6 +227,7 @@ def main() -> None:
     check_nwchem()
     check_tblite()
     check_prism()
+    check_rdkit()
     check_mlip()
     check_models_dir()
     check_templates_dir()

@@ -109,6 +109,9 @@ def _remap_refs(step: dict, mapping: Callable[[int], int | None], label: str) ->
     remap(step, "read_population", "read_population")
     if isinstance(step.get("deltascf"), dict):
         remap(step["deltascf"], "inherit_from", "deltascf.inherit_from")
+    if isinstance(step.get("nmr"), dict):
+        remap(step["nmr"], "opt_from", "nmr.opt_from")
+        remap(step["nmr"], "coupling_from", "nmr.coupling_from")
     return step, lost
 
 

@@ -7,6 +7,13 @@ Versions follow the git release tags.
 ## [Unreleased]
 
 ### Added
+- **NMR for ORCA, Gaussian and NWChem** (`nmr` protocol key, see `docs/source/user_guide/nmr.md`):
+  - shielding and coupling switched on independently; any magnetic isotope (`"1H"`, `"13C"`, `"15N"`, `"2H"`, …), optional subset of atoms (0-based);
+  - reference molecules from an `.xyz` file, a bundled geometry (TMS, CFCl3, H3PO4, CH3NO2, NH3, BF3·OEt2, Me2Se, Me4Sn) or a SMILES (RDKit, extra `[nmr]`); optimised at the level of the last ground-state optimisation, shielding at the level of the NMR step, cached and reused by later NMR steps and restarts;
+  - Boltzmann averages of σ and J, equivalent nuclei from symmetry and topology (ported from FROGChem), tables in `nmr_p<N>.out` / `.json`;
+  - one spectrum per nucleus with the exact spin Hamiltonian, heteronuclear couplings weighted by natural abundance, decoupling, couplings taken from an earlier step, experimental overlay with shift fit; `NMR_<isotope>_comparison.png`;
+  - J reported for the requested isotopes whatever the engine used; Protocol Wizard section and "NMR" template; `enan_check` reports RDKit.
+
 - **ΔSCF excited states for ORCA and NWChem** (`deltascf` protocol key, see `docs/source/user_guide/deltascf.md`):
   - excitations written as relative labels (`"HOMO-n->LUMO+m"`) or `"auto"` (dominant transition of a TD-DFT root); no orbital indices to write;
   - reference ground state + TD-DFT reused from a `read_orbitals` step at the same level, otherwise computed per conformer;

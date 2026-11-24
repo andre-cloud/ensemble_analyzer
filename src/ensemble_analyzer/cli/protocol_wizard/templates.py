@@ -93,6 +93,28 @@ SYSTEM_TEMPLATES: dict[str, list[dict[str, Any]]] = {
             "comment": "ΔSCF S1 (vertical), spin-purified",
         },
     ],
+    "NMR (opt+freq → 1H/13C shifts and couplings)": [
+        {
+            "calculator": "orca",
+            "functional": "r2SCAN-3c",
+            "opt": True,
+            "freq": True,
+            "comment": "opt+freq (also optimises the NMR references)",
+        },
+        {
+            "calculator": "orca",
+            "functional": "PBE0",
+            "basis": "pcSseg-2",
+            "nmr": {
+                "shielding": True,
+                "coupling": True,
+                "nuclei": ["1H", "13C"],
+                "references": [{"name": "TMS", "nuclei": ["1H", "13C"]}],
+                "decouple": {"13C": ["1H"]},
+            },
+            "comment": "NMR shifts + couplings",
+        },
+    ],
 }
 
 
