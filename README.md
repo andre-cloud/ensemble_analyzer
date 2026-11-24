@@ -204,7 +204,7 @@ options:
 All graphs are saved also as a pickle. This file can be reloaded and from there you can modify every single element of the Matplotlib Figure store in it. This requires some programming skills and, especially, time. Here is where `enan_graph_editor` comes to play. It is once again an interactive terminal interface (based both on rich or InquierPy library) where you can change and personalize every pickle. If you have to modify more files at once, a *batch* mode is implemented as well, so to by-pass the limitation of the manual selection of the interactive TUI. 
 
 ```bash
-usage: enan_graph_editor [-h] [--batch] [--list] [--rename OLD NEW] [--rename-file RENAME_FILE] [--color LABEL COLOR] [--linestyle LABEL STYLE] [--linewidth LABEL WIDTH] [--alpha LABEL ALPHA] [--visibility LABEL bool] [--output OUTPUT] [--format {pickle,png,pdf,svg}] [--no-strict]
+usage: enan_graph_editor [-h] [--batch] [--list] [--rename OLD NEW] [--rename-file RENAME_FILE] [--color LABEL COLOR] [--linestyle LABEL STYLE] [--linewidth LABEL WIDTH] [--alpha LABEL ALPHA] [--visibility LABEL bool] [--output OUTPUT] [--format {pickle,png,pdf,svg}]
                          [--verbose]
                          pickle_file
 
@@ -216,7 +216,6 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   --batch, -b           Batch mode (non-interactive)
-  --no-strict           Disable strict validation
   --verbose, -v         Verbose output
 
 batch mode options:

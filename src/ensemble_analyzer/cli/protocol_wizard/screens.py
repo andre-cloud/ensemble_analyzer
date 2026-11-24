@@ -4,7 +4,6 @@ import json
 from typing import Any
 
 from textual import on
-from textual.app import ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical, VerticalScroll
 from textual.screen import ModalScreen, Screen
@@ -15,7 +14,6 @@ from textual.widgets import (
     Label,
     ListItem,
     ListView,
-    RichLog,
     Select,
     Static,
 )
@@ -28,6 +26,7 @@ from ensemble_analyzer.cli.protocol_wizard.fields import (
 from ensemble_analyzer.cli.protocol_wizard.steps import (
     AUTO_KEY,
     apply_defaults,
+    as_dict,
     as_list,
     default_read_orbitals,
     export_protocol,
@@ -39,7 +38,6 @@ from ensemble_analyzer.cli.protocol_wizard.steps import (
 )
 from ensemble_analyzer.cli.protocol_wizard.templates import (
     SYSTEM_TEMPLATES,
-    apply,
     load_user_templates,
     save_user_template,
     user_template_path,
@@ -79,6 +77,13 @@ def _parse_bool(v: str) -> bool:
     return v.strip().lower() in ("yes", "true", "1", "y")
 
 
+def _yn(flag: Any, wid: str, yes_first: bool = False) -> Select:
+    """A Yes/No dropdown preset from ``flag``."""
+    choices = [("No", "no"), ("Yes", "yes")]
+    return Select(choices[::-1] if yes_first else choices,
+                  value="yes" if flag else "no", id=wid)
+
+
 def _clean(step: dict) -> dict:
     cleaned = {}
     for key, value in step.items():
@@ -88,12 +93,9 @@ def _clean(step: dict) -> dict:
             continue
         if isinstance(value, (list, dict)) and not value:
             continue
-        if key == "calculator":
-            cleaned[key] = value
-        elif key in DEFAULTS and value == DEFAULTS[key]:
+        if key in DEFAULTS and value == DEFAULTS[key]:
             continue
-        else:
-            cleaned[key] = value
+        cleaned[key] = value
     return cleaned
 
 
@@ -163,14 +165,9 @@ def _fmt_solvent(data: dict) -> str:
 
 class StepEditorScreen(ModalScreen[dict | None]):
     CSS = """
-    StepEditorScreen {
-        align: center middle;
-    }
     #editor-box {
         width: 80%;
         height: 90%;
-        border: solid #3b82f6;
-        background: #0f172a;
     }
     #editor-box > VerticalScroll {
         scrollbar-gutter: stable;
@@ -223,6 +220,29 @@ class StepEditorScreen(ModalScreen[dict | None]):
         self._ro_default = default_read_orbitals(self.previous, self.step)
         super().__init__()
 
+    def _in(self, wid: str) -> str:
+        return self.query_one(f"#{wid}", Input).value.strip()
+
+    def _bool(self, wid: str) -> bool:
+        return _parse_bool(self.query_one(f"#{wid}", Select).value)
+
+    def _num(self, wid: str, cast=float, default: str = "", fallback=None):
+        """Number typed in an Input: blank -> ``default`` (None if empty);
+        not a number -> ``fallback``."""
+        raw = self._in(wid) or default
+        if not raw:
+            return None
+        try:
+            return cast(raw)
+        except ValueError:
+            return fallback
+
+    def _put_num(self, s: dict, field: str, default: str = "") -> None:
+        """``s[field]`` = float typed in ``#f_<field>``, left unset if blank/invalid."""
+        value = self._num(f"f_{field}", float, default)
+        if value is not None:
+            s[field] = value
+
     def _ro_default_label(self) -> str:
         default = self._ro_default or "none"
         return (f"Read orbitals from step (default: {default} — previous step of the same QM "
@@ -231,7 +251,7 @@ class StepEditorScreen(ModalScreen[dict | None]):
     def _current_ro_default(self) -> str:
         """read_orbitals default for the calculator / ΔSCF choice now in the form."""
         probe = {"calculator": self.query_one("#f_calculator", Select).value}
-        if _parse_bool(self.query_one("#f_dscf", Select).value):
+        if self._bool("f_dscf"):
             probe["deltascf"] = {"excitation": "auto"}
         return default_read_orbitals(self.previous, probe)
 
@@ -248,7 +268,7 @@ class StepEditorScreen(ModalScreen[dict | None]):
 
     def compose(self):
         kind = "NEW" if self.is_new else "EDIT"
-        with Vertical(id="editor-box"):
+        with Vertical(id="editor-box", classes="box"):
             with VerticalScroll():
                 yield Label(f"Step {self.step_num} — {kind}", classes="title")
 
@@ -288,25 +308,13 @@ class StepEditorScreen(ModalScreen[dict | None]):
                 )
 
                 yield Label("Optimization", classes="field")
-                yield Select(
-                    [("No", "no"), ("Yes", "yes")],
-                    value="yes" if self.step.get("opt") else "no",
-                    id="f_opt",
-                )
+                yield _yn(self.step.get("opt"), "f_opt")
 
                 yield Label("Frequencies", classes="field")
-                yield Select(
-                    [("No", "no"), ("Yes", "yes")],
-                    value="yes" if self.step.get("freq") else "no",
-                    id="f_freq",
-                )
+                yield _yn(self.step.get("freq"), "f_freq")
 
                 yield Label("Transition State (TS)", classes="field")
-                yield Select(
-                    [("No", "no"), ("Yes", "yes")],
-                    value="yes" if self.step.get("ts") else "no",
-                    id="f_ts",
-                )
+                yield _yn(self.step.get("ts"), "f_ts")
 
                 yield Label("Multiplicity", classes="field")
                 yield Input(
@@ -334,11 +342,7 @@ class StepEditorScreen(ModalScreen[dict | None]):
                     yield Label("Solvent name", classes="field")
                     yield Input(value=_v(sol.get("solvent")), id="f_solvent_name")
                     yield Label("Use SMD?", classes="field")
-                    yield Select(
-                        [("No", "no"), ("Yes", "yes")],
-                        value="yes" if (isinstance(sol, dict) and sol.get("smd")) else "no",
-                        id="f_solvent_smd",
-                    )
+                    yield _yn((isinstance(sol, dict) and sol.get("smd")), "f_solvent_smd")
 
                 # ── TD-DFT ──
                 with Collapsible(title="TD-DFT (Excited States)", collapsed=True):
@@ -349,21 +353,13 @@ class StepEditorScreen(ModalScreen[dict | None]):
                         id="f_nroots",
                     )
                     yield Label("Tamm-Dancoff (TDA)", classes="field")
-                    yield Select(
-                        [("No", "no"), ("Yes", "yes")],
-                        value="yes" if self.step.get("tda") else "no",
-                        id="f_tda",
-                    )
+                    yield _yn(self.step.get("tda"), "f_tda")
 
                 # ── ΔSCF ──
                 dscf = self.step.get("deltascf") or {}
                 with Collapsible(title="ΔSCF (Excited State, ORCA/NWChem)", collapsed=not dscf):
                     yield Label("Enable ΔSCF", classes="field")
-                    yield Select(
-                        [("No", "no"), ("Yes", "yes")],
-                        value="yes" if dscf else "no",
-                        id="f_dscf",
-                    )
+                    yield _yn(dscf, "f_dscf")
                     yield Label(
                         "Reference TD-DFT step = 'Read orbitals from step' above: it must be a step "
                         "with nroots (GS orbitals, E(GS), state composition). Empty = computed at "
@@ -387,8 +383,7 @@ class StepEditorScreen(ModalScreen[dict | None]):
                     yield Select([("lower", "lower"), ("upper", "upper")],
                                  value=dscf.get("doublet_branch", "lower"), id="f_dscf_branch")
                     yield Label("Cation-orbital guess as last attempts", classes="field")
-                    yield Select([("Yes", "yes"), ("No", "no")],
-                                 value="yes" if dscf.get("cation_guess", True) else "no", id="f_dscf_cation")
+                    yield _yn(dscf.get("cation_guess", True), "f_dscf_cation", yes_first=True)
                     yield Label("Min. gap vs reference [eV] (lowest state of the same multiplicity)",
                                 classes="field")
                     yield Input(value=_v(dscf.get("min_gap_ev", 0.1)), placeholder="0.1", id="f_dscf_gap")
@@ -420,11 +415,7 @@ class StepEditorScreen(ModalScreen[dict | None]):
                         id="f_cluster",
                     )
                     yield Label("Disable pruning?", classes="field")
-                    yield Select(
-                        [("No", "no"), ("Yes", "yes")],
-                        value="yes" if self.step.get("no_prune") else "no",
-                        id="f_no_prune",
-                    )
+                    yield _yn(self.step.get("no_prune"), "f_no_prune")
                     yield Label("Duplicate-removal method", classes="field")
                     yield Select(
                         [
@@ -436,11 +427,7 @@ class StepEditorScreen(ModalScreen[dict | None]):
                         id="f_prune_method",
                     )
                     yield Label("PRISM: use moment-of-inertia stage? (opt-in)", classes="field")
-                    yield Select(
-                        [("No", "no"), ("Yes", "yes")],
-                        value="yes" if self.step.get("prism_moi") else "no",
-                        id="f_prism_moi",
-                    )
+                    yield _yn(self.step.get("prism_moi"), "f_prism_moi")
                     yield Label("PRISM: max RMSD (Å)", classes="field")
                     yield Input(
                         value=str(self.step.get("prism_max_rmsd", 0.25)),
@@ -471,11 +458,7 @@ class StepEditorScreen(ModalScreen[dict | None]):
                         id="f_min_localization",
                     )
                     yield Label("Auto-displace", classes="field")
-                    yield Select(
-                        [("No", "no"), ("Yes", "yes")],
-                        value="yes" if self.step.get("auto_displace") else "no",
-                        id="f_auto_displace",
-                    )
+                    yield _yn(self.step.get("auto_displace"), "f_auto_displace")
                     yield Label("Displace scale", classes="field")
                     yield Input(
                         value=str(self.step.get("displace_scale", 0.3)),
@@ -514,17 +497,9 @@ class StepEditorScreen(ModalScreen[dict | None]):
                         id="f_freq_fact",
                     )
                     yield Label("Skip failed optimizations?", classes="field")
-                    yield Select(
-                        [("No", "no"), ("Yes", "yes")],
-                        value="yes" if self.step.get("skip_opt_fail") else "no",
-                        id="f_skip_opt_fail",
-                    )
+                    yield _yn(self.step.get("skip_opt_fail"), "f_skip_opt_fail")
                     yield Label("Block on retention rate?", classes="field")
-                    yield Select(
-                        [("No", "no"), ("Yes", "yes")],
-                        value="yes" if self.step.get("block_on_retention_rate") else "no",
-                        id="f_block_on_retention_rate",
-                    )
+                    yield _yn(self.step.get("block_on_retention_rate"), "f_block_on_retention_rate")
                     yield Label("Read population from step", classes="field")
                     yield Input(
                         value=_v(self.step.get("read_population")),
@@ -568,71 +543,55 @@ class StepEditorScreen(ModalScreen[dict | None]):
 
         s["calculator"] = self.query_one("#f_calculator", Select).value
 
-        func = self.query_one("#f_functional", Input).value.strip()
+        func = self._in("f_functional")
         if func:
             s["functional"] = func
 
-        basis = self.query_one("#f_basis", Input).value.strip()
+        basis = self._in("f_basis")
         if basis or s.get("calculator") not in ML_CALCULATORS:
             s["basis"] = basis
 
-        dispersion = self.query_one("#f_dispersion", Input).value.strip()
+        dispersion = self._in("f_dispersion")
         if dispersion:
             s["dispersion"] = dispersion
 
-        task = self.query_one("#f_task", Input).value.strip()
+        task = self._in("f_task")
         if task:
             s["task"] = task
 
-        s["opt"] = _parse_bool(self.query_one("#f_opt", Select).value)
-        s["freq"] = _parse_bool(self.query_one("#f_freq", Select).value)
-        s["ts"] = _parse_bool(self.query_one("#f_ts", Select).value)
+        s["opt"] = self._bool("f_opt")
+        s["freq"] = self._bool("f_freq")
+        s["ts"] = self._bool("f_ts")
 
-        try:
-            s["mult"] = int(self.query_one("#f_mult", Input).value.strip() or "1")
-        except ValueError:
-            s["mult"] = 1
-
-        try:
-            s["charge"] = int(self.query_one("#f_charge", Input).value.strip() or "0")
-        except ValueError:
-            s["charge"] = 0
+        s["mult"] = self._num("f_mult", int, "1", 1)
+        s["charge"] = self._num("f_charge", int, "0", 0)
 
         # solvent
-        sol_name = self.query_one("#f_solvent_name", Input).value.strip()
+        sol_name = self._in("f_solvent_name")
         if sol_name:
             s["solvent"] = {
                 "solvent": sol_name,
-                "smd": _parse_bool(self.query_one("#f_solvent_smd", Select).value),
+                "smd": self._bool("f_solvent_smd"),
             }
 
         # TD-DFT
-        nroots = self.query_one("#f_nroots", Input).value.strip()
-        if nroots:
-            try:
-                s["nroots"] = int(nroots)
-            except ValueError:
-                pass
-        s["tda"] = _parse_bool(self.query_one("#f_tda", Select).value)
+        nroots = self._num("f_nroots", int)
+        if nroots is not None:
+            s["nroots"] = nroots
+        s["tda"] = self._bool("f_tda")
 
         # ΔSCF
-        ref = self.query_one("#f_read_orbitals", Input).value.strip()
-        if _parse_bool(self.query_one("#f_dscf", Select).value):
+        ref = self._in("f_read_orbitals")
+        if self._bool("f_dscf"):
             dscf: dict = {
-                "excitation": self.query_one("#f_dscf_exc", Input).value.strip() or "auto",
+                "excitation": self._in("f_dscf_exc") or "auto",
                 "spin": self.query_one("#f_dscf_spin", Select).value,
-                "spin_purify": _parse_bool(self.query_one("#f_dscf_purify", Select).value),
+                "spin_purify": self._bool("f_dscf_purify"),
                 "doublet_branch": self.query_one("#f_dscf_branch", Select).value,
-                "cation_guess": _parse_bool(self.query_one("#f_dscf_cation", Select).value),
+                "cation_guess": self._bool("f_dscf_cation"),
             }
-            try:
-                dscf["root"] = int(self.query_one("#f_dscf_root", Input).value.strip() or "1")
-            except ValueError:
-                dscf["root"] = 1
-            try:
-                dscf["min_gap_ev"] = float(self.query_one("#f_dscf_gap", Input).value.strip() or "0.1")
-            except ValueError:
-                dscf["min_gap_ev"] = 0.1
+            dscf["root"] = self._num("f_dscf_root", int, "1", 1)
+            dscf["min_gap_ev"] = self._num("f_dscf_gap", float, "0.1", 0.1)
             for key, wid in (("alphaconf", "#f_dscf_aconf"), ("betaconf", "#f_dscf_bconf")):
                 raw = self.query_one(wid, Input).value.strip()
                 if raw:
@@ -651,43 +610,21 @@ class StepEditorScreen(ModalScreen[dict | None]):
 
         # clustering
         s["cluster"] = _parse_cluster(self.query_one("#f_cluster", Input).value)
-        s["no_prune"] = _parse_bool(self.query_one("#f_no_prune", Select).value)
+        s["no_prune"] = self._bool("f_no_prune")
         s["prune_method"] = self.query_one("#f_prune_method", Select).value or "rotconst"
         if s["prune_method"] != "rotconst":
-            s["prism_moi"] = _parse_bool(self.query_one("#f_prism_moi", Select).value)
+            s["prism_moi"] = self._bool("f_prism_moi")
             for field in ("prism_max_rmsd", "prism_max_dev", "prism_moi_dev"):
-                raw = self.query_one(f"#f_{field}", Input).value.strip()
-                if raw:
-                    try:
-                        s[field] = float(raw)
-                    except ValueError:
-                        pass
+                self._put_num(s, field)
 
         # TS
         lf = _parse_coord_list(self.query_one("#f_loc_freq", Input).value)
         if lf:
             s["loc_freq"] = lf
-        try:
-            s["min_localization"] = float(
-                self.query_one("#f_min_localization", Input).value.strip() or "40.0"
-            )
-        except ValueError:
-            pass
-        s["auto_displace"] = _parse_bool(
-            self.query_one("#f_auto_displace", Select).value
-        )
-        try:
-            s["displace_scale"] = float(
-                self.query_one("#f_displace_scale", Input).value.strip() or "0.3"
-            )
-        except ValueError:
-            pass
-        try:
-            s["neg_freq_threshold"] = float(
-                self.query_one("#f_neg_freq_threshold", Input).value.strip() or "20.0"
-            )
-        except ValueError:
-            pass
+        self._put_num(s, "min_localization", "40.0")
+        s["auto_displace"] = self._bool("f_auto_displace")
+        self._put_num(s, "displace_scale", "0.3")
+        self._put_num(s, "neg_freq_threshold", "20.0")
 
         # parallel execution
         cpu_per_job = _parse_cpu_per_job(self.query_one("#f_cpu_per_job", Input).value)
@@ -696,28 +633,14 @@ class StepEditorScreen(ModalScreen[dict | None]):
 
         # advanced
         for field in ("thrG", "thrB", "thrGMAX"):
-            raw = self.query_one(f"#f_{field}", Input).value.strip()
-            if raw:
-                try:
-                    s[field] = float(raw)
-                except ValueError:
-                    pass
-        try:
-            s["freq_fact"] = float(
-                self.query_one("#f_freq_fact", Input).value.strip() or "1.0"
-            )
-        except ValueError:
-            pass
-        s["skip_opt_fail"] = _parse_bool(
-            self.query_one("#f_skip_opt_fail", Select).value
-        )
-        s["block_on_retention_rate"] = _parse_bool(
-            self.query_one("#f_block_on_retention_rate", Select).value
-        )
-        rp = self.query_one("#f_read_population", Input).value.strip()
+            self._put_num(s, field)
+        self._put_num(s, "freq_fact", "1.0")
+        s["skip_opt_fail"] = self._bool("f_skip_opt_fail")
+        s["block_on_retention_rate"] = self._bool("f_block_on_retention_rate")
+        rp = self._in("f_read_population")
         if rp:
             s["read_population"] = rp
-        ai = self.query_one("#f_add_input", Input).value.strip()
+        ai = self._in("f_add_input")
         if ai:
             s["add_input"] = ai
 
@@ -726,7 +649,7 @@ class StepEditorScreen(ModalScreen[dict | None]):
             s["validators"] = list(self._validators)
 
         # comment
-        comment = self.query_one("#f_comment", Input).value.strip()
+        comment = self._in("f_comment")
         if comment:
             s["comment"] = comment
 
@@ -775,9 +698,9 @@ class StepEditorScreen(ModalScreen[dict | None]):
         elif bid == "cancel":
             self.dismiss(None)
         elif bid == "val_add":
-            pat = self.query_one("#f_val_pattern", Input).value.strip()
-            exp_raw = self.query_one("#f_val_expected", Input).value.strip()
-            thr_raw = self.query_one("#f_val_threshold", Input).value.strip()
+            pat = self._in("f_val_pattern")
+            exp_raw = self._in("f_val_expected")
+            thr_raw = self._in("f_val_threshold")
             if pat and exp_raw and thr_raw:
                 try:
                     self._validators.append([pat, float(exp_raw), float(thr_raw)])
@@ -799,19 +722,16 @@ class StepEditorScreen(ModalScreen[dict | None]):
 
 # ── Template selector modal ───────────────────────────────────────
 
-class TemplateScreen(ModalScreen[list | None]):
+# ── Minimal input screen ──────────────────────────────────────────
+
+class _PickScreen(ModalScreen[str | None]):
     CSS = """
-    TemplateScreen {
-        align: center middle;
-    }
-    #template-box {
+    #pick-box {
         width: 50%;
         height: auto;
-        border: solid #3b82f6;
-        background: #0f172a;
         padding: 1;
     }
-    ListView {
+    #pick_list {
         height: auto;
         max-height: 20;
     }
@@ -819,59 +739,90 @@ class TemplateScreen(ModalScreen[list | None]):
 
     BINDINGS = [("escape", "dismiss(None)")]
 
+    def __init__(self, choices: list[tuple[str, Any]], prompt: str = "Select:"):
+        """``choices``: (label, value) rows; rows with value None are disabled headers."""
+        self.choices = choices
+        self.prompt = prompt
+        super().__init__()
+
     def compose(self):
-        # _entries runs parallel to the ListView items: steps, or None for headers/notes
-        self._entries: list[list | None] = []
-        items: list[ListItem] = []
+        with Vertical(id="pick-box", classes="box"):
+            yield Label(self.prompt, classes="title")
+            items = [ListItem(Static(label), disabled=value is None)
+                     for label, value in self.choices]
+            yield ListView(*items, id="pick_list")
 
-        def add_note(text: str):
-            items.append(ListItem(Static(text), disabled=True))
-            self._entries.append(None)
+    def on_list_view_selected(self, event: ListView.Selected):
+        idx = event.list_view.index
+        if idx is not None and 0 <= idx < len(self.choices) and self.choices[idx][1] is not None:
+            self.dismiss(self.choices[idx][1])
 
-        def add_template(label: str, steps: list):
-            items.append(ListItem(Static(label)))
-            self._entries.append(steps)
 
-        add_note("[bold]System Templates[/]")
-        for name, steps in SYSTEM_TEMPLATES.items():
-            add_template(f"  {name}", steps)
+class _InputScreen(ModalScreen[str | None]):
+    CSS = """
+    #input-box {
+        width: 50%;
+        height: auto;
+        padding: 1;
+    }
+    #input-buttons {
+        height: auto;
+        align: center middle;
+        margin-top: 1;
+    }
+    """
 
+    BINDINGS = [("escape", "dismiss(None)")]
+
+    def __init__(self, prompt: str, default: str = ""):
+        self.prompt = prompt
+        self.default = default
+        super().__init__()
+
+    def compose(self):
+        with Vertical(id="input-box", classes="box"):
+            yield Label(self.prompt)
+            yield Input(value=self.default, id="input_field")
+            with Horizontal(id="input-buttons"):
+                yield Button("OK", variant="primary", id="ok")
+                yield Button("Cancel", id="cancel")
+
+    def on_button_pressed(self, event: Button.Pressed):
+        if event.button.id == "ok":
+            val = self.query_one("#input_field", Input).value.strip()
+            self.dismiss(val if val else None)
+        else:
+            self.dismiss(None)
+
+
+class TemplateScreen(_PickScreen):
+    """Template picker: system templates, then user templates grouped by sub-folder."""
+
+    def __init__(self):
+        choices: list[tuple[str, list | None]] = [("[bold]System Templates[/]", None)]
+        choices += [(f"  {name}", steps) for name, steps in SYSTEM_TEMPLATES.items()]
         user_templates, errors = load_user_templates()
-        add_note(f"[bold]User Templates[/]  [dim]{user_templates_dir()}[/]")
+        choices.append((f"[bold]User Templates[/]  [dim]{user_templates_dir()}[/]", None))
         folder = ""
         for key, steps in user_templates.items():
             parent, _, name = key.rpartition("/")
             if parent != folder:
                 folder = parent
-                add_note(f"  [bold]{parent}/[/]")
-            add_template(f"    {name}" if parent else f"  {name}", steps)
+                choices.append((f"  [bold]{parent}/[/]", None))
+            choices.append((f"    {name}" if parent else f"  {name}", steps))
         if not user_templates:
-            add_note("  [dim](none — add .json files there or use 'Save as template')[/]")
-        for err in errors:
-            add_note(f"  [yellow]⚠ {err}[/]")
-
-        with Vertical(id="template-box"):
-            yield Label("Select a template:", classes="title")
-            yield ListView(*items, id="template_list")
-
-    def on_list_view_selected(self, event: ListView.Selected):
-        idx = event.list_view.index
-        if idx is not None and idx < len(self._entries) and self._entries[idx] is not None:
-            self.dismiss(self._entries[idx])
+            choices.append(("  [dim](none — add .json files there or use 'Save as template')[/]", None))
+        choices += [(f"  [yellow]⚠ {err}[/]", None) for err in errors]
+        super().__init__(choices, "Select a template:")
 
 
 # ── Summary modal ─────────────────────────────────────────────────
 
 class SummaryScreen(ModalScreen[None]):
     CSS = """
-    SummaryScreen {
-        align: center middle;
-    }
     #summary-box {
         width: 80%;
         height: 90%;
-        border: solid #3b82f6;
-        background: #0f172a;
     }
     #summary-box > VerticalScroll {
         padding: 1 2;
@@ -885,7 +836,7 @@ class SummaryScreen(ModalScreen[None]):
         super().__init__()
 
     def compose(self):
-        with Vertical(id="summary-box"):
+        with Vertical(id="summary-box", classes="box"):
             with VerticalScroll():
                 if not self.protocol:
                     yield Label("(no steps defined)")
@@ -914,14 +865,10 @@ class SummaryScreen(ModalScreen[None]):
 
 class ConfirmScreen(ModalScreen[bool]):
     CSS = """
-    ConfirmScreen {
-        align: center middle;
-    }
     #confirm-box {
         width: 40%;
         height: auto;
         border: solid #f59e0b;
-        background: #0f172a;
         padding: 1;
     }
     #confirm-buttons {
@@ -938,7 +885,7 @@ class ConfirmScreen(ModalScreen[bool]):
         super().__init__()
 
     def compose(self):
-        with Vertical(id="confirm-box"):
+        with Vertical(id="confirm-box", classes="box"):
             yield Label(self.message)
             with Horizontal(id="confirm-buttons"):
                 yield Button("Yes", variant="primary", id="yes")
@@ -952,14 +899,9 @@ class ConfirmScreen(ModalScreen[bool]):
 
 class MainScreen(Screen):
     CSS = """
-    MainScreen {
-        align: center middle;
-    }
     #main-box {
         width: 80%;
         height: 90%;
-        border: solid #3b82f6;
-        background: #0f172a;
     }
     #header-box {
         height: 3;
@@ -999,9 +941,7 @@ class MainScreen(Screen):
     ]
 
     def compose(self):
-        state = self.app.state  # type: ignore
-
-        with Vertical(id="main-box"):
+        with Vertical(id="main-box", classes="box"):
             yield Static(id="header", classes="header")
 
             with Horizontal(id="body"):
@@ -1020,7 +960,8 @@ class MainScreen(Screen):
                     yield Button("Save as template", id="save_template")
                     yield Button("Exit", id="exit")
 
-            yield Static(id="footer", classes="footer")
+            yield Static("[dim]Tab/navigate  Enter=select  Esc=back  q=quit[/]",
+                         id="footer", classes="footer")
 
     def on_mount(self):
         self._refresh()
@@ -1041,10 +982,6 @@ class MainScreen(Screen):
             list_view.append(
                 ListItem(Static(_step_label(key, state.protocol[key])))
             )
-
-        self.query_one("#footer", Static).update(
-            "[dim]Tab/navigate  Enter=select  Esc=back  q=quit[/]"
-        )
 
     def _on_step_edited(self, result: dict | None, key: str | None = None):
         if result is None:
@@ -1074,7 +1011,7 @@ class MainScreen(Screen):
         if steps is None:
             return
         state = self.app.state  # type: ignore
-        state.protocol = apply_defaults(apply(steps))
+        state.protocol = apply_defaults(as_dict(steps))
         state.filename = None
         state.dirty = True
         self._refresh()
@@ -1119,21 +1056,17 @@ class MainScreen(Screen):
                 lambda k: self._open_new_step(int(k)) if k is not None else None,
             )
 
-        elif btn == "edit":
-            if not state.protocol:
-                return
-            self._start_edit_flow()
+        elif btn == "edit" and state.protocol:
+            self._pick_step("Select step to edit:", self._on_edit_key)
 
-        elif btn == "remove":
-            if not state.protocol:
-                return
-            self._start_remove_flow()
+        elif btn == "remove" and state.protocol:
+            self._pick_step("Select step to remove:", self._on_remove_key)
 
         elif btn == "summary":
             self.app.push_screen(SummaryScreen(export_protocol(state.protocol)))
 
         elif btn == "save":
-            self._do_save_maybe_ask()
+            self._save()
 
         elif btn == "save_template":
             if not state.protocol:
@@ -1158,35 +1091,16 @@ class MainScreen(Screen):
 
     def _on_exit_confirm(self, result: bool):
         if result:
-            self._save_and_exit()
+            self._save(then=self.app.exit)
         else:
             self.app.exit()
 
-    def _save_and_exit(self):
-        state = self.app.state  # type: ignore
-        if state.filename:
-            self._do_save(state.filename)
-            self.app.exit()
-        else:
-            self.app.push_screen(
-                _InputScreen("Save as:", "protocol.json"),
-                self._on_save_exit_filename,
-            )
-
-    def _on_save_exit_filename(self, fname: str | None):
-        if fname:
-            self._do_save(fname)
-        self.app.exit()
-
-    # ── Edit flow ──
-
-    def _start_edit_flow(self):
+    def _pick_step(self, prompt: str, callback) -> None:
         state = self.app.state  # type: ignore
         choices = [(f"{k}: {_step_label(k, state.protocol[k])}", k) for k in sorted(state.protocol, key=int)]
-        self.app.push_screen(
-            _PickScreen(choices, "Select step to edit:"),
-            self._on_edit_key,
-        )
+        self.app.push_screen(_PickScreen(choices, prompt), callback)
+
+    # ── Edit flow ──
 
     def _on_edit_key(self, key: str | None):
         if key is None:
@@ -1205,14 +1119,6 @@ class MainScreen(Screen):
         )
 
     # ── Remove flow ──
-
-    def _start_remove_flow(self):
-        state = self.app.state  # type: ignore
-        choices = [(f"{k}: {_step_label(k, state.protocol[k])}", k) for k in sorted(state.protocol, key=int)]
-        self.app.push_screen(
-            _PickScreen(choices, "Select step to remove:"),
-            self._on_remove_key,
-        )
 
     def _on_remove_key(self, key: str | None):
         if key is None:
@@ -1266,10 +1172,7 @@ class MainScreen(Screen):
                 data = json.load(f)
             if not isinstance(data, dict):
                 raise ValueError("Root must be a JSON object")
-            steps = {}
-            for i, (_, step) in enumerate(sorted(data.items(), key=lambda x: int(x[0]))):
-                steps[str(i)] = step
-            state.protocol = infer_auto(steps)
+            state.protocol = infer_auto(as_dict(as_list(data)))
             state.filename = fname
             state.dirty = False
             self._refresh()
@@ -1278,22 +1181,22 @@ class MainScreen(Screen):
 
     # ── Save ──
 
-    def _do_save_maybe_ask(self):
+    def _save(self, then=None):
+        """Save to the current file, asking for a name first if there is none;
+        ``then`` runs afterwards (also when the name prompt is cancelled)."""
         state = self.app.state  # type: ignore
-        if not state.filename:
-            self.app.push_screen(
-                _InputScreen("Save as:", "protocol.json"),
-                self._on_save_filename,
-            )
-        else:
-            self._do_save(state.filename)
 
-    def _on_save_filename(self, fname: str | None):
-        if not fname:
-            return
-        state = self.app.state  # type: ignore
-        state.filename = fname
-        self._do_save(fname)
+        def done(fname: str | None):
+            if fname:
+                state.filename = fname
+                self._do_save(fname)
+            if then:
+                then()
+
+        if state.filename:
+            done(state.filename)
+        else:
+            self.app.push_screen(_InputScreen("Save as:", "protocol.json"), done)
 
     def _do_save(self, fname: str):
         state = self.app.state  # type: ignore
@@ -1330,84 +1233,3 @@ class MainScreen(Screen):
             self.notify(f"Template saved: {path}")
         except Exception as e:
             self.app.push_screen(ConfirmScreen(f"Template save error: {e}"))
-
-
-# ── Minimal input screen ──────────────────────────────────────────
-
-class _PickScreen(ModalScreen[str | None]):
-    CSS = """
-    _PickScreen {
-        align: center middle;
-    }
-    #pick-box {
-        width: 50%;
-        height: auto;
-        border: solid #3b82f6;
-        background: #0f172a;
-        padding: 1;
-    }
-    ListView {
-        height: 12;
-    }
-    """
-
-    BINDINGS = [("escape", "dismiss(None)")]
-
-    def __init__(self, choices: list[tuple[str, str]], prompt: str = "Select:"):
-        self.choices = choices
-        self.prompt = prompt
-        super().__init__()
-
-    def compose(self):
-        with Vertical(id="pick-box"):
-            yield Label(self.prompt, classes="title")
-            items = [ListItem(Static(label)) for label, _ in self.choices]
-            yield ListView(*items, id="pick_list")
-
-    def on_list_view_selected(self, event: ListView.Selected):
-        if event.list_view.index is not None:
-            idx = event.list_view.index
-            if 0 <= idx < len(self.choices):
-                self.dismiss(self.choices[idx][1])
-
-
-class _InputScreen(ModalScreen[str | None]):
-    CSS = """
-    _InputScreen {
-        align: center middle;
-    }
-    #input-box {
-        width: 50%;
-        height: auto;
-        border: solid #3b82f6;
-        background: #0f172a;
-        padding: 1;
-    }
-    #input-buttons {
-        height: auto;
-        align: center middle;
-        margin-top: 1;
-    }
-    """
-
-    BINDINGS = [("escape", "dismiss(None)")]
-
-    def __init__(self, prompt: str, default: str = ""):
-        self.prompt = prompt
-        self.default = default
-        super().__init__()
-
-    def compose(self):
-        with Vertical(id="input-box"):
-            yield Label(self.prompt)
-            yield Input(value=self.default, id="input_field")
-            with Horizontal(id="input-buttons"):
-                yield Button("OK", variant="primary", id="ok")
-                yield Button("Cancel", id="cancel")
-
-    def on_button_pressed(self, event: Button.Pressed):
-        if event.button.id == "ok":
-            val = self.query_one("#input_field", Input).value.strip()
-            self.dismiss(val if val else None)
-        else:
-            self.dismiss(None)

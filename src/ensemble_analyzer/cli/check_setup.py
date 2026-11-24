@@ -117,18 +117,22 @@ def check_nwchem() -> None:
     else:
         log_warn("NWChem executable NOT found. (Optional if using ORCA)")
 
+def _optional(module: str, found: str, missing: str) -> bool:
+    """PASS ``found`` if ``module`` is importable, else WARN ``missing``."""
+    ok = importlib.util.find_spec(module) is not None
+    log_pass(found) if ok else log_warn(missing)
+    return ok
+
 def check_prism() -> None:
     """
     Check for PRISM Pruner (optional: prune_method 'prism' / 'prism_rotcorr').
     """
 
-    if importlib.util.find_spec("prism_pruner") is not None:
-        log_pass("PRISM Pruner found (prune_method 'prism' / 'prism_rotcorr' available).")
-    else:
-        log_warn(
-            "PRISM Pruner NOT installed (needed only for prune_method 'prism'/'prism_rotcorr'). "
-            "Install: pip install \"ensemble-analyzer[prism]\""
-        )
+    _optional("prism_pruner",
+              "PRISM Pruner found (prune_method 'prism' / 'prism_rotcorr' available).",
+              "PRISM Pruner NOT installed (needed only for prune_method 'prism'/'prism_rotcorr'). "
+              "Install: pip install \"ensemble-analyzer[prism]\"")
+
 
 def check_tblite() -> None:
     """
@@ -137,10 +141,8 @@ def check_tblite() -> None:
 
     print(f"\n{'-'*20} 5. Checking TBLite (Tight Binding) and PRISM Pruner {'-'*20}")
 
-    if importlib.util.find_spec("tblite") is not None:
-        log_pass("TBLite library found.")
-    else:
-        log_warn("TBLite NOT installed. Install: pip install \"ensemble-analyzer[tblite]\"")
+    _optional("tblite", "TBLite library found.",
+              "TBLite NOT installed. Install: pip install \"ensemble-analyzer[tblite]\"")
 
 def check_mlip() -> None:
     """
@@ -149,27 +151,16 @@ def check_mlip() -> None:
 
     print(f"\n{'-'*20} 6. Checking MLIPs {'-'*20}")
 
-    # AIMNet (requires torch + aimnet)
-    aimnet_ok = importlib.util.find_spec("aimnet") is not None
-    torch_ok = importlib.util.find_spec("torch") is not None
-    if aimnet_ok:
-        log_pass("aimnet library found.")
-    else:
-        log_warn("aimnet NOT installed. Install: pip install \"ensemble-analyzer[aimnet]\"")
-    if torch_ok:
-        log_pass("PyTorch found.")
-    else:
-        log_warn("PyTorch NOT installed. Required by aimnet/uma/mace.")
-
+    _optional("aimnet", "aimnet library found.",
+              "aimnet NOT installed. Install: pip install \"ensemble-analyzer[aimnet]\"")
+    _optional("torch", "PyTorch found.", "PyTorch NOT installed. Required by aimnet/uma/mace.")
     # UMA / FAIRChem: one backend (fairchem-core v2, UMA-architecture models)
-    if importlib.util.find_spec("fairchem") is not None:
-        log_pass("UMA/FAIRChem (fairchem-core) library found.")
-    else:
-        log_warn("UMA/FAIRChem (fairchem-core) NOT installed. Install: pip install \"ensemble-analyzer[uma]\"")
+    fairchem_ok = _optional(
+        "fairchem", "UMA/FAIRChem (fairchem-core) library found.",
+        "UMA/FAIRChem (fairchem-core) NOT installed. Install: pip install \"ensemble-analyzer[uma]\"")
 
     # fairchem-core needs e3nn>=0.5: EnAn rebuilds MACE models for the installed
     # e3nn, so both can share one environment (see enan_calculators._mace).
-    fairchem_ok = importlib.util.find_spec("fairchem") is not None
     if importlib.util.find_spec("mace") is not None:
         e3nn_version = _package_version("e3nn")
         note = " (models rebuilt for e3nn >= 0.5)" if e3nn_version and not e3nn_version.startswith("0.4") else ""
@@ -191,37 +182,30 @@ def _package_version(name: str) -> str | None:
     except PackageNotFoundError:
         return None
 
+def _check_env_dir(var: str, unset_msg: str) -> None:
+    """Report an optional directory environment variable."""
+    value = os.environ.get(var)
+    if not value:
+        log_warn(f"{var} not set. {unset_msg}")
+    elif Path(value).is_dir():
+        log_pass(f"{var} = {value}")
+    else:
+        log_warn(f"{var} = {value} (directory does not exist yet)")
+
 def check_models_dir() -> None:
     """Check ENAN_MODELS_DIR environment variable."""
-
-    models_dir = os.environ.get("ENAN_MODELS_DIR")
-    if models_dir:
-        p = Path(models_dir)
-        if p.is_dir():
-            log_pass(f"ENAN_MODELS_DIR = {models_dir}")
-        else:
-            log_warn(f"ENAN_MODELS_DIR = {models_dir} (directory does not exist yet)")
-    else:
-        log_warn("ENAN_MODELS_DIR not set. ML models default to ~/.ensemble_analyzer/models/")
+    _check_env_dir("ENAN_MODELS_DIR", "ML models default to ~/.ensemble_analyzer/models/")
 
 def check_templates_dir() -> None:
     """Check ENAN_TEMPLATES_DIR environment variable."""
-
     print(f"\n{'-'*20} 7. Checking Protocol Wizard Templates {'-'*20}")
-    templates_dir = os.environ.get("ENAN_TEMPLATES_DIR")
-    if templates_dir:
-        p = Path(templates_dir)
-        if p.is_dir():
-            log_pass(f"ENAN_TEMPLATES_DIR = {templates_dir}")
-        else:
-            log_warn(f"ENAN_TEMPLATES_DIR = {templates_dir} (directory does not exist yet)")
-    else:
-        log_warn("ENAN_TEMPLATES_DIR not set. Protocol Wizard user templates default to ~/.ensemble_analyzer/template/")
+    _check_env_dir("ENAN_TEMPLATES_DIR",
+                   "Protocol Wizard user templates default to ~/.ensemble_analyzer/template/")
 
 def main() -> None:
     """Run the complete installation check suite."""
     
-    print(f"Running Ensemble Analyzer Installation Check...\n")
+    print("Running Ensemble Analyzer Installation Check...\n")
     
     deps_ok = check_python_dependencies()
     orca_ok = check_orca()

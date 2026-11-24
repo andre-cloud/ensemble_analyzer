@@ -4,15 +4,9 @@ import warnings
 from pathlib import Path
 from typing import Dict, Optional
 
-try:
-    import matplotlib as mpl
-    import matplotlib.pyplot as plt
-    from matplotlib.figure import Figure
-    from matplotlib.axes import Axes
-except ImportError as e:
-    raise ImportError(
-        "matplotlib not installed. Run: pip install matplotlib"
-    ) from e
+import matplotlib as mpl
+from matplotlib.figure import Figure
+from matplotlib.axes import Axes
 
 
 logger = logging.getLogger(__name__)
@@ -31,9 +25,8 @@ class MatplotlibPickleEditor:
         '#BC4B51', '#5B8E7D', '#8B5A3C', '#264653', '#E76F51'
     ]
 
-    def __init__(self, pickle_path: Path, strict_validation: bool = True):
+    def __init__(self, pickle_path: Path):
         self.pickle_path = pickle_path
-        self.strict_validation = strict_validation
         self.figure: Optional[Figure] = None
         self.axes: Optional[Axes] = None
         self._modifications_made = False
@@ -53,11 +46,9 @@ class MatplotlibPickleEditor:
                 ) from e
 
         if not isinstance(obj, Figure):
-            if self.strict_validation:
-                raise PickleSecurityError(
-                    f"Object is not matplotlib.figure.Figure, but {type(obj)}"
-                )
-            logger.warning(f"WARNING: unexpected type {type(obj)}")
+            raise PickleSecurityError(
+                f"Object is not matplotlib.figure.Figure, but {type(obj)}"
+            )
 
         old_fig = obj
         if not old_fig.axes:
@@ -248,100 +239,46 @@ class MatplotlibPickleEditor:
             ]
         return changed
 
-    def change_line_colors(self, label_color_map: Dict[str, str]) -> int:
+    def _apply(self, mapping: Dict[str, object], setter: str, what: str,
+               check=None) -> int:
+        """Call ``setter`` on each plotted line (and its legend handle) whose
+        legend label is in ``mapping``; return how many were changed."""
         if not self.axes:
             raise RuntimeError("You must call load() first")
         legend = self.axes.get_legend()
         if not legend:
             return 0
-        lines = self.axes.get_lines()
-        legend_texts = legend.get_texts()
-        legend_lines = legend.get_lines()
         changed = 0
-        for line, leg_line, text in zip(lines, legend_lines, legend_texts):
+        for line, leg_line, text in zip(self.axes.get_lines(),
+                                        legend.get_lines(), legend.get_texts()):
             label = text.get_text()
-            if label in label_color_map:
-                color = label_color_map[label]
-                try:
-                    line.set_color(color)
-                    leg_line.set_color(color)
-                    changed += 1
-                    self._modifications_made = True
-                except ValueError as e:
-                    logger.warning(f"Invalid color '{color}' for '{label}': {e}")
+            if label not in mapping:
+                continue
+            value = mapping[label]
+            if check and not check(value):
+                logger.warning(f"Invalid {what} '{value}' for '{label}'")
+                continue
+            try:
+                getattr(line, setter)(value)
+                getattr(leg_line, setter)(value)
+                changed += 1
+                self._modifications_made = True
+            except Exception as e:
+                logger.warning(f"Invalid {what} '{value}' for '{label}': {e}")
         return changed
+
+    def change_line_colors(self, label_color_map: Dict[str, str]) -> int:
+        return self._apply(label_color_map, "set_color", "color")
 
     def change_line_linestyle(self, style_map: Dict[str, str]) -> int:
-        if not self.axes:
-            raise RuntimeError("You must call load() first")
-        legend = self.axes.get_legend()
-        if not legend:
-            return 0
-        lines = self.axes.get_lines()
-        legend_texts = legend.get_texts()
-        legend_lines = legend.get_lines()
-        changed = 0
-        for line, leg_line, text in zip(lines, legend_lines, legend_texts):
-            label = text.get_text()
-            if label in style_map:
-                style = style_map[label]
-                try:
-                    line.set_linestyle(style)
-                    leg_line.set_linestyle(style)
-                    changed += 1
-                    self._modifications_made = True
-                except Exception as e:
-                    logger.warning(f"Invalid style '{style}' for '{label}': {e}")
-        return changed
+        return self._apply(style_map, "set_linestyle", "style")
 
     def change_line_linewidth(self, width_map: Dict[str, float]) -> int:
-        if not self.axes:
-            raise RuntimeError("You must call load() first")
-        legend = self.axes.get_legend()
-        if not legend:
-            return 0
-        lines = self.axes.get_lines()
-        legend_texts = legend.get_texts()
-        legend_lines = legend.get_lines()
-        changed = 0
-        for line, leg_line, text in zip(lines, legend_lines, legend_texts):
-            label = text.get_text()
-            if label in width_map:
-                width = width_map[label]
-                try:
-                    line.set_linewidth(width)
-                    leg_line.set_linewidth(width)
-                    changed += 1
-                    self._modifications_made = True
-                except Exception as e:
-                    logger.warning(f"Invalid width '{width}' for '{label}': {e}")
-        return changed
+        return self._apply(width_map, "set_linewidth", "width")
 
     def change_line_alpha(self, alpha_map: Dict[str, float]) -> int:
-        if not self.axes:
-            raise RuntimeError("You must call load() first")
-        legend = self.axes.get_legend()
-        if not legend:
-            return 0
-        lines = self.axes.get_lines()
-        legend_texts = legend.get_texts()
-        legend_lines = legend.get_lines()
-        changed = 0
-        for line, leg_line, text in zip(lines, legend_lines, legend_texts):
-            label = text.get_text()
-            if label in alpha_map:
-                alpha = alpha_map[label]
-                try:
-                    if not 0 <= alpha <= 1:
-                        logger.warning(f"Alpha must be between 0 and 1, received {alpha}")
-                        continue
-                    line.set_alpha(alpha)
-                    leg_line.set_alpha(alpha)
-                    changed += 1
-                    self._modifications_made = True
-                except Exception as e:
-                    logger.warning(f"Invalid alpha '{alpha}' for '{label}': {e}")
-        return changed
+        return self._apply(alpha_map, "set_alpha", "alpha (must be 0-1)",
+                           check=lambda a: 0 <= a <= 1)
 
     def change_line_visibility(self, visibility_map: Dict[str, bool]) -> int:
         if not self.axes:
@@ -385,20 +322,16 @@ class MatplotlibPickleEditor:
             legend.remove()
             self.axes._ea_labels = [None] * len(lines)
 
-    def set_xlim(self, xmin: Optional[float] = None, xmax: Optional[float] = None) -> None:
+    def set_xlim(self, xmin: float, xmax: float) -> None:
         if not self.axes:
             raise RuntimeError("You must call load() first")
-        cur = self.axes.get_xlim()
-        self.axes.set_xlim(xmin if xmin is not None else cur[0],
-                           xmax if xmax is not None else cur[1])
+        self.axes.set_xlim(xmin, xmax)
         self._modifications_made = True
 
-    def set_ylim(self, ymin: Optional[float] = None, ymax: Optional[float] = None) -> None:
+    def set_ylim(self, ymin: float, ymax: float) -> None:
         if not self.axes:
             raise RuntimeError("You must call load() first")
-        cur = self.axes.get_ylim()
-        self.axes.set_ylim(ymin if ymin is not None else cur[0],
-                           ymax if ymax is not None else cur[1])
+        self.axes.set_ylim(ymin, ymax)
         self._modifications_made = True
 
     def save(self, output_path: Optional[Path] = None,
@@ -421,11 +354,6 @@ class MatplotlibPickleEditor:
 
         self._modifications_made = False
         return output_path
-
-    def preview(self) -> None:
-        if not self.figure:
-            raise RuntimeError("You must call load() first")
-        plt.show()
 
     def has_modifications(self) -> bool:
         return self._modifications_made

@@ -17,7 +17,7 @@ def parse_argument() -> argparse.Namespace:
 def main() -> None:
     args = parse_argument()
 
-    from ensemble_analyzer._logger.create_log import create_logger
+    from ensemble_analyzer._logger.logger import create_logger
     from ensemble_analyzer.graph import main_spectra, plot_comparative_graphs
     from ensemble_analyzer.ensemble_io import load_workflow_data
     from ensemble_analyzer._managers.calculation_config import CalculationConfig

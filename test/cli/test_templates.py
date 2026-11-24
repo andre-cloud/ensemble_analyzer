@@ -12,9 +12,9 @@ from ensemble_analyzer.cli.protocol_wizard.screens import (
     TemplateScreen,
     _InputScreen,
 )
+from ensemble_analyzer.cli.protocol_wizard.steps import as_dict
 from ensemble_analyzer.cli.protocol_wizard.templates import (
     SYSTEM_TEMPLATES,
-    apply,
     load_user_templates,
     save_user_template,
     user_template_path,
@@ -132,7 +132,7 @@ class TestSaveUserTemplate:
         path = save_user_template("lab/new/opt", protocol, tmp_path)
         assert path == tmp_path / "lab" / "new" / "opt.json"
         templates, _ = load_user_templates(tmp_path)
-        assert apply(templates["lab/new/opt"]) == protocol
+        assert as_dict(templates["lab/new/opt"]) == protocol
 
     def test_overwrite(self, tmp_path):
         save_user_template("opt", {"0": {"n": 1}}, tmp_path)
@@ -140,16 +140,6 @@ class TestSaveUserTemplate:
             save_user_template("opt", {"0": {"n": 2}}, tmp_path)
         save_user_template("opt", {"0": {"n": 2}}, tmp_path, overwrite=True)
         assert json.loads((tmp_path / "opt.json").read_text()) == {"0": {"n": 2}}
-
-
-class TestApply:
-
-    def test_keys_and_deep_copy(self):
-        steps = [{"constraints": [[1, 2]]}, {"opt": True}]
-        protocol = apply(steps)
-        assert list(protocol) == ["0", "1"]
-        protocol["0"]["constraints"].append([3, 4])
-        assert steps[0]["constraints"] == [[1, 2]]
 
 
 class TestTemplateScreen:
@@ -175,8 +165,8 @@ class TestTemplateScreen:
 
         async def check(app, pilot):
             screen = app.screen
-            lv = screen.query_one("#template_list", ListView)
-            entries = screen._entries
+            lv = screen.query_one("#pick_list", ListView)
+            entries = [v for _, v in screen.choices]
             n_sys = len(SYSTEM_TEMPLATES)
             # header, system templates, header, user template, error note
             assert len(entries) == n_sys + 4
@@ -200,12 +190,12 @@ class TestTemplateScreen:
 
         async def check(app, pilot):
             screen = app.screen
-            lv = screen.query_one("#template_list", ListView)
+            lv = screen.query_one("#pick_list", ListView)
             labels = [str(item.query_one("Static").render()) for item in lv.children]
             user = labels[len(SYSTEM_TEMPLATES) + 1:]
             assert user[0].startswith("User Templates")
             assert user[1:] == ["  mine", "  lab/", "    a", "    b"]
-            entries = screen._entries[len(SYSTEM_TEMPLATES) + 2:]
+            entries = [v for _, v in screen.choices][len(SYSTEM_TEMPLATES) + 2:]
             assert entries == [[{"n": 0}], None, [{"n": 1}], [{"n": 2}]]
 
         self._run(check)
@@ -214,7 +204,7 @@ class TestTemplateScreen:
         monkeypatch.setenv("ENAN_TEMPLATES_DIR", str(tmp_path / "missing"))
 
         async def check(app, pilot):
-            entries = app.screen._entries
+            entries = [v for _, v in app.screen.choices]
             assert len(entries) == len(SYSTEM_TEMPLATES) + 3
             assert entries[-1] is None
 

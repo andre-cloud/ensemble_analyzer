@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Dict
 
 from .core import MatplotlibPickleEditor, PickleSecurityError
-from .tui import InteractiveTUI, INQUIRER_AVAILABLE
+from .tui import InteractiveTUI
 
 
 logging.basicConfig(
@@ -30,10 +30,19 @@ def parse_mapping_file(filepath: Path) -> Dict[str, str]:
     return mapping
 
 
+def _floats(pairs, what: str) -> Dict[str, float]:
+    out = {}
+    for label, value in pairs or []:
+        try:
+            out[label] = float(value)
+        except ValueError:
+            logger.error(f"Invalid {what} for '{label}': {value}")
+    return out
+
+
 def batch_mode(args: argparse.Namespace) -> int:
     try:
-        editor = MatplotlibPickleEditor(args.pickle_file,
-                                       strict_validation=not args.no_strict)
+        editor = MatplotlibPickleEditor(args.pickle_file)
         editor.load()
 
         if args.list:
@@ -44,85 +53,35 @@ def batch_mode(args: argparse.Namespace) -> int:
 
             print(f"\nLabels in {args.pickle_file}:")
             print("-" * 50)
+            colors = editor.get_line_colors()
             for idx, label in labels.items():
-                colors = editor.get_line_colors()
-                color = colors.get(label, "N/A")
-                print(f"  [{idx}] {label} (color: {color})")
+                print(f"  [{idx}] {label} (color: {colors.get(label, 'N/A')})")
             print()
             return 0
 
-        rename_map = {}
-        if args.rename:
-            for old, new in args.rename:
-                rename_map[old] = new
-
+        rename_map = dict(args.rename or [])
         if args.rename_file:
-            file_map = parse_mapping_file(args.rename_file)
-            rename_map.update(file_map)
-
-        if rename_map:
-            count = editor.rename_legend_labels(rename_map)
-            logger.info(f"Renamed {count} labels")
-
-        color_map = {}
-        if args.color:
-            for label, color in args.color:
-                color_map[label] = color
-
-        if color_map:
-            count = editor.change_line_colors(color_map)
-            logger.info(f"Changed {count} colors")
-
-        linestyle_map = {}
-        if args.linestyle:
-            for label, style in args.linestyle:
-                linestyle_map[label] = style
-
-        if linestyle_map:
-            count = editor.change_line_linestyle(linestyle_map)
-            logger.info(f"Changed {count} linestyles")
-
-        linewidth_map = {}
-        if args.linewidth:
-            for label, width in args.linewidth:
-                try:
-                    linewidth_map[label] = float(width)
-                except ValueError:
-                    logger.error(f"Invalid linewidth for '{label}': {width}")
-
-        if linewidth_map:
-            count = editor.change_line_linewidth(linewidth_map)
-            logger.info(f"Changed {count} line widths")
-
-        alpha_map = {}
-        if args.alpha:
-            for label, alpha in args.alpha:
-                try:
-                    alpha_map[label] = float(alpha)
-                except ValueError:
-                    logger.error(f"Invalid alpha for '{label}': {alpha}")
-
-        if alpha_map:
-            count = editor.change_line_alpha(alpha_map)
-            logger.info(f"Changed {count} alpha values")
-
+            rename_map.update(parse_mapping_file(args.rename_file))
 
         visibility_map = {}
-        if args.visibility:
-            for label, val in args.visibility:
-                v_lower = val.lower()
-                if v_lower in ('true', '1', 't', 'yes', 'on'):
-                    v_bool = True
-                elif v_lower in ('false', '0', 'f', 'no', 'off'):
-                    v_bool = False
-                else:
-                    logger.error(f"Invalid boolean value for '{label}': {val}")
-                    continue
-                visibility_map[label] = v_bool
+        for label, val in args.visibility or []:
+            v = val.lower()
+            if v in ('true', '1', 't', 'yes', 'on', 'false', '0', 'f', 'no', 'off'):
+                visibility_map[label] = v in ('true', '1', 't', 'yes', 'on')
+            else:
+                logger.error(f"Invalid boolean value for '{label}': {val}")
 
-        if visibility_map:
-            count = editor.change_line_visibility(visibility_map)
-            logger.info(f"Changed visibility for {count} lines")
+        edits = [
+            (rename_map, editor.rename_legend_labels, "labels renamed"),
+            (dict(args.color or []), editor.change_line_colors, "colors changed"),
+            (dict(args.linestyle or []), editor.change_line_linestyle, "linestyles changed"),
+            (_floats(args.linewidth, "linewidth"), editor.change_line_linewidth, "line widths changed"),
+            (_floats(args.alpha, "alpha"), editor.change_line_alpha, "alpha values changed"),
+            (visibility_map, editor.change_line_visibility, "visibilities changed"),
+        ]
+        for mapping, apply, what in edits:
+            if mapping:
+                logger.info(f"{apply(mapping)} {what}")
 
         if args.xlim:
             editor.set_xlim(args.xlim[0], args.xlim[1])
@@ -131,7 +90,7 @@ def batch_mode(args: argparse.Namespace) -> int:
             editor.set_ylim(args.ylim[0], args.ylim[1])
             logger.info(f"Set y-limits: {args.ylim[0]} – {args.ylim[1]}")
 
-        if rename_map or color_map or linestyle_map or linewidth_map or alpha_map or visibility_map or args.xlim or args.ylim:
+        if any(m for m, _, _ in edits) or args.xlim or args.ylim:
             output_path = editor.save(args.output, args.format)
             print(f"✓ Saved: {output_path}")
         else:
@@ -211,8 +170,6 @@ BATCH MODE (examples):
                             choices=['pickle', 'png', 'pdf', 'svg'],
                             help='Output format')
 
-    parser.add_argument('--no-strict', action='store_true',
-                       help='Disable strict validation')
     parser.add_argument('--verbose', '-v', action='store_true',
                        help='Verbose output')
 
@@ -224,16 +181,8 @@ BATCH MODE (examples):
     if args.batch:
         return batch_mode(args)
 
-    if not INQUIRER_AVAILABLE:
-        print("ERROR: Interactive mode requires InquirerPy",
-              file=sys.stderr)
-        print("Install: pip install InquirerPy rich", file=sys.stderr)
-        print("\nUse --batch for non-interactive mode", file=sys.stderr)
-        return 1
-
     try:
-        editor = MatplotlibPickleEditor(args.pickle_file,
-                                       strict_validation=not args.no_strict)
+        editor = MatplotlibPickleEditor(args.pickle_file)
         editor.load()
 
         tui = InteractiveTUI(editor)

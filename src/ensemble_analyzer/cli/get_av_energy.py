@@ -6,6 +6,9 @@ from pathlib import Path
 from typing import Tuple
 
 
+KEYS = ("E", "E_ZPVE", "H", "G")
+
+
 def get_thermo_data(conf, protocol_number, temp, mult, cut_off, alpha, pressure, linear, symno: int = 1, model: str = "grimme") -> Tuple[float, ...]:
     import numpy as np
     from ensemble_analyzer.rrho import free_gibbs_energy
@@ -81,9 +84,9 @@ def main() -> None:
     parser.add_argument('--linear', help='Define if molecules are linear',
                         action='store_true')
 
-    parser.add_argument("--sub", nargs=2, action='append', metavar=('P1', 'P2'),
+    parser.add_argument("--sub", nargs=2, type=int, action='append', metavar=('P1', 'P2'),
                         help="Subtraction: Avg(P1) - Avg(P2). Example: --sub 4 2")
-    parser.add_argument("--add", nargs=2, action='append', metavar=('P1', 'P2'),
+    parser.add_argument("--add", nargs=2, type=int, action='append', metavar=('P1', 'P2'),
                         help="Addition: Avg(P1) + Avg(P2). Example: --add 1 3")
 
     parser.add_argument("--validate", nargs=4, action='append',
@@ -94,7 +97,9 @@ def main() -> None:
     args = parser.parse_args()
 
     from collections import defaultdict
-    from ensemble_analyzer._logger.create_log import create_logger
+    import numpy as np
+    from ensemble_analyzer.constants import EH_TO_KCAL
+    from ensemble_analyzer._logger.logger import create_logger
     from ensemble_analyzer.ensemble_io import load_workflow_data
     from ensemble_analyzer.protocol.protocol import sort_protocols
     from ensemble_analyzer._title import title
@@ -145,7 +150,6 @@ def main() -> None:
         failed_validations = []
 
         for c in conformers:
-            import numpy as np
             if str(p_num) not in c.energies:
                 continue
             record = c.energies[str(p_num)]
@@ -195,32 +199,21 @@ def main() -> None:
             logger.warning(f"Protocol {p_num}: No active conformers found.")
             continue
 
-        import numpy as np
-        vec_E = np.array([d["E"] for d in data_rows])
-        vec_EZPVE = np.array([d["E_ZPVE"] for d in data_rows])
-        vec_H = np.array([d["H"] for d in data_rows])
-        vec_G = np.array([d["G"] for d in data_rows])
+        comment = getattr(proto, 'comment', '')
+        vecs = {k: np.array([d[k] for d in data_rows]) for k in KEYS}
+        pops = {k: calculate_population_vector(vecs[k], target_temp) for k in KEYS}
 
-        pop_E = calculate_population_vector(vec_E, target_temp)
-        pop_EZPVE = calculate_population_vector(vec_EZPVE, target_temp)
-        pop_H = calculate_population_vector(vec_H, target_temp)
-        pop_G = calculate_population_vector(vec_G, target_temp)
+        def fmt(x):
+            return f"{x:.10f}" if not np.isnan(x) else "  ---  "
 
-        table_rows = []
-        for i, d in enumerate(data_rows):
-            fmt = lambda x: f"{x:.10f}" if not np.isnan(x) else "  ---  "
-            fmt_pop = lambda x: f"{x:5.2f}" if not np.isnan(x) else " --- "
+        def fmt_pop(x):
+            return f"{x:5.2f}" if not np.isnan(x) else " --- "
 
-            comment = getattr(proto, 'comment', '')
-
-            row = [
-                f"{d['conf_obj'].number}",
-                fmt(vec_E[i]),      fmt_pop(pop_E[i]),
-                fmt(vec_EZPVE[i]),  fmt_pop(pop_EZPVE[i]),
-                fmt(vec_H[i]),      fmt_pop(pop_H[i]),
-                fmt(vec_G[i]),      fmt_pop(pop_G[i]),
-            ]
-            table_rows.append(row)
+        table_rows = [
+            [f"{d['conf_obj'].number}"]
+            + [cell for k in KEYS for cell in (fmt(vecs[k][i]), fmt_pop(pops[k][i]))]
+            for i, d in enumerate(data_rows)
+        ]
 
         headers = [
             "Conf",
@@ -237,31 +230,17 @@ def main() -> None:
             char="-",
         )
 
-        if failed_validations:
-            for conf_id in failed_validations:
-                logger.warning(f"Validation failed for conf {conf_id}, proto {p_num}")
+        for conf_id in failed_validations:
+            logger.warning(f"Validation failed for conf {conf_id}, proto {p_num}")
 
-        av_E = calculate_weighted_average(vec_E, pop_E)
-        av_EZPVE = calculate_weighted_average(vec_EZPVE, pop_EZPVE)
-        av_H = calculate_weighted_average(vec_H, pop_H)
-        av_G = calculate_weighted_average(vec_G, pop_G)
+        averages = {k: calculate_weighted_average(vecs[k], pops[k]) for k in KEYS}
+        protocol_averages[p_num] = averages
 
-        protocol_averages[p_num] = {
-            "E": av_E, "EZPVE": av_EZPVE, "H": av_H, "G": av_G,
-        }
-
-        fmt_av = lambda x: f"{x:.10f}" if not np.isnan(x) else "---"
-
-        final_summary_rows.append([
-            f"{p_num}",
-            f"{proto.functional}/{proto.basis}",
-            comment,
-            fmt_av(av_E),
-            fmt_av(av_EZPVE),
-            fmt_av(av_H),
-            fmt_av(av_G),
-            len(vec_E),
-        ])
+        final_summary_rows.append(
+            [f"{p_num}", f"{proto.functional}/{proto.basis}", comment]
+            + [f"{averages[k]:.10f}" if not np.isnan(averages[k]) else "---" for k in KEYS]
+            + [len(data_rows)]
+        )
 
     summary_headers = [
         "Prot.", "Level", "Comment",
@@ -278,39 +257,21 @@ def main() -> None:
     if args.sub or args.add:
         ops_rows = []
 
-        def perform_op(p1_str, p2_str, op_type):
-            import numpy as np
-            from ensemble_analyzer.constants import EH_TO_KCAL
-
-            try:
-                p1, p2 = int(p1_str), int(p2_str)
-            except ValueError:
-                return [f"{op_type} {p1_str} {p2_str}", "Error: Invalid ID", "", "", ""]
-
+        def perform_op(p1, p2, op_type):
             if p1 not in protocol_averages or p2 not in protocol_averages:
                 return [f"{op_type} {p1} {p2}", "Error: Missing Data", "", "", ""]
-
-            v1 = protocol_averages[p1]
-            v2 = protocol_averages[p2]
-
-            factor = EH_TO_KCAL
-
+            v1, v2 = protocol_averages[p1], protocol_averages[p2]
             row = [f"Prot {p1} {op_type} {p2}"]
-            for key in ["E", "EZPVE", "H", "G"]:
+            for key in KEYS:
                 if np.isnan(v1[key]) or np.isnan(v2[key]):
                     row.append("NaN")
                 else:
                     val = (v1[key] - v2[key]) if op_type == "-" else (v1[key] + v2[key])
-                    row.append(f"{val * factor:.2f}")
+                    row.append(f"{val * EH_TO_KCAL:.2f}")
             return row
 
-        if args.sub:
-            for p1, p2 in args.sub:
-                ops_rows.append(perform_op(p1, p2, "-"))
-
-        if args.add:
-            for p1, p2 in args.add:
-                ops_rows.append(perform_op(p1, p2, "+"))
+        ops_rows += [perform_op(p1, p2, "-") for p1, p2 in args.sub or []]
+        ops_rows += [perform_op(p1, p2, "+") for p1, p2 in args.add or []]
 
         if ops_rows:
             logger.table(

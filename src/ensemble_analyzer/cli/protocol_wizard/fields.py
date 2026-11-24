@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from typing import Any
 
+# Values equal to these defaults are dropped from the saved protocol.
 DEFAULTS: dict[str, Any] = {
-    "calculator": "orca",
     "mult": 1,
     "charge": 0,
     "freq_fact": 1.0,
@@ -27,12 +27,6 @@ DEFAULTS: dict[str, Any] = {
     "neg_freq_threshold": 20.0,
     "fmax": 0.01,
     "maxiter": 100000000,
-    "nroots": None,
-    "thrG": None,
-    "thrB": None,
-    "thrGMAX": None,
-    "cpu_per_job": None,  # unset = 1 job at a time on all -cpu cores
-    "add_input": "",
 }
 
 ML_CALCULATORS = {"tblite", "aimnet", "mace", "uma", "fairchem", "skala"}

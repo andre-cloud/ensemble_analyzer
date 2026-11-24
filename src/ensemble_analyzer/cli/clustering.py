@@ -1,7 +1,13 @@
 import argparse
+import logging
 import os
 from typing import Any
-from unittest.mock import Mock
+
+import matplotlib
+import numpy as np
+
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt  # noqa: E402  (after the backend is chosen)
 
 
 def parse_args() -> argparse.Namespace:
@@ -34,8 +40,6 @@ python clustering.py ensemble.xyz -o my_pca.png --title "Drug Conformers"
                         help='Output image filename (default: cluster.png)')
     parser.add_argument('--write', action='store_true',
                         help='Save cluster-reduced ensemble to clustered.xyz')
-    parser.add_argument('--dpi', type=int, default=300,
-                        help='Output image DPI (default: 300)')
     parser.add_argument('-cpu', '--cpu', type=int, default=1, dest='cpu',
                         help='Parallel workers for the automatic cluster search (default: 1)')
     parser.add_argument('-v', '--verbose', action='store_true',
@@ -45,37 +49,9 @@ python clustering.py ensemble.xyz -o my_pca.png --title "Drug Conformers"
     return args
 
 
-class CLILogger:
-    """Simple CLI logger for clustering output."""
-
-    def __init__(self, verbose: bool = False) -> None:
-        self.verbose = verbose
-
-    def info(self, msg: str) -> None:
-        print(f"ℹ️ {msg}")
-
-    def debug(self, msg: str) -> None:
-        if self.verbose:
-            print(f"🔍 {msg}")
-
-    def warning(self, msg: str) -> None:
-        print(f"⚠️  {msg}")
-
-    def error(self, msg: str) -> None:
-        print(f"❌ {msg}")
-
-
-def plot_component_analysis(result: Any, out_dir: str, base_name: str, logger: CLILogger) -> None:
-    import numpy as np
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
+def plot_component_analysis(result: Any, out_dir: str, base_name: str, logger: logging.Logger) -> None:
 
     logger.info("Generating component loading analysis...")
-
-    if getattr(result, 'components', None) is None:
-        logger.warning("No component loadings available, skipping loading plot")
-        return
 
     components = result.components[:2]
     n_features = components.shape[1]
@@ -107,17 +83,9 @@ def plot_component_analysis(result: Any, out_dir: str, base_name: str, logger: C
     logger.info(f"✓ Component loadings saved: {loading_file}")
 
 
-def plot_before_after_pca(result: Any, out_dir: str, base_name: str, logger: CLILogger) -> None:
-    import numpy as np
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
+def plot_before_after_pca(result: Any, out_dir: str, base_name: str, logger: logging.Logger) -> None:
 
     logger.info("Generating before/after PCA comparison...")
-
-    if getattr(result, 'original_features', None) is None:
-        logger.warning("Original features not available, skipping before/after plot")
-        return
 
     original = result.original_features
     transformed = result.scores
@@ -135,27 +103,26 @@ def plot_before_after_pca(result: Any, out_dir: str, base_name: str, logger: CLI
                     c=[colors[idx]],
                     alpha=0.6, s=50, edgecolors='black', linewidth=0.5)
 
-    if getattr(result, 'components', None) is not None:
-        mean_0 = np.mean(original[:, 0])
-        mean_1 = np.mean(original[:, 1])
+    mean_0 = np.mean(original[:, 0])
+    mean_1 = np.mean(original[:, 1])
 
-        v1_0, v1_1 = result.components[0, 0], result.components[0, 1]
-        v2_0, v2_1 = result.components[1, 0], result.components[1, 1]
+    v1_0, v1_1 = result.components[0, 0], result.components[0, 1]
+    v2_0, v2_1 = result.components[1, 0], result.components[1, 1]
 
-        scale1 = np.std(transformed[:, 0]) * 2
-        scale2 = np.std(transformed[:, 1]) * 2
+    scale1 = np.std(transformed[:, 0]) * 2
+    scale2 = np.std(transformed[:, 1]) * 2
 
-        ax1.plot([mean_0 - v1_0 * scale1, mean_0 + v1_0 * scale1],
-                 [mean_1 - v1_1 * scale1, mean_1 + v1_1 * scale1],
-                 color='red', linewidth=2, linestyle='--')
-        ax1.text(mean_0 + v1_0 * scale1, mean_1 + v1_1 * scale1,
-                 'PC1', color='red', fontsize=12, fontweight='bold')
+    ax1.plot([mean_0 - v1_0 * scale1, mean_0 + v1_0 * scale1],
+             [mean_1 - v1_1 * scale1, mean_1 + v1_1 * scale1],
+             color='red', linewidth=2, linestyle='--')
+    ax1.text(mean_0 + v1_0 * scale1, mean_1 + v1_1 * scale1,
+             'PC1', color='red', fontsize=12, fontweight='bold')
 
-        ax1.plot([mean_0 - v2_0 * scale2, mean_0 + v2_0 * scale2],
-                 [mean_1 - v2_1 * scale2, mean_1 + v2_1 * scale2],
-                 color='green', linewidth=2, linestyle='--')
-        ax1.text(mean_0 + v2_0 * scale2, mean_1 + v2_1 * scale2,
-                 'PC2', color='green', fontsize=12, fontweight='bold')
+    ax1.plot([mean_0 - v2_0 * scale2, mean_0 + v2_0 * scale2],
+             [mean_1 - v2_1 * scale2, mean_1 + v2_1 * scale2],
+             color='green', linewidth=2, linestyle='--')
+    ax1.text(mean_0 + v2_0 * scale2, mean_1 + v2_1 * scale2,
+             'PC2', color='green', fontsize=12, fontweight='bold')
 
     ax1.set_xlabel('Feature 1 (Original Space)', fontsize=11)
     ax1.set_ylabel('Feature 2 (Original Space)', fontsize=11)
@@ -182,13 +149,7 @@ def plot_before_after_pca(result: Any, out_dir: str, base_name: str, logger: CLI
     logger.info(f"✓ Before/After comparison saved: {comparison_file}")
 
 
-def plot_clustering_metrics(result: Any, out_dir: str, base_name: str, logger: CLILogger, explicit_k: int | None = None) -> None:
-    import numpy as np
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-    from ensemble_analyzer._clustering.cluster_manager import ClusteringManager
-
+def plot_clustering_metrics(result: Any, out_dir: str, base_name: str, logger: logging.Logger, explicit_k: int | None = None) -> None:
     logger.info("Generating clustering metric plots...")
 
     variance = result.explained_variance * 100
@@ -207,7 +168,7 @@ def plot_clustering_metrics(result: Any, out_dir: str, base_name: str, logger: C
     ax1.grid(True, alpha=0.3, axis='y', linestyle='--')
 
     ax2 = ax1.twinx()
-    line = ax2.plot(x_pos, cumulative_variance, color='#e74c3c', marker='o',
+    ax2.plot(x_pos, cumulative_variance, color='#e74c3c', marker='o',
                     linewidth=2.5, markersize=8, label='Cumulative Variance')
 
     ax2.set_ylabel('Cumulative Variance (%)', fontsize=12, fontweight='bold', color='#e74c3c')
@@ -234,12 +195,9 @@ def plot_clustering_metrics(result: Any, out_dir: str, base_name: str, logger: C
     plt.close()
     logger.info(f"✓ Scree plot saved: {scree_file}")
 
-    if explicit_k is None and getattr(result, 'k_range', None):
+    if explicit_k is None:
         # reuse the search already run by perform_pca
         k_range, scores = result.k_range, result.silhouette_scores
-    elif explicit_k is None:
-        dummy_mgr = ClusteringManager(logger=logger)
-        _, k_range, scores = dummy_mgr.find_optimal_clusters(result.scores)
     else:
         k_range, scores = range(explicit_k, explicit_k + 1), []
 
@@ -265,61 +223,17 @@ def plot_clustering_metrics(result: Any, out_dir: str, base_name: str, logger: C
         logger.warning("Not enough data points to generate Silhouette plot")
 
 
-def plot_3d_original_space(result: Any, out_dir: str, base_name: str, logger: CLILogger) -> None:
-    import numpy as np
-    import matplotlib
-    matplotlib.use('Agg')
-    import matplotlib.pyplot as plt
-
-    logger.info("Generating 3D original space plot...")
-
-    if getattr(result, 'original_features', None) is None or result.original_features.shape[1] < 3:
-        logger.warning("Not enough original features available for 3D plot, skipping")
-        return
-
-    original = result.original_features
-    labels = result.clusters
-
-    fig, ax = plt.subplots(figsize=(5, 6))
-
-    unique_labels = np.unique(labels)
-    colors = plt.cm.tab10(np.linspace(0, 1, len(unique_labels)))
-
-    for idx, label in enumerate(unique_labels):
-        mask = labels == label
-        ax.scatter(
-            original[mask, 0],
-            original[mask, 1],
-            c=[colors[idx]],
-            alpha=0.7,
-            s=40,
-            edgecolors='black',
-            linewidth=0.5,
-        )
-
-    ax.set_xlabel('Feature 1', fontsize=10)
-    ax.set_ylabel('Feature 2', fontsize=10)
-    ax.set_title('Original Features (Pre-PCA)', fontsize=12, fontweight='bold')
-    ax.grid()
-
-    plt.tight_layout()
-    plot_file = os.path.join(out_dir, f"{base_name}_3d_original.png")
-    plt.savefig(plot_file, dpi=300, bbox_inches='tight')
-    plt.close()
-
-    logger.info(f"✓ 3D Original Space plot saved: {plot_file}")
-
-
 def main() -> None:
     args = parse_args()
 
     from ensemble_analyzer.ensemble_io import read_ensemble, save_snapshot
-    from ensemble_analyzer._clustering.cluster_config import ClusteringConfig
-    from ensemble_analyzer._clustering.cluster_manager import ClusteringManager
-    logger = CLILogger(verbose=args.verbose)
+    from ensemble_analyzer._clustering.cluster_manager import ClusteringConfig, ClusteringManager
+    logging.basicConfig(level=logging.DEBUG if args.verbose else logging.INFO,
+                        format="%(message)s")
+    logger = logging.getLogger("enan_clustering")
 
     print(f"\n{'=' * 60}")
-    print(f"PCA CLUSTERING ANALYSIS")
+    print("PCA CLUSTERING ANALYSIS")
     print(f"{'=' * 60}\n")
 
     logger.info(f"Loading ensemble from {args.file}...")
@@ -332,7 +246,6 @@ def main() -> None:
         exit(1)
 
     config = ClusteringConfig(
-        n_clusters=args.ncluster,
         include_H=args.include_H,
         set_cluster_attribute=True,
         n_jobs=max(1, args.cpu),
@@ -355,10 +268,8 @@ def main() -> None:
         plot_component_analysis(result, out_dir, base_name, logger)
         plot_before_after_pca(result, out_dir, base_name, logger)
 
-        import numpy as np
-
         print(f"\n{'=' * 60}")
-        print(f"RESULTS")
+        print("RESULTS")
         print(f"{'=' * 60}")
         print(f"✓ Clusters identified: {result.n_clusters}")
         print(f"✓ Variance explained (PC1): {result.explained_variance[0] * 100:.1f}%")
@@ -366,20 +277,18 @@ def main() -> None:
         print(f"✓ Total variance (PC1+PC2): {result.explained_variance[:2].sum() * 100:.1f}%")
         print(f"✓ Output saved: {args.output}")
 
-        if getattr(result, 'components', None) is not None:
-            print(f"\n{'=' * 60}")
-            print(f"COMPONENT ANALYSIS")
-            print(f"{'=' * 60}")
-            for i in range(min(3, len(result.components))):
-                pc = result.components[i]
-                top_features = np.argsort(np.abs(pc))[-5:][::-1]
-                print(f"PC{i + 1} top features: {list(top_features)} "
-                      f"(variance: {result.explained_variance[i] * 100:.1f}%)")
-            print(f"{'=' * 60}")
+        print(f"\n{'=' * 60}")
+        print("COMPONENT ANALYSIS")
+        print(f"{'=' * 60}")
+        for i in range(min(3, len(result.components))):
+            pc = result.components[i]
+            top_features = np.argsort(np.abs(pc))[-5:][::-1]
+            print(f"PC{i + 1} top features: {list(top_features)} "
+                  f"(variance: {result.explained_variance[i] * 100:.1f}%)")
+        print(f"{'=' * 60}")
 
         if args.write:
             logger.info("\nReducing ensemble by clusters...")
-            print([i.cluster for i in ensemble])
             reduced = manager.reduce_by_clusters(ensemble, True)
             save_snapshot("clustered.xyz", reduced, logger)
             active = len([c for c in reduced if c.active])

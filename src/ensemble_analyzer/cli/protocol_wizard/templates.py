@@ -13,7 +13,6 @@ list of steps.
 
 from __future__ import annotations
 
-import copy
 import json
 import os
 from pathlib import Path
@@ -184,6 +183,3 @@ def save_user_template(
         json.dump(protocol, f, indent=4, ensure_ascii=False)
     return path
 
-
-def apply(steps: list[dict[str, Any]]) -> dict[str, dict[str, Any]]:
-    return {str(i): copy.deepcopy(step) for i, step in enumerate(steps)}
