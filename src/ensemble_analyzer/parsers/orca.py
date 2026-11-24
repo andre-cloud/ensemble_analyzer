@@ -1,5 +1,5 @@
 
-from ensemble_analyzer.parsers.base import BaseParser, register_parser
+from ensemble_analyzer.parsers.base import BaseParser
 from ensemble_analyzer.constants import FACTOR_EV_CM_1
 from ensemble_analyzer.parsers.vibrations import orca_get_freq, orca_get_normal_modes, to_displacements
 
@@ -8,15 +8,13 @@ import numpy as np
 from typing import Tuple
 
 
-@register_parser('orca')
 class OrcaParser(BaseParser):
     """
     Parser implementation for ORCA output files.
     Supports ORCA 5 and ORCA 6 syntax variations (older versions use the ORCA 5 layout).
     """
 
-    REGEX = {
-        '6':{
+    REGEX_6 = {
         "B": r"Rotational constants in cm-1:\s*(-?\d+.\d*)\s*(-?\d+.\d*)\s*(-?\d+.\d*)",
         'units_B': 'cm-1',
         "m": r"Total Dipole Moment\s*:\s*([+-]?\d+(?:\.\d+)?)\s+([+-]?\d+(?:\.\d+)?)\s+([+-]?\d+(?:\.\d+)?)",
@@ -34,8 +32,6 @@ class OrcaParser(BaseParser):
         "idx_en_vcd": 1,  # index for energy in the VCD table in cm**-1
         "idx_imp_vcd": 2,  # index for oscillator strength in the VCD table
         "s_freq": "VIBRATIONAL FREQUENCIES",
-        "e_freq": "------------",
-        "idx_freq": 1,  # index for frequency in frequency table
         # frequency / normal-mode blocks (same keys as frogchem regex_ORCA)
         "frequency": r'VIBRATIONAL FREQUENCIES([\S\s]*?)\n\n\n',
         "normal_modes": r'NORMAL MODES([\S\s]*?)\n\n\n',
@@ -43,34 +39,11 @@ class OrcaParser(BaseParser):
         "geom_start": """CARTESIAN COORDINATES (ANGSTROEM)
 ---------------------------------""",
         "finish": "ORCA TERMINATED NORMALLY",
-        "ext": "out",
-        },
-
-        "5": {
-        "B": r"Rotational constants in cm-1:\s*(-?\d+.\d*)\s*(-?\d+.\d*)\s*(-?\d+.\d*)",
-        'units_B': 'cm-1',
-        "m": r"Total Dipole Moment\s*:\s*([+-]?\d+(?:\.\d+)?)\s+([+-]?\d+(?:\.\d+)?)\s+([+-]?\d+(?:\.\d+)?)",
-        "E": r"FINAL SINGLE POINT ENERGY\s*(-?\d*.\d*)",
-        "s_IR": """Mode   freq       eps      Int      T**2         TX        TY        TZ
-       cm**-1   L/(mol*cm) km/mol    a.u.
-----------------------------------------------------------------------------
-""",
-        "s_VCD": None,
-        "break": "\n\n",
-        "idx_en_ir": 1,  # index for energy in the IR table in cm**-1
-        "idx_imp_ir": 3,  # index for oscillator strength in the IR table
-        "idx_imp_vcd": 2,  # index for oscillator strength in the VCD table
-        "s_freq": "VIBRATIONAL FREQUENCIES",
-        "e_freq": "------------",
-        "idx_freq": 1,  # index for frequency in frequency table
-        # frequency / normal-mode blocks (same keys as frogchem regex_ORCA)
-        "frequency": r'VIBRATIONAL FREQUENCIES([\S\s]*?)\n\n\n',
-        "normal_modes": r'NORMAL MODES([\S\s]*?)\n\n\n',
-        "opt_done": "THE OPTIMIZATION HAS CONVERGED",
-        "geom_start": """CARTESIAN COORDINATES (ANGSTROEM)
----------------------------------""",
-        "finish": "ORCA TERMINATED NORMALLY",
-        "ext": "out",}
+    }
+    # ORCA 5 (and older): different energy line, no VCD table
+    REGEX = {
+        "6": REGEX_6,
+        "5": {**REGEX_6, "E": r"FINAL SINGLE POINT ENERGY\s*(-?\d*.\d*)", "s_VCD": None},
     }
 
     # --- TD-DFT spectra -------------------------------------------------

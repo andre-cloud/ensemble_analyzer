@@ -1,8 +1,9 @@
 import os
 import shutil
-from pathlib import Path
 import re
 from ase.calculators.orca import ORCA, OrcaProfile
+
+from enan_calculators._input import append_to_input
 
 _POST_COORDS_KEYWORDS = frozenset({'%frag', '%eprnmr', '%nmr', '%rel', '%epr'})
 
@@ -85,6 +86,11 @@ def orca_pal_block(cpu: int, raw_input: str = "", version: int | None = None) ->
     return f"%pal nprocs {cpu} end\n"
 
 
+def append_post_block(calculator, text: str) -> None:
+    """Append ``text`` to the ORCA input after the coordinates (chains earlier patches)."""
+    append_to_input(calculator, text, "write_inputfiles", lambda: calculator.template.inputname)
+
+
 def create_orca_calc(charge, mult, method, basis, solvent=None, cpu=1, add_input="", directory=None):
     ORCA_COMMAND = os.getenv("ORCACOMMAND") or shutil.which("orca")
     orca_profile = OrcaProfile(command=ORCA_COMMAND)
@@ -114,14 +120,6 @@ def create_orca_calc(charge, mult, method, basis, solvent=None, cpu=1, add_input
     )
 
     if post:
-        original = calculator.write_inputfiles
-
-        def patched_write_input(*args, **kwargs):
-            original(*args, **kwargs)
-            inp = Path(calculator.directory) / calculator.template.inputname
-            with open(inp, "a") as f:
-                f.write("\n" + post + "\n")
-
-        calculator.write_inputfiles = patched_write_input
+        append_post_block(calculator, post)
 
     return calculator

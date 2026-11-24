@@ -1,54 +1,15 @@
-from ase.calculators.orca import ORCA, OrcaProfile
-from ensemble_analyzer.calculators.base import BaseCalc, register_calculator
-from enan_calculators._orca import orca_pal_block, _split_post_blocks
-from ensemble_analyzer.protocol.dispersion import dispersion_keyword
-import shutil
-import os
-
 from typing import Tuple, Any
 
-
-VERSION = None
-
-try:
-    ORCA_COMMAND = os.getenv("ORCACOMMAND") or shutil.which("orca")
-    orca_profile = OrcaProfile(command=ORCA_COMMAND)
-    VERSION = int(os.getenv("ORCAVERSION")[0])
-except Exception:
-    orca_profile = None
+from ase.calculators.orca import ORCA
+from enan_calculators import orca_major_version
+from ensemble_analyzer.calculators.base import BaseCalc, register_calculator
+from ensemble_analyzer.protocol.dispersion import dispersion_keyword
 
 
 @register_calculator("orca")
 class OrcaCalc(BaseCalc):
 
-    VERSION = VERSION if VERSION else 0
-
-    def common_str(self) -> Tuple[str, str, str]:
-        if self.protocol.solvent:
-            if "xtb" in self.protocol.functional.lower():
-                solv = f"ALPB({self.protocol.solvent.solvent})"
-            elif self.protocol.solvent.solvent.strip():
-                solv = f" {self.protocol.solvent}"
-            else:
-                solv = f" CPCM"
-        else:
-            solv = ""
-
-        disp = dispersion_keyword(self.protocol.dispersion, "orca")
-        si = f"{self.protocol.functional} {self.protocol.basis} {solv} nopop"
-        if disp:
-            si += f" {disp}"
-
-        raw_input = self.protocol.add_input.replace("CONF", str(self.conf.folder))
-        pre, post = _split_post_blocks(raw_input)
-
-        ob = (
-            orca_pal_block(self.cpu, raw_input, self.VERSION or None)
-            + pre
-            + ("\n%maxcore 5000\n" if "maxcore" not in raw_input else "")
-        )
-
-        return si, ob, post
+    VERSION = orca_major_version() or 0
 
     def _build_calculator(self) -> Tuple[Any, str]:
         from enan_calculators import get_ase_calculator

@@ -41,7 +41,7 @@ class TestSkalaCalc:
         return mock_conformer, mock_protocol
 
     def _calc(self, proto, conf):
-        from ensemble_analyzer.calculators.skala_calc import SkalaCalc
+        from ensemble_analyzer.calculators.skala import SkalaCalc
         return SkalaCalc(proto, 4, conf)
 
     def test_import_error_when_skala_missing(self, setup):

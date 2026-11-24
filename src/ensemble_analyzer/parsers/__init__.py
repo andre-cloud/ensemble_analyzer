@@ -1,12 +1,12 @@
-import importlib
-import pkgutil
+from .base import BaseParser
+from .gaussian import GaussianParser
+from .nwchem import NWChemParser
+from .orca import OrcaParser
 
-# Automatically import all modules in the directory
-for module_info in pkgutil.iter_modules(__path__):
-    if module_info.name != "base":  # avoid reloading base.py
-        importlib.import_module(f"{__name__}.{module_info.name}")
+PARSER_REGISTRY: dict[str, type[BaseParser]] = {
+    "orca": OrcaParser,
+    "gaussian": GaussianParser,
+    "nwchem": NWChemParser,
+}
 
-# Expose the global registry
-from .base import PARSER_REGISTRY, BaseParser, register_parser
-
-__all__ = ["PARSER_REGISTRY", "BaseParser", "register_parser"]
+__all__ = ["PARSER_REGISTRY", "BaseParser"]

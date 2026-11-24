@@ -7,28 +7,6 @@ from typing import Tuple, Any
 @register_calculator("gaussian")
 class GaussianCalc(BaseCalc):
 
-    def common_str(self)-> str:
-        solv = ""
-        if self.protocol.solvent:
-            if self.protocol.solvent.smd:
-                solv = f" SCRF=(SMD,Solvent={self.protocol.solvent.solvent})"
-            else:
-                solv = f" SCRF=(CPCM,Solvent={self.protocol.solvent.solvent})"
-
-        route = f"# {self.protocol.functional}/{self.protocol.basis}{solv}"
-
-        disp = dispersion_keyword(self.protocol.dispersion, "gaussian")
-        if disp:
-            route += f" EmpiricalDispersion={disp}"
-
-        if self.protocol.add_input.strip():
-            route += " " + self.protocol.add_input.strip()
-
-        if self.protocol.read_orbitals:
-            route += " guess=read"
-
-        return route
-
     def _build_calculator(self) -> Tuple[Any, str]:
         from enan_calculators import get_ase_calculator
 

@@ -41,7 +41,6 @@ def conf(mock_conformer):
 
 def _orca_tddft_block(protocol, conformer, method="single_point") -> str:
     with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
-         patch("ensemble_analyzer.calculators.orca.orca_profile"), \
          patch("ensemble_analyzer.calculators.orca.OrcaCalc.VERSION", 6):
         ase_calc, _ = getattr(OrcaCalc(protocol, 4, conformer), method)()
     blocks = ase_calc.parameters["orcablocks"]

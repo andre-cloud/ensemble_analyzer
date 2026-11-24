@@ -1,35 +1,11 @@
 from abc import ABC, abstractmethod
-from typing import Callable, Dict, List, Tuple
+from typing import Dict, List, Tuple
 from ase import Atoms
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.constants import ROT_CONST_FACTOR, CONVERT_B
 
 import re
 import numpy as np
-
-def register_parser(name: str) -> Callable:
-    """Decorator to register each parser in the global registry.
-
-    Args:
-        name: Parser identifier (e.g. 'gaussian', 'orca').
-
-    Returns:
-        Callable: Decorator that registers the class in PARSER_REGISTRY.
-    """
-
-    def decorator(cls: type) -> type:
-        """Register a parser class.
-
-        Args:
-            cls: Parser class to register.
-
-        Returns:
-            type: The input class unchanged.
-        """
-        PARSER_REGISTRY[name.lower()] = cls
-        return cls
-
-    return decorator
 
 class BaseParser(ABC):
     REGEX: Dict = {}
@@ -166,6 +142,3 @@ class BaseParser(ABC):
             where=moments > 1e-6,
         )  # [cm⁻¹]
         return B_vec
-
-
-PARSER_REGISTRY : Dict[str, BaseParser]= {}

@@ -1,88 +1,31 @@
 from __future__ import annotations
 
-from abc import ABC, abstractmethod
-
 from typing import Callable, Tuple, Any, Optional
 import importlib
-import numpy as np
 import os
-import pkgutil
 
 
-class LazyCalculatorRegistry:
-    """Dict-like registry that imports calculator modules on demand.
+class _Registry(dict):
+    """Calculator name -> class, importing ``calculators/<name>.py`` on first use.
 
-    Convention: calculator name ``"foo"`` → module ``calculators/foo.py``.
-    The module's ``@register_calculator`` decorator populates the registry at
-    import time; importing is deferred until the calculator is actually needed.
+    Each module fills the registry through its ``@register_calculator``.
     """
 
-    def __init__(self) -> None:
-        self._loaded: dict[str, type] = {}
-        self._all_names: set[str] | None = None
+    def __missing__(self, name: str) -> type:
+        if name in CALCULATORS:
+            importlib.import_module(f"{__package__}.{name}")
+        if not dict.__contains__(self, name):
+            raise KeyError(f"Calculator {name!r} not found or not registered")
+        return dict.get(self, name)
 
-    # -- discovery ---------------------------------------------------------------
-
-    def _discover_all(self) -> None:
-        if self._all_names is not None:
-            return
-        pkg = importlib.import_module("ensemble_analyzer.calculators")
-        self._all_names = {
-            m.name
-            for m in pkgutil.iter_modules(pkg.__path__)
-            if m.name not in ("base", "_ml_base", "__init__")
-        }
-
-    def _load(self, name: str) -> None:
-        name = name.lower()
-        if name not in self._loaded:
-            try:
-                importlib.import_module(f"ensemble_analyzer.calculators.{name}")
-            except ImportError: 
-                importlib.import_module(f"ensemble_analyzer.calculators.{name}_calc")
-
-
-    # -- Mapping interface -------------------------------------------------------
+    def __contains__(self, name: object) -> bool:
+        return isinstance(name, str) and name.lower() in CALCULATORS
 
     def __getitem__(self, name: str) -> type:
-        name = name.lower()
-        self._load(name)
-        if name not in self._loaded:
-            raise KeyError(
-                f"Calculator {name!r} not found or not registered"
-            )
-        return self._loaded[name]
-
-    def __setitem__(self, name: str, cls: type) -> None:
-        self._loaded[name.lower()] = cls
-
-    def __contains__(self, name: str) -> bool:
-        name = name.lower()
-        if name in self._loaded:
-            return True
-        try:
-            self._load(name)
-            return name in self._loaded
-        except ImportError:
-            return False
-
-    def __iter__(self):
-        self._discover_all()
-        return iter(self._all_names)
-
-    def __len__(self):
-        self._discover_all()
-        return len(self._all_names)
+        return super().__getitem__(name.lower())
 
     def keys(self):
-        self._discover_all()
-        return iter(self._all_names)
-
-    def get(self, name: str, default: Any = None) -> Any:
-        try:
-            return self[name]
-        except KeyError:
-            return default
+        return iter(CALCULATORS)
 
 
 def register_calculator(name: str) -> Callable:
@@ -94,9 +37,10 @@ def register_calculator(name: str) -> Callable:
 
 
 ML_CALCULATORS: set[str] = {"tblite", "aimnet", "uma", "fairchem", "mace", "skala"}
+CALCULATORS: tuple[str, ...] = ("orca", "gaussian", "nwchem", *sorted(ML_CALCULATORS))
 
 
-class BaseCalc(ABC):
+class BaseCalc:
     def __init__(self, protocol, cpu: int, conf=None, temperature=298.15,
                  linear=False, cut_off=100, alpha=4, P=101.325):
         self.protocol = protocol
@@ -108,10 +52,6 @@ class BaseCalc(ABC):
         self.cut_off = cut_off
         self.alpha = alpha
         self.P = P
-
-    @abstractmethod
-    def common_str(self) -> dict:
-        pass
 
     def _find_hessian_source_protocol(self) -> Optional[int]:
         if not self.protocol.ts:
@@ -166,4 +106,4 @@ class BaseCalc(ABC):
         return os.path.abspath(os.path.join(*parts)).replace('\\', '/')
 
 
-CALCULATOR_REGISTRY = LazyCalculatorRegistry()
+CALCULATOR_REGISTRY = _Registry()

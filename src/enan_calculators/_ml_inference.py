@@ -42,7 +42,7 @@ def _warn_if_charge_spin_ignored(calc_name, task_name, charge, mult):
         )
 
 
-def create_ml_calc(calc_name, charge, mult, method, task_name, merge_mole=False, solvent=None):
+def create_ml_calc(calc_name, charge, mult, method, task_name):
     if FAIRChemCalculator is None:
         raise ImportError("fairchem-core missing. Install via: pip install \"ensemble-analyzer[fairchem]\"")
 
@@ -60,24 +60,22 @@ def create_ml_calc(calc_name, charge, mult, method, task_name, merge_mole=False,
 
     # "uma" and "fairchem" are the same fairchem-core (v2) backend: look in
     # both model folders so weights work whichever engine name is used.
-    search_dirs = [get_models_dir(name, create=False) for name in (calc_name, *_FAIRCHEM_DIRS)]
+    search_dirs = [get_models_dir(name) for name in (calc_name, *_FAIRCHEM_DIRS)]
     candidates = [d / method for d in dict.fromkeys(search_dirs)] + [Path(method)]
     model_path = next((c for c in candidates if c.exists()), None)
     if model_path is None:
         raise FileNotFoundError(
             f"Model file not found: {method}. "
-            f"Please place the downloaded weights in {get_models_dir('fairchem', create=False)}."
+            f"Please place the downloaded weights in {get_models_dir('fairchem')}."
         )
 
-    # Merged MoLE weights are valid for one composition only, so a merged
-    # predictor is never shared between different systems.
-    cache_key = (str(model_path.resolve()), device, merge_mole)
+    cache_key = (str(model_path.resolve()), device)
 
     if cache_key not in _PREDICTOR_CACHE:
         inference_settings = InferenceSettings(
             tf32=True,
             activation_checkpointing=False,
-            merge_mole=merge_mole,
+            merge_mole=False,
             compile=True,
             max_atoms=256,
         )
@@ -90,9 +88,6 @@ def create_ml_calc(calc_name, charge, mult, method, task_name, merge_mole=False,
         )
 
     predictor = _PREDICTOR_CACHE[cache_key]
-    if merge_mole:
-        # merging is bound to the first system seen: never reuse it
-        _PREDICTOR_CACHE.pop(cache_key)
 
     from ase.calculators.calculator import all_changes
 

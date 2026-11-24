@@ -29,7 +29,6 @@ def _orca(protocol, conf):
 
 def _orca_build(engine, **kw):
     with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
-         patch("ensemble_analyzer.calculators.orca.orca_profile"), \
          patch("ensemble_analyzer.calculators.orca.OrcaCalc.VERSION", 6):
         calc = engine.build(Path("run"), **kw)
     return calc.parameters["orcasimpleinput"], calc.parameters["orcablocks"], calc

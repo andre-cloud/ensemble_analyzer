@@ -21,42 +21,47 @@ class TestNWChemCalc:
         mock_protocol.ts = False
         return mock_conformer, mock_protocol
 
-    def test_common_str_basic(self, setup_calc):
+    @patch("ensemble_analyzer.calculators.nwchem.NWCHEM_COMMAND", "nwchem")
+    def test_build_basic(self, setup_calc):
         conf, proto = setup_calc
         calc = NWChemCalc(proto, 4, conf)
-        kw = calc.common_str()
+        kw = calc.single_point()[0].parameters
         assert kw["theory"] == "dft"
         assert kw["xc"] == "B3LYP"
         assert kw["basis"] == "6-31G*"
         assert "charge" not in kw
         assert kw["dft"]["mult"] == 1
 
-    def test_common_str_charge_nonzero(self, setup_calc):
+    @patch("ensemble_analyzer.calculators.nwchem.NWCHEM_COMMAND", "nwchem")
+    def test_build_charge_nonzero(self, setup_calc):
         conf, proto = setup_calc
         proto.charge = 2
         calc = NWChemCalc(proto, 4, conf)
-        kw = calc.common_str()
+        kw = calc.single_point()[0].parameters
         assert kw["charge"] == 2
         assert kw["dft"]["mult"] == 1
 
-    def test_common_str_with_solvent(self, setup_calc):
+    @patch("ensemble_analyzer.calculators.nwchem.NWCHEM_COMMAND", "nwchem")
+    def test_build_with_solvent(self, setup_calc):
         conf, proto = setup_calc
         calc = NWChemCalc(proto, 4, conf)
-        kw = calc.common_str()
+        kw = calc.single_point()[0].parameters
         assert "cosmo" in kw
         assert kw["cosmo"]["solvent"] == "water"
 
-    def test_common_str_no_solvent(self, setup_calc):
+    @patch("ensemble_analyzer.calculators.nwchem.NWCHEM_COMMAND", "nwchem")
+    def test_build_no_solvent(self, setup_calc):
         conf, proto = setup_calc
         proto.solvent = None
         calc = NWChemCalc(proto, 4, conf)
-        kw = calc.common_str()
+        kw = calc.single_point()[0].parameters
         assert "cosmo" not in kw
 
+    @patch("ensemble_analyzer.calculators.nwchem.NWCHEM_COMMAND", "nwchem")
     def test_common_memory(self, setup_calc):
         conf, proto = setup_calc
         calc = NWChemCalc(proto, 8, conf)
-        kw = calc.common_str()
+        kw = calc.single_point()[0].parameters
         assert kw["memory"] == "40000 mb"
 
     @patch("ensemble_analyzer.calculators.nwchem.NWCHEM_COMMAND", "nwchem")

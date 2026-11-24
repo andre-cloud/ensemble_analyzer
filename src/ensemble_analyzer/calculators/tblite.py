@@ -5,14 +5,5 @@ from .base import register_calculator
 @register_calculator("tblite")
 class TBLiteCalc(BaseMlCalc):
     label = "tblite"
-
-    def _get_ml_calculator(self, **kwargs):
-        from enan_calculators import get_ase_calculator
-        method = kwargs.pop("method", self.protocol.functional or "GFN2-xTB")
-        return get_ase_calculator(
-            "tblite",
-            charge=self.protocol.charge,
-            mult=self.protocol.mult,
-            method=method,
-            solvent=self.protocol.solvent.solvent if self.protocol.solvent else None,
-        )
+    default_method = "GFN2-xTB"
+    uses_task = False

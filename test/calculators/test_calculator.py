@@ -31,14 +31,6 @@ class TestCalculators:
         
         return mock_conformer, mock_protocol
 
-    def test_gaussian_common_string(self, setup_calc):
-        conf, proto = setup_calc
-        # Signature: (protocol, cpu, conf)
-        calc = GaussianCalc(proto, 4, conf)
-        
-        route = calc.common_str()
-        assert "# B3LYP/6-31G* SCRF=(CPCM,Solvent=Water)" in route
-
     def test_gaussian_opt_constraints(self, setup_calc):
         conf, proto = setup_calc
         proto.constraints = [[1], [2]] # Atom indices
@@ -50,33 +42,10 @@ class TestCalculators:
         assert "X 1 F" in ase_calc.parameters["addsec"]
         assert "X 2 F" in ase_calc.parameters["addsec"]
 
-    def test_gaussian_smd_solvent(self, setup_calc):
-        conf, proto = setup_calc
-        proto.solvent.smd = True
-        
-        calc = GaussianCalc(proto, 4, conf)
-        route = calc.common_str()
-        assert "SCRF=(SMD,Solvent=Water)" in route
-
-    def test_orca_common_string(self, setup_calc):
-        conf, proto = setup_calc
-        # Mock ORCA profile availability
-        with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
-             patch("ensemble_analyzer.calculators.orca.orca_profile"):
-            calc = OrcaCalc(proto, 4, conf)
-            si, ob, post = calc.common_str()
-            
-            assert "B3LYP 6-31G*" in si
-            assert "CPCM" in si 
-            assert "nopop" in si
-            assert "%pal nprocs 4 " in ob
-            assert post == ""
-
     def test_orca_freq_block(self, setup_calc):
         conf, proto = setup_calc
         proto.freq = True
         with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
-             patch("ensemble_analyzer.calculators.orca.orca_profile"), \
              patch("ensemble_analyzer.calculators.orca.OrcaCalc.VERSION", 6):
             calc = OrcaCalc(proto, 4, conf)
             ase_calc, label = calc.frequency()
@@ -87,8 +56,7 @@ class TestCalculators:
     def test_orca_constraints(self, setup_calc):
         conf, proto = setup_calc
         proto.constraints = [[1]]
-        with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
-             patch("ensemble_analyzer.calculators.orca.orca_profile"):
+        with patch("enan_calculators._orca.shutil.which", return_value="orca"):
             calc = OrcaCalc(proto, 4, conf)
             ase_calc, label = calc.optimisation()
         
@@ -98,8 +66,7 @@ class TestCalculators:
         conf, proto = setup_calc
         proto.constraints = [[1, 2], [1, 2, 3], [1, 2, 3, 4], [1]]
 
-        with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
-             patch("ensemble_analyzer.calculators.orca.orca_profile"):
+        with patch("enan_calculators._orca.shutil.which", return_value="orca"):
             calc = OrcaCalc(proto, 4, conf)
             ase_calc, label = calc.optimisation()
             assert "%geom Constraints {B 1 2 C} {A 1 2 3 C} {D 1 2 3 4 C} {C 1 C} end end" in ase_calc.parameters["orcasimpleinput"]

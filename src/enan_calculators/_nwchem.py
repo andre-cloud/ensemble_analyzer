@@ -1,7 +1,8 @@
 import os
 import shutil
-from pathlib import Path
 from ase.calculators.nwchem import NWChem
+
+from enan_calculators._input import append_to_input
 
 NWCHEM_COMMAND = (
     os.getenv("NWCHEMCOMMAND")
@@ -26,20 +27,12 @@ def create_nwchem_calc(charge, mult, method, basis, solvent=None, cpu=1, add_inp
 
     calculator = NWChem(label=label or "nwchem", command=command or NWCHEM_COMMAND, **kw)
 
-    extra = []
     if add_input.strip():
-        extra.append(add_input)
-
-    if extra:
-        block = "\n\n".join(extra)
-        original = calculator.write_input
-
-        def patched_write_input(atoms, properties=None, system_changes=None) -> None:
-            original(atoms, properties, system_changes)
-            inp = Path(calculator.directory) / calculator.input_filename()
-            with open(inp, "a") as f:
-                f.write("\n" + block + "\n")
-
-        calculator.write_input = patched_write_input
+        append_nwchem_block(calculator, add_input)
 
     return calculator
+
+
+def append_nwchem_block(calculator, text: str) -> None:
+    """Append ``text`` to the NWChem input (chains earlier patches)."""
+    append_to_input(calculator, text, "write_input", calculator.input_filename)

@@ -1,4 +1,6 @@
 from enan_calculators._models import get_models_dir
+from enan_calculators._orca import append_post_block, orca_major_version
+from enan_calculators._nwchem import NWCHEM_COMMAND, append_nwchem_block
 
 
 def get_ase_calculator(engine, charge, mult, method, solvent=None, task=None, **kwargs):
@@ -51,14 +53,11 @@ def get_ase_calculator(engine, charge, mult, method, solvent=None, task=None, **
     raise ValueError(f"Unknown calculator engine: {engine}")
 
 
-def convert_to_single_point(atoms):
-    atoms_copy = atoms.copy()
-    atoms_copy.calc = None
-    return atoms_copy
-
-
 __all__ = [
     "get_ase_calculator",
-    "convert_to_single_point",
     "get_models_dir",
+    "append_post_block",
+    "orca_major_version",
+    "append_nwchem_block",
+    "NWCHEM_COMMAND",
 ]

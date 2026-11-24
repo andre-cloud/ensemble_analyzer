@@ -1,8 +1,8 @@
+import os
 from typing import Any
 import time
 from pathlib import Path
 import numpy as np
-import os
 
 from .base import BaseCalc
 
@@ -31,11 +31,38 @@ class _CappedSella(Sella):
 
 
 class BaseMlCalc(BaseCalc):
-    def common_str(self) -> dict:
-        return {}
+    """ML/semiempirical calculator: the ASE calculator comes from ``enan_calculators``.
 
-    def _get_ml_calculator(self, **kwargs: Any) -> Any:
-        raise NotImplementedError
+    Subclasses set ``label`` (also the ``enan_calculators`` engine name) and:
+    ``default_method`` used when ``protocol.functional`` is empty;
+    ``method_required`` error text when no method is given (None: not required);
+    ``uses_task`` / ``uses_basis`` whether ``protocol.task`` / ``protocol.basis`` are passed.
+    """
+    label: str
+    default_method: str | None = None
+    method_required: str | None = None
+    uses_task = True
+    uses_basis = False
+
+    def _get_ml_calculator(self, method: str | None = None) -> Any:
+        from enan_calculators import get_ase_calculator
+        if method is None:
+            method = self.protocol.functional or self.default_method
+        if method is None and self.method_required:
+            raise ValueError(f"{self.label} calculator requires {self.method_required}")
+        kwargs = {}
+        if self.uses_task:
+            kwargs["task"] = self.protocol.task
+        if self.uses_basis:
+            kwargs["basis"] = self.protocol.basis
+        return get_ase_calculator(
+            self.label,
+            charge=self.protocol.charge,
+            mult=self.protocol.mult,
+            method=method,
+            solvent=self.protocol.solvent.solvent if self.protocol.solvent else None,
+            **kwargs,
+        )
 
     def _apply_ase_constraints(self, atoms):
         if not self.constraints:

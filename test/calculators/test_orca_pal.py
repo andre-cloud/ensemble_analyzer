@@ -61,21 +61,6 @@ def test_create_orca_calc_writes_group(monkeypatch, tmp_path):
     assert calc.parameters["orcablocks"].startswith("%pal nprocs 8 nprocs_group 4 end\n")
 
 
-def test_orca_calc_common_str_respects_version(setup_calc_orca):
-    from ensemble_analyzer.calculators.orca import OrcaCalc
-
-    conf, proto = setup_calc_orca
-    with patch("ensemble_analyzer.calculators.orca.orca_profile"), \
-         patch("ensemble_analyzer.calculators.orca.OrcaCalc.VERSION", 6):
-        _, ob, _ = OrcaCalc(proto, 8, conf).common_str()
-    assert "%pal nprocs 8 nprocs_group 4 end" in ob
-
-    with patch("ensemble_analyzer.calculators.orca.orca_profile"), \
-         patch("ensemble_analyzer.calculators.orca.OrcaCalc.VERSION", 4):
-        _, ob, _ = OrcaCalc(proto, 8, conf).common_str()
-    assert "%pal nprocs 8 end" in ob
-
-
 @pytest.fixture
 def setup_calc_orca(mock_conformer, mock_protocol):
     mock_protocol.add_input = ""

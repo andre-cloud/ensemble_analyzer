@@ -89,8 +89,3 @@ class TestNWChemReadOrbitals:
         ase_calc, _ = NWChemCalc(tddft_protocol, 4, conf).single_point()
         assert "protocol_0/1_p0_nwchem/1_p0_nwchem.movecs" in ase_calc.parameters["dft"]["vectors"]
 
-    def test_common_str_uses_same_paths(self, tddft_protocol, conf):
-        tddft_protocol.number = 3
-        tddft_protocol.read_orbitals = "1"
-        calc = NWChemCalc(tddft_protocol, 4, conf)
-        assert calc.common_str()["dft"]["vectors"] == calc._vectors_directive()

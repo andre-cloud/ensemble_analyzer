@@ -1,6 +1,6 @@
 
 
-from ensemble_analyzer.parsers.base import BaseParser, register_parser
+from ensemble_analyzer.parsers.base import BaseParser
 from ensemble_analyzer.parsers.vibrations import (
     gaussian_get_freq, gaussian_get_ir_intensities, gaussian_get_normal_modes,
     gaussian_align_normal_modes, to_displacements,
@@ -8,11 +8,10 @@ from ensemble_analyzer.parsers.vibrations import (
 
 import re
 import numpy as np
-from typing import List, Tuple
+from typing import Tuple
 
 
 
-@register_parser('gaussian')
 class GaussianParser(BaseParser):
     """
     Parser implementation for Gaussian output files.
@@ -23,16 +22,7 @@ class GaussianParser(BaseParser):
         'units_B': 'GHz',
         "m": r"X=\s+(-?\d+.\d+)\s+Y=\s+(-?\d+.\d+)\s+Z=\s+(-?\d+.\d+)",
         "E": r"SCF Done.* =\s+(-?\d+.\d+)\s*",
-        "break": "\n\n",
-        "idx_en_tddft": None,  # index for energy in the UV & ECD table in eV
-        "idx_imp_tddft": None,  # index for oscillator strength in the UV table
-        "idx_en_ir": None,  # index for energy in the IR table in cm**-1
-        "idx_imp_ir": None,  # index for oscillator strength in the IR table
-        "idx_imp_vcd": None,  # index for oscillator strength in the VCD table
-        "s_freq": "Harmonic frequencies (cm**-1), IR intensities (KM/Mole), Raman scattering",
         "start_spec": "Excited states from",
-        "e_freq": "\n\n\n",
-        "idx_freq": 1,  # index for frequency in frequency table
         # frequency section (same keys as frogchem regex_gaussian)
         "freq_section": "Harmonic frequencies (cm**-1), IR intensities (KM/Mole), Raman scattering",
         "freq_end": "\n\n\n",
@@ -46,7 +36,6 @@ class GaussianParser(BaseParser):
  Number     Number       Type             X           Y           Z
  ---------------------------------------------------------------------""",
         "finish": "Normal termination",
-        "ext": "log"
     }
 
 
@@ -136,27 +125,3 @@ class GaussianParser(BaseParser):
         R = np.array([m for m in ecd_pattern.findall(ecd)], dtype=np.float64)
 
         return np.column_stack((energies,f)), np.column_stack((energies,R))
-
-if __name__ == '__main__':
-
-    import mock
-    parser = GaussianParser("files/gaussian.log", mock.MagicMock())
-    B,M = parser.parse_B_m()
-    print(f'{B,M=}')
-    geom = parser.parse_geom()
-    print(f'{geom=}')
-    energy = parser.parse_energy()
-    print(f'{energy=}')
-    print(f'{parser.opt_done()=}')
-    print(f'{parser.normal_termination()=}')
-    frequencies, ir_inten, rot_str = parser.parse_freq()
-    print(f'{frequencies, ir_inten, rot_str=}')
-    parser = GaussianParser("files/gaussian_tddft.log", mock.MagicMock())
-    uv, ecd = parser.parse_tddft()
-    print(f'{uv, ecd=}')
-
-
-    
-
-
-

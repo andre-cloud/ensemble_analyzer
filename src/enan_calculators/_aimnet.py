@@ -26,7 +26,7 @@ def create_aimnet_calc(charge, mult, method, solvent=None, task=None):
     cache_key = (method, charge, mult)
 
     if cache_key not in _PREDICTOR_CACHE:
-        model_path = get_models_dir("aimnet", create=False) / method
+        model_path = get_models_dir("aimnet") / method
 
         if not model_path.exists():
             model_path = Path(method)

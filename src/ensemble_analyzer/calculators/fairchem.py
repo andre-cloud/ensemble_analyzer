@@ -1,3 +1,8 @@
-from enan_calculators._fairchem import FAIRChemMlCalc
+from .base import register_calculator
+from .uma import UMAMlCalc
 
-__all__ = ["FAIRChemMlCalc"]
+
+@register_calculator("fairchem")
+class FAIRChemMlCalc(UMAMlCalc):
+    """Same fairchem-core backend as ``uma``, registered under its own name."""
+    label = "fairchem"

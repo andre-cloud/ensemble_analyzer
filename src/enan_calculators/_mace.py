@@ -182,13 +182,13 @@ def create_mace_calc(charge, mult, method, solvent=None, task=None):
     if method in _FOUNDATION:
         cache_key = (method, device, default_dtype, task)
     else:
-        model_path = get_models_dir("mace", create=False) / method
+        model_path = get_models_dir("mace") / method
         if not model_path.exists():
             model_path = Path(method)
             if not model_path.exists():
                 raise FileNotFoundError(
                     f"MACE model not found: {model_path}. "
-                    f"Please place the downloaded weights in {get_models_dir('mace', create=False)}."
+                    f"Please place the downloaded weights in {get_models_dir('mace')}."
                 )
         cache_key = (str(model_path), device, default_dtype, task)
 

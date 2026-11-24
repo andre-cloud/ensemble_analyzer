@@ -2,9 +2,9 @@ import re
 import os
 import numpy as np
 
-from ensemble_analyzer.constants import regex_parsing, GRAPHS
+from ensemble_analyzer.constants import GRAPHS
 from ensemble_analyzer.rrho import free_gibbs_energy
-from ensemble_analyzer.parsers.base import PARSER_REGISTRY
+from ensemble_analyzer.parsers import PARSER_REGISTRY
 from ensemble_analyzer.validators import validate_line
 
 from ensemble_analyzer.conformer.conformer import Conformer
@@ -15,20 +15,6 @@ from ensemble_analyzer._logger.logger import Logger
 
 from datetime import datetime
 import traceback
-
-
-def tranform_float(freq: float) -> str:
-    """
-    Format a frequency value as a string with 2 decimal places.
-
-    Args:
-        freq (float): The frequency value to format.
-
-    Returns:
-        str: Formatted string (e.g., "123.45").
-    """
-
-    return f"{freq:.2f}"
 
 
 def _wants_excited_state_energy(p) -> bool:
@@ -146,7 +132,6 @@ def get_conf_parameters(
                     SCF=e, T=temp, freq=freq, mw=conf.weight_mass, B=B_vec, m=p.mult,
                     linear = linear, cut_off = cut_off, alpha = alpha, P = P
                 )
-                H = H
                 g_e = g - e
             except Exception as thermo_err:
                  log.error(f"Error computing RRHO thermodynamics for Conf {conf.number}: {thermo_err}")

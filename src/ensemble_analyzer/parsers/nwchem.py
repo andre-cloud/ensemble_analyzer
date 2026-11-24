@@ -1,11 +1,10 @@
-from ensemble_analyzer.parsers.base import BaseParser, register_parser
+from ensemble_analyzer.parsers.base import BaseParser
 
 import re
 import numpy as np
-from typing import List, Tuple
+from typing import Tuple
 
 
-@register_parser('nwchem')
 class NWChemParser(BaseParser):
     """
     Parser implementation for NWChem output files.
@@ -16,13 +15,11 @@ class NWChemParser(BaseParser):
         "units_B": "cm-1",
         "m": r"Nuclear Dipole moment[\s\S]*?(-?\d+\.\d+)\s+(-?\d+\.\d+)\s+(-?\d+\.\d+)",
         "E": r"(?:Total DFT energy|SCF energy)\s*=\s*(-?\d+\.\d+)",
-        "break": "\n\n",
         "s_freq": "NORMAL MODE EIGENVECTORS IN CARTESIAN COORDINATES",
         "s_IR": "Projected Infra Red Intensities",
         "geom_start": "Output coordinates in angstroms",
         "finish": "Total times",
         "opt_done": "Optimization converged",
-        "ext": "log",
     }
 
     def parse_geom(self) -> np.ndarray:
@@ -219,16 +216,3 @@ class NWChemParser(BaseParser):
             ecd = np.array(ecd_list, dtype=np.float64)
 
         return uv, ecd
-
-
-
-
-
-
-if __name__ == '__main__': 
-    from mock import MagicMock
-    p = NWChemParser('water_nwchem.nwo', log=MagicMock())
-
-    print(p.parse_geom())
-    print(p.parse_B_m())
-    print(p.opt_done())

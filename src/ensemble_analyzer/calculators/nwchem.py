@@ -1,53 +1,13 @@
-import shutil
-import os
-from pathlib import Path
 from typing import Any, Tuple
 
 from ase.calculators.nwchem import NWChem
+from enan_calculators import NWCHEM_COMMAND, append_nwchem_block
 from ensemble_analyzer.calculators.base import BaseCalc, register_calculator
 from ensemble_analyzer.protocol.dispersion import dispersion_keyword
 
 
-NWCHEM_COMMAND = (
-    os.getenv("NWCHEMCOMMAND")
-    or shutil.which("nwchem_openmpi")
-    or shutil.which("nwchem")
-)
-
-
 @register_calculator("nwchem")
 class NWChemCalc(BaseCalc):
-
-    def common_str(self) -> dict:
-        nroots = self.protocol.nroots
-        is_tddft = isinstance(nroots, int) and nroots > 0
-        kw = {
-            "theory": "tddft" if is_tddft else "dft",
-            "xc": self.protocol.functional,
-            "basis": self.protocol.basis,
-            "dft": {"mult": self.protocol.mult},
-        }
-        disp = dispersion_keyword(self.protocol.dispersion, "nwchem")
-        if disp:
-            kw["dft"]["disp"] = {"vdw": disp}
-        if is_tddft:
-            kw["nroots"] = nroots
-            tda = self.protocol.tda
-            kw["tddft"] = {"tda": True} if isinstance(tda, bool) and tda else True
-        if self.protocol.charge != 0:
-            kw["charge"] = self.protocol.charge
-
-        if self.protocol.solvent:
-            solv = self.protocol.solvent.solvent
-            if solv:
-                kw["cosmo"] = {"solvent": solv.lower()}
-
-        memory_mb = self.cpu * 5000
-        kw["memory"] = f"{memory_mb} mb"
-
-        kw["dft"]["vectors"] = self._vectors_directive()
-
-        return kw
 
     def _movecs_path(self, protocol_number: Any) -> str:
         """MO vectors written by the NWChem job of a protocol step.
@@ -132,15 +92,7 @@ class NWChemCalc(BaseCalc):
 
         constraints_block = self._build_constraints()
         if constraints_block:
-            original = calculator.write_input
-
-            def patched_write_input(atoms, properties=None, system_changes=None) -> None:
-                original(atoms, properties, system_changes)
-                inp = Path(calculator.directory) / calculator.input_filename()
-                with open(inp, "a") as f:
-                    f.write("\n" + constraints_block + "\n")
-
-            calculator.write_input = patched_write_input
+            append_nwchem_block(calculator, constraints_block)
 
         return calculator, "nwchem"
 

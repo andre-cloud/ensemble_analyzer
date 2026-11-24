@@ -20,7 +20,7 @@ def create_skala_calc(charge, mult, method, basis, solvent=None):
             "skala module missing. Install via: pip install skala"
         )
 
-    model_path = get_models_dir("skala", create=False) / method
+    model_path = get_models_dir("skala") / method
     if not model_path.exists():
         model_path_fun = Path(str(model_path) + ".fun")
         if model_path_fun.exists():
@@ -30,7 +30,7 @@ def create_skala_calc(charge, mult, method, basis, solvent=None):
             if not model_path.exists():
                 raise FileNotFoundError(
                     f"Skala model not found: {model_path}. "
-                    f"Please place the downloaded weights in {get_models_dir('skala', create=False)}."
+                    f"Please place the downloaded weights in {get_models_dir('skala')}."
                 )
 
     cache_key = (method, basis, charge, mult)

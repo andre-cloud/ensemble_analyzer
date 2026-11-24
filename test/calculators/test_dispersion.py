@@ -81,7 +81,6 @@ class TestCalculatorDispersion:
     def test_gaussian_route(self, setup_calc):
         conf, proto = setup_calc
         calc = GaussianCalc(proto, 4, conf)
-        assert "# B3LYP/6-31G* EmpiricalDispersion=GD3BJ" in calc.common_str()
         ase_calc, _ = calc.single_point()
         assert "EmpiricalDispersion=GD3BJ" in ase_calc.parameters["extra"]
 
@@ -94,11 +93,8 @@ class TestCalculatorDispersion:
     def test_orca_simple_input(self, setup_calc):
         conf, proto = setup_calc
         proto.dispersion = "D4"
-        with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
-             patch("ensemble_analyzer.calculators.orca.orca_profile"):
+        with patch("enan_calculators._orca.shutil.which", return_value="orca"):
             calc = OrcaCalc(proto, 4, conf)
-            si, _, _ = calc.common_str()
-            assert si.split()[-1] == "D4"
             ase_calc, _ = calc.single_point()
             assert " D4" in ase_calc.parameters["orcasimpleinput"]
 
@@ -106,7 +102,6 @@ class TestCalculatorDispersion:
     def test_nwchem_dft_block(self, setup_calc):
         conf, proto = setup_calc
         calc = NWChemCalc(proto, 4, conf)
-        assert calc.common_str()["dft"]["disp"] == {"vdw": 4}
         ase_calc, _ = calc.single_point()
         block = _format_block("dft", ase_calc.parameters["dft"])
         assert "  disp vdw 4" in block
