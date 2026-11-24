@@ -84,3 +84,6 @@ def plot_comparative_graphs(log, idxs=None, show=False, nm=True, show_ref_weight
         comp = ComparedGraph(graph_type=graph_type, experimental_file=experimental_file, log=log, protocol_index=idxs, nm=nm, norm_exp=norm_exp)
         if len(comp.data) > 0:
             comp.plot(show=show, show_ref_weight=show_ref_weight)
+
+    from ensemble_analyzer._nmr.plot import plot_nmr_comparisons
+    plot_nmr_comparisons(log, idxs=idxs, show=show)

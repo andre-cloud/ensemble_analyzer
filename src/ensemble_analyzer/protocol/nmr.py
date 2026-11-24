@@ -32,8 +32,9 @@ DEFAULTS: Dict = {
     "opt_from": None,            # step whose level optimises the references (None = auto)
     "reference_opt_step": None,  # filled by check_protocols
     "coupling_step": None,       # filled by check_protocols
+    "coupling_nuclei": None,     # filled by check_protocols: isotopes of the coupling step
 }
-_INTERNAL_KEYS = ("reference_opt_step", "coupling_step")
+_INTERNAL_KEYS = ("reference_opt_step", "coupling_step", "coupling_nuclei")
 REFERENCE_KEYS = ("name", "xyz", "smiles", "nuclei", "atoms", "delta", "charge", "mult")
 _ADD_INPUT_CLASH = re.compile(r"(%eprnmr|\bnmr\b|\bspinspin\b|\bproperty\b)", re.IGNORECASE)
 
@@ -218,6 +219,7 @@ def check_protocols(protocols: Sequence, log=None) -> None:
                     )
 
         s["coupling_step"] = None
+        s["coupling_nuclei"] = list(s["nuclei"]) if s["coupling"] else None
         if s["shielding"] and not s["coupling"] and s.get("coupling_from") is not False:
             def has_j(q):
                 qs = getattr(q, "nmr", None)
@@ -234,6 +236,8 @@ def check_protocols(protocols: Sequence, log=None) -> None:
                 cands = [q for q in earlier if has_j(q)]
                 if cands:
                     s["coupling_step"] = int(cands[-1].number)
+            if s["coupling_step"] is not None:
+                s["coupling_nuclei"] = list(by_number[s["coupling_step"]].nmr["nuclei"])
 
         for ref in s["references"]:
             src = _source(ref)

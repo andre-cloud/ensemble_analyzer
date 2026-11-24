@@ -46,6 +46,7 @@ class CalculationOrchestrator:
         
         # Executor
         self.protocol_executor = ProtocolExecutor(self.config, self.logger, self.checkpoint_manager)
+        self.protocol_executor.protocols = list(self.protocols)
     
     def run(self) -> None:
         """
