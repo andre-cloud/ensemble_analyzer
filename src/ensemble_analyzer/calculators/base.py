@@ -81,12 +81,21 @@ class BaseCalc:
     def _add_tddft_keywords(self, calc: Any) -> None:
         pass
 
+    def _add_nmr_keywords(self, calc: Any) -> None:
+        pass
+
+    def _nmr_settings(self):
+        """The step's NMR settings, or None (protocols in tests may be MagicMocks)."""
+        nmr = getattr(self.protocol, "nmr", None)
+        return nmr if isinstance(nmr, dict) and nmr else None
+
     # --- Template methods ---
 
     def single_point(self) -> Tuple[Any, str]:
         calc, label = self._build_calculator()
         self._add_sp_keywords(calc)
         self._add_tddft_keywords(calc)
+        self._add_nmr_keywords(calc)
         return calc, label
 
     def optimisation(self) -> Tuple[Any, str]:

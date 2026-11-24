@@ -104,6 +104,16 @@ class OrcaCalc(BaseCalc):
                 f"\n%tddft nroots {nroots} tda {tda_val}{iroot} end\n"
             )
 
+    def _add_nmr_keywords(self, calc: ORCA) -> None:
+        settings = self._nmr_settings()
+        if not settings:
+            return
+        from enan_calculators._orca import append_post_block
+        from ensemble_analyzer._nmr.inputs import orca_block
+
+        calc.parameters["orcasimpleinput"] += "\n! NMR\n"
+        append_post_block(calc, orca_block(settings, self.conf.atoms))
+
     def _maybe_add_vcd(self, calc: ORCA) -> None:
         if self.VERSION > 5:
             calc.parameters["orcablocks"] += "\n%freq vcd true end\n"

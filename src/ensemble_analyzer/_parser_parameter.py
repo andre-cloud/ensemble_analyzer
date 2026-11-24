@@ -187,6 +187,18 @@ def get_conf_parameters(
 
         log.debug(f'{log.TICK} CONF {conf.number:03d} {log.SPLIT} Graphs Data are stored correctly')
 
+
+        nmr = getattr(p, "nmr", None)
+        if isinstance(nmr, dict) and nmr:
+            try:
+                from ensemble_analyzer._nmr.parsing import parse_nmr_output
+                record = parse_nmr_output(p.calculator, parser.fl, nmr, conf.atoms)
+                conf.nmr_data.add(number, record)
+                if not record.has_data():
+                    log.warning(f"CONF {conf.number:03d}: no NMR data found in {output}")
+            except Exception as nmr_err:
+                log.warning(f"Error parsing NMR data for Conf {conf.number}: {nmr_err}")
+
         return True
 
     except Exception as e:

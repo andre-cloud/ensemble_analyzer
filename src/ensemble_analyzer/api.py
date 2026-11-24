@@ -197,9 +197,11 @@ def run(
         # Load or initialize workflow
         if restart:
             conformers, protocols_out = load_workflow_data()
+            _check_protocols(protocols_out, log)
             start_from = ProtocolManager().load_last_completed()
         else:
             protocols_out = _normalize_protocols(protocol)
+            _check_protocols(protocols_out, log)
             ProtocolManager().save(protocols_out)
             conformers = _normalize_ensemble(ensemble, log)
             start_from = 0
@@ -237,3 +239,14 @@ def run(
             logger=log,
             orchestrator=orchestrator
         )
+
+
+def _check_protocols(protocols, log) -> None:
+    """Cross-step checks also run by the CLI (optional dependencies, ΔSCF and NMR links)."""
+    from ensemble_analyzer._managers.prism_backend import check_prism_available
+    from ensemble_analyzer.protocol.deltascf import check_protocols as check_deltascf
+    from ensemble_analyzer.protocol.nmr import check_protocols as check_nmr
+
+    check_prism_available(protocols)
+    check_deltascf(protocols, log)
+    check_nmr(protocols, log)

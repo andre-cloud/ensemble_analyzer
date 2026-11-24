@@ -46,6 +46,7 @@ class CheckpointManager:
                 "atoms": list(conf.atoms),
                 "energies": conf.energies.as_dict(),
                 "graphs_data": conf.graphs_data.as_dict(),
+                "nmr_data": conf.nmr_data.as_dict(),
                 "active": conf.active,
             }
         

@@ -74,7 +74,10 @@ class Protocol:
 
     # ΔSCF excited state (ORCA / NWChem), see protocol/deltascf.py
     deltascf                    : Optional[Dict]                = None
-    
+
+    # NMR shieldings / couplings (ORCA / Gaussian / NWChem), see protocol/nmr.py
+    nmr                         : Optional[Dict]                = None
+
     # Pruning & Clustering
     no_prune                    : Optional[bool]                = False
     cluster                     : Optional[Union[bool,int]]     = False
@@ -351,6 +354,13 @@ class Protocol:
         from ensemble_analyzer.protocol.deltascf import normalize_settings
         self.deltascf = normalize_settings(
             self.deltascf, self.number, self.calculator, self.add_input, self.nroots
+        )
+
+        # NMR: validated, defaults filled in (plain dict, serialisable)
+        from ensemble_analyzer.protocol.nmr import normalize_settings as normalize_nmr
+        self.nmr = normalize_nmr(
+            self.nmr, self.number, self.calculator, self.add_input, self.nroots,
+            opt=self.opt, freq=self.freq, deltascf=self.deltascf,
         )
 
         # Load eventual more Thresholds

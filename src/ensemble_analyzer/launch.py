@@ -86,17 +86,20 @@ def main(
     # protocol is known: before writing files or running any calculation.
     from ensemble_analyzer._managers.prism_backend import check_prism_available
     from ensemble_analyzer.protocol.deltascf import check_protocols as check_deltascf
+    from ensemble_analyzer.protocol.nmr import check_protocols as check_nmr
 
     # ── Resolve inputs ─────────────────────────────────────────────────
     if restart:
         conformers, protocols_out = load_workflow_data()
         check_prism_available(protocols_out)
         check_deltascf(protocols_out, log)
+        check_nmr(protocols_out, log)
         start_from = ProtocolManager().load_last_completed()
     else:
         protocols_out = _normalize_protocols(protocol)
         check_prism_available(protocols_out)
         check_deltascf(protocols_out, log)
+        check_nmr(protocols_out, log)
         ProtocolManager().save(protocols_out)
         conformers = _normalize_ensemble(ensemble, log)
         start_from = 0
