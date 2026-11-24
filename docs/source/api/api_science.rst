@@ -14,9 +14,6 @@ Clustering & PCA
    :members:
    :undoc-members:
 
-.. automodule:: ensemble_analyzer._clustering.cluster_config
-   :members:
-   :undoc-members:
 
 Thermochemistry (qRRHO)
 -----------------------
@@ -33,14 +30,6 @@ Spectroscopy & Plotting
    :undoc-members:
 
 .. automodule:: ensemble_analyzer._spectral.base
-   :members:
-   :undoc-members:
-
-.. automodule:: ensemble_analyzer._spectral.comp_vibronic
-   :members:
-   :undoc-members:
-
-.. automodule:: ensemble_analyzer._spectral.comp_electronic
    :members:
    :undoc-members:
 

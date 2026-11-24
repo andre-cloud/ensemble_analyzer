@@ -11,7 +11,7 @@ from ensemble_analyzer._managers.protocol_executor import ProtocolExecutor
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.protocol.protocol import Protocol
 
-@patch("ensemble_analyzer.conformer.conformer.mkdir")
+@patch("ensemble_analyzer.conformer.conformer.Path")
 def test_full_workflow_simulation(mock_mkdir, mock_logger):
     """
     Simulates a complete cycle: Input Ensemble -> Protocol (Calc + Pruning) -> Output.

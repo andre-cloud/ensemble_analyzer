@@ -1,10 +1,8 @@
 import os
-from pathlib import Path
 
 # --- Light constants (no numpy/scipy needed) ---
 
 DEBUG = bool(os.getenv("DEBUG"))
-MAX_TRY = 5
 
 CHIRALS = ["VCD", "ECD"]
 GRAPHS = ['IR', 'VCD', 'UV', 'ECD']
@@ -53,8 +51,7 @@ regex_parsing = {
 _LAZY_INIT = False
 
 def _ensure_lazy():
-    global _LAZY_INIT, np, R, c, h, electron_volt, Boltzmann, N_A, \
-           FACTOR_EV_NM, FACTOR_EV_CM_1, J_TO_H, AMU_TO_KG, ROT_CONST_FACTOR
+    global _LAZY_INIT
     if _LAZY_INIT:
         return
 
@@ -70,15 +67,13 @@ def _ensure_lazy():
     g['np'] = _np
     g['R'] = _R
     g['h'] = _h
-    g['electron_volt'] = _ev
     g['Boltzmann'] = _B
     g['N_A'] = _NA
     g['FACTOR_EV_NM'] = _h * _c / (10 ** -9 * _ev)
     g['FACTOR_EV_CM_1'] = 1 / 8065.544
     g['c'] = _c * 100
     g['J_TO_H'] = _J_TO_H
-    g['AMU_TO_KG'] = _AMU_TO_KG
-    g['ROT_CONST_FACTOR'] = _h / (8 * np.pi ** 2 * g['c'] * _AMU_TO_KG * 1e-20)
+    g['ROT_CONST_FACTOR'] = _h / (8 * _np.pi ** 2 * g['c'] * _AMU_TO_KG * 1e-20)
 
     _LAZY_INIT = True
 
@@ -106,10 +101,6 @@ def boltzmann_distribution(
     return rel_energies * EH_TO_KCAL, population
 
 
-def ordinal(n: int) -> str:
-    return "%d-%s" % (n, "tsnrhtdd"[(n // 10 % 10 != 1) * (n % 10 < 4) * n % 10:: 4])
-
-
 def compute_boltzmann_populations(conformers, protocol_number: int, temperature: float) -> None:
     import numpy as np
     active = [c for c in conformers if c.active]
@@ -122,15 +113,9 @@ def compute_boltzmann_populations(conformers, protocol_number: int, temperature:
         c.energies.set(str(protocol_number), 'Erel', rel_e)
 
 
-def get_models_dir(calculator_name: str, create: bool = True) -> Path:
-    from enan_calculators import get_models_dir as _get_models_dir
-    return _get_models_dir(calculator_name, create)
-
-
 def __getattr__(name):
-    heavy = {'np', 'R', 'c', 'h', 'electron_volt', 'Boltzmann', 'N_A',
-             'FACTOR_EV_NM', 'FACTOR_EV_CM_1', 'J_TO_H', 'AMU_TO_KG',
-             'ROT_CONST_FACTOR'}
+    heavy = {'np', 'R', 'c', 'h', 'Boltzmann', 'N_A',
+             'FACTOR_EV_NM', 'FACTOR_EV_CM_1', 'J_TO_H', 'ROT_CONST_FACTOR'}
     if name in heavy:
         _ensure_lazy()
         return globals()[name]

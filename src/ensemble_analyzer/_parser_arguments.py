@@ -249,9 +249,6 @@ def parser_arguments()-> argparse.Namespace:
         action="store_true",
     )
 
-    if __name__ == "__main__":  # pragma: no cover:
-        parser.print_help()
-
     a = sys.argv
     if "-h-p" in a or "--help-protocol" in a:
         return print_help_protocol()
@@ -303,8 +300,4 @@ def mix_type(values: List[str]) -> Union[bool, float, List[float], None]:
         except ValueError: 
             raise ValueError(f'Cannot convert values {values=} to a float list.')
     if len(values) >2 : 
-        raise ValueError(f'Too many arguments given')
-
-
-if __name__ == "__main__":  # pragma: no cover:
-    parser_arguments()
+        raise ValueError('Too many arguments given')

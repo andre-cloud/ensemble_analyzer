@@ -2,8 +2,6 @@
 from typing import List
 from pathlib import Path
 import json
-import tempfile
-import shutil
 
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer._logger.logger import Logger
@@ -51,18 +49,11 @@ class CheckpointManager:
                 "active": conf.active,
             }
         
-        # Write to temporary file first
-        with tempfile.NamedTemporaryFile(
-            'w',
-            delete=False,
-            suffix='.tmp',
-            dir=self.checkpoint_file.parent
-        ) as tmp:
-            write_json(data, tmp, indent=4)
-            tmp_path = Path(tmp.name)
-        
-        # Atomic move
-        shutil.move(str(tmp_path), str(self.checkpoint_file))
+        # Write to a temporary file, then atomically replace the checkpoint
+        tmp = self.checkpoint_file.with_suffix(".tmp")
+        with open(tmp, "w") as f:
+            write_json(data, f, indent=4)
+        tmp.replace(self.checkpoint_file)
         
         if log:
             logger.checkpoint_saved(conformer_count=len(ensemble))

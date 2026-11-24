@@ -22,13 +22,18 @@ import shutil
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Sequence, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 from ase import Atoms
 
 from ensemble_analyzer.protocol import deltascf as ds
 from ensemble_analyzer.protocol.deltascf import Attempt, Excitation
+from ensemble_analyzer._logger.logger import Logger
+
+# Parser log of the trial runs: their warnings are reported by the runner itself
+_QUIET = Logger("enan.deltascf.parser")
+_QUIET.disabled = True
 
 
 @dataclass
@@ -78,8 +83,10 @@ class _Engine:
         self.conf = conf
         self.cpu = cpu
 
-    def _calc_class(self):
-        raise NotImplementedError
+    def parser(self, output: Path):
+        """Parser of an engine output; its warnings are reported by the runner."""
+        from ensemble_analyzer.parsers import PARSER_REGISTRY
+        return PARSER_REGISTRY[self.name](str(output), _QUIET)
 
     def _variant(self, *, mode: str, charge: int, mult: int, nroots: Optional[int]):
         p = copy.copy(self.protocol)          # no __post_init__: keeps Solvent etc.
@@ -94,12 +101,7 @@ class _Engine:
         return p
 
     def _base_calc(self, p):
-        builder = self._calc_class()(p, self.cpu, self.conf)
-        if p.opt:
-            return builder.optimisation()
-        if p.freq:
-            return builder.frequency()
-        return builder.single_point()
+        return p.get_calculator(cpu=self.cpu, conf=self.conf)
 
     def build(self, run_dir: Path, *, mode: str = "sp", charge: Optional[int] = None,
               mult: Optional[int] = None, guess: Optional[Path] = None,
@@ -112,11 +114,7 @@ class _Engine:
 
 
 class _OrcaEngine(_Engine):
-    name, index_base, ext = "orca", 0, "out"
-
-    def _calc_class(self):
-        from ensemble_analyzer.calculators.orca import OrcaCalc
-        return OrcaCalc
+    name, index_base, ext, orbital_file = "orca", 0, "out", "orca.gbw"
 
     def build(self, run_dir, *, mode="sp", charge=None, mult=None, guess=None, target=None,
               attempt=None, n_occ=(0, 0), nroots=None):
@@ -164,7 +162,6 @@ class _OrcaEngine(_Engine):
         return " ".join(parts)
 
     def run(self, calc, geometry, opt):
-        from ensemble_analyzer.parsers.orca import OrcaParser
         run_dir = Path(calc.directory)
         run_dir.mkdir(parents=True, exist_ok=True)
         atoms = Atoms(symbols="".join(self.conf.atoms), positions=geometry)
@@ -178,15 +175,11 @@ class _OrcaEngine(_Engine):
         output = run_dir / calc.template.outputname
         if not output.exists():
             return _Run(False, reason=error or "no output written")
-        return _parse(OrcaParser, output, run_dir / "orca.gbw", opt)
+        return _parse(self, output, run_dir / "orca.gbw", opt)
 
 
 class _NWChemEngine(_Engine):
-    name, index_base, ext = "nwchem", 1, "nwo"
-
-    def _calc_class(self):
-        from ensemble_analyzer.calculators.nwchem import NWChemCalc
-        return NWChemCalc
+    name, index_base, ext, orbital_file = "nwchem", 1, "nwo", None
 
     def build(self, run_dir, *, mode="sp", charge=None, mult=None, guess=None, target=None,
               attempt=None, n_occ=(0, 0), nroots=None):
@@ -221,7 +214,6 @@ class _NWChemEngine(_Engine):
         return calc
 
     def run(self, calc, geometry, opt):
-        from ensemble_analyzer.parsers.nwchem import NWChemParser
         run_dir = Path(calc.directory)
         run_dir.mkdir(parents=True, exist_ok=True)
         atoms = Atoms(symbols="".join(self.conf.atoms), positions=geometry)
@@ -234,15 +226,14 @@ class _NWChemEngine(_Engine):
         output = run_dir / f"{calc.prefix}.nwo"
         if not output.exists():
             return _Run(False, reason=error or "no output written")
-        result = _parse(NWChemParser, output, run_dir / "deltascf.movecs", opt)
+        result = _parse(self, output, run_dir / "deltascf.movecs", opt)
         if error and result.ok:
             result.ok, result.reason = False, "NWChem exited with an error"
         return result
 
 
-def _parse(parser_cls, output: Path, orbitals: Path, opt: bool) -> _Run:
-    from unittest.mock import MagicMock
-    parser = parser_cls(str(output), MagicMock())   # warnings are reported by the runner
+def _parse(engine: _Engine, output: Path, orbitals: Path, opt: bool) -> _Run:
+    parser = engine.parser(output)
     reason = parser.deltascf_status(opt=opt)
     energy = parser.parse_energy() or None
     if reason is None and energy is None:
@@ -352,10 +343,7 @@ class DeltaSCFRunner:
 
     @staticmethod
     def _reference_from(engine, output: Path, orbitals: Path, mult: int, step) -> _Reference:
-        from unittest.mock import MagicMock
-        from ensemble_analyzer.parsers.nwchem import NWChemParser
-        from ensemble_analyzer.parsers.orca import OrcaParser
-        parser = (OrcaParser if engine.name == "orca" else NWChemParser)(str(output), MagicMock())
+        parser = engine.parser(output)
         electrons = parser.parse_n_electrons()
         if electrons is None:
             raise RuntimeError(f"number of electrons not found in {output}")
@@ -562,8 +550,7 @@ class DeltaSCFRunner:
         output = folder / f"{conf.number}_p{protocol.number}_{engine.name}.{engine.ext}"
         shutil.copyfile(accepted.output, output)
         if accepted.orbitals is not None:
-            name = "orca.gbw" if engine.name == "orca" else accepted.orbitals.name
-            shutil.copyfile(accepted.orbitals, folder / name)
+            shutil.copyfile(accepted.orbitals, folder / (engine.orbital_file or accepted.orbitals.name))
 
         cfg = self.executor.config
         success = get_conf_parameters(

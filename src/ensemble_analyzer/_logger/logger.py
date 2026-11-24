@@ -1,16 +1,13 @@
 import logging
-import sys
 from tabulate import tabulate
 import time
-from pathlib import Path
 from typing import Generator, Optional, Any, Dict, List, Union
 from contextlib import contextmanager
 from datetime import timedelta
 
 
 
-from ensemble_analyzer.constants import DEBUG
-from ensemble_analyzer._title import title
+from ensemble_analyzer.constants import DEBUG, LOG_FORMAT
 
 
 
@@ -44,10 +41,6 @@ class Logger(logging.Logger):
     # Application Event
     # ===
     
-    def title_screen(self) -> None:
-        """Print the application title banner."""
-        self.info(title)
-
     def application_input_received(self, config: Dict[str,Any]) -> None: 
         """
         Log the initial configuration summary.
@@ -123,7 +116,6 @@ class Logger(logging.Logger):
     def calculation_start(self, conformer_id: int, protocol_number: int, count: int) -> None:
         """Log the start of a single conformer calculation."""
         self.info(f"{count:03d}. {self.ARROW} CONF {conformer_id:03d} {self.SPLIT} Protocol {protocol_number}")
-        self._start_timer(f"calc_{conformer_id}_{protocol_number}")
     
     def calculation_success(self, conformer_id: int, protocol_number: int, energy: float, gibbs:float, elapsed_time: float, frequencies: List[float]) -> None:
         """
@@ -141,7 +133,6 @@ class Logger(logging.Logger):
             None
         """
 
-        self._stop_timer(f"calc_{conformer_id}_{protocol_number}")
         text = f"\t{self.TICK} CONF {conformer_id:03d} {self.SPLIT} E = {energy:.8f} Eh {self.SPLIT} Time: {elapsed_time:.1f}s"
         if frequencies is not None and len(frequencies) > 0: 
             n_im_freq = len(frequencies[frequencies<0])
@@ -149,17 +140,10 @@ class Logger(logging.Logger):
             text += f' {self.SPLIT} Imag. Freq {n_im_freq} {im_freq}'
         self.info(text)
     
-    def calculation_failure(self, conformer_id: int, error: str) -> None:
-        """Log a failed calculation with the error message."""
-        self.error(f"    {self.FAIL} CONF {conformer_id:03d} [FAILED] {self.SPLIT} Error: \n{error[:60]}")
-
     def missing_previous_thermo(self, conformer_id: int) -> None:
         """Warn that thermochemical data is unavailable for a conformer."""
         self.warning(f'{self.WARNING} No previous thermochemical data found for conformer {conformer_id}: setting G, H, S, ZPVE to NaN.')
 
-    def missing_param(self, param: str, action: str) -> None:
-        """Warn that a required parameter is missing."""
-        self.warning(f'{self.WARNING} {param} not found. {action}')
     
     
     # ===
@@ -208,17 +192,13 @@ class Logger(logging.Logger):
     def pca_analysis(self, conformer_count: int, n_clusters: Optional[int], include_hydrogen: bool, output_file: str) -> None:
         """Log PCA analysis parameters."""
         self.info("")
-        self.info(f"PCA Analysis:")
+        self.info("PCA Analysis:")
         self.info(f"  Conformers: {conformer_count}")
         if n_clusters:
             self.info(f"  Clusters: {n_clusters}")
         self.info(f"  Include H: {include_hydrogen}")
         self.info(f"  Output: {output_file}")
     
-    def spectra_generation(self, graph_type: str, output_file: str) -> None:
-        """Log that a spectrum file was generated."""
-        self.debug(f"  Generated {graph_type} spectrum {self.ARROW} {output_file}")
-
     # ===
     # Checkpoint Events
     # ===
@@ -227,11 +207,6 @@ class Logger(logging.Logger):
         """Log that a checkpoint was saved."""
         self.debug(f"Checkpoint saved: {conformer_count} conformers ")
     
-    def checkpoint_loaded(self, conformer_count: int, protocol_number: int) -> None:
-        """Log that a checkpoint was loaded and execution is resuming."""
-        self.info(f"Checkpoint loaded: {conformer_count} conformers")
-        self.info(f"Resuming from protocol {protocol_number}")
-
     # ===
     # Spectra Events
     # ===
@@ -273,16 +248,6 @@ class Logger(logging.Logger):
 
 
     # ===
-    # Error Handling
-    # ===
-
-    def critical_error(self, error_type: str, message: str, **context: Any) -> None:
-        """Log a critical error with type, message and optional context."""
-        self._separator("CRITICAL ERROR", char="!")
-        self.critical(f"Error Type: {error_type}")
-        self.critical(f"Message: {message}")
-
-    # ===
     # Performance Tracking
     # ===
 
@@ -309,7 +274,7 @@ class Logger(logging.Logger):
     # Formatting
     # ===
 
-    def _separator(self, title: str = "", char: str = "=", width: int = 70, **kwargs):
+    def _separator(self, title: str = "", char: str = "=", width: int = 70):
         """Print a separator line."""
         if title:
             self.info(f"\n{char * width}")
@@ -354,4 +319,58 @@ class Logger(logging.Logger):
         else:
             elapsed = time.perf_counter() - start
             self.debug(f"Completed {operation_name}{context_suffix} in {elapsed:.2f}s")
-    
+
+
+class ColoredFormatter(logging.Formatter):
+    """Log formatter with optional ANSI color support."""
+
+    COLORS = {
+        logging.DEBUG: "\033[90m",
+        logging.INFO: "",
+        logging.WARNING: "\033[33m",
+        logging.ERROR: "\033[31m",
+        logging.CRITICAL: "\033[1;31m",
+    }
+    RESET = "\033[0m"
+
+    def __init__(self, fmt: Optional[str] = None, datefmt: Optional[str] = None, use_colors: bool = False) -> None:
+        super().__init__(fmt, datefmt)
+        self.use_colors = use_colors
+
+    def format(self, record: logging.LogRecord) -> str:
+        """Format a log record, optionally wrapping with ANSI color codes."""
+        msg = super().format(record)
+        if not self.use_colors:
+            return msg
+        return f"{self.COLORS.get(record.levelno, self.RESET)}{msg}{self.RESET}"
+
+
+def create_logger(
+    output_file: str,
+    debug: bool = False,
+    logger_name: str = "enan",
+    disable_color: bool = False,
+) -> Logger:
+    """
+    Create the EnAn logger writing to *output_file*.
+
+    Args:
+        output_file: Output log filename
+        debug: Enable debug level logging
+        logger_name: Logger name (default: "enan")
+    """
+    log = Logger(name=logger_name)
+
+    handler = logging.FileHandler(output_file, mode="a")
+    handler.setLevel(logging.DEBUG if debug else logging.INFO)
+    handler.setFormatter(ColoredFormatter(LOG_FORMAT, use_colors=disable_color))
+
+    log.setLevel(logging.DEBUG if debug else logging.INFO)
+    log.addHandler(handler)
+
+    # Disable noisy third-party loggers
+    logging.getLogger("matplotlib").setLevel(logging.WARNING)
+    logging.getLogger("numba").setLevel(logging.WARNING)
+
+    log.debug(f"Logger initialized | Debug: {debug} | Output: {output_file}")
+    return log

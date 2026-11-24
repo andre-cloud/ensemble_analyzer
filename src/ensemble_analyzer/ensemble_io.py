@@ -1,11 +1,14 @@
-import os, re
+import re
 import numpy as np
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, TYPE_CHECKING
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.conformer.energy_data import EnergyRecord
 from ensemble_analyzer._logger.logger import Logger
 from ensemble_analyzer._managers.checkpoint_manager import CheckpointManager
 from ensemble_analyzer._managers.protocol_manager import ProtocolManager
+
+if TYPE_CHECKING:
+    from ensemble_analyzer.protocol.protocol import Protocol
 
 
 def load_workflow_data() -> Tuple[List[Conformer], List['Protocol']]:

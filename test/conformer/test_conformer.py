@@ -13,7 +13,7 @@ class TestConformer:
     @pytest.fixture
     def basic_conformer(self):
         """Fixture for a basic Conformer, mocking filesystem operations."""
-        with patch("ensemble_analyzer.conformer.conformer.mkdir"):
+        with patch("ensemble_analyzer.conformer.conformer.Path"):
             return Conformer(
                 number=1,
                 geom=np.array([[0.,0.,0.], [0.,0.,1.]]),

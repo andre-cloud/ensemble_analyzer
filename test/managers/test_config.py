@@ -5,7 +5,7 @@ import pytest
 from unittest.mock import MagicMock
 from ensemble_analyzer._managers.calculation_config import CalculationConfig
 from ensemble_analyzer.protocol.protocol import Protocol
-from ensemble_analyzer._clustering.cluster_config import ClusteringConfig
+from ensemble_analyzer._clustering.cluster_manager import ClusteringConfig
 
 def test_calculation_config_defaults():
     config = CalculationConfig()
@@ -35,6 +35,5 @@ def test_protocol_calculator_retrieval():
     assert "not yet registered" in str(exc.value)
 
 def test_clustering_config():
-    c = ClusteringConfig(n_clusters=5)
-    assert c.n_clusters == 5
+    c = ClusteringConfig()
     assert c.set_cluster_attribute is True

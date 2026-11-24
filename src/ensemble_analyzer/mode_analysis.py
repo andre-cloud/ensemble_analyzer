@@ -1,9 +1,6 @@
 import numpy as np
-from ase import Atoms as ASE_Atoms
 from ase import units
-
-
-_ATOMIC_MASSES: dict[str, float] = {}
+from ase.data import atomic_masses, atomic_numbers
 
 # Converts sqrt(eigenvalue) of a mass-weighted Hessian in eV/(Å² amu) to eV,
 # the same factor ase.vibrations uses.
@@ -84,14 +81,6 @@ def project_hessian(
     return freqs, modes
 
 
-def _get_mass(symbol: str) -> float:
-    m = _ATOMIC_MASSES.get(symbol)
-    if m is None:
-        m = ASE_Atoms(symbol).get_masses()[0]
-        _ATOMIC_MASSES[symbol] = m
-    return m
-
-
 class NormalModeAnalyzer:
     def __init__(
         self,
@@ -103,7 +92,7 @@ class NormalModeAnalyzer:
         keep = np.array([np.sum(m ** 2) > 1e-14 for m in modes])
         self.normal_modes = modes[keep]
         
-        self.masses = np.array([_get_mass(a) for a in atoms], dtype=float)
+        self.masses = np.array([atomic_masses[atomic_numbers[a]] for a in atoms], dtype=float)
         self.geom = np.asarray(geom, dtype=float)
         self.atoms = atoms
         self.n_atoms = len(atoms)
@@ -132,20 +121,11 @@ class NormalModeAnalyzer:
     def delta_positions(
         self, mode: int, scale: float = 0.3
     ) -> dict:
-        mode_vec = self.normal_modes[mode]
-        delta_mag = 2 * scale * np.linalg.norm(mode_vec, axis=1)
-        total = np.sum(delta_mag)
-        if total == 0:
-            return {
-                "delta_mag": np.zeros(self.n_atoms),
-                "percent": np.zeros(self.n_atoms),
-                "total_delta": 0.0,
-            }
-        percent = (delta_mag / total) * 100.0
+        delta_mag = 2 * scale * np.linalg.norm(self.normal_modes[mode], axis=1)
         return {
             "delta_mag": delta_mag,
-            "percent": percent,
-            "total_delta": float(total),
+            "percent": self.localize_mode(mode),
+            "total_delta": float(np.sum(delta_mag)),
         }
 
     def displace_geometry(

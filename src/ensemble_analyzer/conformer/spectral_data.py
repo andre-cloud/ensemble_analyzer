@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import Optional, Dict, Union, Literal
+from typing import Dict, Literal
 
 import numpy as np
 
@@ -50,13 +50,7 @@ class SpectralRecord:
     def __len__(self) -> int:
         """Number of spectral transitions."""
         return len(self.X)
-    
-    @property
-    def is_empty(self) -> bool:
-        """Check whether the record contains no transitions."""
-        return len(self.X) == 0
 
-    
 
 @dataclass
 class SpectralStore:
@@ -65,7 +59,7 @@ class SpectralStore:
     Example: store[1]['IR'] -> SpectralRecord(...)
     """
 
-    data: Dict = field(default_factory=lambda: defaultdict(lambda: defaultdict(SpectralRecord)))
+    data: Dict = field(default_factory=lambda: defaultdict(dict))
 
 
     def add(self, protocol_number: int, graph_type: Literal['IR', 'VCD', 'UV', 'ECD'], record: SpectralRecord) -> None:
@@ -83,7 +77,7 @@ class SpectralStore:
     
     def has_graph_type(self, protocol_number: int, graph_type: Literal['IR', 'VCD', 'UV', 'ECD']) -> bool:
         """Check if a specific graph type exists for the given protocol."""
-        return graph_type in self.data[int(protocol_number)]
+        return graph_type in self.data.get(int(protocol_number), {})
 
     def as_dict(self) -> dict:
         """Used for checkpoint serialization."""
@@ -91,7 +85,7 @@ class SpectralStore:
     
     def load(self, input_dict: dict) -> None:
         """Restore the store from a serialized dictionary."""
-        self.data = defaultdict(lambda: defaultdict(SpectralRecord))
+        self.data = defaultdict(dict)
         for proto_str, graphs in input_dict.items():
             proto = int(proto_str)
             for graph_type, record_dict in graphs.items():

@@ -30,7 +30,3 @@ GitHub: https://github.com/andre-cloud/ensemble_analyzer.git
 
 
 title = "\n".join([line.center(80, " ") for line in text.splitlines()])
-
-
-if __name__=='__main__':
-    print(title)

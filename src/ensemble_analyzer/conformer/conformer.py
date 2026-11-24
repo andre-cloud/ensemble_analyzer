@@ -1,14 +1,13 @@
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Union
+from pathlib import Path
+from typing import List, Optional
 from ase.atoms import Atoms
 
-
-from ensemble_analyzer.io_utils import mkdir
 from ensemble_analyzer.calculators.base import BaseCalc
 
-from .energy_data import EnergyRecord, EnergyStore
-from .spectral_data import SpectralRecord, SpectralStore
+from .energy_data import EnergyStore
+from .spectral_data import SpectralStore
 
 import numpy as np
 import random
@@ -25,7 +24,6 @@ class Conformer:
     raw                 : bool            = False
 
     last_geometry       : np.ndarray      = field(init=False)
-    _initial_geometry   : np.ndarray      = field(init=False)
     energies            : EnergyStore     = field(default_factory = EnergyStore)
     active              : bool            = True
     color               : str             = field(default_factory=lambda: "#%06x"%random.randint(0,0xFFFFFF))
@@ -36,12 +34,11 @@ class Conformer:
 
     def __post_init__(self) -> None:
         """Initialize derived fields from the input geometry."""
-        self._initial_geometry = self.geom.copy()
         self.last_geometry = self.geom.copy()
         self.folder = f'conf_{self.number}'
 
         if not self.raw: 
-            mkdir(self.folder)
+            Path(self.folder).mkdir(parents=True, exist_ok=True)
 
     # ===
     # ASE

@@ -99,27 +99,7 @@ ml = [
     "orjson",
     "pandas",
 ]
-all = [
-    "prism_pruner>=0.1.2",
-    "tblite",
-    "aimnet",
-    "fairchem-core",
-    "skala",
-    "opt_einsum",
-    "torch-ema",
-    "prettytable",
-    "matscipy",
-    "h5py",
-    "torchmetrics",
-    "python-hostlist",
-    "configargparse",
-    "GitPython",
-    "pyYAML",
-    "tqdm",
-    "lmdb",
-    "orjson",
-    "pandas",
-]
+all = ["ensemble-analyzer[prism,ml]"]
 docs = [
     "sphinx>=7.0.0",
     "sphinx-rtd-theme",

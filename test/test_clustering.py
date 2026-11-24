@@ -26,8 +26,8 @@ class TestClustering:
     def test_execute_pca_config_passing(self, MockManager, mock_logger, mock_conformer):
         with patch("ensemble_analyzer.clustering.validate_possible_PCA", return_value=True):
             execute_PCA([mock_conformer], 3, "out.png", "Title", mock_logger, False, False)
-            args, kwargs = MockManager.call_args
-            assert kwargs['config'].n_clusters == 3
+            _, kwargs = MockManager.return_value.perform_pca.call_args
+            assert kwargs['n_clusters'] == 3
 
     def test_reduce_by_clusters(self, manager, mock_conformer):
         c1 = MagicMock(active=True, cluster=0)

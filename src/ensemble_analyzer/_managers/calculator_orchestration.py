@@ -131,4 +131,4 @@ class CalculationOrchestrator:
             )
 
 
-        self.logger._separator(f"CALCULATIONS COMPLETED SUCCESSFULLY", char="*")
+        self.logger._separator("CALCULATIONS COMPLETED SUCCESSFULLY", char="*")

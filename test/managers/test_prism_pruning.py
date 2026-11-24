@@ -151,10 +151,9 @@ def test_dispatch_defaults_to_rotconst(mock_logger):
     mgr = PruningManager(logger=mock_logger)
     with patch.object(mgr, "_remove_duplicates_rotconst") as rc, \
          patch.object(mgr, "_remove_duplicates_prism") as pr:
-        mgr._remove_duplicates([], SimpleNamespace(thrG=1, thrB=1, number=1))   # no attribute
         mgr._remove_duplicates([], MagicMock())                                 # mock attribute
         mgr._remove_duplicates([], SimpleNamespace(prune_method="rotconst"))
-    assert rc.call_count == 3 and pr.call_count == 0
+    assert rc.call_count == 2 and pr.call_count == 0
 
 
 def test_dispatch_to_prism(mock_logger):

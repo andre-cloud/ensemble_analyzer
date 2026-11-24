@@ -1,8 +1,8 @@
 import pytest
 import logging
 from unittest.mock import patch, MagicMock
-from ensemble_analyzer._logger.create_log import create_logger
-from ensemble_analyzer._logger.formatter import ColoredFormatter
+from ensemble_analyzer._logger.logger import create_logger
+from ensemble_analyzer._logger.logger import ColoredFormatter
 
 
 class TestColoredFormatter:
@@ -27,20 +27,12 @@ class TestColoredFormatter:
             result = fmt.format(record)
             assert result.startswith(code), f"Level {level} should use {code}"
 
-    def test_auto_detect_color(self):
-        with patch("ensemble_analyzer._logger.formatter.sys.stderr.isatty", return_value=True):
-            fmt = ColoredFormatter(use_colors=None)
-            assert fmt.use_colors is True
-
-        with patch("ensemble_analyzer._logger.formatter.sys.stderr.isatty", return_value=False):
-            fmt = ColoredFormatter(use_colors=None)
-            assert fmt.use_colors is False
 
 
 class TestCreateLogger:
 
-    @patch("ensemble_analyzer._logger.create_log.logging.FileHandler")
-    @patch("ensemble_analyzer._logger.create_log.Logger")
+    @patch("ensemble_analyzer._logger.logger.logging.FileHandler")
+    @patch("ensemble_analyzer._logger.logger.Logger")
     def test_create_logger_default(self, MockLogger, MockFileHandler):
         mock_instance = MockLogger.return_value
         result = create_logger("test.log")
@@ -48,21 +40,21 @@ class TestCreateLogger:
         MockLogger.assert_called_with(name="enan")
         MockFileHandler.assert_called_with("test.log", mode="a")
 
-    @patch("ensemble_analyzer._logger.create_log.logging.FileHandler")
-    @patch("ensemble_analyzer._logger.create_log.Logger")
+    @patch("ensemble_analyzer._logger.logger.logging.FileHandler")
+    @patch("ensemble_analyzer._logger.logger.Logger")
     def test_create_logger_debug(self, MockLogger, MockFileHandler):
         result = create_logger("test.log", debug=True)
         handler = MockFileHandler.return_value
         handler.setLevel.assert_called_with(logging.DEBUG)
 
-    @patch("ensemble_analyzer._logger.create_log.logging.FileHandler")
-    @patch("ensemble_analyzer._logger.create_log.Logger")
+    @patch("ensemble_analyzer._logger.logger.logging.FileHandler")
+    @patch("ensemble_analyzer._logger.logger.Logger")
     def test_create_logger_custom_name(self, MockLogger, MockFileHandler):
         create_logger("test.log", logger_name="custom")
         MockLogger.assert_called_with(name="custom")
 
-    @patch("ensemble_analyzer._logger.create_log.logging.FileHandler")
-    @patch("ensemble_analyzer._logger.create_log.Logger")
+    @patch("ensemble_analyzer._logger.logger.logging.FileHandler")
+    @patch("ensemble_analyzer._logger.logger.Logger")
     def test_create_logger_no_color(self, MockLogger, MockFileHandler):
         create_logger("test.log", disable_color=True)
         MockLogger.return_value.addHandler.assert_called()

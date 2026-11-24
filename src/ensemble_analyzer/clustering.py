@@ -2,8 +2,7 @@
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer._logger.logger import Logger
 
-from ensemble_analyzer._clustering.cluster_config import ClusteringConfig
-from ensemble_analyzer._clustering.cluster_manager import ClusteringManager
+from ensemble_analyzer._clustering.cluster_manager import ClusteringConfig, ClusteringManager
 
 from ensemble_analyzer.constants import MIN_CONFORMERS_FOR_PCA, CLUSTER_PRUNING_MIN_KEEP_FRACTION
 
@@ -19,7 +18,6 @@ def execute_PCA(
     log: Logger,
     set_: bool = True,
     include_H: bool = False,
-    legend: bool = True,
     n_jobs: int = 1,
 ) -> bool:
     """Execute PCA-based clustering on the conformer ensemble.
@@ -34,7 +32,6 @@ def execute_PCA(
             With auto-detection, the pruning floor
             ``CLUSTER_PRUNING_MIN_KEEP_FRACTION`` then applies.
         include_H (bool): Include hydrogen in distance matrix.
-        legend (bool): Include legend in plot.
         n_jobs (int): Parallel workers for the automatic k search.
 
     Returns:
@@ -42,7 +39,6 @@ def execute_PCA(
     """
 
     config = ClusteringConfig(
-        n_clusters=ncluster,
         include_H=include_H,
         set_cluster_attribute=set_,
         min_keep_fraction=CLUSTER_PRUNING_MIN_KEEP_FRACTION if set_ else 0.0,
@@ -58,7 +54,6 @@ def execute_PCA(
             n_clusters=ncluster,
             output_file=fname,
             title=title,
-            include_legend=legend,
         )
         return result is not None
     return False
@@ -115,14 +110,4 @@ def get_ensemble(
     
     manager = ClusteringManager(logger=log)
     return manager.reduce_by_clusters(confs, sort_by_energy=sort)
-
-
-# ===
-# CLI for Standalone Usage
-# ===
-
-if __name__ == "__main__":
-    """
-    Standalone CLI for PCA analysis.
-    """
 

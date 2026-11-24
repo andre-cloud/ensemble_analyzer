@@ -8,7 +8,6 @@ class TestSpectralRecord:
     def test_creation(self):
         rec = SpectralRecord(X=np.array([1000.0, 2000.0]), Y=np.array([0.5, 1.0]))
         assert len(rec) == 2
-        assert not rec.is_empty
 
     def test_converts_to_array(self):
         rec = SpectralRecord(X=[1000.0, 2000.0], Y=[0.5, 1.0])
@@ -22,10 +21,6 @@ class TestSpectralRecord:
     def test_not_1d(self):
         with pytest.raises(ValueError):
             SpectralRecord(X=np.array([[1.0]]), Y=np.array([[0.5]]))
-
-    def test_is_empty(self):
-        rec = SpectralRecord(X=np.array([]), Y=np.array([]))
-        assert rec.is_empty
 
     def test_as_dict_roundtrip(self):
         rec = SpectralRecord(X=np.array([1000.0]), Y=np.array([0.5]))

@@ -1,5 +1,5 @@
 import contextlib
-import os
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
@@ -7,27 +7,23 @@ from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.protocol.protocol import Protocol
 from ensemble_analyzer.ensemble_io import read_ensemble, save_snapshot
 from ensemble_analyzer._managers.calculation_config import CalculationConfig
-from ensemble_analyzer._logger.create_log import create_logger
+from ensemble_analyzer._logger.logger import create_logger
 from ensemble_analyzer.constants import DEBUG
 
 
+@dataclass
 class EnsembleResult:
     """
     Container for the results of an ensemble_analyzer workflow.
     """
-    def __init__(
-        self,
-        conformers: List[Conformer],
-        protocols: List[Protocol],
-        config: CalculationConfig,
-        logger: Any = None,
-        orchestrator: Any = None
-    ):
-        self.conformers = conformers
-        self.protocols = protocols
-        self.config = config
-        self.logger = logger
-        self.orchestrator = orchestrator
+    conformers: List[Conformer]
+    protocols: List[Protocol]
+    config: CalculationConfig
+    logger: Any = None
+    orchestrator: Any = None
+    initial_count: int = field(init=False)
+
+    def __post_init__(self) -> None:
         self.initial_count = len(self.conformers)
 
     @property

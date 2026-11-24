@@ -1,13 +1,12 @@
 
 from dataclasses import dataclass, field
-from typing import Union, Optional, List, Dict, Literal, Any
+from typing import Union, Optional, List, Dict, Any
 import json
 from importlib.resources import files
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.protocol.solvent import Solvent
 from ensemble_analyzer.protocol.dispersion import normalize_dispersion, validate_dispersion
 from ensemble_analyzer._managers.prism_backend import ALL_PRUNE_METHODS
-from pathlib import Path
 
 
 def sort_protocols(protocols: List['Protocol']) -> List['Protocol']:
@@ -269,34 +268,11 @@ class Protocol:
         calc_class = CALCULATOR_REGISTRY[calc_name]
         calc_instance = calc_class(self, cpu, conf, **kwargs)
         
-        mode_map = {
-            "opt": calc_instance.optimisation,
-            "freq": calc_instance.frequency,
-            "energy": calc_instance.single_point,
-        }
-
         if self.opt:
-            return mode_map["opt"]()
+            return calc_instance.optimisation()
         if self.freq:
-            return mode_map["freq"]()
-        return mode_map["energy"]()
-    
-    # ===
-    # Static Functions
-    # ===
-
-    @staticmethod
-    def load_raw(json) -> 'Protocol':
-        """
-        Factory method to create a Protocol instance from a dictionary.
-
-        Args:
-            json_data (dict): Dictionary containing protocol parameters.
-
-        Returns:
-            Protocol: Initialized protocol object.
-        """
-        return Protocol(**json)
+            return calc_instance.frequency()
+        return calc_instance.single_point()
     
     def __repr__(self) -> str:
         """String representation of the protocol step.

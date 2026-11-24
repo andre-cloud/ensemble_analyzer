@@ -69,11 +69,11 @@ def main(
         output = f"{base}_restart.out"
 
     # ── Heavy imports (deferred) ──────────────────────────────────────
-    from ensemble_analyzer.protocol.protocol import Protocol, load_protocol, sort_protocols
-    from ensemble_analyzer._logger.create_log import create_logger
+    from ensemble_analyzer.protocol.protocol import sort_protocols
+    from ensemble_analyzer._logger.logger import create_logger
     from ensemble_analyzer._title import title
     from ensemble_analyzer.constants import DEBUG
-    from ensemble_analyzer.ensemble_io import read_ensemble, load_workflow_data
+    from ensemble_analyzer.ensemble_io import load_workflow_data
     from ensemble_analyzer._managers.protocol_manager import ProtocolManager
     from ensemble_analyzer._managers.calculation_config import CalculationConfig
     from ensemble_analyzer._managers.calculator_orchestration import CalculationOrchestrator

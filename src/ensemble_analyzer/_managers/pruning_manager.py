@@ -1,4 +1,4 @@
-from typing import List, Dict, Optional, Tuple
+from typing import List, Optional
 from dataclasses import dataclass
 import numpy as np
 
@@ -7,7 +7,7 @@ from collections import defaultdict
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.protocol.protocol import Protocol
 from ensemble_analyzer._logger.logger import Logger
-from ensemble_analyzer.constants import R, EH_TO_KCAL, CAL_TO_J, boltzmann_distribution
+from ensemble_analyzer.constants import EH_TO_KCAL, boltzmann_distribution
 from ensemble_analyzer._managers.prism_backend import PRISM_METHODS, run_prism_pruning
 
 
@@ -110,7 +110,7 @@ class PruningManager:
         
         energies = np.array([c.get_energy(protocol_number=protocol.number) for c in active])
         
-        rel_energies, populations = self._boltzmann_distribution(energies, temperature)
+        rel_energies, populations = boltzmann_distribution(energies, temperature)
 
         for idx, conf in enumerate(active):
             conf.energies.last().Erel = float(rel_energies[idx])
@@ -152,7 +152,7 @@ class PruningManager:
             None
         """
         
-        active = [(conf, self._get_effective_energy(conf)) for conf in conformers if conf.active]
+        active = [(conf, conf.energies.get_energy()) for conf in conformers if conf.active]
         
         if len(active)==0: 
             return
@@ -185,11 +185,9 @@ class PruningManager:
         ``'rotconst'`` (default, energy + rotational constants) or
         ``'prism'`` / ``'prism_rotcorr'`` (PRISM Pruner backend).
         """
-        method = getattr(protocol, "prune_method", "rotconst")
-        if not isinstance(method, str):  # e.g. mocks or legacy objects
-            method = "rotconst"
-        if method.lower() in PRISM_METHODS:
-            return self._remove_duplicates_prism(conformers, protocol, method.lower())
+        method = str(protocol.prune_method).lower()
+        if method in PRISM_METHODS:
+            return self._remove_duplicates_prism(conformers, protocol, method)
         return self._remove_duplicates_rotconst(conformers, protocol)
 
     def _remove_duplicates_prism(self, conformers: List[Conformer], protocol: Protocol, method: str) -> None:
@@ -209,7 +207,7 @@ class PruningManager:
         if len(active) < 2:
             return
 
-        e_kcal = np.array([self._get_effective_energy(c) for c in active]) * EH_TO_KCAL
+        e_kcal = np.array([c.energies.get_energy() for c in active]) * EH_TO_KCAL
         order = np.argsort(e_kcal, kind="stable")
         active = [active[i] for i in order]
         e_kcal = e_kcal[order] - e_kcal[order].min()
@@ -225,12 +223,12 @@ class PruningManager:
             coords, atoms, e_kcal,
             max_dE=float(protocol.thrG),
             method=method,
-            use_moi=bool(getattr(protocol, "prism_moi", False)),
-            moi_dev=float(getattr(protocol, "prism_moi_dev", 1e-2)),
-            max_rmsd=float(getattr(protocol, "prism_max_rmsd", 0.25)),
-            max_dev=getattr(protocol, "prism_max_dev", None),
+            use_moi=bool(protocol.prism_moi),
+            moi_dev=float(protocol.prism_moi_dev),
+            max_rmsd=float(protocol.prism_max_rmsd),
+            max_dev=protocol.prism_max_dev,
             heavy_atoms_only=not self.include_H,
-            timeout_s=int(getattr(protocol, "prism_timeout", 60)),
+            timeout_s=int(protocol.prism_timeout),
             debugfunction=self.logger.debug,
         )
 
@@ -305,7 +303,7 @@ class PruningManager:
         Returns:
             ComparisonResult: Result of the comparison with deactivation decision.
         """
-        delta_e = abs(self._get_effective_energy(check) - self._get_effective_energy(ref)) * EH_TO_KCAL
+        delta_e = abs(check.energies.get_energy() - ref.energies.get_energy()) * EH_TO_KCAL
         delta_b = abs(check.rotatory - ref.rotatory)
         delta_m = abs(check.moment - ref.moment) if check.moment else np.nan
         
@@ -332,19 +330,6 @@ class PruningManager:
     # ===
 
     @staticmethod
-    def _get_effective_energy(conf: Conformer) -> float:
-        """
-        Retrieve the effective energy for a conformer.
-
-        Args:
-            conf (Conformer): The conformer to query.
-
-        Returns:
-            float: Effective energy value.
-        """
-        return conf.energies.get_energy()
-    
-    @staticmethod
     def _calculate_rmsd(conf1: Conformer, conf2: Conformer, include_H: bool) -> float:
         """Calculate RMSD based on distance matrix eigenvalues.
         It is a rotation/traslation invariant measure.
@@ -367,13 +352,6 @@ class PruningManager:
         evals2 = np.linalg.eigvalsh(dm2)
 
         return float(np.sqrt(np.mean((evals1 - evals2) ** 2)))
-    
-    @staticmethod
-    def _boltzmann_distribution(
-        energies: np.ndarray,
-        temperature: float
-    ) -> Tuple[np.ndarray, np.ndarray]:
-        return boltzmann_distribution(energies, temperature)
     
     # ===
     # Logging

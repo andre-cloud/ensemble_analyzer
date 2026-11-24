@@ -1,5 +1,3 @@
-
-
 from dataclasses import dataclass
 from typing import Any, Optional, Dict, List
 from pathlib import Path
@@ -52,10 +50,10 @@ class CalculationConfig:
     @classmethod
     def from_args(cls, args, start_from_protocol: int = 0) -> 'CalculationConfig':
         """
-        Factory method to create a config from command-line arguments.
-        
-        Also handles persistence: checks for existing `settings.json` or creates
-        one from the provided arguments.
+        Create a config from command-line arguments.
+
+        If `settings.json` exists its values win (keys missing from it fall back
+        to the arguments); otherwise it is created from the arguments.
 
         Args:
             args (argparse.Namespace): Parsed command-line arguments.
@@ -64,55 +62,43 @@ class CalculationConfig:
         Returns:
             CalculationConfig: Initialized configuration object.
         """
-        
+        settings = cls._args_to_dict(args)
         settings_file = Path("settings.json")
-        
-        # Try to load existing settings
         if settings_file.exists():
             with open(settings_file) as f:
-                settings = json.load(f)
+                settings.update(json.load(f))
         else:
-            # Create settings from args
-            settings = cls._args_to_dict(args)
-            
-            # Save for future use
             with open(settings_file, 'w') as f:
                 json.dump(settings, f, indent=4)
-        
-        # Create config from settings
+        return cls._from_settings(settings, start_from_protocol)
+
+    @classmethod
+    def load(cls, filepath: Path = Path("settings.json")) -> 'CalculationConfig':
+        """
+        Load configuration from a settings JSON file.
+
+        Raises:
+            FileNotFoundError: If the settings file is missing.
+        """
+        with open(filepath) as f:
+            return cls._from_settings(json.load(f))
+
+    @classmethod
+    def _from_settings(cls, s: dict, start_from_protocol: int = 0) -> 'CalculationConfig':
+        """Build a config from a settings dict (keys as in settings.json)."""
+        def pair(key):
+            return {'vibro': s.get(f"{key}_vibro"), 'electro': s.get(f"{key}_electro")}
+        simple = ("cpu", "temperature", "include_H", "definition", "invert",
+                  "restart", "linear", "cut_off", "alpha", "P")
         return cls(
-            cpu=settings.get("cpu", args.cpu),
-            temperature=settings.get("temperature", args.temperature),
             start_from_protocol=start_from_protocol,
-            include_H=settings.get("include_H", args.include_H),
-            definition=settings.get("definition", args.definition),
-            fwhm={
-                'vibro': settings.get("fwhm_vibro", args.fwhm_vibro),
-                'electro': settings.get("fwhm_electro", args.fwhm_electro)
-            },
-            shift={
-                'vibro': settings.get("shift_vibro", args.shift_vibro),
-                'electro': settings.get("shift_electro", args.shift_electro)
-            },
-            interested={
-                'vibro': settings.get("interested_vibro", args.interest_vibro),
-                'electro': settings.get("interested_electro", args.interest_electro)
-            },
-            invert=settings.get("invert", args.invert),
-            restart = settings.get("restart", args.restart)
+            fwhm=pair("fwhm"), shift=pair("shift"), interested=pair("interested"),
+            **{k: s[k] for k in simple if k in s},
         )
-    
+
     @staticmethod
     def _args_to_dict(args: Any) -> dict:
-        """
-        Convert argparse namespace to settings dictionary.
-        
-        Args:
-            args: Parsed arguments
-            
-        Returns:
-            Dictionary suitable for settings.json
-        """
+        """Convert the argparse namespace to the settings.json dictionary."""
         return {
             "cpu": args.cpu,
             "temperature": args.temperature,
@@ -126,107 +112,12 @@ class CalculationConfig:
             "invert": args.invert,
             "include_H": args.include_H,
             "restart": args.restart,
+            "P": args.pressure,
+            "linear": args.linear,
+            "alpha": args.alpha,
+            "cut_off": args.cut_off,
         }
-    
-    def to_dict(self)  -> dict:
-        """
-        Convert configuration to a dictionary for serialization.
 
-        Returns:
-            dict: Dictionary suitable for JSON dumping.
-        """
-        result = {
-            "cpu": self.cpu,
-            "temperature": self.temperature,
-            "definition": self.definition,
-            "include_H": self.include_H,
-            "invert": self.invert,
-        }
-        
-        if self.fwhm:
-            result["fwhm_vibro"] = self.fwhm.get("vibro")
-            result["fwhm_electro"] = self.fwhm.get("electro")
-        
-        if self.shift:
-            result["shift_vibro"] = self.shift.get("vibro")
-            result["shift_electro"] = self.shift.get("electro")
-        
-        if self.interested:
-            result["interested_vibro"] = self.interested.get("vibro")
-            result["interested_electro"] = self.interested.get("electro")
-        
-        return result
-    
-    def save(self, filepath: Path = Path("settings.json")) -> None:
-        """
-        Save the current configuration to a JSON file.
-
-        Args:
-            filepath (Path): Output file path. Defaults to "settings.json".
-        """
-        with open(filepath, 'w') as f:
-            json.dump(self.to_dict(), f, indent=4)
-    
-    @classmethod
-    def load(cls, filepath: Path = Path("settings.json")) -> 'CalculationConfig':
-        """
-        Load configuration from a JSON file.
-
-        Args:
-            filepath (Path): Input file path. Defaults to "settings.json".
-
-        Returns:
-            CalculationConfig: Reconstructed configuration object.
-
-        Raises:
-            FileNotFoundError: If the settings file is missing.
-        """
-
-        if not filepath.exists():
-            raise FileNotFoundError(f"Settings file not found: {filepath}")
-        
-        with open(filepath) as f:
-            settings = json.load(f)
-        
-        return cls(
-            cpu=settings["cpu"],
-            temperature=settings["temperature"],
-            start_from_protocol=settings.get("start_from_protocol", 0),
-            include_H=settings.get("include_H", False),
-            definition=settings.get("definition", 4),
-            fwhm={
-                'vibro': settings.get("fwhm_vibro"),
-                'electro': settings.get("fwhm_electro")
-            },
-            shift={
-                'vibro': settings.get("shift_vibro"),
-                'electro': settings.get("shift_electro")
-            },
-            interested={
-                'vibro': settings.get("interested_vibro"),
-                'electro': settings.get("interested_electro")
-            },
-            invert=settings.get("invert", False),
-            restart = settings.get("restart", False)
-        )
-    
-    def validate(self) -> None:
-        """
-        Perform sanity checks on configuration values.
-
-        Raises:
-            ValueError: If critical parameters (cpu, temperature) are invalid.
-        """
-        
-        if self.cpu < 1:
-            raise ValueError(f"CPU count must be ≥ 1, got {self.cpu}")
-        
-        if self.temperature <= 0:
-            raise ValueError(f"Temperature must be > 0 K, got {self.temperature}")
-        
-        if self.definition < 1:
-            raise ValueError(f"Definition must be ≥ 1, got {self.definition}")
-        
     def create_log(self, protocols: List[Protocol], conformers: int) -> dict:
         """
         Create a summary dictionary of the calculation setup.

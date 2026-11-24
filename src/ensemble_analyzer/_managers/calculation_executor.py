@@ -91,14 +91,13 @@ class CalculationExecutor:
             )
 
         is_ml = protocol.calculator.lower() in ML_CALCULATORS
+        (Path(conf.folder) / f"protocol_{protocol.number}").mkdir(parents=True, exist_ok=True)
+        for var in ('OMP_NUM_THREADS', 'MKL_NUM_THREADS', 'OPENBLAS_NUM_THREADS'):
+            os.environ[var] = str(cpu)
 
         if not is_ml and getattr(protocol, "deltascf", None):
             # ΔSCF: reference, convergence ladder, checks and spin purification
             from ensemble_analyzer._managers.deltascf_runner import DeltaSCFRunner
-            (Path(conf.folder) / f"protocol_{protocol.number}").mkdir(parents=True, exist_ok=True)
-            os.environ['OMP_NUM_THREADS'] = str(cpu)
-            os.environ['MKL_NUM_THREADS'] = str(cpu)
-            os.environ['OPENBLAS_NUM_THREADS'] = str(cpu)
             return DeltaSCFRunner(self).run(conf, protocol, cpu)
 
         calc_kwargs = {}
@@ -113,11 +112,6 @@ class CalculationExecutor:
 
         calc, label = protocol.get_calculator(cpu=cpu, conf=conf, **calc_kwargs)
         atoms = conf.get_ase_atoms(calc)
-        (Path(conf.folder) / f"protocol_{protocol.number}").mkdir(parents=True, exist_ok=True)
-
-        os.environ['OMP_NUM_THREADS'] = str(cpu)
-        os.environ['MKL_NUM_THREADS'] = str(cpu)
-        os.environ['OPENBLAS_NUM_THREADS'] = str(cpu)
 
         start_time = time.perf_counter()
 
@@ -237,22 +231,33 @@ class CalculationExecutor:
     # Imaginary frequency validation + displacement
     # ------------------------------------------------------------------
 
+    @staticmethod
+    def _imag_setup(conf: Conformer, protocol: Protocol):
+        """(freqs, negative-mode indices, analyzer) of the step, or None
+        when it has no frequencies / normal modes."""
+        if str(protocol.number) not in conf.energies:
+            return None
+        data = conf.energies[str(protocol.number)]
+        freqs, modes = data.Freq, data.NormalModes
+        if not isinstance(freqs, np.ndarray) or freqs.size == 0:
+            return None
+        if not isinstance(modes, np.ndarray) or modes.shape[0] == 0:
+            return None
+        analyzer = NormalModeAnalyzer(
+            normal_modes=modes, geom=conf.last_geometry, atoms=conf.atoms,
+        )
+        return freqs, np.where(freqs < 0)[0], analyzer
+
     def _check_imaginary_and_displace(
         self,
         conf: Conformer,
         protocol: Protocol,
     ) -> tuple[bool, np.ndarray | None]:
-        data = conf.energies[str(protocol.number)]
-        freqs = data.Freq
-        modes = data.NormalModes
-
-        if not isinstance(freqs, np.ndarray) or freqs.size == 0:
+        setup = self._imag_setup(conf, protocol)
+        if setup is None:
             return False, None
-        if not isinstance(modes, np.ndarray) or modes.shape[0] == 0:
-            return False, None
-
+        freqs, neg_idx, analyzer = setup
         threshold = abs(protocol.neg_freq_threshold)
-        neg_idx = np.where(freqs < 0)[0]
         if len(neg_idx) == 0:
             if protocol.ts:
                 self.logger.warning(
@@ -262,11 +267,6 @@ class CalculationExecutor:
                 conf.active = False
             return False, None
 
-        analyzer = NormalModeAnalyzer(
-            normal_modes=modes,
-            geom=conf.last_geometry,
-            atoms=conf.atoms,
-        )
         significant, _ = analyzer.classify_negative_freqs(freqs, threshold)
 
         if protocol.ts and protocol.loc_freq:
@@ -274,7 +274,7 @@ class CalculationExecutor:
                 conf, protocol, freqs, neg_idx, significant, analyzer,
             )
         return self._handle_opt_imaginary(
-            conf, protocol, freqs, neg_idx, significant, analyzer,
+            conf, protocol, freqs, significant, analyzer,
         )
 
     def _log_imaginary_localization(
@@ -282,25 +282,11 @@ class CalculationExecutor:
         conf: Conformer,
         protocol: Protocol,
     ) -> None:
-        if str(protocol.number) not in conf.energies:
+        setup = self._imag_setup(conf, protocol)
+        if setup is None or len(setup[1]) == 0:
             return
-        data = conf.energies[str(protocol.number)]
-        freqs = data.Freq
-        modes = data.NormalModes
-        if not isinstance(freqs, np.ndarray) or freqs.size == 0:
-            return
-        if not isinstance(modes, np.ndarray) or modes.shape[0] == 0:
-            return
-        neg_idx = np.where(freqs < 0)[0]
-        if len(neg_idx) == 0:
-            return
-
+        freqs, _, analyzer = setup
         threshold = abs(protocol.neg_freq_threshold)
-        analyzer = NormalModeAnalyzer(
-            normal_modes=modes,
-            geom=conf.last_geometry,
-            atoms=conf.atoms,
-        )
         significant, noise = analyzer.classify_negative_freqs(freqs, threshold)
 
         if noise:
@@ -319,7 +305,7 @@ class CalculationExecutor:
             if details["top_atoms"]:
                 parts.append(
                     "atoms: "
-                    +                     ", ".join(f"{idx}:{a}({p:.1f}%)" for idx, a, p in details["top_atoms"])
+                    + ", ".join(f"{idx}:{a}({p:.1f}%)" for idx, a, p in details["top_atoms"])
                 )
             self.logger.debug(f"Conf {conf.number}: significant imag " + " | ".join(parts))
 
@@ -328,7 +314,7 @@ class CalculationExecutor:
     # ------------------------------------------------------------------
 
     def _handle_opt_imaginary(
-        self, conf, protocol, freqs, neg_idx, significant, analyzer,
+        self, conf, protocol, freqs, significant, analyzer,
     ) -> tuple[bool, np.ndarray | None]:
         if len(significant) == 0:
             return False, None
@@ -366,8 +352,6 @@ class CalculationExecutor:
         sorted_idx = sorted(neg_idx, key=lambda i: abs(freqs[i]), reverse=True)
 
         def _on_target(mode_i: int) -> bool:
-            if not loc_freq:
-                return True
             d = analyzer.delta_positions(mode_i, protocol.displace_scale)
             target_idx = np.unique([a for g in loc_freq for a in g])
             target_pct = float(np.sum(d["percent"][target_idx]))

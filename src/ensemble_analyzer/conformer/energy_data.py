@@ -151,13 +151,7 @@ class EnergyStore:
 
     def get_last_freq(self, protocol_number: str) -> np.ndarray:
         """Retrieve frequencies from the given protocol, falling back to earlier ones."""
-        p = str(protocol_number)
-        if p in self.data:
-            freq = self.data[p].Freq
-            if freq is not None and len(freq) > 0:
-                return freq
-    
-        for i in range(int(protocol_number) - 1, -1, -1):
+        for i in range(int(protocol_number), -1, -1):
             key = str(i)
             if key in self.data:
                 freq = self.data[key].Freq

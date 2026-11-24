@@ -1,9 +1,8 @@
 
-from typing import List, Union
+from typing import List
 import copy
 import time
 import datetime
-import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import numpy as np
@@ -21,7 +20,7 @@ from ensemble_analyzer._managers.calculation_executor import CalculationExecutor
 from ensemble_analyzer._managers.pruning_manager import PruningManager
 
 from ensemble_analyzer.calculators.base import ML_CALCULATORS
-from ensemble_analyzer.constants import DEBUG, MIN_RETENTION_RATE, EH_TO_KCAL
+from ensemble_analyzer.constants import boltzmann_distribution, MIN_RETENTION_RATE, EH_TO_KCAL
 
 
 
@@ -309,10 +308,10 @@ class ProtocolExecutor:
         dG = np.array([i.energies[protocol_number_str].G for i in CONFS])
 
         # Boltzmann populations
-        _, dE_boltz = self.pruning_manager._boltzmann_distribution(dE, T)
-        _, dE_ZPVE_boltz = self.pruning_manager._boltzmann_distribution(dE_ZPVE, T)
-        _, dH_boltz = self.pruning_manager._boltzmann_distribution(dH, T)
-        _, dG_boltz = self.pruning_manager._boltzmann_distribution(dG, T)
+        _, dE_boltz = boltzmann_distribution(dE, T)
+        _, dE_ZPVE_boltz = boltzmann_distribution(dE_ZPVE, T)
+        _, dH_boltz = boltzmann_distribution(dH, T)
+        _, dG_boltz = boltzmann_distribution(dG, T)
 
         averages = [[
             f'{T:.2f}',
@@ -381,4 +380,4 @@ class ProtocolExecutor:
 
         rows = [i.create_log(protocol_number=protocol.number, monitor_internals=protocol.monitor_internals) for i in conformers if i.active]
         
-        self.logger.table(title=title, data=rows, headers=headers, witdh=50, char = '*')
+        self.logger.table(title=title, data=rows, headers=headers, width=50, char = '*')
