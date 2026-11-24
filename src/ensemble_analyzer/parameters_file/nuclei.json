@@ -1,0 +1,492 @@
+{
+  "1H": {
+    "element": "H",
+    "spin": 0.5,
+    "gamma": 267522000.0,
+    "abundance": 0.999885,
+    "range": [
+      -0.5,
+      14.0
+    ]
+  },
+  "2H": {
+    "element": "H",
+    "spin": 1.0,
+    "gamma": 41066000.0,
+    "abundance": 0.000115,
+    "range": [
+      -0.5,
+      14.0
+    ]
+  },
+  "6Li": {
+    "element": "Li",
+    "spin": 1.0,
+    "gamma": 39371000.0,
+    "abundance": 0.0759,
+    "range": [
+      -10.0,
+      10.0
+    ]
+  },
+  "7Li": {
+    "element": "Li",
+    "spin": 1.5,
+    "gamma": 103962000.0,
+    "abundance": 0.9240999999999999,
+    "range": [
+      -10.0,
+      10.0
+    ]
+  },
+  "10B": {
+    "element": "B",
+    "spin": 3.0,
+    "gamma": 28747000.0,
+    "abundance": 0.19899999999999998,
+    "range": [
+      -100.0,
+      100.0
+    ]
+  },
+  "11B": {
+    "element": "B",
+    "spin": 1.5,
+    "gamma": 85847000.0,
+    "abundance": 0.8009999999999999,
+    "range": [
+      -100.0,
+      100.0
+    ]
+  },
+  "13C": {
+    "element": "C",
+    "spin": 0.5,
+    "gamma": 67282800.0,
+    "abundance": 0.010700000000000001,
+    "range": [
+      -10.0,
+      220.0
+    ]
+  },
+  "14N": {
+    "element": "N",
+    "spin": 1.0,
+    "gamma": 19331000.0,
+    "abundance": 0.9963599999999999,
+    "range": [
+      -400.0,
+      100.0
+    ]
+  },
+  "15N": {
+    "element": "N",
+    "spin": 0.5,
+    "gamma": -27116000.0,
+    "abundance": 0.00364,
+    "range": [
+      -400.0,
+      100.0
+    ]
+  },
+  "17O": {
+    "element": "O",
+    "spin": 2.5,
+    "gamma": -36281000.0,
+    "abundance": 0.00037999999999999997,
+    "range": [
+      -100.0,
+      600.0
+    ]
+  },
+  "19F": {
+    "element": "F",
+    "spin": 0.5,
+    "gamma": 251814800.0,
+    "abundance": 1.0,
+    "range": [
+      -250.0,
+      50.0
+    ]
+  },
+  "23Na": {
+    "element": "Na",
+    "spin": 1.5,
+    "gamma": 70808000.0,
+    "abundance": 1.0,
+    "range": [
+      -50.0,
+      50.0
+    ]
+  },
+  "25Mg": {
+    "element": "Mg",
+    "spin": 2.5,
+    "gamma": -16388000.0,
+    "abundance": 0.1,
+    "range": [
+      -100,
+      100
+    ]
+  },
+  "27Al": {
+    "element": "Al",
+    "spin": 2.5,
+    "gamma": 69763000.0,
+    "abundance": 1.0,
+    "range": [
+      -50.0,
+      250.0
+    ]
+  },
+  "29Si": {
+    "element": "Si",
+    "spin": 0.5,
+    "gamma": -53190000.0,
+    "abundance": 0.046849999999999996,
+    "range": [
+      -150.0,
+      50.0
+    ]
+  },
+  "31P": {
+    "element": "P",
+    "spin": 0.5,
+    "gamma": 108394000.0,
+    "abundance": 1.0,
+    "range": [
+      -150.0,
+      250.0
+    ]
+  },
+  "33S": {
+    "element": "S",
+    "spin": 1.5,
+    "gamma": 20546800.0,
+    "abundance": 0.0075,
+    "range": [
+      -200.0,
+      300.0
+    ]
+  },
+  "35Cl": {
+    "element": "Cl",
+    "spin": 1.5,
+    "gamma": 26242000.0,
+    "abundance": 0.7576,
+    "range": [
+      -100.0,
+      1100.0
+    ]
+  },
+  "37Cl": {
+    "element": "Cl",
+    "spin": 1.5,
+    "gamma": 21844000.0,
+    "abundance": 0.24239999999999998,
+    "range": [
+      -100.0,
+      1100.0
+    ]
+  },
+  "51V": {
+    "element": "V",
+    "spin": 3.5,
+    "gamma": 70455000.0,
+    "abundance": 0.9975,
+    "range": [
+      -1500.0,
+      500.0
+    ]
+  },
+  "55Mn": {
+    "element": "Mn",
+    "spin": 2.5,
+    "gamma": 66453000.0,
+    "abundance": 1.0,
+    "range": [
+      -3000,
+      3000
+    ]
+  },
+  "57Fe": {
+    "element": "Fe",
+    "spin": 0.5,
+    "gamma": 8681000.0,
+    "abundance": 0.02119,
+    "range": [
+      -5000,
+      5000
+    ]
+  },
+  "59Co": {
+    "element": "Co",
+    "spin": 3.5,
+    "gamma": 63320000.0,
+    "abundance": 1.0,
+    "range": [
+      -5000,
+      15000
+    ]
+  },
+  "63Cu": {
+    "element": "Cu",
+    "spin": 1.5,
+    "gamma": 71118000.0,
+    "abundance": 0.6915,
+    "range": [
+      -500,
+      1000
+    ]
+  },
+  "65Cu": {
+    "element": "Cu",
+    "spin": 1.5,
+    "gamma": 76040000.0,
+    "abundance": 0.3085,
+    "range": [
+      -500,
+      1000
+    ]
+  },
+  "75As": {
+    "element": "As",
+    "spin": 1.5,
+    "gamma": 45960000.0,
+    "abundance": 1.0,
+    "range": [
+      -500,
+      500
+    ]
+  },
+  "77Se": {
+    "element": "Se",
+    "spin": 0.5,
+    "gamma": 51253857.0,
+    "abundance": 0.07629999999999999,
+    "range": [
+      -500.0,
+      1500.0
+    ]
+  },
+  "79Br": {
+    "element": "Br",
+    "spin": 1.5,
+    "gamma": 67256000.0,
+    "abundance": 0.5069,
+    "range": [
+      -100.0,
+      1500.0
+    ]
+  },
+  "81Br": {
+    "element": "Br",
+    "spin": 1.5,
+    "gamma": 72497000.0,
+    "abundance": 0.49310000000000004,
+    "range": [
+      -100.0,
+      1500.0
+    ]
+  },
+  "89Y": {
+    "element": "Y",
+    "spin": 0.5,
+    "gamma": -13163000.0,
+    "abundance": 1.0,
+    "range": [
+      -500,
+      1500
+    ]
+  },
+  "95Mo": {
+    "element": "Mo",
+    "spin": 2.5,
+    "gamma": -17433000.0,
+    "abundance": 0.159,
+    "range": [
+      -2500,
+      4500
+    ]
+  },
+  "103Rh": {
+    "element": "Rh",
+    "spin": 0.5,
+    "gamma": -8468000.0,
+    "abundance": 1.0,
+    "range": [
+      -2000,
+      12000
+    ]
+  },
+  "107Ag": {
+    "element": "Ag",
+    "spin": 0.5,
+    "gamma": -10889000.0,
+    "abundance": 0.51839,
+    "range": [
+      -500,
+      1500
+    ]
+  },
+  "109Ag": {
+    "element": "Ag",
+    "spin": 0.5,
+    "gamma": -12518000.0,
+    "abundance": 0.48161000000000004,
+    "range": [
+      -500,
+      1500
+    ]
+  },
+  "111Cd": {
+    "element": "Cd",
+    "spin": 0.5,
+    "gamma": -56983000.0,
+    "abundance": 0.128,
+    "range": [
+      -500,
+      1000
+    ]
+  },
+  "113Cd": {
+    "element": "Cd",
+    "spin": 0.5,
+    "gamma": -59609155.0,
+    "abundance": 0.1222,
+    "range": [
+      -500.0,
+      1000.0
+    ]
+  },
+  "115Sn": {
+    "element": "Sn",
+    "spin": 0.5,
+    "gamma": -88013000.0,
+    "abundance": 0.0034000000000000002,
+    "range": [
+      -2500,
+      1500
+    ]
+  },
+  "117Sn": {
+    "element": "Sn",
+    "spin": 0.5,
+    "gamma": -95888000.0,
+    "abundance": 0.0768,
+    "range": [
+      -2500,
+      1500
+    ]
+  },
+  "119Sn": {
+    "element": "Sn",
+    "spin": 0.5,
+    "gamma": -100317000.0,
+    "abundance": 0.0859,
+    "range": [
+      -2500,
+      1500
+    ]
+  },
+  "125Te": {
+    "element": "Te",
+    "spin": 0.5,
+    "gamma": -85108000.0,
+    "abundance": 0.0707,
+    "range": [
+      -1500,
+      3500
+    ]
+  },
+  "127I": {
+    "element": "I",
+    "spin": 2.5,
+    "gamma": 53895730.0,
+    "abundance": 1.0,
+    "range": [
+      -500.0,
+      3000.0
+    ]
+  },
+  "129Xe": {
+    "element": "Xe",
+    "spin": 0.5,
+    "gamma": -74521000.0,
+    "abundance": 0.264,
+    "range": [
+      -500,
+      6000
+    ]
+  },
+  "133Cs": {
+    "element": "Cs",
+    "spin": 3.5,
+    "gamma": 35333000.0,
+    "abundance": 1.0,
+    "range": [
+      -200,
+      200
+    ]
+  },
+  "183W": {
+    "element": "W",
+    "spin": 0.5,
+    "gamma": 11282000.0,
+    "abundance": 0.1431,
+    "range": [
+      -6000,
+      3000
+    ]
+  },
+  "187Os": {
+    "element": "Os",
+    "spin": 0.5,
+    "gamma": 6193000.0,
+    "abundance": 0.0196,
+    "range": [
+      -5000,
+      5000
+    ]
+  },
+  "195Pt": {
+    "element": "Pt",
+    "spin": 0.5,
+    "gamma": 58385000.0,
+    "abundance": 0.33832,
+    "range": [
+      -5000.0,
+      1000.0
+    ]
+  },
+  "199Hg": {
+    "element": "Hg",
+    "spin": 0.5,
+    "gamma": 48430000.0,
+    "abundance": 0.16870000000000002,
+    "range": [
+      -3000.0,
+      500.0
+    ]
+  },
+  "205Tl": {
+    "element": "Tl",
+    "spin": 0.5,
+    "gamma": 155393000.0,
+    "abundance": 0.7048000000000001,
+    "range": [
+      -5000,
+      8000
+    ]
+  },
+  "207Pb": {
+    "element": "Pb",
+    "spin": 0.5,
+    "gamma": 55800000.0,
+    "abundance": 0.221,
+    "range": [
+      -2000.0,
+      2000.0
+    ]
+  }
+}

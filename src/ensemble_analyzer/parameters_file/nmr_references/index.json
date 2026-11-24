@@ -1,0 +1,113 @@
+{
+  "TMS": {
+    "file": "TMS.xyz",
+    "smiles": "C[Si](C)(C)C",
+    "aliases": [
+      "tetramethylsilane",
+      "SiMe4",
+      "Me4Si"
+    ],
+    "charge": 0,
+    "mult": 1,
+    "nuclei": [
+      "1H",
+      "13C",
+      "29Si"
+    ]
+  },
+  "CFCl3": {
+    "file": "CFCl3.xyz",
+    "smiles": "FC(Cl)(Cl)Cl",
+    "aliases": [
+      "trichlorofluoromethane",
+      "CCl3F",
+      "freon-11"
+    ],
+    "charge": 0,
+    "mult": 1,
+    "nuclei": [
+      "19F"
+    ]
+  },
+  "H3PO4": {
+    "file": "H3PO4.xyz",
+    "smiles": "OP(O)(O)=O",
+    "aliases": [
+      "phosphoric_acid"
+    ],
+    "charge": 0,
+    "mult": 1,
+    "nuclei": [
+      "31P"
+    ]
+  },
+  "CH3NO2": {
+    "file": "CH3NO2.xyz",
+    "smiles": "C[N+](=O)[O-]",
+    "aliases": [
+      "nitromethane",
+      "MeNO2"
+    ],
+    "charge": 0,
+    "mult": 1,
+    "nuclei": [
+      "15N",
+      "14N"
+    ]
+  },
+  "NH3": {
+    "file": "NH3.xyz",
+    "smiles": "N",
+    "aliases": [
+      "ammonia"
+    ],
+    "charge": 0,
+    "mult": 1,
+    "nuclei": [
+      "15N",
+      "14N"
+    ]
+  },
+  "BF3OEt2": {
+    "file": "BF3OEt2.xyz",
+    "smiles": "CC[O+](CC)[B-](F)(F)F",
+    "aliases": [
+      "BF3.OEt2",
+      "BF3*OEt2",
+      "boron_trifluoride_etherate"
+    ],
+    "charge": 0,
+    "mult": 1,
+    "nuclei": [
+      "11B",
+      "10B"
+    ]
+  },
+  "Me2Se": {
+    "file": "Me2Se.xyz",
+    "smiles": "C[Se]C",
+    "aliases": [
+      "dimethylselenide",
+      "SeMe2"
+    ],
+    "charge": 0,
+    "mult": 1,
+    "nuclei": [
+      "77Se"
+    ]
+  },
+  "Me4Sn": {
+    "file": "Me4Sn.xyz",
+    "smiles": "C[Sn](C)(C)C",
+    "aliases": [
+      "tetramethyltin",
+      "SnMe4"
+    ],
+    "charge": 0,
+    "mult": 1,
+    "nuclei": [
+      "119Sn",
+      "117Sn"
+    ]
+  }
+}
