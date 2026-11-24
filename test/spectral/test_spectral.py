@@ -1,8 +1,6 @@
 import pytest
 import numpy as np
 from unittest.mock import MagicMock, patch
-from ensemble_analyzer._spectral.comp_electronic import ComputedElectronic
-from ensemble_analyzer._spectral.comp_vibronic import ComputedVibronic
 from ensemble_analyzer._spectral.base import BaseGraph
 
 class TestSpectral:
@@ -16,7 +14,7 @@ class TestSpectral:
 
     @pytest.fixture
     def base_setup(self, mock_defaults, mock_protocol, mock_logger):
-        return ComputedElectronic(
+        return BaseGraph(
             confs=[],
             protocol=mock_protocol,
             graph_type="UV",
@@ -56,7 +54,7 @@ class TestSpectral:
         assert np.allclose(norm, [0.5, 0.25, -1.0])
 
     def test_electronic_convolution_shift(self, mock_defaults, mock_protocol, mock_logger):
-        spec = ComputedElectronic(confs=[], protocol=mock_protocol, graph_type="UV", log=mock_logger)
+        spec = BaseGraph(confs=[], protocol=mock_protocol, graph_type="UV", log=mock_logger)
         energies = np.array([50.0])
         impulses = np.array([1.0])
         shift = 10.0
@@ -68,7 +66,7 @@ class TestSpectral:
             assert passed_energies[0] == 60.0 
 
     def test_vibronic_convolution_shift(self, mock_defaults, mock_protocol, mock_logger):
-        spec = ComputedVibronic(confs=[], protocol=mock_protocol, graph_type="IR", log=mock_logger)
+        spec = BaseGraph(confs=[], protocol=mock_protocol, graph_type="IR", log=mock_logger)
         energies = np.array([1000.0])
         impulses = np.array([1.0])
         shift = 0.98 
@@ -102,3 +100,13 @@ class TestSpectral:
             assert base_setup.SHIFT == 0.5
             assert base_setup.FWHM == 0.5
             base_setup.log.spectra_result.assert_called()
+
+    @pytest.mark.parametrize("user,expected", [
+        (None, [-0.5, 0.5]), ([0.1, 0.3], [0.1, 0.3]), (0.2, [0.2, 0.2]), (0, [0, 0]),
+    ])
+    def test_bounds(self, user, expected, mock_protocol, mock_logger):
+        g = BaseGraph(confs=[], protocol=mock_protocol, graph_type="UV", log=mock_logger,
+                      definition=2, shift_user=user)
+        g.set_boundaries()
+        assert g.shift_bounds == expected
+        assert g.fwhm_bounds == [0.20, 0.50]

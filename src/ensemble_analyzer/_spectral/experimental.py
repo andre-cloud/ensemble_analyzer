@@ -1,10 +1,9 @@
 from dataclasses import dataclass
-import os, sys
+import os
 import numpy as np
 
-from typing import Union, Optional, Literal
+from typing import Optional
 
-from ensemble_analyzer._spectral.graph_default import GraphDefault
 from ensemble_analyzer._spectral.base import BaseGraph
 
 from ensemble_analyzer.constants import FACTOR_EV_NM, MIN_WEIGHTED_VALUE
@@ -17,8 +16,6 @@ class ExperimentalGraph(BaseGraph):
     Responsible for loading, normalizing, interpolating experimental data
     and calculating the weighting function for comparison.
     """
-
-    graph_type: Literal['IR', 'VCD', 'UV', 'ECD']
 
     def __post_init__(self) -> None:
         """Initialize defaults and energy grid for experimental data."""
@@ -67,21 +64,16 @@ class ExperimentalGraph(BaseGraph):
         Process axis units (e.g. nm to eV) and determine index boundaries.
         """
 
-        convert = False
-        if self.graph_type in ['UV', 'ECD'] and np.min(self.x) > 20: 
-            self.x = FACTOR_EV_NM / self.x
-            convert = True
-            if convert:
-                self.x = self.x[::-1]
-                self.y = self.y[::-1]
-        
+        # UV/ECD reference given in nm: convert to eV (reversing keeps x ascending)
+        if self.graph_type in ['UV', 'ECD'] and np.min(self.x) > 20:
+            self.x = (FACTOR_EV_NM / self.x)[::-1]
+            self.y = self.y[::-1]
+
         self.x_min = float(np.min(self.x))
         self.x_max = float(np.max(self.x))
 
         self.x_min_idx = int(np.argmin((self.X - self.x_min)<0))
         self.x_max_idx = int(np.argmax((self.X - self.x_max)>0))
-        # if convert: 
-        #     self.x_min_idx, self.x_max_idx = self.x_max_idx, self.x_min_idx
 
     def calc_weighting_function(self) -> None: 
         """

@@ -9,42 +9,11 @@ from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer.protocol.protocol import Protocol
 from ensemble_analyzer._logger.logger import Logger
 
-from ensemble_analyzer.constants import CHIRALS
+from ensemble_analyzer.constants import CHIRALS, VIBRO_OR_ELECTRO
 
 
-# ---------------------------------------------------------------------------
-# Lazy numba — compiled on first call, pure-numpy vectorised fallback
-# ---------------------------------------------------------------------------
-
+# Lazy numba kernels, compiled on first call
 _NUMBA_COMPILED = {}
-
-def _gaussian_numpy(X, x0, I, fwhm):
-    sigma = fwhm / (2 * np.sqrt(2 * np.log(2)))
-    norm = 1.0 / (sigma * np.sqrt(2 * np.pi))
-    dx = (X[:, np.newaxis] - x0[np.newaxis, :]) / sigma
-    return norm * np.exp(-0.5 * dx ** 2) @ I
-
-
-def _lorentzian_numpy(X, x0, I, fwhm):
-    n_peaks = x0.shape[0]
-    n_x = X.shape[0]
-    Y = np.zeros(n_x)
-    if n_peaks == 0:
-        return Y
-    fwhm2 = fwhm * fwhm
-    for i in range(n_peaks):
-        xi = x0[i]
-        Ii = I[i]
-        if Ii == 0.0:
-            continue
-        dx = X - xi
-        Y += Ii * fwhm2 / (fwhm2 + 4.0 * dx * dx)
-    return Y
-
-
-def _diversity_numpy(a, b, weight, max_val):
-    diff = a - b
-    return np.sqrt(np.sum(weight * diff * diff) / diff.shape[0]) / max_val
 
 
 def _compile_numba():
@@ -151,12 +120,13 @@ class BaseGraph:
     read_population: Optional[Union[int, float, str]] = None
     definition: Optional[int] = 4
     interested_area: Optional[list] = None
+    ref: Optional["BaseGraph"] = None  # experimental reference (ExperimentalGraph)
 
     def __post_init__(self) -> None:
         self.defaults = GraphDefault(self.graph_type)
-
         self.X = np.linspace(self.defaults.start, self.defaults.end, num=10 ** self.definition)
-        self.X = self.X[np.argsort(self.X)]
+        # Maximum of the diversity function: spectra normalised to [0,1], or [-1,1] if chiral
+        self.MAX = 2 if self.graph_type in CHIRALS else 1
 
     def retrieve_data(self, protocol: Protocol) -> None:
         self.impulse = []
@@ -210,24 +180,21 @@ class BaseGraph:
 
     def diversity_function(self, a: np.ndarray, b: np.ndarray,
                            w: Optional[np.ndarray] = None) -> float:
-        MAX = 1 if self.graph_type not in CHIRALS else 2
         w = self.ref.weight if w is None else w
-        return diversity_function_njit(a=a, b=b, weight=w, max_val=MAX)
+        return diversity_function_njit(a=a, b=b, weight=w, max_val=self.MAX)
+
+    @staticmethod
+    def _bounds(user, default):
+        """User bounds: a [min, max] list, a fixed number, or None for the default interval."""
+        if isinstance(user, list):
+            return user
+        if isinstance(user, (int, float)):
+            return [user, user]
+        return default
 
     def set_boundaries(self) -> None:
-        if isinstance(self.shift_user, list):
-            self.shift_bounds = self.shift_user
-        elif isinstance(self.shift_user, float) or isinstance(self.shift_user, int):
-            self.shift_bounds = [self.shift_user, self.shift_user]
-        elif not self.shift_user:
-            self.shift_bounds = self.defaults.shift_intervals
-
-        if isinstance(self.fwhm_user, list):
-            self.fwhm_bounds = self.fwhm_user
-        elif isinstance(self.fwhm_user, float) or isinstance(self.fwhm_user, int):
-            self.fwhm_bounds = [self.fwhm_user, self.fwhm_user]
-        elif not self.fwhm_user:
-            self.fwhm_bounds = self.defaults.fwhm_intervals
+        self.shift_bounds = self._bounds(self.shift_user, self.defaults.shift_intervals)
+        self.fwhm_bounds = self._bounds(self.fwhm_user, self.defaults.fwhm_intervals)
 
     def compute_spectrum(self) -> None:
         self.log.debug("Compute spectrum")
@@ -304,16 +271,14 @@ class BaseGraph:
             self.Y[self.ref.x_min_idx:self.ref.x_max_idx],
             ref_norm[self.ref.x_min_idx:self.ref.x_max_idx],
         )
-        similarity = ((1 if self.graph_type not in CHIRALS else 2) - diversity) / \
-                     (1 if self.graph_type not in CHIRALS else 2) * 100
+        similarity = (self.MAX - diversity) / self.MAX * 100
 
         diversity_unw = self.diversity_function(
             self.Y[self.ref.x_min_idx:self.ref.x_max_idx],
             ref_norm[self.ref.x_min_idx:self.ref.x_max_idx],
             w=np.ones_like(self.Y[self.ref.x_min_idx:self.ref.x_max_idx]),
         )
-        similarity_unw = ((1 if self.graph_type not in CHIRALS else 2) - diversity_unw) / \
-                          (1 if self.graph_type not in CHIRALS else 2) * 100
+        similarity_unw = (self.MAX - diversity_unw) / self.MAX * 100
 
         self.log.spectra_result(
             graph_type=self.graph_type,
@@ -325,6 +290,16 @@ class BaseGraph:
             },
             msg=t,
         )
+
+    def convolute(self, energies: np.ndarray, impulses: np.ndarray, shift: float, fwhm: float) -> np.ndarray:
+        """Broaden the transitions on the X grid.
+
+        IR/VCD: Lorentzian, multiplicative shift (frequency scaling).
+        UV/ECD: Gaussian, additive shift in eV (positive = blue shift).
+        """
+        if VIBRO_OR_ELECTRO[self.graph_type] == 'vibro':
+            return self.lorentzian(energies * shift, impulses, fwhm)
+        return self.gaussian(energies + shift, impulses, fwhm)
 
     def gaussian(self, x0: np.ndarray, I: np.ndarray, fwhm: float) -> np.ndarray:
         return gaussian_njit(self.X, x0, I, fwhm)

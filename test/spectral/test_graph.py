@@ -1,8 +1,7 @@
-import os
-import pytest
 import numpy as np
 from unittest.mock import MagicMock, patch
-from ensemble_analyzer.graph import eV_to_nm, main_spectra, plot_comparative_graphs
+from ensemble_analyzer.constants import eV_to_nm
+from ensemble_analyzer.graph import main_spectra, plot_comparative_graphs
 
 
 class TestGraph:
@@ -14,30 +13,26 @@ class TestGraph:
 
     @patch("ensemble_analyzer.graph.os.path.exists")
     @patch("ensemble_analyzer.graph.ExperimentalGraph")
-    def test_main_spectra_no_ref(self, MockExp, mock_exists, mock_protocol, mock_logger):
+    @patch("ensemble_analyzer.graph.BaseGraph")
+    def test_main_spectra_no_ref(self, mock_cls, MockExp, mock_exists, mock_protocol, mock_logger):
         mock_exists.return_value = False
-        mock_cls = MagicMock()
-        fake_class = {"IR": mock_cls, "VCD": MagicMock(), "UV": MagicMock(), "ECD": MagicMock()}
-        with patch.dict("ensemble_analyzer.graph.class_", fake_class, clear=True):
-            main_spectra([], mock_protocol, mock_logger, invert=False, interested_area={},
-                         shift={"vibro": None, "electro": None}, fwhm={"vibro": None, "electro": None})
-            mock_cls.assert_called()
-            mock_cls.return_value.compute_spectrum.assert_called()
+        main_spectra([], mock_protocol, mock_logger, invert=False, interested_area={},
+                     shift={"vibro": None, "electro": None}, fwhm={"vibro": None, "electro": None})
+        assert [c.kwargs["graph_type"] for c in mock_cls.call_args_list] == ["IR", "VCD", "UV", "ECD"]
+        mock_cls.return_value.compute_spectrum.assert_called()
+        MockExp.assert_not_called()
 
     @patch("ensemble_analyzer.graph.os.path.exists")
     @patch("ensemble_analyzer.graph.ExperimentalGraph")
-    def test_main_spectra_with_ref(self, MockExp, mock_exists, mock_protocol, mock_logger):
-        def exists_side(path):
-            return "ref.dat" in path
-        mock_exists.side_effect = exists_side
-        mock_cls = MagicMock()
-        fake_class = {"IR": mock_cls}
-        with patch.dict("ensemble_analyzer.graph.class_", fake_class, clear=True):
-            main_spectra([], mock_protocol, mock_logger, invert=False,
-                         interested_area={"vibro": None, "electro": None},
-                         shift={"vibro": None, "electro": None}, fwhm={"vibro": None, "electro": None})
-            MockExp.assert_called()
-            mock_cls.assert_called()
+    @patch("ensemble_analyzer.graph.BaseGraph")
+    def test_main_spectra_with_ref(self, mock_cls, MockExp, mock_exists, mock_protocol, mock_logger):
+        mock_exists.side_effect = lambda path: path.endswith("ir_ref.dat")
+        main_spectra([], mock_protocol, mock_logger, invert=False,
+                     interested_area={"vibro": None, "electro": None},
+                     shift={"vibro": None, "electro": None}, fwhm={"vibro": None, "electro": None})
+        MockExp.assert_called_once()
+        assert mock_cls.call_args_list[0].kwargs["ref"] is MockExp.return_value
+        assert mock_cls.call_args_list[2].kwargs["ref"] is None
 
     @patch("ensemble_analyzer.graph.ComparedGraph")
     @patch("ensemble_analyzer.graph.os.path.exists")

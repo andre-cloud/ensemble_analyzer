@@ -1,30 +1,13 @@
-
 from typing import Optional, List, Union
-import numpy as np
 import os
 
-from ensemble_analyzer.constants import FACTOR_EV_NM, VIBRO_OR_ELECTRO, CHIRALS, GRAPHS
+from ensemble_analyzer.constants import VIBRO_OR_ELECTRO, CHIRALS, GRAPHS
+from ensemble_analyzer._spectral.base import BaseGraph
 from ensemble_analyzer._spectral.experimental import ExperimentalGraph
-from ensemble_analyzer._spectral.comp_electronic import ComputedElectronic
-from ensemble_analyzer._spectral.comp_vibronic import ComputedVibronic
 from ensemble_analyzer._spectral.compare import ComparedGraph
 from ensemble_analyzer.protocol.protocol import Protocol
 from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer._logger.logger import Logger
-
-
-def eV_to_nm(eV: np.ndarray) -> np.ndarray:
-    """Convert energy in eV to wavelength in nm."""
-    return FACTOR_EV_NM / eV
-
-class_ = {
-    'IR': ComputedVibronic, 
-    'VCD': ComputedVibronic, 
-    'UV': ComputedElectronic, 
-    'ECD': ComputedElectronic, 
-}
-
-
 
 
 def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, invert: bool, interested_area: List[float], shift: Optional[Union[List[float],float,None]] = None, fwhm: Optional[Union[List[float],float,None]] = None, read_pop: Optional[str] = None, definition: Optional[int] = 4) -> None:
@@ -51,7 +34,7 @@ def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, inv
     """
     
     log.spectra_start(protocol_number=protocol.number)
-    for graph_type in list(class_.keys()):
+    for graph_type in GRAPHS:
         ref = None
         fname = f"{graph_type.lower()}_ref.dat"
         if os.path.exists(os.path.join(os.getcwd(), fname)):
@@ -59,7 +42,7 @@ def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, inv
             ref.read()
 
 
-        graph = class_[graph_type](
+        graph = BaseGraph(
             confs=ensemble,
             graph_type=graph_type,
             log=log,
