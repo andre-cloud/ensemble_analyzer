@@ -79,3 +79,11 @@ class TestCalculators:
         assert "X 1 F" in ase_calc.parameters["addsec"]
 
 
+
+    @pytest.mark.parametrize("smd, model", [(True, "SMD"), (False, "CPCM")])
+    def test_gaussian_solvent_model(self, setup_calc, smd, model):
+        from ensemble_analyzer.protocol.solvent import Solvent
+        conf, proto = setup_calc
+        proto.solvent = Solvent("Water", smd=smd)
+        ase_calc, _ = GaussianCalc(proto, 4, conf).single_point()
+        assert f"SCRF=({model},Solvent=Water)" in ase_calc.parameters["extra"]

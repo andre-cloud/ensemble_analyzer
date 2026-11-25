@@ -1,10 +1,11 @@
 from ase.calculators.gaussian import Gaussian
 
 
-def create_gaussian_calc(charge, mult, method, basis, solvent=None, cpu=1, add_input="", label=None):
+def create_gaussian_calc(charge, mult, method, basis, solvent=None, cpu=1, add_input="", label=None,
+                         smd=False):
     solv = ""
     if solvent:
-        solv = f" SCRF=(CPCM,Solvent={solvent})"
+        solv = f" SCRF=({'SMD' if smd else 'CPCM'},Solvent={solvent})"
 
     route = f"# {method}/{basis}{solv}"
 

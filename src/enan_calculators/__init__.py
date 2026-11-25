@@ -35,6 +35,7 @@ def get_ase_calculator(engine, charge, mult, method, solvent=None, task=None, **
             solvent=solvent, cpu=kwargs.get("cpu", 1),
             add_input=kwargs.get("add_input", ""),
             label=kwargs.get("label"),
+            smd=kwargs.get("smd", False),
         )
     elif engine == "nwchem":
         from enan_calculators._nwchem import create_nwchem_calc

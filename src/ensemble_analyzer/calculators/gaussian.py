@@ -10,14 +10,7 @@ class GaussianCalc(BaseCalc):
     def _build_calculator(self) -> Tuple[Any, str]:
         from enan_calculators import get_ase_calculator
 
-        if self.protocol.solvent:
-            if self.protocol.solvent.smd:
-                solv_name = f"SMD({self.protocol.solvent.solvent})"
-            else:
-                solv_name = self.protocol.solvent.solvent
-        else:
-            solv_name = None
-
+        solvent = self.protocol.solvent
         ase_label = f"{self.conf.folder}/protocol_{self.protocol.number}/{self.conf.number}_p{self.protocol.number}_gaussian"
 
         calculator = get_ase_calculator(
@@ -26,7 +19,8 @@ class GaussianCalc(BaseCalc):
             mult=self.protocol.mult,
             method=self.protocol.functional,
             basis=self.protocol.basis,
-            solvent=solv_name,
+            solvent=solvent.solvent if solvent else None,
+            smd=bool(solvent and solvent.smd),
             cpu=self.cpu,
             add_input=self.protocol.add_input.strip(),
             label=ase_label,
