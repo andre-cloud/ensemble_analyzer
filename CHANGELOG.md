@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 Versions follow the git release tags.
 
 
-## [Unreleased]
+## [1.4.0] - Unreleased
 
 ### Added
 - **NMR for ORCA, Gaussian and NWChem** (`nmr` protocol key, see `docs/source/user_guide/nmr.md`):
@@ -14,6 +14,10 @@ Versions follow the git release tags.
   - one spectrum per nucleus with the exact spin Hamiltonian, heteronuclear couplings weighted by natural abundance, decoupling, couplings taken from an earlier step, experimental overlay with shift fit; `NMR_<isotope>_comparison.png`;
   - J reported for the requested isotopes whatever the engine used; Protocol Wizard section and "NMR" template; `enan_check` reports RDKit.
 
+
+## [1.3.0] - Unreleased
+
+### Added
 - **ΔSCF excited states for ORCA and NWChem** (`deltascf` protocol key, see `docs/source/user_guide/deltascf.md`):
   - excitations written as relative labels (`"HOMO-n->LUMO+m"`) or `"auto"` (dominant transition of a TD-DFT root); no orbital indices to write;
   - reference ground state + TD-DFT reused from a `read_orbitals` step at the same level, otherwise computed per conformer;
