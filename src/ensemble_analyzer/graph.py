@@ -62,7 +62,7 @@ def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, inv
 
     log.spectra_end(protocol_number=protocol.number)
 
-def plot_comparative_graphs(log, idxs=None, show=False, nm=True, show_ref_weight=False) -> None:
+def plot_comparative_graphs(log, idxs=None, show=False, nm=True, show_ref_weight=False, norm_exp=False) -> None:
     """
     Generate comparison plots overlaying spectra from different protocol steps.
 
@@ -72,6 +72,7 @@ def plot_comparative_graphs(log, idxs=None, show=False, nm=True, show_ref_weight
         show (bool): Whether to display the plot interactively.
         nm (bool): Whether to plot x-axis in nanometers (for UV/ECD).
         show_ref_weight (bool): Whether to overlay the weighting function used for matching.
+        norm_exp (bool): Spectra scaled to the experimental intensities (physical y labels).
 
     Returns:
         None
@@ -80,6 +81,6 @@ def plot_comparative_graphs(log, idxs=None, show=False, nm=True, show_ref_weight
     for graph_type in GRAPHS:
         experimental_file = f"{graph_type.upper()}_ref_norm.xy" if os.path.exists(f"{graph_type.upper()}_ref_norm.xy") else None
         
-        comp = ComparedGraph(graph_type=graph_type, experimental_file=experimental_file, log=log, protocol_index=idxs, nm=nm)
+        comp = ComparedGraph(graph_type=graph_type, experimental_file=experimental_file, log=log, protocol_index=idxs, nm=nm, norm_exp=norm_exp)
         if len(comp.data) > 0:
             comp.plot(show=show, show_ref_weight=show_ref_weight)

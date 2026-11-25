@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Optional, List, Tuple, Dict
 from dataclasses import dataclass
 from ensemble_analyzer.constants import eV_to_nm, CHIRALS, FACTOR_EV_NM
-from ensemble_analyzer._spectral.graph_default import GraphDefault
+from ensemble_analyzer._spectral.graph_default import GraphDefault, NORM_EXP_Y_LABEL
 
 
 @dataclass
@@ -21,6 +21,7 @@ class ComparedGraph:
     log: Optional[any] = None
     protocol_index: Optional[List[int]] = None
     nm: bool = True
+    norm_exp: bool = False  # spectra at the experimental intensities: physical y label
 
     def __post_init__(self) -> None:
         """Initialize loaded computed and experimental data."""
@@ -190,7 +191,10 @@ class ComparedGraph:
                 secax = ax.secondary_xaxis("top", functions=(eV_to_nm, eV_to_nm))
                 secax.set_xlabel(r"Wavelength $\lambda$ [nm]")
         
-        ax.set_ylabel(self.defaults.axis_label['y'])
+        if self.norm_exp and self.Xr is not None:
+            ax.set_ylabel(NORM_EXP_Y_LABEL[self.graph_type.upper()])
+        else:
+            ax.set_ylabel(self.defaults.axis_label['y'])
     
     def _configure_limits(self, ax: plt.Axes, in_nm: bool) -> None:
         """Set axis limits with padding."""

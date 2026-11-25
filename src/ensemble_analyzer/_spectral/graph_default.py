@@ -23,6 +23,15 @@ _DEFAULTS = {
 }
 
 
+# y-axis label when the spectra are scaled to the experimental intensities (norm_exp)
+NORM_EXP_Y_LABEL = {
+    'UV': 'Abs [a.u.]',
+    'ECD': 'mdeg [°]',
+    'IR': 'Abs [a.u.]',
+    'VCD': '∆A [a.u.]',
+}
+
+
 @dataclass
 class GraphDefault:
     """Default spectral parameters (range, shift, FWHM, labels) for each graph type."""

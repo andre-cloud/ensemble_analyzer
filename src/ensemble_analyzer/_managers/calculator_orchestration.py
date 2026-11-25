@@ -111,7 +111,7 @@ class CalculationOrchestrator:
         self.checkpoint_manager.save(self.conformers, self.logger)
         
         # Comparative graphs
-        plot_comparative_graphs(self.logger)
+        plot_comparative_graphs(self.logger, norm_exp=self.config.norm_exp)
         
         total_time = datetime.timedelta(seconds=time.perf_counter()-staring_time)
         final_count = len([c for c in self.conformers if c.active])

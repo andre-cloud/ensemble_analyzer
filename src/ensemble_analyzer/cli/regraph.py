@@ -61,7 +61,7 @@ def main() -> None:
         )
 
     plot_comparative_graphs(log, args.idx, show=False, nm=args.no_nm,
-                            show_ref_weight=args.weight)
+                            show_ref_weight=args.weight, norm_exp=config_mgr.norm_exp)
 
     log.application_correct_end(
         total_conformers=len([c for c in ensemble if c.active]),

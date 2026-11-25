@@ -25,3 +25,22 @@ def test_experimental_and_computed_scale(tmp_path, monkeypatch, mock_protocol, m
     comp = ComparedGraph(graph_type="VCD", experimental_file="VCD_ref_norm.xy", log=mock_logger)
     i, j = int(comp.bounders[0]), int(comp.bounders[1])
     assert np.max(np.abs(comp.data["1"][1][i:j])) == pytest.approx(np.max(np.abs(y_ref[i:j])))
+
+
+@pytest.mark.parametrize("graph_type, label", [
+    ("UV", "Abs [a.u.]"), ("ECD", "mdeg [°]"), ("IR", "Abs [a.u.]"), ("VCD", "∆A [a.u.]"),
+])
+def test_norm_exp_y_labels(tmp_path, monkeypatch, mock_logger, graph_type, label):
+    from unittest.mock import MagicMock
+    from ensemble_analyzer._spectral.graph_default import GraphDefault
+    monkeypatch.chdir(tmp_path)
+    np.savetxt(f"{graph_type}_ref_norm.xy", np.column_stack([np.arange(10.0), np.ones(10)]))
+    np.savetxt(f"{graph_type}_index_lim.xy", np.array([0, 9]))
+    np.savetxt(f"{graph_type}_weighted.xy", np.column_stack([np.arange(10.0), np.ones(10)]))
+
+    for norm_exp, expected in [(True, label), (False, GraphDefault(graph_type).axis_label["y"])]:
+        comp = ComparedGraph(graph_type=graph_type, experimental_file=f"{graph_type}_ref_norm.xy",
+                             log=mock_logger, norm_exp=norm_exp)
+        ax = MagicMock()
+        comp._configure_axes(ax, in_nm=False)
+        ax.set_ylabel.assert_called_with(expected)

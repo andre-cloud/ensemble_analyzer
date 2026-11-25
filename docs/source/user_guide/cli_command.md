@@ -57,7 +57,7 @@ The main driver `ensemble_analyzer` accepts various command-line arguments to co
     Inverts the y-axis for chiral spectra (VCD/ECD).
 
 * **`--norm-exp`**
-    With an experimental spectrum (`ir_ref.dat`, `vcd_ref.dat`, `uv_ref.dat`, `ecd_ref.dat`), keeps the experimental intensities and scales each computed spectrum so that its maximum absolute value, inside the experimental range, equals the experimental one. Without it, experimental and computed spectra are normalised to [-1, 1]. The fit of shift/FWHM and the similarity scores are the same in both cases. Saved in `settings.json` as `"norm_exp"`: edit it there to switch before `enan_regraph`.
+    With an experimental spectrum (`ir_ref.dat`, `vcd_ref.dat`, `uv_ref.dat`, `ecd_ref.dat`), keeps the experimental intensities and scales each computed spectrum so that its maximum absolute value, inside the experimental range, equals the experimental one. Without it, experimental and computed spectra are normalised to [-1, 1]. The fit of shift/FWHM and the similarity scores are the same in both cases. The comparison plots then use physical y labels (UV and IR: Abs [a.u.], ECD: mdeg [°], VCD: ∆A [a.u.]). Saved in `settings.json` as `"norm_exp"`: edit it there to switch before `enan_regraph`.
 
 * **`--definition`** (int)
     Resolution of the spectral grid, defined as $10^N$ points (default: `4`, i.e., 10,000 points).
