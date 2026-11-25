@@ -144,6 +144,11 @@ This example shows a typical workflow: a ground-state optimization and frequency
 * **`deltascf`** (dict)
     Optimises an excited state as a single non-aufbau determinant on top of a TD-DFT reference step (`read_orbitals`), with automatic convergence ladder, collapse checks and spin purification. Example: `"read_orbitals": "1", "deltascf": {"excitation": "auto", "root": 1}`. See [ΔSCF excited states](deltascf.md) for all options.
 
+## NMR (ORCA, Gaussian, NWChem)
+
+* **`nmr`** (dict)
+    Shieldings and/or spin-spin couplings on a single-point step, averaged over the ensemble; shifts against reference molecules that EnAn optimises and computes at the same level; one spectrum per nucleus. Example: `"nmr": {"shielding": true, "coupling": true, "nuclei": ["1H", "13C"], "references": [{"name": "TMS", "nuclei": ["1H", "13C"]}]}`. See [NMR](nmr.md) for all options.
+
 ## Transition State Analysis
 
 * **`ts`** (bool)

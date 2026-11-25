@@ -93,6 +93,18 @@ class GaussianCalc(BaseCalc):
     def _add_freq_keywords(self, calc: Gaussian) -> None:
         calc.parameters["extra"] += " freq=(HPModes,vcd)"
 
+    def _add_nmr_keywords(self, calc: Gaussian) -> None:
+        settings = self._nmr_settings()
+        if not settings:
+            return
+        from ensemble_analyzer._nmr.inputs import gaussian_keywords
+
+        route, atoms_line = gaussian_keywords(settings, self.conf.atoms)
+        calc.parameters["extra"] += f" {route}"
+        if atoms_line:
+            previous = calc.parameters.get("addsec")
+            calc.parameters["addsec"] = f"{previous}\n\n{atoms_line}" if previous else atoms_line
+
     def _add_tddft_keywords(self, calc: Gaussian) -> None:
         nroots = self.protocol.nroots
         if isinstance(nroots, int) and nroots > 0:

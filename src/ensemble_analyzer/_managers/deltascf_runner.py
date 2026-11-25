@@ -92,6 +92,7 @@ class _Engine:
         p = copy.copy(self.protocol)          # no __post_init__: keeps Solvent etc.
         p.read_orbitals = ""
         p.deltascf = None
+        p.nmr = None
         p.nroots = nroots
         p.tda = True if nroots else self.protocol.tda
         p.charge, p.mult = charge, mult

@@ -1,0 +1,27 @@
+CHEMICAL SHIELDING SUMMARY (ppm)
+--------------------------------
+
+
+  Nucleus  Element    Isotropic     Anisotropy
+  -------  -------  ------------   ------------
+      5       H           31.665          9.484 
+      6       H           31.666          9.479 
+      7       H           31.664          9.486 
+      8       H           31.665          9.481 
+      9       H           31.667          9.476 
+     10       H           31.664          9.482 
+     11       H           31.667          9.477 
+     12       H           31.665          9.482 
+     13       H           31.663          9.485 
+     14       H           31.666          9.484 
+     15       H           31.665          9.483 
+     16       H           31.665          9.482 
+      0       C          191.067          6.423 
+      2       C          191.059          6.425 
+      3       C          191.060          6.411 
+      4       C          191.068          6.432 
+
+
+NMR shielding tensor and spin rotation calculation done in   0.1 sec 
+
+                             ****ORCA TERMINATED NORMALLY****

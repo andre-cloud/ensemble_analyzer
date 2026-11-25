@@ -1,4 +1,3 @@
-import os
 from typing import Any
 import time
 from pathlib import Path
@@ -176,7 +175,7 @@ class BaseMlCalc(BaseCalc):
         self._apply_ase_constraints(atoms)
         start = time.perf_counter()
         logdir = Path(self.conf.folder) / f"protocol_{self.protocol.number}"
-        os.mkdir(logdir)
+        logdir.mkdir(parents=True, exist_ok=True)
 
         if self.protocol.ts:
             with _CappedSella(atoms, maxstep=self.protocol.maxstep,

@@ -46,7 +46,7 @@ def main() -> None:
     else:
         for protocol_number in args.idx:
             compute_boltzmann_populations(
-                confs=ensemble, protocol_number=protocol_number,
+                conformers=ensemble, protocol_number=protocol_number,
                 temperature=config_mgr.temperature,
             )
 
@@ -59,6 +59,13 @@ def main() -> None:
             interested_area=config_mgr.interested,
             norm_exp=config_mgr.norm_exp,
         )
+        if isinstance(getattr(prot_obj, "nmr", None), dict):
+            from ensemble_analyzer._managers.nmr_reference import cached_reference_sigmas
+            from ensemble_analyzer._nmr.analysis import process_nmr_step
+            from ensemble_analyzer.protocol.nmr import check_protocols as check_nmr
+            check_nmr(protocol, log)
+            refs = cached_reference_sigmas(prot_obj, protocol, config_mgr, log)
+            process_nmr_step(ensemble, prot_obj, refs, log)
 
     plot_comparative_graphs(log, args.idx, show=False, nm=args.no_nm,
                             show_ref_weight=args.weight, norm_exp=config_mgr.norm_exp)

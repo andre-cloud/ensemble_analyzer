@@ -115,6 +115,18 @@ class NWChemCalc(BaseCalc):
     def _add_freq_keywords(self, calc: NWChem) -> None:
         calc.parameters["task"] = "freq"
 
+    def _add_nmr_keywords(self, calc: NWChem) -> None:
+        settings = self._nmr_settings()
+        if not settings:
+            return
+        from ensemble_analyzer._nmr.inputs import nwchem_property
+
+        calc.parameters["property"] = nwchem_property(settings, self.conf.atoms)
+        calc.parameters["task"] = "property"
+        if settings["coupling"]:
+            # spin-spin couplings need an unrestricted wave function
+            calc.parameters.setdefault("dft", {})["odft"] = None
+
     def _add_tddft_keywords(self, calc: NWChem) -> None:
         """TD-DFT single points (``task tddft energy``) when ``nroots`` is set.
 

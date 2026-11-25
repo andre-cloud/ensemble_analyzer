@@ -23,6 +23,10 @@ from ensemble_analyzer.cli.protocol_wizard.fields import (
     ML_CALCULATORS,
     CALCULATOR_CHOICES,
 )
+from ensemble_analyzer.cli.protocol_wizard.nmr_fields import (
+    format_decouple, format_groups, format_references, parse_decouple, parse_groups, parse_indices,
+    parse_references,
+)
 from ensemble_analyzer.cli.protocol_wizard.steps import (
     AUTO_KEY,
     apply_defaults,
@@ -60,6 +64,8 @@ def _step_label(key: str, step: dict) -> str:
         parts.append(f"[{step['cpu_per_job']} CPU/job]")
     if step.get("deltascf"):
         parts.append("[ΔSCF]")
+    if step.get("nmr"):
+        parts.append("[NMR]")
     if str(step.get("read_orbitals") or "").strip():
         parts.append(f"[orb←{step['read_orbitals']}]")
     return " ".join(parts)
@@ -391,6 +397,44 @@ class StepEditorScreen(ModalScreen[dict | None]):
                     yield Input(value=_v(dscf.get("alphaconf")), placeholder="e.g. 0,1", id="f_dscf_aconf")
                     yield Input(value=_v(dscf.get("betaconf")), placeholder="", id="f_dscf_bconf")
 
+                # ── NMR ──
+                nmr = self.step.get("nmr") or {}
+                with Collapsible(title="NMR (shielding / coupling, ORCA/Gaussian/NWChem)", collapsed=not nmr):
+                    yield Label("Enable NMR (single-point step)", classes="field")
+                    yield _yn(nmr, "f_nmr")
+                    yield Label("Shielding → shifts (needs references) / spin-spin couplings J", classes="field")
+                    yield _yn(nmr.get("shielding", True), "f_nmr_shield", yes_first=True)
+                    yield _yn(nmr.get("coupling"), "f_nmr_coupl", yes_first=True)
+                    yield Label("Nuclei (isotopes)", classes="field")
+                    yield Input(value=" ".join(nmr.get("nuclei") or []), placeholder="1H 13C", id="f_nmr_nuclei")
+                    yield Label("Only these atoms (0-based, empty = all)", classes="field")
+                    yield Input(value=" ".join(map(str, nmr.get("atoms") or [])), placeholder="", id="f_nmr_atoms")
+                    yield Label("References: name[=SMILES|file.xyz]: nuclei; ... "
+                                "(TMS, CFCl3, H3PO4, CH3NO2, NH3, BF3OEt2, Me2Se, Me4Sn are bundled)",
+                                classes="field")
+                    yield Input(value=format_references(nmr.get("references")), placeholder="TMS: 1H 13C",
+                                id="f_nmr_refs")
+                    yield Label("Extra equivalent atoms (0-based groups, ';'-separated)", classes="field")
+                    yield Input(value=format_groups(nmr.get("equivalent")), placeholder="10 11; 14 15",
+                                id="f_nmr_equiv")
+                    yield Label("Decoupling (observed: partners; ...)", classes="field")
+                    yield Input(value=format_decouple(nmr.get("decouple")), placeholder="13C: 1H",
+                                id="f_nmr_decouple")
+                    yield Label("Spectrometer 1H frequency [MHz] / line width [Hz]", classes="field")
+                    yield Input(value=_v(nmr.get("frequency", 400)), placeholder="400", id="f_nmr_freq")
+                    yield Input(value=_v(nmr.get("fwhm", 1.0)) if not isinstance(nmr.get("fwhm"), dict) else "1.0",
+                                placeholder="1.0", id="f_nmr_fwhm")
+                    yield Label("Coupling terms", classes="field")
+                    yield Select([("All (FC+SD+PSO+DSO)", "all"), ("Fermi contact only", "fc")],
+                                 value=nmr.get("coupling_terms", "all"), id="f_nmr_terms")
+                    yield Label("Couplings for a shielding-only step: step number, 'none', empty = auto",
+                                classes="field")
+                    cf = nmr.get("coupling_from")
+                    yield Input(value="none" if cf is False else _v(cf), placeholder="", id="f_nmr_cfrom")
+                    yield Label("Level for optimising the references: step number, empty = last opt",
+                                classes="field")
+                    yield Input(value=_v(nmr.get("opt_from")), placeholder="", id="f_nmr_optfrom")
+
                 # ── Constraints & Monitoring ──
                 with Collapsible(title="Constraints & Monitoring", collapsed=True):
                     yield Label("Constraints (semicolon-separated groups)", classes="field")
@@ -600,6 +644,42 @@ class StepEditorScreen(ModalScreen[dict | None]):
         if ref:
             s["read_orbitals"] = ref
 
+        # NMR
+        if self._bool("f_nmr"):
+            nmr: dict = {
+                "shielding": self._bool("f_nmr_shield"),
+                "coupling": self._bool("f_nmr_coupl"),
+                "nuclei": self.query_one("#f_nmr_nuclei", Input).value.replace(",", " ").split(),
+                "coupling_terms": self.query_one("#f_nmr_terms", Select).value,
+            }
+            self._nmr_error = None
+            try:
+                atoms = parse_indices(self.query_one("#f_nmr_atoms", Input).value)
+                if atoms is not None:
+                    nmr["atoms"] = atoms
+                refs = parse_references(self.query_one("#f_nmr_refs", Input).value)
+                if refs:
+                    nmr["references"] = refs
+                groups = parse_groups(self.query_one("#f_nmr_equiv", Input).value)
+                if groups:
+                    nmr["equivalent"] = groups
+                dec = parse_decouple(self.query_one("#f_nmr_decouple", Input).value)
+                if dec:
+                    nmr["decouple"] = dec
+                nmr["frequency"] = float(self._in("f_nmr_freq") or "400")
+                nmr["fwhm"] = float(self._in("f_nmr_fwhm") or "1.0")
+                cf = self._in("f_nmr_cfrom").lower()
+                if cf in ("none", "no", "false"):
+                    nmr["coupling_from"] = False
+                elif cf:
+                    nmr["coupling_from"] = int(cf)
+                of = self._in("f_nmr_optfrom")
+                if of:
+                    nmr["opt_from"] = int(of)
+            except ValueError as err:
+                self._nmr_error = str(err)
+            s["nmr"] = nmr
+
         # constraints
         c = _parse_coord_list(self.query_one("#f_constraints", Input).value)
         if c:
@@ -686,6 +766,17 @@ class StepEditorScreen(ModalScreen[dict | None]):
             warning = orbitals_warning(self.previous, step, ref)
             if warning:
                 self.notify(f"Read orbitals: {warning}", severity="warning", timeout=8)
+            if step.get("nmr"):
+                from ensemble_analyzer.protocol.nmr import normalize_settings as normalize_nmr
+                try:
+                    if getattr(self, "_nmr_error", None):
+                        raise ValueError(f"NMR: {self._nmr_error}")
+                    normalize_nmr(step["nmr"], "-", step.get("calculator", "orca"), step.get("add_input", ""),
+                                  step.get("nroots"), opt=bool(step.get("opt") or step.get("ts")),
+                                  freq=bool(step.get("freq")), deltascf=step.get("deltascf"))
+                except ValueError as err:
+                    self.notify(str(err), severity="error", timeout=8)
+                    return
             if step.get("deltascf"):
                 from ensemble_analyzer.protocol.deltascf import normalize_settings
                 try:

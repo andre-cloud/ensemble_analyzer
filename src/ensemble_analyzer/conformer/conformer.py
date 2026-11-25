@@ -8,6 +8,7 @@ from ensemble_analyzer.calculators.base import BaseCalc
 
 from .energy_data import EnergyStore
 from .spectral_data import SpectralStore
+from ensemble_analyzer.conformer.nmr_data import NMRStore
 
 import numpy as np
 import random
@@ -30,6 +31,7 @@ class Conformer:
     cluster             : Optional[int]   = None
     folder              : str             = field(init=False)
     graphs_data         : SpectralStore   = field(default_factory = SpectralStore)
+    nmr_data            : NMRStore        = field(default_factory = NMRStore)
 
 
     def __post_init__(self) -> None:
@@ -212,6 +214,7 @@ class Conformer:
         
         c.energies.load(data["energies"])
         c.graphs_data.load(data["graphs_data"])
+        c.nmr_data.load(data.get("nmr_data", {}))
         
         c.active = data["active"]
         return c

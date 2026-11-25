@@ -133,6 +133,17 @@ def check_prism() -> None:
               "PRISM Pruner NOT installed (needed only for prune_method 'prism'/'prism_rotcorr'). "
               "Install: pip install \"ensemble-analyzer[prism]\"")
 
+def check_rdkit() -> None:
+    """
+    Check for RDKit (optional: NMR references given as SMILES).
+    """
+
+    _optional(
+            "rdkit", "RDKit found (NMR references from SMILES available).",
+            "RDKit NOT installed (needed only for NMR references given as SMILES; bundled "
+            "references such as TMS and .xyz files work without it). "
+            "Install: conda install -c conda-forge rdkit  or  pip install \"ensemble-analyzer[nmr]\""
+        )
 
 def check_tblite() -> None:
     """
@@ -213,6 +224,7 @@ def main() -> None:
     check_nwchem()
     check_tblite()
     check_prism()
+    check_rdkit()
     check_mlip()
     check_models_dir()
     check_templates_dir()

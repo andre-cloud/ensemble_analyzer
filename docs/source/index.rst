@@ -20,6 +20,7 @@ Ensemble Analyzer Documentation
    user_guide/cli_tools.md
    user_guide/protocol.md
    user_guide/deltascf.md
+   user_guide/nmr.md
    user_guide/cli_command.md
    
 .. toctree::

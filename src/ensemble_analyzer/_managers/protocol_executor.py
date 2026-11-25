@@ -51,6 +51,7 @@ class ProtocolExecutor:
         self.checkpoint_manager = checkpoint_manager
         self.calculator = CalculationExecutor(config, logger)
         self.pruning_manager = PruningManager(logger, self.config.include_H)
+        self.protocols: List[Protocol] = []   # whole workflow (NMR references need earlier steps)
     
     def execute(
         self,
@@ -81,7 +82,15 @@ class ProtocolExecutor:
         )
         
         protocol_start_time = time.perf_counter()
-        
+
+        # NMR reference molecules (optimisation + shielding, cached across steps)
+        nmr_refs = {}
+        if isinstance(getattr(protocol, "nmr", None), dict):
+            from ensemble_analyzer._managers.nmr_reference import NMRReferenceRunner
+            nmr_refs = NMRReferenceRunner(self.config, self.logger).ensure(
+                protocol, self.protocols or [protocol]
+            )
+
         # Run calculations
         self._run_calculations(conformers, protocol)
         
@@ -154,6 +163,13 @@ class ProtocolExecutor:
                 interested_area=self.config.interested,
                 norm_exp=self.config.norm_exp,
             )
+
+            if isinstance(getattr(protocol, "nmr", None), dict):
+                from ensemble_analyzer._nmr.analysis import process_nmr_step
+                try:
+                    process_nmr_step(conformers, protocol, nmr_refs, self.logger)
+                except Exception as e:
+                    self.logger.error(f"NMR analysis of protocol {protocol.number} failed: {e}")
         
         # Protocol end
         self.logger.protocol_end(
