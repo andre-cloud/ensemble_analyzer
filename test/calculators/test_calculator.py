@@ -87,3 +87,25 @@ class TestCalculators:
         proto.solvent = Solvent("Water", smd=smd)
         ase_calc, _ = GaussianCalc(proto, 4, conf).single_point()
         assert f"SCRF=({model},Solvent=Water)" in ase_calc.parameters["extra"]
+
+    @staticmethod
+    def _gaussian_input(ase_calc, tmp_path) -> str:
+        from ase import Atoms
+        ase_calc.label = str(tmp_path / "g")
+        ase_calc.write_input(Atoms("H2", positions=[[0, 0, 0], [0, 0, 0.74]]))
+        return (tmp_path / "g.com").read_text()
+
+    def test_gaussian_read_orbitals_writes_oldchk(self, setup_calc, tmp_path):
+        conf, proto = setup_calc
+        proto.read_orbitals = 1
+        text = self._gaussian_input(GaussianCalc(proto, 4, conf).single_point()[0], tmp_path)
+        assert "%oldchk=" in text and "protocol_1/gaussian.chk" in text
+        assert "guess=read" in text
+
+    def test_gaussian_ts_readfc_writes_oldchk(self, setup_calc, tmp_path):
+        conf, proto = setup_calc
+        proto.ts = True
+        with patch.object(GaussianCalc, "_find_hessian_source_protocol", return_value=0):
+            text = self._gaussian_input(GaussianCalc(proto, 4, conf).optimisation()[0], tmp_path)
+        assert "opt=(readfc,ts,noeigentest)" in text
+        assert "%oldchk=" in text and "protocol_0/gaussian.chk" in text

@@ -39,7 +39,9 @@ class GaussianCalc(BaseCalc):
             oldchk_path = self._build_path(
                 self.conf.folder, f"protocol_{self.protocol.read_orbitals}", "gaussian.chk"
             )
-            calculator.oldchk = oldchk_path
+            calculator.parameters["oldchk"] = oldchk_path
+            if "guess" not in self.protocol.add_input.lower():
+                calculator.parameters["extra"] += " guess=read"
 
         return calculator, "gaussian"
 
@@ -59,7 +61,7 @@ class GaussianCalc(BaseCalc):
                         chk_path = self._build_path(
                             self.conf.folder, f"protocol_{src}", "gaussian.chk"
                         )
-                        calc.oldchk = chk_path
+                        calc.parameters["oldchk"] = chk_path
                         ts_opt = " opt=(readfc,ts,noeigentest)"
                         ts_opt_cons = " opt=(readfc,ts,modredundant,noeigentest)"
             opt_str = ts_opt
