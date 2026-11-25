@@ -293,51 +293,51 @@ class ProtocolExecutor:
             return
 
         protocol_number_str = str(protocol_number)
-        dE = np.array([i.energies[protocol_number_str].E for i in CONFS])
-        dE_ZPVE = np.array(
+        E = np.array([i.energies[protocol_number_str].E for i in CONFS])
+        E_ZPVE = np.array(
             [
                 i.energies[protocol_number_str].E + i.energies[protocol_number_str].zpve
                 for i in CONFS
             ]
         )
-        dH = np.array(
+        H = np.array(
             [
                 i.energies[protocol_number_str].E + i.energies[protocol_number_str].H
                 for i in CONFS
             ]
         )
-        dG = np.array([i.energies[protocol_number_str].G for i in CONFS])
+        G = np.array([i.energies[protocol_number_str].G for i in CONFS])
 
         # Boltzmann populations
-        _, dE_boltz = boltzmann_distribution(dE, T)
-        _, dE_ZPVE_boltz = boltzmann_distribution(dE_ZPVE, T)
-        _, dH_boltz = boltzmann_distribution(dH, T)
-        _, dG_boltz = boltzmann_distribution(dG, T)
+        _, E_boltz = boltzmann_distribution(E, T)
+        _, E_ZPVE_boltz = boltzmann_distribution(E_ZPVE, T)
+        _, H_boltz = boltzmann_distribution(H, T)
+        _, G_boltz = boltzmann_distribution(G, T)
 
         averages = [[
             f'{T:.2f}',
-            float(np.sum(dE * dE_boltz)),
-            float(np.sum(dE_ZPVE * dE_ZPVE_boltz)),
-            float(np.sum(dH * dH_boltz)),
-            float(np.sum(dG * dG_boltz)),
+            float(np.sum(E * E_boltz)),
+            float(np.sum(E_ZPVE * E_ZPVE_boltz)),
+            float(np.sum(H * H_boltz)),
+            float(np.sum(G * G_boltz)),
         ]]
 
         rows = [
             [
                 f"Conf {i.number}",
-                dE[idx],
-                f"{float(dE_boltz[idx]*100):.2f}",
-                dE_ZPVE[idx],
-                f"{float(dE_ZPVE_boltz[idx]*100):.2f}",
-                dH[idx],
-                f"{float(dH_boltz[idx]*100):.2f}",
-                dG[idx],
-                f"{float(dG_boltz[idx]*100):.2f}",
+                E[idx],
+                f"{float(E_boltz[idx]*100):.2f}",
+                E_ZPVE[idx],
+                f"{float(E_ZPVE_boltz[idx]*100):.2f}",
+                H[idx],
+                f"{float(H_boltz[idx]*100):.2f}",
+                G[idx],
+                f"{float(G_boltz[idx]*100):.2f}",
             ]
             for idx, i in enumerate(CONFS)
         ]
 
-        headers=["Conformer", "∆E [Eh]", "Boltzamnn Pop. on ∆E", "∆(E+ZPVE) [Eh]", "Boltzamnn Pop. on ∆(E+ZPVE)", "∆H [Eh]", "Boltzamnn Pop. on ∆H", "∆G [Eh]", "Boltzamnn Pop. on ∆G"]
+        headers=["Conformer", "E [Eh]", "Boltzmann Pop. on E", "E+ZPVE [Eh]", "Boltzmann Pop. on E+ZPVE", "H [Eh]", "Boltzmann Pop. on H", "G [Eh]", "Boltzmann Pop. on G"]
 
         self.logger.table(
             title="Energetic Summary of the active conformers", 
