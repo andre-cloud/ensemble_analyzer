@@ -13,7 +13,7 @@ import numpy as np
 import random
 
 
-@dataclass
+@dataclass(eq=False)  # identity equality, hashable; ordering is by energy
 class Conformer: 
     """
     Dataclass storing all conformer-related data used across the protocol.
@@ -230,9 +230,3 @@ class Conformer:
         if not self.active:
             return 0 > other._last_energy
         return self._last_energy > other._last_energy
-
-    def __eq__(self, other: 'Conformer') -> bool:
-        """Check if two conformers have the same energy."""
-        if not self.active:
-            return 0 == other._last_energy
-        return self._last_energy == other._last_energy

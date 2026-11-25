@@ -58,3 +58,13 @@ class TestConformer:
         assert dm[0,1] == 1.0 # Distance between (0,0,0) and (0,0,1)
         assert dm[1,0] == 1.0
         assert dm[0,0] == 0.0
+
+def test_equality_is_identity_and_hashable():
+    from unittest.mock import patch
+    with patch("ensemble_analyzer.conformer.conformer.Path"):
+        a = Conformer(number=1, geom=np.zeros((1, 3)), atoms=("C",))
+        b = Conformer(number=2, geom=np.zeros((1, 3)), atoms=("C",))
+    # Same (missing) energy: still two different conformers
+    assert a != b and a == a
+    assert b not in [a]
+    assert len({a, b}) == 2
