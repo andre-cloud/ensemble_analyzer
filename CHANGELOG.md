@@ -4,7 +4,7 @@ All notable changes to this project will be documented in this file.
 Versions follow the git release tags.
 
 
-## [Unreleased]
+## [1.3.0] - 2026-11-25
 
 ### Added
 - **ΔSCF excited states for ORCA and NWChem** (`deltascf` protocol key, see `docs/source/user_guide/deltascf.md`):
@@ -31,6 +31,7 @@ Versions follow the git release tags.
 - UMA: predictors were loaded with merged MoLE experts (`merge_mole=True`) and cached by model path only, so a later system with a different composition reused weights merged for the first one. Merging is now off.
 - ML potentials that ignore `charge`/`mult` now warn on charged or open-shell steps instead of silently computing a neutral singlet: MACE models without charge/spin embeddings (MACE-OFF, MACE-MP, Egret-1, …; detected from the loaded model, also for local files) and UMA/FAIRChem with a `task` other than `"omol"`.
 - Tutorial 3: the S1 optimisation step read its own orbitals (`read_orbitals: "2"`).
+- Energetic summary table: the columns hold absolute E, E+ZPVE, H and G, not differences; headers no longer say ∆ (and "Boltzmann" is spelled right).
 
 
 ## [1.2.2] - 2026-11-10
