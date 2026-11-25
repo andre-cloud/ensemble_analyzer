@@ -64,8 +64,9 @@ def test_run_programmatic(mock_logger, mock_orch):
 
 
 @patch("ensemble_analyzer._managers.calculator_orchestration.CalculationOrchestrator")
-def test_run_quiet_silences_console_not_log(mock_orch, tmp_path, capsys):
+def test_run_quiet_silences_console_not_log(mock_orch, tmp_path, capsys, monkeypatch):
     import logging
+    monkeypatch.chdir(tmp_path)
     c = Conformer(1, np.array([[0, 0, 0]]), ("C",), raw=True)
     mock_orch.return_value.conformers = [c]
     mock_orch.return_value.run.side_effect = lambda: print("library noise")
