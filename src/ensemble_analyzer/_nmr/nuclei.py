@@ -7,7 +7,7 @@ Data in ``parameters_file/nuclei.json``, keyed by isotope label (``"1H"``, ``"13
 import json
 import re
 from importlib.resources import files
-from typing import Dict, List, Tuple
+from typing import Dict, Tuple
 
 NUCLEUS_DATA: Dict[str, Dict] = json.loads(
     files("ensemble_analyzer").joinpath("parameters_file/nuclei.json").read_text()
@@ -65,13 +65,6 @@ def shift_range(nucleus: str) -> Tuple[float, float]:
     return float(lo), float(hi)
 
 
-def isotopes_of(element: str) -> List[str]:
-    """Magnetic isotopes of an element in ``nuclei.json``, most abundant first."""
-    el = element.capitalize()
-    found = [k for k, v in NUCLEUS_DATA.items() if v["element"] == el]
-    return sorted(found, key=lambda k: -NUCLEUS_DATA[k]["abundance"])
-
-
 def larmor_mhz(nucleus: str, frequency_1h: float) -> float:
     """Larmor frequency (MHz) of ``nucleus`` on a spectrometer of ``frequency_1h`` MHz for 1H."""
     return float(frequency_1h) * abs(gamma(nucleus) / gamma("1H"))
@@ -84,4 +77,4 @@ def shielding_to_shift(sigma: float, sigma_ref: float, delta_ref: float = 0.0) -
 
 def rescale_coupling(j_hz: float, used: Tuple[str, str], wanted: Tuple[str, str]) -> float:
     """J for the ``wanted`` isotope pair from a J computed for the ``used`` pair (J ∝ γA·γB)."""
-    return j_hz * (gamma(wanted[0]) * gamma(wanted[1])) / (gamma(used[0]) * gamma(used[1]))
+    return j_hz * gamma(wanted[0]) * gamma(wanted[1]) / (gamma(used[0]) * gamma(used[1]))

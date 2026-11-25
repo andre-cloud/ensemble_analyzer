@@ -1,7 +1,7 @@
 from typing import Tuple, Any
 
 from ase.calculators.orca import ORCA
-from enan_calculators import orca_major_version
+from enan_calculators import append_post_block, orca_major_version
 from ensemble_analyzer.calculators.base import BaseCalc, register_calculator
 from ensemble_analyzer.protocol.dispersion import dispersion_keyword
 
@@ -108,7 +108,6 @@ class OrcaCalc(BaseCalc):
         settings = self._nmr_settings()
         if not settings:
             return
-        from enan_calculators._orca import append_post_block
         from ensemble_analyzer._nmr.inputs import orca_block
 
         calc.parameters["orcasimpleinput"] += "\n! NMR\n"

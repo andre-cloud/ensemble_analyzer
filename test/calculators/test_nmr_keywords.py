@@ -33,7 +33,6 @@ def _p(calculator="orca", **nmr):
 
 def _orca_input(protocol, conf, tmp_path) -> str:
     with patch("enan_calculators._orca.shutil.which", return_value="orca"), \
-         patch("ensemble_analyzer.calculators.orca.orca_profile"), \
          patch("ensemble_analyzer.calculators.orca.OrcaCalc.VERSION", 6):
         calc, _ = OrcaCalc(protocol, 4, conf).single_point()
     calc.directory = tmp_path

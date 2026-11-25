@@ -18,6 +18,7 @@ from itertools import product
 from typing import Dict, List, Sequence, Tuple
 
 import numpy as np
+from scipy.sparse.csgraph import connected_components
 
 from ensemble_analyzer._nmr.nuclei import (
     abundance,
@@ -64,21 +65,9 @@ def _partner_distribution(spin: float, n: int, p: float, prune: float = 1e-3) ->
 
 
 def _components(n: int, J: np.ndarray, cutoff: float) -> List[List[int]]:
-    seen, comps = set(), []
-    for start in range(n):
-        if start in seen:
-            continue
-        stack, comp = [start], []
-        seen.add(start)
-        while stack:
-            i = stack.pop()
-            comp.append(i)
-            for j in range(n):
-                if j not in seen and abs(J[i, j]) >= cutoff:
-                    seen.add(j)
-                    stack.append(j)
-        comps.append(sorted(comp))
-    return comps
+    """Groups connected by |J| >= cutoff, ordered by their lowest index."""
+    _, labels = connected_components(np.abs(J[:n, :n]) >= cutoff, directed=False)
+    return [np.flatnonzero(labels == c).tolist() for c in range(labels.max(initial=-1) + 1)]
 
 
 def simulate_nucleus(

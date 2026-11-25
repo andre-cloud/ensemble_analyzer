@@ -133,16 +133,13 @@ def check_prism() -> None:
               "PRISM Pruner NOT installed (needed only for prune_method 'prism'/'prism_rotcorr'). "
               "Install: pip install \"ensemble-analyzer[prism]\"")
 
-
 def check_rdkit() -> None:
     """
     Check for RDKit (optional: NMR references given as SMILES).
     """
 
-    if importlib.util.find_spec("rdkit") is not None:
-        log_pass("RDKit found (NMR references from SMILES available).")
-    else:
-        log_warn(
+    _optional(
+            "rdkit", "RDKit found (NMR references from SMILES available).",
             "RDKit NOT installed (needed only for NMR references given as SMILES; bundled "
             "references such as TMS and .xyz files work without it). "
             "Install: conda install -c conda-forge rdkit  or  pip install \"ensemble-analyzer[nmr]\""

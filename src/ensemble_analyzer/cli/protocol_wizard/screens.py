@@ -401,12 +401,10 @@ class StepEditorScreen(ModalScreen[dict | None]):
                 nmr = self.step.get("nmr") or {}
                 with Collapsible(title="NMR (shielding / coupling, ORCA/Gaussian/NWChem)", collapsed=not nmr):
                     yield Label("Enable NMR (single-point step)", classes="field")
-                    yield Select([("No", "no"), ("Yes", "yes")], value="yes" if nmr else "no", id="f_nmr")
+                    yield _yn(nmr, "f_nmr")
                     yield Label("Shielding → shifts (needs references) / spin-spin couplings J", classes="field")
-                    yield Select([("Yes", "yes"), ("No", "no")],
-                                 value="yes" if nmr.get("shielding", True) else "no", id="f_nmr_shield")
-                    yield Select([("Yes", "yes"), ("No", "no")],
-                                 value="yes" if nmr.get("coupling") else "no", id="f_nmr_coupl")
+                    yield _yn(nmr.get("shielding", True), "f_nmr_shield", yes_first=True)
+                    yield _yn(nmr.get("coupling"), "f_nmr_coupl", yes_first=True)
                     yield Label("Nuclei (isotopes)", classes="field")
                     yield Input(value=" ".join(nmr.get("nuclei") or []), placeholder="1H 13C", id="f_nmr_nuclei")
                     yield Label("Only these atoms (0-based, empty = all)", classes="field")
@@ -647,10 +645,10 @@ class StepEditorScreen(ModalScreen[dict | None]):
             s["read_orbitals"] = ref
 
         # NMR
-        if _parse_bool(self.query_one("#f_nmr", Select).value):
+        if self._bool("f_nmr"):
             nmr: dict = {
-                "shielding": _parse_bool(self.query_one("#f_nmr_shield", Select).value),
-                "coupling": _parse_bool(self.query_one("#f_nmr_coupl", Select).value),
+                "shielding": self._bool("f_nmr_shield"),
+                "coupling": self._bool("f_nmr_coupl"),
                 "nuclei": self.query_one("#f_nmr_nuclei", Input).value.replace(",", " ").split(),
                 "coupling_terms": self.query_one("#f_nmr_terms", Select).value,
             }
@@ -668,14 +666,14 @@ class StepEditorScreen(ModalScreen[dict | None]):
                 dec = parse_decouple(self.query_one("#f_nmr_decouple", Input).value)
                 if dec:
                     nmr["decouple"] = dec
-                nmr["frequency"] = float(self.query_one("#f_nmr_freq", Input).value.strip() or "400")
-                nmr["fwhm"] = float(self.query_one("#f_nmr_fwhm", Input).value.strip() or "1.0")
-                cf = self.query_one("#f_nmr_cfrom", Input).value.strip().lower()
+                nmr["frequency"] = float(self._in("f_nmr_freq") or "400")
+                nmr["fwhm"] = float(self._in("f_nmr_fwhm") or "1.0")
+                cf = self._in("f_nmr_cfrom").lower()
                 if cf in ("none", "no", "false"):
                     nmr["coupling_from"] = False
                 elif cf:
                     nmr["coupling_from"] = int(cf)
-                of = self.query_one("#f_nmr_optfrom", Input).value.strip()
+                of = self._in("f_nmr_optfrom")
                 if of:
                     nmr["opt_from"] = int(of)
             except ValueError as err:

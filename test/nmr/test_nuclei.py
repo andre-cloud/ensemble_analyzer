@@ -5,7 +5,6 @@ from ensemble_analyzer._nmr.nuclei import (
     abundance,
     element_of,
     get_nucleus_spin,
-    isotopes_of,
     mass_number,
     normalize_nucleus_name,
     rescale_coupling,
@@ -36,8 +35,6 @@ def test_lookups():
     assert element_of("15N") == "N" and mass_number("15N") == 15
     assert get_nucleus_spin("14N") == 1.0 and get_nucleus_spin("2H") == 1.0
     assert abundance("19F") == 1.0
-    assert isotopes_of("N") == ["14N", "15N"]
-    assert isotopes_of("Ag")[0] == "107Ag"
 
 
 def test_shift_and_rescale():

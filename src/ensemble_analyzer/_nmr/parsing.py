@@ -14,7 +14,7 @@ import re
 from typing import Dict, Sequence, Tuple
 
 from ensemble_analyzer._nmr.inputs import all_selected, selected_atoms
-from ensemble_analyzer._nmr.nuclei import NUCLEUS_DATA, gamma, normalize_nucleus_name
+from ensemble_analyzer._nmr.nuclei import gamma, normalize_nucleus_name, rescale_coupling
 from ensemble_analyzer.conformer.nmr_data import NMRRecord
 
 GAUSSIAN_K_TO_J = 4.35948e-16
@@ -29,10 +29,9 @@ def _f(text: str) -> float:
 def _isotope(label: str):
     """Canonical isotope or None for labels such as ``1C`` (no isotope assigned)."""
     try:
-        key = normalize_nucleus_name(label)
+        return normalize_nucleus_name(label)
     except ValueError:
         return None
-    return key if key in NUCLEUS_DATA else None
 
 
 # --- ORCA -------------------------------------------------------------------
@@ -133,8 +132,7 @@ def parse_nmr_output(engine: str, text: str, settings: Dict, symbols: Sequence[s
     def add_pair(a, b, iso_a, iso_b, j):
         if a not in wanted or b not in wanted or iso_a is None or iso_b is None:
             return
-        j = j * gamma(wanted[a]) * gamma(wanted[b]) / (gamma(iso_a) * gamma(iso_b))
-        couplings[(min(a, b), max(a, b))] = j
+        couplings[(min(a, b), max(a, b))] = rescale_coupling(j, (iso_a, iso_b), (wanted[a], wanted[b]))
 
     if engine == "orca":
         shield, pairs = _orca(text)
