@@ -60,6 +60,14 @@ class TestCalculationConfig:
         assert loaded.temperature == 300.0
         assert loaded.definition == 3
         assert loaded.fwhm == {"vibro": 5, "electro": None}
+        assert loaded.norm_exp is False
+
+    def test_norm_exp_settings_roundtrip(self, tmp_path, monkeypatch):
+        """--norm-exp is saved in settings.json and read back (enan_regraph)."""
+        monkeypatch.chdir(tmp_path)
+        CalculationConfig.from_args(_args(norm_exp=True))
+        assert json.loads((tmp_path / "settings.json").read_text())["norm_exp"] is True
+        assert CalculationConfig.load(tmp_path / "settings.json").norm_exp is True
 
     def test_from_args_thermo_flags(self, tmp_path, monkeypatch):
         """--pressure, --linear, --alpha and --cut-off reach the config."""
