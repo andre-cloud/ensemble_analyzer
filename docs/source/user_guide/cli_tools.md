@@ -105,6 +105,7 @@ Options:
 - `-no-nm`: Do not save graphs with nanometer (nm) x-axis (saves only default units).
 - `-w`, `--weight`: Overlay the weighting function used for comparison on the plot.
 - `--disable-color`: Disable colored terminal output.
+- `--norm-exp`: Scale the spectra to the experimental maximum (absolute value) instead of [-1, 1]; it is also on when the original run used `--norm-exp`.
 
 Example: Recalculate spectra for step 1 using new settings in settings.json:
 

@@ -26,6 +26,7 @@ class CalculationConfig:
     shift: Optional[Dict[str, Optional[float]]] = None
     interested: Optional[Dict[str, Optional[float]]] = None
     invert: bool = False
+    norm_exp: bool = False  # spectra scaled to the experimental |max| instead of [-1, 1]
 
     linear: bool = False
     cut_off: float = 100
@@ -89,7 +90,7 @@ class CalculationConfig:
         def pair(key):
             return {'vibro': s.get(f"{key}_vibro"), 'electro': s.get(f"{key}_electro")}
         simple = ("cpu", "temperature", "include_H", "definition", "invert",
-                  "restart", "linear", "cut_off", "alpha", "P")
+                  "restart", "linear", "cut_off", "alpha", "P", "norm_exp")
         return cls(
             start_from_protocol=start_from_protocol,
             fwhm=pair("fwhm"), shift=pair("shift"), interested=pair("interested"),
@@ -110,6 +111,7 @@ class CalculationConfig:
             "interested_vibro": args.interest_vibro,
             "interested_electro": args.interest_electro,
             "invert": args.invert,
+            "norm_exp": args.norm_exp,
             "include_H": args.include_H,
             "restart": args.restart,
             "P": args.pressure,

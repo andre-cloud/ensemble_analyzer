@@ -217,6 +217,14 @@ def parser_arguments()-> argparse.Namespace:
         action="store_true",
         default=False,
     )
+    graph_group.add_argument(
+        "--norm-exp",
+        help="With an experimental spectrum, scale the computed spectra to the experimental "
+             "maximum (absolute value) and keep the experimental intensities, instead of "
+             "normalising everything to [-1, 1]",
+        action="store_true",
+        default=False,
+    )
 
     log_group = parser.add_argument_group("Parameters for the log")
     log_group.add_argument(

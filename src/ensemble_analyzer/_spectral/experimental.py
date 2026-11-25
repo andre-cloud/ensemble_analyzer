@@ -30,13 +30,13 @@ class ExperimentalGraph(BaseGraph):
 
         self.load_file_experimental()
         self.process()
-        self.y = self.normalize(self.y)
         self.Y = self.interpolate()
         self.calc_weighting_function()
 
         self.dump_XY_data(self.X, self.weight, f'{self.graph_type}_weighted.xy')
 
-        self.dump_XY_data(self.X, self.Y, f'{self.graph_type}_ref_norm.xy')
+        self.dump_XY_data(self.X, self.Y * (self.scale if self.norm_exp else 1.0),
+                          f'{self.graph_type}_ref_norm.xy')
         np.savetxt(f'{self.graph_type.upper()}_index_lim.xy', np.array([self.x_min_idx, self.x_max_idx]))
 
     def load_file_experimental(self) -> None:
@@ -50,6 +50,7 @@ class ExperimentalGraph(BaseGraph):
         X, Y = np.hsplit(data, 2)
 
         self.x = X.ravel()
+        self.scale = float(np.max(np.abs(Y)))  # experimental |max|, used with norm_exp
         self.y = self.normalize(Y.ravel())
 
     def interpolate(self) -> np.ndarray:

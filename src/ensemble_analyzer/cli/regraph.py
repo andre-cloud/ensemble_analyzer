@@ -10,6 +10,9 @@ def parse_argument() -> argparse.Namespace:
     parser.add_argument('-no-nm', '--no-nm', help='Do not save the nm graphs', action='store_false')
     parser.add_argument('-w', '--weight', help='Show Weighting function', action='store_true')
     parser.add_argument('--disable-color', action='store_true', help='Disable colored output')
+    parser.add_argument('--norm-exp', action='store_true',
+                        help='Scale the spectra to the experimental maximum (absolute value) '
+                             'instead of [-1, 1]; also on if the run used --norm-exp')
     args = parser.parse_args()
     return args
 
@@ -57,6 +60,7 @@ def main() -> None:
             ensemble, prot_obj, log=log, invert=config_mgr.invert,
             shift=config_mgr.shift, fwhm=config_mgr.fwhm,
             interested_area=config_mgr.interested,
+            norm_exp=args.norm_exp or config_mgr.norm_exp,
         )
 
     plot_comparative_graphs(log, args.idx, show=False, nm=args.no_nm,

@@ -151,7 +151,8 @@ class ProtocolExecutor:
                 fwhm=self.config.fwhm,
                 shift=self.config.shift,
                 definition=self.config.definition,
-                interested_area=self.config.interested
+                interested_area=self.config.interested,
+                norm_exp=self.config.norm_exp,
             )
         
         # Protocol end

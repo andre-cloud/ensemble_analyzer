@@ -10,7 +10,7 @@ from ensemble_analyzer.conformer.conformer import Conformer
 from ensemble_analyzer._logger.logger import Logger
 
 
-def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, invert: bool, interested_area: List[float], shift: Optional[Union[List[float],float,None]] = None, fwhm: Optional[Union[List[float],float,None]] = None, read_pop: Optional[str] = None, definition: Optional[int] = 4) -> None:
+def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, invert: bool, interested_area: List[float], shift: Optional[Union[List[float],float,None]] = None, fwhm: Optional[Union[List[float],float,None]] = None, read_pop: Optional[str] = None, definition: Optional[int] = 4, norm_exp: bool = False) -> None:
     """
     Main driver for generating computed spectra for a specific protocol step.
 
@@ -28,6 +28,8 @@ def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, inv
         fwhm (Optional[Union[List[float], float]]): Full Width at Half Maximum parameter(s).
         read_pop (Optional[str]): Protocol ID to read Boltzmann populations from.
         definition (Optional[int]): Resolution of the spectral grid (10^definition points).
+        norm_exp (bool): With an experimental spectrum, write the experimental and
+            computed spectra scaled to the experimental |max| instead of [-1, 1].
 
     Returns:
         None
@@ -38,7 +40,7 @@ def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, inv
         ref = None
         fname = f"{graph_type.lower()}_ref.dat"
         if os.path.exists(os.path.join(os.getcwd(), fname)):
-            ref = ExperimentalGraph(confs=[], protocol=protocol, graph_type=graph_type, log=log, interested_area=interested_area.get(VIBRO_OR_ELECTRO[graph_type]))
+            ref = ExperimentalGraph(confs=[], protocol=protocol, graph_type=graph_type, log=log, interested_area=interested_area.get(VIBRO_OR_ELECTRO[graph_type]), norm_exp=norm_exp)
             ref.read()
 
 
@@ -52,7 +54,8 @@ def main_spectra(ensemble: List[Conformer], protocol: Protocol, log: Logger, inv
             shift_user=shift.get(VIBRO_OR_ELECTRO[graph_type], None),
             fwhm_user=fwhm.get(VIBRO_OR_ELECTRO[graph_type], None),
             read_population=read_pop,
-            definition=int(definition)
+            definition=int(definition),
+            norm_exp=norm_exp,
         )
 
         graph.compute_spectrum()

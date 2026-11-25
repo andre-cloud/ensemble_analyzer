@@ -26,6 +26,12 @@ class ComparedGraph:
         """Initialize loaded computed and experimental data."""
         self._validate_graph_type()
         self.Xr, self.Yr, self.bounders, self.weighted = self._load_experimental()
+        # Intensity the spectra are scaled to: the experimental |max| in its window
+        # (1 for the [-1, 1] normalisation, or without an experimental spectrum)
+        self.scale = 1.0
+        if isinstance(self.bounders, np.ndarray):
+            i, j = int(self.bounders[0]), int(self.bounders[1])
+            self.scale = float(np.max(np.abs(self.Yr[i:j]))) or 1.0
         self.data = self._load_computed()        
         self.defaults = GraphDefault(self.graph_type)
         
@@ -89,10 +95,7 @@ class ComparedGraph:
             
         idx_start, idx_end = int(self.bounders[0]), int(self.bounders[1])
         max_y = np.max(np.abs(Y[idx_start:idx_end]))
-        
-        if max_y > 1:
-            return Y / max_y
-        return Y
+        return Y / max_y * self.scale if max_y > 0 else Y
 
     def _load_experimental(self) -> Tuple[Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray], Optional[np.ndarray]]:
         """Load experimental spectrum and boundary files from disk."""
@@ -192,7 +195,8 @@ class ComparedGraph:
     def _configure_limits(self, ax: plt.Axes, in_nm: bool) -> None:
         """Set axis limits with padding."""
 
-        y_lim = [-1.05, 1.05] if self.graph_type.upper() in CHIRALS else [-0.05, 1.05]
+        y_lim = [-1.05 * self.scale, 1.05 * self.scale] if self.graph_type.upper() in CHIRALS \
+            else [-0.05 * self.scale, 1.05 * self.scale]
         ax.set_ylim(y_lim)
         
         if self.Xr is not None and self.bounders is not None:

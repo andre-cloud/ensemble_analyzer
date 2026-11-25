@@ -12,7 +12,7 @@ def _args(**over):
              fwhm_electro=None, shift_vibro=None, shift_electro=None,
              interest_vibro=None, interest_electro=None, invert=False,
              include_H=False, restart=False, pressure=101.325, linear=False,
-             alpha=4, cut_off=100)
+             alpha=4, cut_off=100, norm_exp=False)
     d.update(over)
     return SimpleNamespace(**d)
 

@@ -121,6 +121,9 @@ class BaseGraph:
     definition: Optional[int] = 4
     interested_area: Optional[list] = None
     ref: Optional["BaseGraph"] = None  # experimental reference (ExperimentalGraph)
+    # Write spectra scaled to the experimental |max| instead of [-1, 1]
+    # (fit and similarity are always computed on the [-1, 1] spectra)
+    norm_exp: bool = False
 
     def __post_init__(self) -> None:
         self.defaults = GraphDefault(self.graph_type)
@@ -225,7 +228,8 @@ class BaseGraph:
 
         if self.Y[~np.isnan(self.Y)].size > 0:
             self.log.debug(f'Saving {self.graph_type} spectra convoluted')
-            self.dump_XY_data(self.X, self.Y,
+            scale = self.ref.scale if (self.ref is not None and self.norm_exp) else 1.0
+            self.dump_XY_data(self.X, self.Y * scale,
                               f'{self.graph_type}_p{self.protocol.number}_comp.xy')
 
     def autoconvolution(self) -> None:
