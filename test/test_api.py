@@ -61,3 +61,17 @@ def test_run_programmatic(mock_logger, mock_orch):
     assert res.conformers[0] == c
     assert res.best == c
     instance.run.assert_called_once()
+
+
+@patch("ensemble_analyzer._managers.calculator_orchestration.CalculationOrchestrator")
+def test_run_quiet_silences_console_not_log(mock_orch, tmp_path, capsys):
+    import logging
+    c = Conformer(1, np.array([[0, 0, 0]]), ("C",), raw=True)
+    mock_orch.return_value.conformers = [c]
+    mock_orch.return_value.run.side_effect = lambda: print("library noise")
+
+    res = ea.run(ensemble=[c], protocol={"0": {"functional": "B3LYP"}},
+                 work_dir=tmp_path, output="q.out", quiet=True)
+
+    assert "library noise" not in capsys.readouterr().out
+    assert all(h.level <= logging.INFO for h in res.logger.handlers)

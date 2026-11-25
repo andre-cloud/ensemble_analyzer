@@ -1,4 +1,5 @@
 import contextlib
+import os
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
@@ -156,7 +157,7 @@ def run(
         work_dir: Optional directory to execute calculations within.
         restart: Resume from last checkpoint.
         output: Log file name.
-        quiet: If True, suppress console logging output.
+        quiet: If True, silence console output (stdout/stderr) during the run; the log file is unaffected.
         disable_color: Disable ANSI colors in log.
         cpu: Number of CPU cores to use.
         temperature: Temperature for thermochemistry.
@@ -166,7 +167,6 @@ def run(
     Returns:
         EnsembleResult: Object containing the resulting conformers and metadata.
     """
-    import logging
     from ensemble_analyzer.launch import _normalize_ensemble, _normalize_protocols
     from ensemble_analyzer.protocol.protocol import sort_protocols
     from ensemble_analyzer._managers.protocol_manager import ProtocolManager
@@ -180,18 +180,20 @@ def run(
         debug=DEBUG,
         disable_color=disable_color
     )
-    if quiet:
-        # Avoid console output by raising level for handlers attached to sys.stdout
-        for handler in log.handlers:
-            if isinstance(handler, logging.StreamHandler):
-                handler.setLevel(logging.CRITICAL)
 
     # Change to work_dir if requested
     if work_dir:
         Path(work_dir).mkdir(parents=True, exist_ok=True)
 
-    cm = contextlib.chdir(work_dir) if work_dir else contextlib.nullcontext()
-    with cm:
+    # The log only goes to its file; quiet silences what libraries print
+    # (warnings, model loading) on the console during the run.
+    with contextlib.ExitStack() as stack:
+        if work_dir:
+            stack.enter_context(contextlib.chdir(work_dir))
+        if quiet:
+            devnull = stack.enter_context(open(os.devnull, "w"))
+            stack.enter_context(contextlib.redirect_stdout(devnull))
+            stack.enter_context(contextlib.redirect_stderr(devnull))
         # Load or initialize workflow
         if restart:
             conformers, protocols_out = load_workflow_data()
