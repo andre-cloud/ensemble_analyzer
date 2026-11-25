@@ -363,7 +363,7 @@ def create_logger(
 
     handler = logging.FileHandler(output_file, mode="a")
     handler.setLevel(logging.DEBUG if debug else logging.INFO)
-    handler.setFormatter(ColoredFormatter(LOG_FORMAT, use_colors=disable_color))
+    handler.setFormatter(ColoredFormatter(LOG_FORMAT, use_colors=not disable_color))
 
     log.setLevel(logging.DEBUG if debug else logging.INFO)
     log.addHandler(handler)

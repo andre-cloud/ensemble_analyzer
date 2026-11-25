@@ -228,7 +228,7 @@ def parser_arguments()-> argparse.Namespace:
 
     log_group.add_argument(
         '--disable-color',
-        action='store_false',
+        action='store_true',
         help='Disable colored output'
     )
 

@@ -58,3 +58,17 @@ class TestCreateLogger:
     def test_create_logger_no_color(self, MockLogger, MockFileHandler):
         create_logger("test.log", disable_color=True)
         MockLogger.return_value.addHandler.assert_called()
+
+    def test_disable_color_controls_formatter(self, tmp_path):
+        for disable, expected in [(True, False), (False, True)]:
+            log = create_logger(str(tmp_path / f"{disable}.log"), logger_name=f"c{disable}",
+                                disable_color=disable)
+            assert log.handlers[0].formatter.use_colors is expected
+
+    def test_cli_flag_disables_color(self, monkeypatch):
+        from ensemble_analyzer._parser_arguments import parser_arguments
+        monkeypatch.setattr("sys.argv", ["enan", "-e", "x.xyz"])
+        assert parser_arguments().disable_color is False
+        monkeypatch.setattr("sys.argv", ["enan", "-e", "x.xyz", "--disable-color"])
+        assert parser_arguments().disable_color is True
+

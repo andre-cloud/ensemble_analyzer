@@ -9,7 +9,7 @@ def parse_argument() -> argparse.Namespace:
     parser.add_argument('-rb', '--read-boltz', help='Read Boltzmann population from a specific protocol', type=int)
     parser.add_argument('-no-nm', '--no-nm', help='Do not save the nm graphs', action='store_false')
     parser.add_argument('-w', '--weight', help='Show Weighting function', action='store_true')
-    parser.add_argument('--disable-color', action='store_false', help='Disable colored output')
+    parser.add_argument('--disable-color', action='store_true', help='Disable colored output')
     args = parser.parse_args()
     return args
 
