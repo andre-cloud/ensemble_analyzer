@@ -16,7 +16,7 @@ def main(
     """Run the ensemble analysis workflow.
 
     Two modes
-    --------
+    ---------
     **CLI mode** — call with no arguments; parses ``sys.argv`` via argparse
     (backward-compatible, entry point unchanged).
 
@@ -29,10 +29,10 @@ def main(
     Parameters
     ----------
     ensemble
-        Path to an XYZ file, a |Conformer|, or a list of them.
+        Path to an XYZ file, a :class:`~ensemble_analyzer.conformer.conformer.Conformer`, or a list of them.
     protocol
         Path to a JSON protocol file, a dict (step-number keys, same format
-        as the JSON file), a |Protocol|, or a list of them.
+        as the JSON file), a :class:`~ensemble_analyzer.protocol.protocol.Protocol`, or a list of them.
     restart
         Resume from the last checkpoint.
     output
@@ -41,13 +41,9 @@ def main(
         Disable ANSI colour in the log.
     **config
         All remaining keyword arguments are forwarded directly to
-        |CalculationConfig|_.  See its documentation for the full list of
+        
+        :class:`~ensemble_analyzer._managers.calculation_config.CalculationConfig`.  See its documentation for the full list of
         accepted fields.
-
-    .. |Conformer| replace:: ``Conformer``
-    .. |Protocol| replace:: ``Protocol``
-    .. |CalculationConfig| replace:: ``CalculationConfig``
-    .. _CalculationConfig: ensemble_analyzer._managers.calculation_config
     """
     # ── Detect mode ────────────────────────────────────────────────────
     from_cli = ensemble is None and protocol is None

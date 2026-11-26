@@ -7,6 +7,6 @@ Classes for defining computational steps and settings.
    :members:
    :undoc-members:
 
-.. automodule:: ensemble_analyzer._protocol.solvent
+.. automodule:: ensemble_analyzer.protocol.solvent
    :members:
    :undoc-members:

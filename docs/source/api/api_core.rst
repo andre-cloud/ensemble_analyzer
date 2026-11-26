@@ -11,6 +11,6 @@ The entry points and high-level orchestration logic.
    :members:
    :undoc-members:
 
-.. automodule:: ensemble_analyzer.parser_arguments
+.. automodule:: ensemble_analyzer._parser_arguments
    :members:
    :undoc-members:

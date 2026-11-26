@@ -6,33 +6,33 @@ Interfaces for external QM software (Calculators) and output parsing.
 Calculators
 -----------
 
-.. automodule:: ensemble_analyzer._calculators.base
+.. automodule:: ensemble_analyzer.calculators.base
    :members:
    :undoc-members:
 
-.. automodule:: ensemble_analyzer._calculators._orca
+.. automodule:: ensemble_analyzer.calculators.orca
    :members:
    :undoc-members:
 
-.. automodule:: ensemble_analyzer._calculators._gaussian
+.. automodule:: ensemble_analyzer.calculators.gaussian
    :members:
    :undoc-members:
 
 Parsers
 -------
 
-.. automodule:: ensemble_analyzer._parsers.base
+.. automodule:: ensemble_analyzer.parsers.base
    :members:
    :undoc-members:
 
-.. automodule:: ensemble_analyzer._parsers._orca
+.. automodule:: ensemble_analyzer.parsers.orca
    :members:
    :undoc-members:
 
-.. automodule:: ensemble_analyzer._parsers._gaussian
+.. automodule:: ensemble_analyzer.parsers.gaussian
    :members:
    :undoc-members:
 
-.. automodule:: ensemble_analyzer.parser_parameter
+.. automodule:: ensemble_analyzer._parser_parameter
    :members:
    :undoc-members:

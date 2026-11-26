@@ -277,6 +277,7 @@ def calc_vibrational_entropy_truhlar(
     Vibrational entropy calculated with Truhlar's quasi-harmonic cutoff model (2011).
 
     All frequencies below cut_off are raised to cut_off:
+
     .. math::
         \tilde{\omega}_i = \max(\omega_i, \omega_{\text{cut}})
 
