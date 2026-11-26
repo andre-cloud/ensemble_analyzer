@@ -72,15 +72,18 @@ def create_ml_calc(calc_name, charge, mult, method, task_name):
     cache_key = (str(model_path.resolve()), device)
 
     if cache_key not in _PREDICTOR_CACHE:
+        # compile=True needs merge_mole=True in fairchem: compiling the
+        # unmerged MoLE model fails on the first forward with
+        # "Expected index [n_edges] to be no larger than self [1]".
         inference_settings = InferenceSettings(
             tf32=True,
             activation_checkpointing=False,
             merge_mole=False,
-            compile=True,
+            compile=False,
             max_atoms=256,
         )
 
-        print(f"Loading and compiling {calc_name} predictor ({method}) on {device}...")
+        print(f"Loading {calc_name} predictor ({method}) on {device}...")
         _PREDICTOR_CACHE[cache_key] = load_predict_unit(
             path=model_path,
             device=device,
