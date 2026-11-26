@@ -411,7 +411,7 @@ class StepEditorScreen(ModalScreen[dict | None]):
                     yield Input(value=" ".join(map(str, nmr.get("atoms") or [])), placeholder="", id="f_nmr_atoms")
                     yield Label("References: name[=SMILES|file.xyz]: nuclei; ... "
                                 "(TMS, CFCl3, H3PO4, CH3NO2, NH3, BF3OEt2, Me2Se, Me4Sn are bundled)",
-                                classes="field")
+                                classes="field", markup=False)
                     yield Input(value=format_references(nmr.get("references")), placeholder="TMS: 1H 13C",
                                 id="f_nmr_refs")
                     yield Label("Extra equivalent atoms (0-based groups, ';'-separated)", classes="field")
