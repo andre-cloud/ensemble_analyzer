@@ -144,3 +144,6 @@ try.py
 *xy 
 *pickle
 protocol_dump.json
+
+# Cartella MagicMock (vuota, creata per errore)
+MagicMock/
